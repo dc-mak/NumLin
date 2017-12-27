@@ -1,0 +1,13 @@
+(* ## added by OPAM user-setup for ocamltop / bas ## 3ec62baf6f9c219ae06d9814069da862 ## you can edit, but keep this line *)
+#use "topfind" ;;
+(* ## end of OPAM user-setup addition for ocamltop / base ## keep this line *) 
+
+#require "core_kernel";;
+#require "owl_top";;
+#require "ppx_traverse_builtins";;
+
+(* If anyone can get `jbuilder utop` to work, that would help avoid this work-around Adding the following     *)
+(* didn't work: (c_library_flags (-lopenblas -lgfortran -lm -L/home/dhruv/.opam/4.04.0/lib/stublibs))         *)
+(* Nor did adding -ldllowl_stubs.so or similar, which caused linker errors, even after setting LD_LIBRARY_PATH *)
+
+#load_rec "lt4la.cmo";;

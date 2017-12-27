@@ -1,0 +1,14 @@
+(jbuild_version 1)
+
+(library (
+    (name lt4la)
+    (synopsis "Linear Types for Linear Algebra")
+    (libraries (
+        owl
+        core_kernel
+        ppx_traverse_builtins
+        ppx_expect.evaluator
+        ppx_inline_test.runner.lib
+    ))
+    (preprocess (pps (ppx_traverse ppx_jane ppx_driver.runner (-inline-test-lib lt4la))))
+))

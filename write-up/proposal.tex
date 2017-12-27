@@ -1,0 +1,232 @@
+\documentclass[11pt]{article}
+
+\usepackage[top=1.1in, bottom=1.25in, left=1.25in, right=1.25in]{geometry}
+\usepackage{booktabs}
+\usepackage{charter}
+\usepackage{parskip}
+\usepackage{setspace}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[nottoc]{tocbibind}
+\usepackage[utf8]{inputenc}
+\usepackage[outputdir=build]{minted}
+\usepackage{hyperref}
+
+% \linespread{1.5}
+\newcommand{\guidance}[1]{\textsl{\textcolor{Gray}{#1}}}
+
+\begin{document}
+
+\centerline{\Large Applications of Linear Types}
+\vspace{2em}
+\centerline{\Large \emph{A Part III project proposal}}
+\vspace{2em}
+\centerline{\large D. C. Makwana (\emph{dcm41}), Trinity College}
+\vspace{1em}
+\centerline{\large Project Supervisor: Dr.~N.~K.~Krishnaswami, Dr~S.~Dolan}
+\vspace{1em}
+
+\begin{abstract}
+\textsl{%
+    Complex resource management is a challenge for programmers.  Linear types
+    allow the compiler and the user to statically keep track of the resources
+    that an implementation uses, and offer a promising solution to
+    resource management. However, they have not made their way into mainstream
+    programming languages. I aim to take a step towards this with an
+    incremental approach, by allowing users to use linear types via an OCaml
+    library that offers them the ability to manipulate primitives of the Owl
+    numerical library in a safe and efficient manner, by inferring and removing
+    redundant copies.
+}%
+
+\end{abstract}
+
+\section{Introduction, approach and outcomes}
+
+% \guidance{%
+%     Provide an introduction to your project or essay. In particular, try to
+%     motivate the work and explain the relevant context (general background, as
+%     well as sufficient detail about any related work).
+% }
+
+% \guidance{%
+%     What's the basic idea and approach? What are you thinking of doing, and how
+%     is it going to solve the problem (or need) you've identified. What are you
+%     going to ``produce''?  A project will typically produce one (or perhaps
+%     more) of the following: a piece of software, an evaluation of a published
+%     result, a proof, or the design (and perhaps the construction of) a new piece
+%     of hardware. An essay will typically either review and critique a particular
+%     area of the academic literature, or evaluate a published result or proof.
+%     Try to name the specific things (and describe them) in this part of the
+%     proposal -- this will allow you to refer to them in the next.
+% }
+
+Simply stated, a linear value is a value that must be used once and only once.
+More abstractly, it is the type-theory corresponding to Girard's Linear Logic.
+Examples of linear types in the real world are the recent efforts to extend GHC
+with Linear Types~\cite{retrofitting} for safe, pure-functional streaming: a
+pointer into a stream must be processed before moving onto the next element (one
+use) but crucially, you cannot keep this pointer and refer to it again (only one
+use).  Rust implements linear types behind the scenes but presents \emph{affine}
+types to the programmer: if a destructor is not called explicitly, the compiler
+inserts ones when it infers the value's lifetime has ended. Apart from memory
+(which enables zero-copy buffers and state-management in a pure functional
+language), linear types can also be used to control other resources such as
+files, network communications, pointers with capabilities and concurrent
+channels.
+
+My project will focus on memory, but not manipulating raw memory block
+primitives, but ensuring the primitive types (such as large matrices) that
+Owl~\cite{owl} manipulates are used efficiently. Owl provides an immutable
+interface and so performs several redundant copies during a computation. It does
+provide more efficient implementations of common numeric algorithms as
+primitives which are hand-optimised and abstract away any unsafe calls involved.
+This approach trades performance for conciseness, safety and ease of reasoning.
+
+The opposite approach -- to rely on the programmer to note and remove redundant
+copies -- is used extensively by Fortran's BLAS~\cite{blas} and Boost's
+uBLAS~\cite{ublas}. They offer many different conventions for each operation to
+meet every situation. For example, a function implementing a binary operation on
+two matrices may return a newly-allocated matrix containing the result or modify
+one of two or three input arguments to hold the result (if there is no aliasing,
+like in \texttt{noalias(C)~=~prod(A,~B)} where the \texttt{=} operator is
+overloaded) and even specify temporary intermediate results with annotations (as
+with \texttt{prod(A,~prod<temp\_type>(B,C))}).
+
+I hypothesise that it is possible to have the best of both worlds: write your
+code as you wish and then have the computer statically determine the most
+space-efficient sequence of copies and in-place writes that produces the
+desired result. A small example to illuminate the point follows. Suppose we
+have $n\times n$ matrices A, B and C. Knowing all those matrices are used
+once and only once, we would then infer that we can evaluate the expression
+\mintinline{ocaml}{(A + B) + C} \emph{in-place}, say, using the memory that A
+occupies.
+
+\begin{minted}{ocaml}
+    let y  = (A + B) + C in    let y  = ((A + B) + C) * A in
+    (* is the same as *)       (* is the same as *)
+    let i1 = A + B  in         let (A1, A2) = dup(A) in
+    let i2 = i1 + C in         let i1 = A1 + B       in
+    i2                         let i2 = i1 + C       in
+    (* is compiled to *)       let i4 = i2 * A2      in
+    A := A + B;                i4
+    A := A + C;                (* is compiled to *)
+    return A                   B := B + A; B := B + C;
+                               B := B * A; return B
+\end{minted}
+
+However, when an expression is used more than once, we can be more explicit and
+invoke a function \emph{dup} for duplicate, to save A for use later.
+
+It is important to note that \emph{dup} is not necessarily a copy: it is merely
+a signal to the compiler via the type system that A's memory should not be
+written to until both the results of the \emph{dup} (A1 and A2) are used.
+Indeed, knowing that B is not used again, we could store (intermediate) results
+in its memory.
+
+\section{Workplan}
+% \guidance{%
+%     Project students have approximately 28 weeks between the submission of
+%     the proposal, and the submission of the dissertation. Essay students have
+%     approximately 14 weeks.  This section should account for what you intend
+%     to do during that time. One approach would be to divide the time into
+%     two-week chunks, and describe the work to be done (and, as relevant,
+%     milestones to be achieved) in each chunk. You should leave one chunk for
+%     writing an essay or two chunks for writing a project dissertation. You
+%     should leave 1 chunk for contingencies.
+% }
+
+The output of this project will be a library that will, given a linear algebra
+expression, produce OCaml code to compute the expression using mutability and
+unsafe functions that will, thanks the static guarantees provided by linear
+types, be safe, correct and perform well (less memory consumption, fewer
+dynamic checks). Evaluation will consist of comparing test programs against
+Owl's default immutable interface, its lazy interface, Julia and Python/Numpy.
+
+During implementation, I will also explore other questions such as: if a matrix
+does need to be copied, then, when during execution is it best to do so?  What
+is necessary to support the class of numerical algorithms like the small
+example above, such as Kalman filters that although in their mathematical
+expression appear to use a value twice, can be implemented to have values
+modified in-place? Numerical libraries and lazy interfaces (that use mutability
+behind the scenes by reference counting) tend to perform poorly for allocating
+lots of small matrices (for example, in robust linear regression); will
+statically determining memory usage improve their performance?
+
+\vspace*{\fill}
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+    \toprule
+
+    Date & Work \\
+
+    \midrule
+
+    % December
+    04-12-2017 & Set-up build environments (using Nix) Git repository          \\
+               & continuous-integration and testing framework. Start           \\
+               & designing explicitly-typed DSL (domain-specific language).    \\
+                                                                               \\
+
+    18-12-2017 & Finish designing DSL and write a tree-interpreter for it      \\
+               & that outputs matrices using Owl.                              \\
+                                                                               \\
+
+    % January
+    01-01-2018 & Write a lexer/parser and \emph{compiler} for this language.   \\
+                                                                               \\
+
+    15-01-2018 & Review with supervisor/break for assignments.                 \\
+                                                                               \\
+
+    29-01-2018 & Start with basic elaboration and inference.                   \\
+                                                                               \\
+
+    % February
+    12-02-2018 & Buffer.                                                       \\
+                                                                               \\
+
+    26-02-2018 & Project progress review. Begin discussion of advanced         \\
+               & extensions such as staging or further inference and analysis. \\
+                                                                               \\
+
+    % March
+    12-03-2018 & `One-minute madness: project `elevator pitch''.               \\
+               &  Start with chosen extension. Submit to ICFP.                 \\
+                                                                               \\
+
+    26-03-2018 & Plan evaluation and start and write-up.                       \\
+                                                                               \\
+
+    % April
+    09-04-2018 & Buffer.                                                       \\
+                                                                               \\
+
+    23-04-2018 & Perform evaluation.                                           \\
+                                                                               \\
+
+    % May
+    07-05-2018 & Write-up.                                                     \\
+                                                                               \\
+
+    21-05-2018 & Project title changes (25\textsuperscript{th}).               \\
+               & Final changes to code and thesis. Prepare for POPL.           \\
+                                                                               \\
+
+    % June
+    01-06-2018 & Submission Deadline.                                          \\
+                                                                               \\
+
+    12-06-2018 & MPhil and Part III Project presentations.                     \\
+                                                                               \\
+
+  \bottomrule
+
+\end{tabular}
+\end{table}
+\vspace*{\fill}
+\newpage
+\bibliographystyle{plain}
+\bibliography{proposal.bib} 
+
+\end{document}

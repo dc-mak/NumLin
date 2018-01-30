@@ -10,7 +10,6 @@ open Lt4la
 open Vars
 ;;
 
-
 let check_expr = 
   Checker.check_expr ~counter:1719
 ;;

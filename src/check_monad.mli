@@ -90,7 +90,7 @@ val fail_string : string -> 'a t
 val failf : ('a, unit, string, 'b t) format4 -> 'a
 
 (* Create a fresh variable and update the state *)
-(* val create_fresh : ?name:string -> unit -> Ast.variable t *)
+val create_fresh : ?name:string -> unit -> Ast.variable t
 
 (** Look for given variable in linear_vars *)
 val lookup : Ast.variable -> tagged_linear_t option t

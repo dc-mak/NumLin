@@ -35,7 +35,7 @@ val unify_linear_t :
 
 (** For now, arrays will be interpreted as/implemented using this.
     S means single-precision floating point of Float32. *)
-type array_type = Owl.Dense.Ndarray.S.arr
+type array_type = Owl.Dense.Ndarray.D.arr
 val sexp_of_array_type : 'a -> Sexplib.Sexp.t
 
 (** Expressions of the language. Right now, I've made my life much easier by
@@ -52,4 +52,28 @@ type expression =
   | Specialise_frac_cap of expression * frac_cap
   | Array_Intro of array_type
   | Array_Elim of variable * expression * expression
+  | Primitive of primitive
+
+and primitive =
+  (* Operators *)
+  | Split_Permission
+  | Merge_Permission
+  | Free
+  | Copy (* xCOPY *)
+  | Swap (* xSWAP *)
+
+  (* Routines/Functions *)
+  | Sum_Mag (* xASUM *)
+  | Scalar_Mult_Then_Add (* xAXPY *)
+  | DotProd (* xDOT *)
+  | Norm2 (* xNRM2 *)
+  | Plane_Rotation (* xROT *)
+  | Givens_Rotation (* xROTG *)
+  | GivensMod_Rotation (* xROTM *)
+  | Gen_GivensMod_Rotation (* xROTMG *)
+  | Scalar_Mult (* xSCAL *)
+  | Index_of_Max_Abs (* IxAMAX *)
+  | Index_of_Min_Abs (* IxAMIN -- Intel only *)
+
 val sexp_of_expression : expression -> Sexplib.Sexp.t
+val sexp_of_primitive : primitive -> Sexplib.Sexp.t

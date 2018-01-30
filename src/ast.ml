@@ -231,13 +231,14 @@ struct
 end
 
 type array_type =
-  Owl.Dense.Ndarray.S.arr
+  Owl.Dense.Ndarray.D.arr
 ;;
 
 let sexp_of_array_type _ =
   Sexplib.Sexp.Atom "<Array>"
 ;;
 
+(* TODO: Use GADTs. Different type for values? E.g. type value = Unit | Array | Pair of value * value?  *)
 type expression =
   | Var of variable
   | Unit_Intro
@@ -251,15 +252,33 @@ type expression =
   | Array_Intro of array_type
   | Array_Elim of variable * expression * expression
 (*| ForAll_Size of variable * expression *)
-(*| Primitive of primitive *)
+  | Primitive of primitive
 
-(*Primitives/extensions *)
-(*and primitive =  *)
-(*| Split_Permission of expression *)
-(*| Merge_Permission of expression *)
-(*| InPlace_Multiply of expression *)
-(*| Multiply of expression *)
-(*| Free of expression *)
+(* Primitives/extensions
+   Intel Level 1: software.intel.com/en-us/mkl-developer-reference-c-blas-level-1-routines-and-functions
+   BLAS Reference: www.netlib.org/blas/blasqr.pdf
+   Not included: xxDOT (derivable), xDOTU, xDOTC (Complex Float32/64) *)
+and primitive =
+  (* Operators *)
+  | Split_Permission
+  | Merge_Permission
+  | Free
+  | Copy (* xCOPY *)
+  | Swap (* xSWAP *)
+
+  (* Routines/Functions *)
+  | Sum_Mag (* xASUM *)
+  | Scalar_Mult_Then_Add (* xAXPY *)
+  | DotProd (* xDOT *)
+  | Norm2 (* xNRM2 *)
+  | Plane_Rotation (* xROT *)
+  | Givens_Rotation (* xROTG *)
+  | GivensMod_Rotation (* xROTM *)
+  | Gen_GivensMod_Rotation (* xROTMG *)
+  | Scalar_Mult (* xSCAL *)
+  | Index_of_Max_Abs (* IxAMAX *)
+  | Index_of_Min_Abs (* IxAMIN -- Intel only *)
+
 [@@deriving sexp_of]
 ;;
 

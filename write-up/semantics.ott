@@ -1,0 +1,211 @@
+metavar fraccap, fc ::=
+  {{ tex \mathit{[[fraccap]]} }} {{ com fractional capability variable }}
+
+
+metavar expression, x, a, b ::=
+  {{ tex \mathit{[[expression]]} }} {{ com expression variable }}
+
+
+grammar
+  terminals :: 'terminals_' ::=
+    | \    ::  :: lambda    {{ tex \lambda   }}
+    | *    ::  :: product   {{ tex \otimes   }}
+    | -o   ::  :: arrow     {{ tex \multimap }}
+    | |-   ::  :: turnstile {{ tex \vdash    }}
+    | mem  ::  :: mem       {{ tex \in       }}
+    | all  ::  :: all       {{ tex \forall   }}
+    | Cap  ::  :: cap       {{ tex \textsf{Cap}   }}
+    | Type ::  :: type      {{ tex \textsf{Type} }}
+
+
+  f :: 'f_' ::=          {{ com fractional capability }}
+    | fc     ::  :: Var  {{ com variable  }}
+    | Zero   ::  :: Zero {{ com zero      }}
+    | Succ f ::  :: Succ {{ com successor }}
+
+
+  t :: 't_' ::= {{ com linear type }}
+    | 1            ::   :: Unit            {{ com unit                              }}
+    | t * t'       ::   :: Pair            {{ com pair                              }}
+    | t -o t'      ::   :: Lollipop        {{ com arrow                             }}
+    | all fc . t   ::   :: ForAll_frac_cap (+ bind fc in t                          +)
+                                           {{ com fractional capability abstraction }}
+    | Arr [ f ]    ::   :: Array           {{ com array                             }}
+    | t { f / fc } :: M :: Substitute      {{ com substitution                      }}
+
+
+  p :: 'p_' ::= {{ com primitive }}
+    | share   ::  :: Split_Permission       {{ com share array                                  }}
+    | combine ::  :: Merge_Permission       {{ com unshare array                                }}
+    | free    ::  :: Free                   {{ com free arrary                                  }}
+    | copy    ::  :: Copy                   {{ com copy array                                   }}
+    | swap    ::  :: Swap                   {{ com swap array                                   }}
+    | asum    ::  :: Sum_Mag                {{ com $\sum_i | x_i |$                             }}
+    | axpy    ::  :: Scalar_Mult_Then_Add   {{ com $x := \alpha x + y$                          }}
+    | dot     ::  :: DotProd                {{ com $x \cdot y$                                  }}
+    | nrm2    ::  :: Norm2                  {{ com $\| x \| ^ 2$                                }}
+                                            {{ tex \textbf{nrm2}                                }}
+    | rot     ::  :: Plane_Rotation         {{ com plane rotation                               }}
+    | rotg    ::  :: Givens_Rotation        {{ com Givens rotation                              }}
+    | rotm    ::  :: GivensMod_Rotation     {{ com modified givens rotation                     }}
+    | rotmg   ::  :: Gen_GivensMod_Rotation {{ com generate modified Givens rotation            }}
+    | scal    ::  :: Scalar_Mult            {{ com $x := \alpha x$                              }}
+    | iamax   ::  :: Index_of_Max_Abs       {{ com index of maximum absolute value              }}
+    | iamin   ::  :: Index_of_Min_Abs       {{ com index of minimum absolute value (Intel only) }}
+
+
+  e :: 'e_' ::= {{ com expression }}
+    | x                       ::  :: Var                 {{ com variable                        }}
+    | ( )                     ::  :: Unit_Intro          {{ com unit introduction               }}
+    | let ( ) = e in e'       ::  :: Unit_Elim           {{ com unit elimination                }}
+    | ( e , e' )              ::  :: Pair_Intro          {{ com pair introduction               }}
+    | let ( a , b ) = e in e' ::  :: Pair_Elim           (+ bind a union b in e'                +)
+                                                         {{ com pair elimination                }}
+    | \ x : t . e             ::  :: Lambda              (+ bind x in e                         +)
+                                                         {{ com abstraction                     }}
+    | e e'                    ::  :: App                 {{ com application                     }}
+    | Array ( e )             ::  :: Array_Intro         {{ com array introduction              }}
+    | let x = e in e'         ::  :: Array_Elim          (+ bind x in e'                        +)
+                                                         {{ com array elimination               }}
+    | p                       ::  :: Primitive           {{ com Level 1 BLAS routine primitives }}
+    | all fc . e              ::  :: ForAll_frac_cap     {{ com frac cap abstraction            }}
+    | e [ f ]                 ::  :: Specialise_frac_cap {{ com frac cap specialisation         }}
+
+
+  T {{ tex \Theta }} :: 'T_' ::= {{ com fractional capability environment }}
+    | empty  ::  :: EmptyT     {{ tex \cdot }}
+    | T , fc ::  :: ExtendedT
+
+
+  G {{ tex \Gamma }}, D {{ tex \Delta }} :: 'G_' ::= {{ com linear types environment }}
+    | empty     ::  :: EmptyEnv    {{ tex \cdot }}
+    | G , x : t ::  :: ExtendedEnv
+    | G , D     ::  :: SplitEnv
+
+
+defns
+  Well_Formed :: 'WF_' ::=
+
+
+  defn
+  T |- f Cap :: ::Cap:: 'Cap_' {{ com Valid fractional capabilities }} by
+
+
+    fc mem T
+    ----------- :: Var
+    T |- fc Cap
+
+
+    ------------- :: Zero
+    T |- Zero Cap
+
+
+    T |- f Cap
+    --------------- :: Succ
+    T |- Succ f Cap
+
+
+  defn
+  T |- t Type :: ::Type:: 'Type_' {{ com Valid types }} by
+
+
+    ----------- :: Unit
+    T |- 1 Type
+
+
+
+
+    T |- t Type
+    T |- t' Type
+    ---------------- :: Pair
+    T |- t * t' Type
+
+
+    T |- t Type
+    T |- t' Type
+    ---------------- :: Lollipop
+    T |- t -o t' Type
+
+
+    T |- f Cap
+    ------------------- :: Array
+    T |- Arr [ f ] Type 
+
+
+    T, fc |- t Type
+    -------------------- :: ForAll
+    T |- all fc . t Type
+
+
+defns
+  Types :: 'Ty_' ::=
+
+
+  defn
+  T ; G |- e : t :: ::Type:: '' {{ com Tying rules for expressions }} by
+
+
+  ------------------ :: Var
+  T ; empty, x : t |- x : t 
+  
+  -------------- :: Unit_Intro
+  T ; empty |- () : 1 
+  
+  T ; G |- e : 1
+  T ; D , x : 1 |- e' : t
+  ------------------------------- :: Unit_Elim
+  T ; G, D |- let x = e in e' : t
+
+
+  T ; G |- e : t
+  T ; D |- e' : t'
+  ------------------------------- :: Pair_Intro
+  T ; G, D |- ( e , e' ) : t * t' 
+  
+  T ; G |- e12 : t1 * t2
+  T ; D, a : t1, b : t2 |- e : t
+  -------------------------------------- :: Pair_Elim
+  T ; G, D |- let ( a , b ) = e12 in e : t
+
+
+  T ; G, x : t' |- e : t
+  T |- t Type
+  ------------------------------- :: Lambda
+  T ; G |- \ x : t' . e : t' -o t
+  
+  T ; G |- e : t' -o t
+  T ; D |- e' : t'
+  ----------------- :: App
+  T ; G, D |- e e' : t
+
+
+  T ; G |- e : Arr [ f ]
+  -------------------------------------- :: Array_Intro
+  T ; G |- Array ( e ) : Arr [ Zero ]
+
+
+  T ; G |- e : Arr [ f ]
+  T ; D, x : Arr [ f ] |- e' : t'
+  --------------------------------- :: Array_Elim
+  T ; G, D |- let x = e in e' : t'
+
+
+  T , fc ; G |- e : t
+  T , fc |- t Type
+  -------------------------------- :: ForAll_frac_cap
+  T ; G |- all fc . e : all fc . t
+
+
+  T ; G |- e : all fc . t
+  ------------------------------- :: Specialise_frac_cap
+  T ; G |- e [ f ] : t { f / fc }
+
+
+grammar
+  formula :: 'formula_' ::=
+    | judgement      ::  :: judgement
+    | x : t mem G    ::  :: xtG
+    | fc mem T       ::  :: fcT
+
+
+% vim: sw=2 sts=2

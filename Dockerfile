@@ -28,6 +28,7 @@ WORKDIR $HOME
 # OCaml Packages Used
 RUN opam install -y           \
         oasis                 \
+        "ocamlmod=0.0.9"      \
         jbuilder              \
         ocaml-compiler-libs   \
         ctypes                \

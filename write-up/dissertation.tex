@@ -1,0 +1,64 @@
+\documentclass{myclass}
+
+% From dissertation template
+\usepackage{graphicx,parskip,setspace,tabularx,xspace}
+\usepackage{epstopdf}
+\epstopdfsetup{outdir=./build/}
+
+% Titles
+\def\authorname{Dhruv C.~Makwana\xspace}
+\def\authorcollege{Trinity College College\xspace}
+\def\authoremail{dcm41@cam.ac.uk}
+\def\dissertationtitle{Applications of Linear Types}
+\def\wordcount{0}
+
+% From Ott
+\usepackage{amssymb}
+\usepackage{supertabular}
+\usepackage{ifthen}
+\usepackage{alltt}%hack
+\input{semantics_def}
+
+%% START OF DOCUMENT
+\begin{document}
+
+%% FRONTMATTER (TITLE PAGE, DECLARATION, ABSTRACT, ETC)
+\pagestyle{empty}
+\singlespacing
+\input{titlepage}
+\onehalfspacing
+\input{declaration}
+\singlespacing
+\input{abstract}
+
+% No resetting page numbers: ISO 7144
+% \pagenumbering{roman}
+% \setcounter{page}{0}
+\pagestyle{plain}
+\tableofcontents
+\listoffigures
+\listoftables
+
+\onehalfspacing
+
+%% START OF MAIN TEXT
+
+\include{introduction}
+
+\include{background}
+
+\include{implementation}
+
+\include{evaluation}
+
+\include{related_work}
+
+\include{conclusion}
+
+\appendix
+\singlespacing
+
+\bibliographystyle{unsrt}
+\bibliography{proposal}
+
+\end{document}

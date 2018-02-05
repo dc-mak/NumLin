@@ -9,13 +9,23 @@ stdenv.mkDerivation {
     buildInputs = [
         (texlive.combine {
             inherit (texlive)
+            ucs
+            ec
+            caption
+            sectsty
+            tocloft
+            titlesec
+            minitoc
+            cm-super
             scheme-basic
             booktabs
             charter
+            epstopdf
             etoolbox # minted
             fancyvrb # minted
             float # minted
             framed
+            graphics
             hyperref
             ifplatform # minted
             latexmk
@@ -32,6 +42,8 @@ stdenv.mkDerivation {
         })
         pythonPackages.pygments
         ocamlPackages.ott
+        ghostscript
+        which
     ];
 
     src = ./.;

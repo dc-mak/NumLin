@@ -3,18 +3,38 @@
 FLAGS := -quiet
 
 TARGETS :=  semantics.pdf \
-	    proposal.pdf
+	    proposal.pdf  \
+	    dissertation.pdf
 
 BUILD := build
 
-all : $(TARGETS)
+# Add Bibligraphy at some point
+SRC :=	myclass.cls \
+	titlepage.tex \
+	declaration.tex \
+	abstract.tex \
+	introduction.tex \
+	background.tex \
+	semantics_def.tex \
+	implementation.tex \
+	evaluation.tex \
+	related_work.tex \
+	conclusion.tex
 
-%.pdf: %.tex | $(BUILD) $(BUILD_AUX)
+all: $(TARGETS)
+
+$(TARGETS):%.pdf: %.tex | $(BUILD) $(BUILD_AUX)
 	latexmk -pdf -dvi- -ps- $< -shell-escape -output-directory=$(BUILD) $(FLAGS)
 	mv $(BUILD)/$@ $@
 
-semantics.tex: semantics.ott
-	ott -i $< -o $@
+dissertation.tex: $(SRC)
+	touch $@
+
+semantics.tex: semantics_def.tex
+	touch $@
+
+semantics_def.tex: semantics.ott
+	ott -i $< -tex_wrap false -o $@
 
 $(BUILD_AUX): $(BUILD)
 $(BUILD):

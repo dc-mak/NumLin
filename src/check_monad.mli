@@ -95,15 +95,12 @@ val create_fresh : ?name:string -> unit -> Ast.variable t
 (** Look for given variable in linear_vars *)
 val lookup : Ast.variable -> tagged_linear_t option t
 
-(** Replace any variables in the fractional capability with what
-    it is mapped to in frac_cap_vars in the environment *)
-val normal_form : Ast.frac_cap -> Ast.frac_cap t
+(** Fractional capability is well-formed if any variables it refers to
+    are present in the fractional capability environment. *)
+val well_formed : Ast.frac_cap -> bool t
 
 (** Marks the [not_used] variable and linear_t as used and returns latter. *)
 val use_var : not_used -> Ast.linear_t t
-
-(** Applies substitutions to the environment *)
-val apply : (Ast.variable * Ast.frac_cap) list -> unit t
 
 (** Evaluates the given monadic value in the context extended with the given
     mappings and then removes those mappings from the environment, checking that
@@ -116,7 +113,7 @@ val with_linear_t :
     mappings and then removes those mappings from the environment.
     - Mappings must be globally unique. *)
 val with_frac_cap :
-  (Ast.variable * Ast.frac_cap) list -> Ast.linear_t t -> Ast.linear_t t
+  Ast.variable list -> Ast.linear_t t -> Ast.linear_t t
 
 (** Evaluates the monadic value. Must ensure [counter] = #variables in expression + 1. *)
 val run : Ast.linear_t t -> counter:int -> Ast.linear_t Core_kernel.Or_error.t

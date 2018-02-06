@@ -34,42 +34,30 @@ struct
   ;;
 
   let pp_frac_cap =
-    let rec count acc = function 
+    let rec count acc = function
       | Zero -> Caml.string_of_int acc
       | Succ frac_cap -> count (acc+1) frac_cap
       | Var var -> var.name ^ if acc = 0 then "" else "+" ^ Caml.string_of_int acc in
     count 0
   ;;
 
-  let rec occurs_frac_cap var =
-    function
-    | Zero ->
-      false
-    | Succ frac_cap ->
-      occurs_frac_cap var frac_cap
-    | Var var' ->
-      [%compare.equal : variable] var var'
-  ;;
-
-  let rec unify_frac_cap frac_cap1 frac_cap2 =
+  let rec same_frac_cap equiv frac_cap1 frac_cap2 =
     let open Or_error.Let_syntax in
     match frac_cap1, frac_cap2 with
     | Zero, Zero ->
-      return []
+      return ()
     | Succ frac_cap1, Succ frac_cap2 ->
-      unify_frac_cap frac_cap1 frac_cap2
+      same_frac_cap equiv frac_cap1 frac_cap2
     | Var var1, Var var2 ->
-      return (if [%compare.equal : variable] var1 var2 then [] else [(var1, Var var2)])
-    | Var var, frac_cap
-    | frac_cap, Var var ->
-      if not (occurs_frac_cap var frac_cap) then
-        return [(var, frac_cap)]
+      let (=) = [%compare.equal : variable] in
+      if List.exists ~f:(fun (x,y) -> x = var1 && y = var2 || y = var1 && x = var2) equiv then
+        return ()
       else
-        let pp () = pp_frac_cap in
-        Or_error.errorf !"Variable: %{sexp: variable} occurs in %a" var pp frac_cap 
+        Or_error.errorf !"Could not show %s and %s and alpha-equivalent." var1.name var2.name
+
     | _, _ ->
       let pp () = pp_frac_cap in
-      Or_error.errorf !"Could not unify %a with %a." pp frac_cap1 pp frac_cap2
+      Or_error.errorf !"Could not show %a and %a are equal." pp frac_cap1 pp frac_cap2
   ;;
 
 end
@@ -82,11 +70,11 @@ end
  * ;;
  *)
 
-include 
+include
 struct
   type linear_t =
-    | Unit 
-    | Pair of linear_t * linear_t 
+    | Unit
+    | Pair of linear_t * linear_t
     | Fun of linear_t * linear_t
     | ForAll_frac_cap of variable * linear_t
     | Array_t of frac_cap
@@ -94,7 +82,7 @@ struct
   ;;
 
   (* I should look in to https://mjambon.github.io/mjambon2016/easy-format.html *)
-  let pp_linear_t ppf = 
+  let pp_linear_t ppf =
     let open Caml.Format in
     let _wrap = ref 0 in
     let rec pp_linear_t ppf = function
@@ -144,94 +132,94 @@ struct
     Buffer.contents buffer
   ;;
 
-  (* NOTE I assume all binding variables (or at least their ids) are unique. *)
-  let sub_frac_cap_exn linear_t ~var ~replacement =
-    (object(self)
-      inherit Ppx_traverse_builtins.map
-      inherit map as super
-      method variable var' =
-        if [%compare.equal : variable] var var' then
-          Printf.failwithf
-            !"INTERNAL ERROR: Variable %{sexp: variable} not unique in linear_t.\n\
-              Ensure you call unify_linear_t before sub_frac_cap_exn" var ()
+  let substitute_in linear_t ~var ~replacement =
+    try Or_error.return begin
+      (object(self)
+        inherit Ppx_traverse_builtins.map
+        inherit map as super
+        method variable var' =
+          if [%compare.equal : variable] var' var then
+            failwith "INTERNAL ERROR: binding variables are not unique."
+          else
+            var'
+        method frac_cap = function
+          | Zero -> Zero
+          | Succ frac_cap -> Succ (self#frac_cap frac_cap)
+          | Var var' as frac_cap ->
+            if [%compare.equal : variable] var var' then replacement else frac_cap
+      end)#linear_t linear_t end
+    with Failure msg ->
+      Or_error.error_string msg
+  ;;
+
+  (* Alpha-equivalence sucks *)
+  let add (x,y) equiv =
+    let (=) = [%compare.equal : variable] in
+    try
+      (x, y) :: List.fold_left equiv ~init:[] ~f:(fun rest (u,v) ->
+        let rest = (u, v) :: rest in
+        if u = x && v = y || u = y && v = x then
+          failwith "don't add" (* ({u,v}={x,y}) + rest *)
+        else if u = x then
+          (y, v) :: rest       (* {x/u,v} + {x/u,y} + {y,v} + rest *)
+        else if u = y then
+          (x, v) :: rest       (* {y/u,v} + {x,y/u} + {x,v} + rest *)
+        else if v = x then
+          (u, y) :: rest       (* {u,x/v} + {x/v,y} + {y,u} + rest *)
+        else if v = y then
+          (u, x) :: rest       (* {u,v/y} + {x,v/y} + {u,x} + rest *)
         else
-          var'
-      method frac_cap = function
-        | Zero -> Zero
-        | Succ frac_cap -> Succ (self#frac_cap frac_cap)
-        | Var var' as frac_cap ->
-          if [%compare.equal : variable] var var' then replacement else frac_cap
-    end)#linear_t linear_t
-  ;;
-  
-  let rec occurs_in_linear_t var =
-    function
-    | Unit ->
-      false
-    | Pair (fst_t, snd_t) ->
-      occurs_in_linear_t var fst_t || occurs_in_linear_t var snd_t
-    | Fun (arg_t, body_t) ->
-      occurs_in_linear_t var arg_t || occurs_in_linear_t var body_t
-    | ForAll_frac_cap (var', t) ->
-      [%compare.equal: variable] var var' || occurs_in_linear_t var t
-    | Array_t frac_cap ->
-      occurs_frac_cap var frac_cap
+          rest)                (* {u,v} + {x,y} + rest *)
+    with _ -> equiv
   ;;
 
-  let apply subs linear_t =
-    try 
-      List.fold subs ~init:linear_t ~f:(fun linear_t (var, replacement) ->
-        sub_frac_cap_exn linear_t ~var ~replacement)
-    with 
-    | Failure msg ->
-      failwith (msg ^ "/apply")
-  ;;
-
-  (* TODO Precompose with an map_error to stack messages upon failure *)
-  Or_error.tag
-  let rec unify_linear_t linear_t1 linear_t2 =
+  (* Same linear_t UP TO alpha-equivalence *)
+  let rec same_linear_t equiv linear_t1 linear_t2 =
     let open Or_error.Let_syntax in
+
     match linear_t1, linear_t2 with
     | Unit, Unit ->
-      return []
+      return ()
 
     | Pair (fst1, snd1) , Pair(fst2,snd2) ->
-      let%bind subs1 = unify_linear_t fst1 fst2 in
-      let%bind subs2 = unify_linear_t (apply subs1 snd1) (apply subs1 snd2) in
-      return (subs1 @ subs2)
+      let%bind () = same_linear_t equiv fst1 fst2 in
+      let%bind () = same_linear_t equiv snd1 snd2 in
+      return ()
 
     | Fun (arg1, body1) , Fun(arg2,body2) ->
-      let%bind subs1 = unify_linear_t arg1 arg2 in
-      let%bind subs2 = unify_linear_t (apply subs1 body1) (apply subs1 body2) in
-      return (subs1 @ subs2)
-      
+      let%bind () = same_linear_t equiv arg1 arg2 in
+      let%bind () = same_linear_t equiv body1 body2 in
+      return ()
+
     (* NOTE I assume all binding variables (or at least their ids) are unique. *)
     | ForAll_frac_cap (var1,linear_t1), ForAll_frac_cap (var2,linear_t2) ->
-      if ([%compare.equal : variable] var1 var2) then
+      if [%compare.equal : variable] var1 var2 then
         Or_error.errorf
           !"INTERNAL ERROR: binding variables are not unique.\n\
             Body 1: %{sexp: linear_t}\nBody 2: %{sexp: linear_t}"
           linear_t1 linear_t2
-      else if occurs_in_linear_t var1 linear_t2 then
-        Or_error.errorf !"Variable: %{sexp: variable} occurs in %a" var1
-          (Fn.const string_of_linear_t) linear_t2
       else
-        let subs1 = [(var1, Var var2)] in
-        let%bind subs2 = unify_linear_t linear_t1 (apply subs1 linear_t2) in
-        return (subs1 @ subs2)
+        same_linear_t (add (var1, var2) equiv) linear_t1 linear_t2
 
     | Array_t frac_cap1, Array_t frac_cap2 ->
-      unify_frac_cap frac_cap1 frac_cap2
+      same_frac_cap equiv frac_cap1 frac_cap2
 
     | _, _ ->
       let pp () = string_of_linear_t in
-      Or_error.errorf !"Couldn't unify\n    %awith\n    %a" pp linear_t1 pp linear_t2
+      Or_error.errorf !"Specifically, could not show this equality:\n    %awith\n    %a" pp linear_t1 pp linear_t2
+  ;;
+
+  let same_linear_t x y : unit Or_error.t =
+    Result.map_error (same_linear_t [] x y) (fun err ->
+      let pp () = string_of_linear_t in
+      let tag = Printf.sprintf "Could not show equality:\n    %awith\n    %a" pp x pp y in
+      Error.tag ~tag err)
   ;;
 
 end
 
 type array_type =
-  Owl.Dense.Ndarray.D.arr
+  float array
 ;;
 
 let sexp_of_array_type _ =
@@ -248,7 +236,7 @@ type expression =
   | Lambda of variable * linear_t * expression
   | App of expression * expression
   | ForAll_frac_cap of variable * expression
-  | Specialise_frac_cap of expression * frac_cap 
+  | Specialise_frac_cap of expression * frac_cap
   | Array_Intro of array_type
   | Array_Elim of variable * expression * expression
 (*| ForAll_Size of variable * expression *)
@@ -285,6 +273,54 @@ and primitive =
 (* TODO Internal tests *)
 let%test_module "Test" =
   (module struct
-    let%test "true" = true
+
+    let printf =
+      Core_kernel.printf
+    ;;
+
+    (* A stock of variables *)
+    let one, two, three, four, five, six, seven, eight, nine, ten, eleven, sentinel =
+      ( {id=1; name="one"}   ,   {id=2; name="two"}   ,   {id=3; name="three"}
+      , {id=4; name="four"}  ,   {id=5; name="five"}  ,     {id=6; name="six"}
+      , {id=7; name="seven"} ,  {id=8; name="eight"}  ,    {id=9; name="nine"}
+      , {id=10; name="ten"}  , {id=11; name="eleven"} , {id=(-1); name="sentinel"} )
+    ;;
+
+    (* same_frac_cap (and pp_frac_cap) *)
+    let%expect_test "same_frac_cap" =
+      let open Ast in
+      same_frac_cap [] Zero (Succ Zero)
+      |> printf !"%{sexp: unit Or_error.t}";
+      [%expect {| (Error "Could not show 0 and 1 are equal.") |}]
+    ;;
+
+    let%expect_test "same_frac_cap" =
+      let open Ast in
+      same_frac_cap [] (Succ (Succ (Var one))) (Var one)
+      |> printf !"%{sexp: unit Or_error.t}";
+      [%expect {| (Error "Could not show one+2 and one are equal.") |}]
+    ;;
+
+    let%expect_test "same_frac_cap" =
+      let open Ast in
+      same_frac_cap [] (Var one) (Succ (Succ (Var three)))
+      |> printf !"%{sexp: unit Or_error.t}";
+      [%expect {| (Error "Could not show one and three+2 are equal.") |}]
+    ;;
+
+    let%expect_test "add" =
+      let ids x = List.map x (fun (x,y) -> (x.id, y.id)) in
+      let show x = printf !"%{sexp: (int * int) list}\n" (ids x) in
+      let it = add (one, two) []  in show it;
+      let it = add (three, four) it in show it;
+      let it = add (four, five) it in show it;
+      let it = add (four, five) it in show it;
+      [%expect {|
+        ((1 2))
+        ((3 4) (1 2))
+        ((4 5) (1 2) (3 5) (3 4))
+        ((4 5) (1 2) (3 5) (3 4)) |}]
+    ;;
+
   end)
 ;;

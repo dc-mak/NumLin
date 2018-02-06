@@ -18,27 +18,25 @@ let execute x =
   |> printf !"%{sexp: Ast.linear_t Or_error.t}\n"
 ;;
 
-(* When create_fresh was still around *)
-    (*
- * let%expect_test "create_fresh" =
- *   let open Let_syntax in
- *   begin
- *     let%bind fresh = create_fresh in
- *     printf !"%{sexp:Ast.variable}\n" fresh;
- *     let%bind fresh = create_fresh in
- *     printf !"%{sexp:Ast.variable}\n" fresh;
- *     return Ast.Unit
- *   end
- *   |> run ~counter:1719 |> ignore;
- *   [%expect {|
- *     ((id 1719) (name 1719))
- *     ((id 1720) (name 1720)) |}]
- * ;;
-*)
+(* create_fresh *)
+let%expect_test "create_fresh" =
+  let open Let_syntax in
+  begin
+    let%bind fresh = create_fresh () in
+    printf !"%{sexp:Ast.variable}\n" fresh;
+    let%bind fresh = create_fresh ~name:"test" () in
+    printf !"%{sexp:Ast.variable}\n" fresh;
+    return Ast.Unit
+  end
+  |> run ~counter:1719 |> ignore;
+  [%expect {|
+    ((id 1719) (name 1719))
+    ((id 1720) (name test_1720)) |}]
+;;
 
 (* with_frac_cap *)
 let%expect_test "with_frac_cap" =
-  with_frac_cap [(four, Ast.(Succ(Var three)))] (return Ast.Unit)
+  with_frac_cap [four] (return Ast.Unit)
   |> execute;
   [%expect {| (Ok Unit) |}]
 ;;
@@ -66,7 +64,7 @@ let%expect_test "lookup None (no vars)" =
 
 let%expect_test "lookup None (with_frac_cap)" =
   let open Let_syntax in
-  with_frac_cap [(four, Ast.(Succ(Var three)))] begin
+  with_frac_cap [four] begin
     let%bind var = lookup four in
     printf !"%{sexp: tagged_linear_t option}\n" var;
     (return Ast.Unit)
@@ -119,58 +117,78 @@ let%expect_test "lookup (Some (Used _))" =
         (Ok (Array_t (Var ((id 3) (name three))))) |}]
 ;;
 
-(* normal_form *)
-let%expect_test "normal_form" =
+(* well_formed *)
+let%expect_test "well_formed" =
   let open Let_syntax in
   begin
-    let%bind frac_cap = normal_form (Ast.Zero) in
-    (return Ast.(Array_t frac_cap))
+    let%bind wf = well_formed (Ast.Zero) in
+    if wf then return Ast.Unit else (fail_string "Not well-formed")
   end
   |> execute;
   [%expect {|
-        (Ok (Array_t Zero)) |}]
+     (Ok Unit) |}]
 ;;
 
-let%expect_test "normal_form" =
+let%expect_test "well_formed" =
   let open Let_syntax in
   begin
-    let%bind frac_cap = normal_form (Ast.(Succ (Succ (Var four)))) in
-    (return Ast.(Array_t frac_cap))
+    let%bind wf = well_formed (Ast.Var one) in
+    if wf then return Ast.Unit else (fail_string "Not well-formed")
   end
   |> execute;
   [%expect {|
-        (Ok (Array_t (Succ (Succ (Var ((id 4) (name four))))))) |}]
+     (Error "Not well-formed") |}]
 ;;
 
-let%expect_test "normal_form/with_frac_cap" =
+(* well_formed/with_frac_cap *)
+let%expect_test "well_formed/with_frac_cap" =
   let open Let_syntax in
-  with_frac_cap [(four, Ast.(Succ(Var three)))] begin
-    let%bind frac_cap = normal_form (Ast.(Succ (Succ (Var four)))) in
-    (return Ast.(Array_t frac_cap))
+  with_frac_cap [one] begin
+    let%bind wf = well_formed (Ast.Var one) in
+    if wf then return Ast.Unit else (fail_string "Not well-formed")
   end
   |> execute;
   [%expect {|
-        (Ok (Array_t (Succ (Succ (Succ (Var ((id 3) (name three)))))))) |}]
+     (Ok Unit) |}]
 ;;
 
-let%expect_test "normal_form/with_linear_t/use_var" =
+let%expect_test "well_formed/with_frac_cap" =
+  let open Let_syntax in
+  with_frac_cap [four] begin
+    let%bind wf = well_formed (Ast.Succ (Var one)) in
+    if wf then return Ast.Unit else (fail_string "Not well-formed")
+  end
+  |> execute;
+  [%expect {|
+     (Error "Not well-formed") |}]
+;;
+
+let%expect_test "well_formed/with_frac_cap" =
+  let open Let_syntax in
+  with_frac_cap [one] begin
+    let%bind wf = well_formed (Ast.Succ (Var one)) in
+    if wf then return Ast.Unit else (fail_string "Not well-formed")
+  end
+  |> execute;
+  [%expect {|
+     (Ok Unit) |}]
+;;
+
+(* with_linear_t/use_var *)
+let%expect_test "with_linear_t/use_var" =
   let open Let_syntax in
   with_linear_t [(four, Ast.Unit)] begin
     let%bind (Some (Not_used four')) = lookup four in
-    let%bind _ = use_var four' in
-    let%bind frac_cap = normal_form (Ast.(Succ (Succ (Var four)))) in
-    (return Ast.(Array_t frac_cap))
+    use_var four'
   end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
-        (Ok (Array_t (Succ (Succ (Var ((id 4) (name four))))))) |}]
+        (Ok Unit) |}]
 ;;
 
-(* apply *)
-let%expect_test "apply/with_linear_t/use_var" =
+let%expect_test "with_linear_t/use_var" =
   let open Let_syntax in
   with_linear_t [(one, Ast.Unit); (three, Ast.Array_t (Var four))] begin
-    let%bind () = apply [(four, Succ (Succ Zero))] in
     (* Boiler plate *)
     let%bind (Some (Not_used one)) = lookup one in
     let%bind linear_t = use_var one in
@@ -184,22 +202,17 @@ let%expect_test "apply/with_linear_t/use_var" =
   |> run ~counter:1719 |> ignore;
   [%expect {|
         Unit
-        (Array_t (Succ (Succ Zero))) |}]
+        (Array_t (Var ((id 4) (name four)))) |}]
 ;;
 
-let%expect_test "apply/with_linear_t/use_var" =
+let%expect_test "with_linear_t/use_var" =
   let open Let_syntax in
-  (try
-     with_linear_t
-       [ (one, Ast.ForAll_frac_cap (four, Ast.Array_t (Succ (Var (four)))))
-       ; (three, Ast.Array_t (Var four))]
-       ( let%bind () = apply [(four, Succ (Succ Zero))] in
-         return Ast.Unit )
-     |> run ~counter:1719 |> ignore;
-   with
-   | Failure msg ->
-     print_string msg);
+  with_linear_t
+    [ (one, Ast.ForAll_frac_cap (four, Ast.Array_t (Succ (Var (four)))))
+    ; (three, Ast.Array_t (Var four))]
+    (return Ast.Unit)
+  |> execute;
   [%expect {|
-        INTERNAL ERROR: Variable ((id 4) (name four)) not unique in linear_t.
-        Ensure you call unify_linear_t before sub_frac_cap_exn/apply |}]
+    (Error  "Variable three not used.\
+           \nVariable one not used.") |}]
 ;;

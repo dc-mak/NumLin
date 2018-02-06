@@ -10,28 +10,6 @@ open Lt4la
 open Vars
 ;;
 
-(* unify_frac_cap (and pp_frac_cap) *)
-let%expect_test "unify_frac_cap" =
-  let open Ast in
-  unify_frac_cap Zero (Succ Zero)
-  |> printf !"%{sexp: (variable * frac_cap) list Or_error.t}";
-  [%expect {| (Error "Could not unify 0 with 1.") |}]
-;;
-
-let%expect_test "unify_frac_cap" =
-  let open Ast in
-  unify_frac_cap  (Succ (Succ (Var one))) (Var one)
-  |> printf !"%{sexp: (variable * frac_cap) list Or_error.t}";
-  [%expect {| (Error "Variable: ((id 1) (name one)) occurs in one+2") |}]
-;;
-
-let%expect_test "unify_frac_cap" =
-  let open Ast in
-  unify_frac_cap (Var one) (Succ (Succ (Var three)))
-  |> printf !"%{sexp: (variable * frac_cap) list Or_error.t}";
-  [%expect {| (Ok ((((id 1) (name one)) (Succ (Succ (Var ((id 3) (name three)))))))) |}]
-;;
-
 (* Generate a sample of linear_types of height at most i *)
 let rec generate i =
   let open Ast in
@@ -40,7 +18,7 @@ let rec generate i =
   let base = [Unit; Array_t (Succ(Succ(Var var'))) ] in
   if i <= 0 then
     base
-  else 
+  else
     let rest = generate (i-1) in
     let cart = List.take (List.permute (List.cartesian_product rest rest)) 10 in
     let rest = List.take (List.permute rest) 10 in
@@ -69,46 +47,142 @@ let%expect_test "pp_linear_type" =
         ∀ i. ∀ h. ∀ g. ∀ f. ∀ e. I |}]
 ;;
 
-(* unify_linear_t *)
-let%expect_test "unify_linear_t" =
+(* substitute_in *)
+let%expect_test "substitute_in" =
   let open Ast in
-  unify_linear_t (Array_t (Var one)) (Array_t (Succ Zero))
-  |> printf !"%{sexp: (variable * frac_cap) list Or_error.t}";
-  [%expect {| (Ok ((((id 1) (name one)) (Succ Zero)))) |}]
+  substitute_in Unit ~var:four ~replacement:(Succ Zero)
+  |> printf !"%{sexp: linear_t Or_error.t}";
+  [%expect {| (Ok Unit) |}]
 ;;
 
-let%expect_test "unify_linear_t" = 
+let%expect_test "substitute_in" =
   let open Ast in
-  unify_linear_t (ForAll_frac_cap (one, Array_t (Succ (Succ (Var one)))))
-    (ForAll_frac_cap (two, Array_t (Var two)))
-  |> printf !"%{sexp: (variable * frac_cap) list Or_error.t}";
+  substitute_in (Array_t (Var four)) ~var:four ~replacement:(Succ Zero)
+  |> printf !"%{sexp: linear_t Or_error.t}";
+  [%expect {| (Ok (Array_t (Succ Zero))) |}]
+;;
+
+let%expect_test "substitute_in" =
+  let open Ast in
+  substitute_in (Array_t (Var three)) ~var:four ~replacement:(Succ Zero)
+  |> printf !"%{sexp: linear_t Or_error.t}";
+  [%expect {| (Ok (Array_t (Var ((id 3) (name three))))) |}]
+;;
+
+let%expect_test "substitute_in" =
+  let open Ast in
+  substitute_in
+    (ForAll_frac_cap (three, Array_t (Var four)))
+    ~var:four
+    ~replacement:(Succ Zero)
+  |> printf !"%{sexp: linear_t Or_error.t}";
+  [%expect {| (Ok (ForAll_frac_cap ((id 3) (name three)) (Array_t (Succ Zero)))) |}]
+;;
+
+let%expect_test "substitute_in" =
+  let open Ast in
+  substitute_in
+    (ForAll_frac_cap (four, Array_t (Var four)))
+    ~var:four
+    ~replacement:(Succ Zero)
+  |> printf !"%{sexp: linear_t Or_error.t}";
+  [%expect {| (Error "INTERNAL ERROR: binding variables are not unique.") |}]
+;;
+
+(* same_linear_t *)
+let%expect_test "same_linear_t" =
+  let open Ast in
+  same_linear_t (Array_t (Var one)) (Array_t (Succ Zero))
+  |> printf !"%{sexp: unit Or_error.t}";
   [%expect {|
-        (Ok
-         ((((id 1) (name one)) (Var ((id 2) (name two))))
-          (((id 2) (name two)) (Succ (Succ (Var ((id 1) (name one)))))))) |}]
+    (Error
+     ( "Could not show equality:\
+      \n    Arr[one]\
+      \nwith\
+      \n    Arr[1]\
+      \n" "Could not show one and 1 are equal.")) |}]
 ;;
 
-let%expect_test "unify_linear_t" = 
-  let open Ast in 
-  unify_linear_t
-    (Pair (ForAll_frac_cap (one, Array_t (Succ (Var one))), Unit))
-    (Pair (ForAll_frac_cap (one, Array_t (Var one)), Unit))
-  |> printf !"%{sexp: (variable * frac_cap) list Or_error.t}";
+let%expect_test "same_linear_t" =
+  let open Ast in
+  same_linear_t (ForAll_frac_cap (one, Array_t (Succ (Succ (Var one)))))
+    (ForAll_frac_cap (two, Array_t (Var two)))
+  |> printf !"%{sexp: unit Or_error.t}";
   [%expect {|
         (Error
-          "INTERNAL ERROR: binding variables are not unique.\
-         \nBody 1: (Array_t (Succ (Var ((id 1) (name one)))))\
-         \nBody 2: (Array_t (Var ((id 1) (name one))))") |}]
+         ( "Could not show equality:\
+          \n    \226\136\128 one. Arr[one+2]\
+          \nwith\
+          \n    \226\136\128 two. Arr[two]\
+          \n" "Could not show one+2 and two are equal.")) |}]
 ;;
 
-let%expect_test "unify_linear_t" =
+let%expect_test "same_linear_t" =
   let open Ast in
-  unify_linear_t Unit (Fun (Unit, Unit))
-  |> printf !"%{sexp: (variable * frac_cap) list Or_error.t}";
+  same_linear_t
+    (Pair (ForAll_frac_cap (one, Array_t (Succ (Var one))), Unit))
+    (Pair (ForAll_frac_cap (one, Array_t (Var one)), Unit))
+  |> printf !"%{sexp: unit Or_error.t}";
   [%expect {|
-        (Error  "Couldn't unify\
-               \n    I\
-               \nwith\
-               \n    I --o I\
-               \n") |}]
+        (Error
+         ( "Could not show equality:\
+          \n    ( \226\136\128 one. Arr[one+1] ) * I\
+          \nwith\
+          \n    ( \226\136\128 one. Arr[one] ) * I\
+          \n"
+           "INTERNAL ERROR: binding variables are not unique.\
+          \nBody 1: (Array_t (Succ (Var ((id 1) (name one)))))\
+          \nBody 2: (Array_t (Var ((id 1) (name one))))")) |}]
+;;
+
+(* joke unintended *)
+let%expect_test "same_linear_t" =
+  let open Ast in
+  same_linear_t
+    (Pair (ForAll_frac_cap (one, Array_t (Succ (Var one))), Unit))
+    (Pair (ForAll_frac_cap (two, Array_t (Var two)), Unit))
+  |> printf !"%{sexp: unit Or_error.t}";
+  [%expect {|
+        (Error
+         ( "Could not show equality:\
+          \n    ( \226\136\128 one. Arr[one+1] ) * I\
+          \nwith\
+          \n    ( \226\136\128 two. Arr[two] ) * I\
+          \n" "Could not show one+1 and two are equal.")) |}]
+;;
+
+let%expect_test "same_linear_t" =
+  let open Ast in
+  same_linear_t Unit (Fun (Unit, Unit))
+  |> printf !"%{sexp: unit Or_error.t}";
+  [%expect {|
+        (Error
+         ( "Could not show equality:\
+          \n    I\
+          \nwith\
+          \n    I --o I\
+          \n"
+           "Specifically, could not show this equality:\
+          \n    I\
+          \nwith\
+          \n    I --o I\
+          \n")) |}]
+;;
+
+(* Without alpha-equivalence, this test would pass *)
+let%expect_test "same_linear_t" =
+  let open Ast in
+  same_linear_t
+    (ForAll_frac_cap (one, ForAll_frac_cap (two, Fun (Array_t (Var one), Fun (
+       Array_t (Var two), Pair (Array_t (Var one), Array_t (Var two)))))))
+    (ForAll_frac_cap (three, ForAll_frac_cap (four, Fun (Array_t (Var three), Fun (
+       Array_t (Var four), Pair (Array_t (Var four), Array_t (Var three)))))))
+  |> printf !"%{sexp: unit Or_error.t}";
+  [%expect {|
+    (Error
+     ( "Could not show equality:\
+      \n    \226\136\128 one. \226\136\128 two. Arr[one] --o Arr[two] --o Arr[one] * Arr[two]\
+      \nwith\
+      \n    \226\136\128 three. \226\136\128 four. Arr[three] --o Arr[four] --o Arr[four] * Arr[three]\
+      \n" "Could not show one and four and alpha-equivalent.")) |}]
 ;;

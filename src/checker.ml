@@ -35,7 +35,7 @@ let rec (check : Ast.expression -> Ast.linear_t Check_monad.t) =
     return (Ast.Fun(var_t, expression_t))
 
   | ForAll_frac_cap (var, (expression : Ast.expression)) ->
-    let%bind expression_t = (check expression) |> with_frac_cap [(var, Ast.Var var)] in
+    let%bind expression_t = (check expression) |> with_frac_cap [var] in
     return ((Ast.ForAll_frac_cap (var, expression_t)) : Ast.linear_t)
 
   | Var var ->
@@ -72,17 +72,16 @@ let rec (check : Ast.expression -> Ast.linear_t Check_monad.t) =
   | Specialise_frac_cap (expression, frac_cap) ->
     begin match%bind check expression with
     | ForAll_frac_cap (var, linear_t) ->
-      (* Really important to call normal_form BEFORE Ast.unify_frac_cap. This
-         invariant could/should be wrapped up into a stateful operation
-         enforced by the type system and implementation. *)
-      let%bind frac_cap = normal_form frac_cap in
-      begin match Ast.unify_frac_cap (Var var) frac_cap with
-      | Ok subs ->
-        let%bind () = apply subs in
-        return (Ast.apply subs linear_t)
-      | Error err  ->
-        failf "%a" (Fn.const Error.to_string_hum) err
-      end
+      if%bind well_formed frac_cap then
+        begin match Ast.substitute_in linear_t var frac_cap with
+        | Ok result ->
+          return result
+        | Error err ->
+          fail_string (Error.to_string_hum err)
+        end
+      else
+        failf !"Specialise_frac_cap: %{sexp: Ast.frac_cap} not found in environment." frac_cap
+
     | inferred_t ->
       error "Specialise_frac_cap: expected ForAll_frac_cap(_,_)" inferred_t
     end
@@ -90,10 +89,11 @@ let rec (check : Ast.expression -> Ast.linear_t Check_monad.t) =
   | Array_Elim (var, expression, body) ->
     begin match%bind check expression with
     | Array_t frac_cap ->
-      (* This may be unnecessary right now, but when I add primitives they
-         could be not normalised w.r.t. the enviroment *)
-      let%bind frac_cap = normal_form frac_cap in
-      check expression |> with_linear_t [(var, Array_t frac_cap)]
+      if%bind well_formed frac_cap then
+        check body |> with_linear_t [(var, Array_t frac_cap)]
+      else
+        failf !"Array_Elim: %{sexp: Ast.frac_cap} not found in environment." frac_cap
+
     | inferred_t ->
       error "Array_Elim: expected Array_t(_)" inferred_t
     end
@@ -102,9 +102,8 @@ let rec (check : Ast.expression -> Ast.linear_t Check_monad.t) =
     begin match%bind check func with
     | Fun (expected_arg_t, body_t) ->
       let%bind actual_arg_t = check arg in
-      begin match Ast.unify_linear_t expected_arg_t actual_arg_t with
-      | Ok subs ->
-        let%bind () = apply subs in
+      begin match Ast.same_linear_t expected_arg_t actual_arg_t with
+      | Ok () ->
         return body_t
       | Error err ->
         failf "%a" (Fn.const Error.to_string_hum) err
@@ -164,7 +163,6 @@ and (check_prim : Ast.primitive -> Ast.linear_t Check_monad.t) =
     return (Ast.Fun(Array_t Zero, Unit))
 
   (* xCOPY: ∀x. Arr[x] -o Arr[x] * Arr[0] *)
-  (* NOTE: Is this correct/fair?  *)
   | Copy ->
     let func_t x = Ast.Fun(Array_t (Var x), Pair(Array_t (Var x), Array_t Zero)) in
     abstract_one "copy" func_t

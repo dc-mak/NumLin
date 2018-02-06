@@ -31,7 +31,7 @@ struct
   let failf fmt : 'a =
     Printf.ksprintf fail_string fmt
 
-  let run value state = 
+  let run value state =
     value state
 
   include Monad.Make

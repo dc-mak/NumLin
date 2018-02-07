@@ -26,7 +26,7 @@ let pretty x =
 ;;
 
 let arr : Ast.expression =
-  Array_Intro [| 0. |]
+  Array_Intro (Owl.Arr.zeros [| 5 |] )
 ;;
 
 let%expect_test "checker_unit_intro" =

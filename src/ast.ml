@@ -219,7 +219,8 @@ struct
 end
 
 type array_type =
-  float array
+  (* float array *)
+  Owl.Arr.arr
 ;;
 
 let sexp_of_array_type _ =

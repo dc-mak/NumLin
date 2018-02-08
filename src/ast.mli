@@ -35,23 +35,7 @@ val same_linear_t : linear_t -> linear_t -> unit Base.Or_error.t
 type array_type = Owl.Arr.arr
 val sexp_of_array_type : array_type -> Sexplib.Sexp.t
 
-(** Expressions of the language. Right now, I've made my life much easier by
-    having type-directed abstract-syntax. Can hopefully elaborate to this later. *)
-type expression =
-    Var of variable
-  | Unit_Intro
-  | Unit_Elim of expression * expression
-  | Pair_Intro of expression * expression
-  | Pair_Elim of variable * variable * expression * expression
-  | Lambda of variable * linear_t * expression
-  | App of expression * expression
-  | ForAll_frac_cap of variable * expression
-  | Specialise_frac_cap of expression * frac_cap
-  | Array_Intro of array_type
-  | Array_Elim of variable * expression * expression
-  | Primitive of primitive
-
-and primitive =
+type primitive =
   (* Operators *)
   | Split_Permission
   | Merge_Permission
@@ -72,5 +56,22 @@ and primitive =
   | Index_of_Max_Abs (* IxAMAX *)
   | Index_of_Min_Abs (* IxAMIN -- Intel only *)
 
-val sexp_of_expression : expression -> Sexplib.Sexp.t
 val sexp_of_primitive : primitive -> Sexplib.Sexp.t
+
+(** Expressions of the language. Right now, I've made my life much easier by
+    having type-directed abstract-syntax. Can hopefully elaborate to this later. *)
+type expression =
+    Var of variable
+  | Unit_Intro
+  | Unit_Elim of expression * expression
+  | Pair_Intro of expression * expression
+  | Pair_Elim of variable * variable * expression * expression
+  | Lambda of variable * linear_t * expression
+  | App of expression * expression
+  | ForAll_frac_cap of variable * expression
+  | Specialise_frac_cap of expression * frac_cap
+  | Array_Intro of array_type
+  | Array_Elim of variable * expression * expression
+  | Primitive of primitive
+
+val sexp_of_expression : expression -> Sexplib.Sexp.t

@@ -132,24 +132,32 @@ struct
     Buffer.contents buffer
   ;;
 
-  let substitute_in linear_t ~var ~replacement =
-    try Or_error.return begin
+  let substitute_in =
+    let var_ref = ref {name="INTERNAL_REF"; id=(-1)} in
+    let rep_ref = ref Zero in
+    let sub_fun =
       (object(self)
         inherit Ppx_traverse_builtins.map
         inherit map as super
-        method variable var' =
-          if [%compare.equal : variable] var' var then
+        method variable var =
+          if [%compare.equal : variable] var !var_ref then
             failwith "INTERNAL ERROR: binding variables are not unique."
           else
-            var'
+            var
         method frac_cap = function
           | Zero -> Zero
           | Succ frac_cap -> Succ (self#frac_cap frac_cap)
-          | Var var' as frac_cap ->
-            if [%compare.equal : variable] var var' then replacement else frac_cap
-      end)#linear_t linear_t end
-    with Failure msg ->
-      Or_error.error_string msg
+          | Var var as frac_cap ->
+            if [%compare.equal : variable] var !var_ref then !rep_ref else frac_cap
+      end)#linear_t in
+    fun linear_t ~var ~replacement ->
+      begin
+        var_ref := var;
+        rep_ref := replacement;
+        try Or_error.return (sub_fun linear_t)
+        with Failure msg ->
+          Or_error.error_string msg
+      end
   ;;
 
   (* Alpha-equivalence sucks *)
@@ -226,27 +234,11 @@ let sexp_of_array_type _ =
   Sexplib.Sexp.Atom "<Array>"
 ;;
 
-(* TODO: Use GADTs. Different type for values? E.g. type value = Unit | Array | Pair of value * value?  *)
-type expression =
-  | Var of variable
-  | Unit_Intro
-  | Unit_Elim of expression * expression
-  | Pair_Intro of expression * expression
-  | Pair_Elim of variable * variable * expression * expression
-  | Lambda of variable * linear_t * expression
-  | App of expression * expression
-  | ForAll_frac_cap of variable * expression
-  | Specialise_frac_cap of expression * frac_cap
-  | Array_Intro of array_type
-  | Array_Elim of variable * expression * expression
-(*| ForAll_Size of variable * expression *)
-  | Primitive of primitive
-
 (* Primitives/extensions
    Intel Level 1: software.intel.com/en-us/mkl-developer-reference-c-blas-level-1-routines-and-functions
    BLAS Reference: www.netlib.org/blas/blasqr.pdf
    Not included: xxDOT (derivable), xDOTU, xDOTC (Complex Float32/64) *)
-and primitive =
+type primitive =
   (* Operators *)
   | Split_Permission
   | Merge_Permission
@@ -266,6 +258,25 @@ and primitive =
   | Scalar_Mult (* xSCAL *)
   | Index_of_Max_Abs (* IxAMAX *)
   | Index_of_Min_Abs (* IxAMIN -- Intel only *)
+
+[@@deriving sexp_of]
+;;
+
+(* TODO: Use GADTs. Different type for values? E.g. type value = Unit | Array | Pair of value * value?  *)
+type expression =
+  | Var of variable
+  | Unit_Intro
+  | Unit_Elim of expression * expression
+  | Pair_Intro of expression * expression
+  | Pair_Elim of variable * variable * expression * expression
+  | Lambda of variable * linear_t * expression
+  | App of expression * expression
+  | ForAll_frac_cap of variable * expression
+  | Specialise_frac_cap of expression * frac_cap
+  | Array_Intro of array_type
+  | Array_Elim of variable * expression * expression
+(*| ForAll_Size of variable * expression *)
+  | Primitive of primitive
 
 [@@deriving sexp_of]
 ;;

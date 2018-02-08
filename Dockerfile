@@ -68,6 +68,8 @@ ENV OWLPATH $HOME/owl
 RUN git clone https://github.com/ryanrhymes/owl.git                            \
     # Owl: FIXME (hacking ... needs to be fixed)                               \
     && sed -i -- 's/-lopenblas/-lopenblas -llapacke/g' $OWLPATH/src/owl/jbuild \
+    # LT4LA: Allows jbuilder to build executables with Owl                     \
+    && sed -i -- 's/-flto/ /g' $OWLPATH/src/owl/jbuild                         \
     && make -C $OWLPATH                                                        \
     && make -C $OWLPATH install
 

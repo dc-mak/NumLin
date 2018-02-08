@@ -219,7 +219,6 @@ struct
 end
 
 type array_type =
-  (* float array *)
   Owl.Arr.arr
 ;;
 

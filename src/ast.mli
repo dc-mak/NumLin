@@ -32,7 +32,6 @@ val same_linear_t : linear_t -> linear_t -> unit Base.Or_error.t
 
 (** For now, arrays will be interpreted as/implemented using this,
     due to issues with Dune, linking and Owl. *)
-(* type array_type = float array *)
 type array_type = Owl.Arr.arr
 val sexp_of_array_type : array_type -> Sexplib.Sexp.t
 

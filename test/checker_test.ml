@@ -26,7 +26,7 @@ let pretty x =
 ;;
 
 let arr : Ast.expression =
-  Array_Intro (Owl.Arr.zeros [| 5 |] )
+  Array_Intro (Int_Intro 5)
 ;;
 
 let%expect_test "checker_unit_intro" =
@@ -150,7 +150,6 @@ let prims : Ast.primitive list =
   ; Gen_GivensMod_Rotation (* xROTMG *)
   ; Scalar_Mult (* xSCAL *)
   ; Index_of_Max_Abs (* IxAMAX *)
-  ; Index_of_Min_Abs (* IxAMIN -- Intel only *)
   ]
 ;;
 
@@ -170,71 +169,25 @@ let%expect_test "check_array_elim" =
     (Ok "\226\136\128 copy_1719. Arr[copy_1719] --o Arr[copy_1719] * Arr[0]\n")
     (Ok "Arr[0] * Arr[0] --o Arr[0] * Arr[0]\n")
     (Ok
-     "\226\136\128 sum_mag_1719. Arr[sum_mag_1719] --o Arr[sum_mag_1719] * Arr[0]\n")
+     "\226\136\128 sum_mag_1719. Arr[sum_mag_1719] --o Arr[sum_mag_1719] * f64\n")
     (Ok
-      "\226\136\128 sum_mag_scalar_1719.\
-     \n  Arr[sum_mag_scalar_1719] --o \226\136\128 sum_mag_vec_1720.\
-     \n    Arr[sum_mag_vec_1720]\
-     \n      --o Arr[0]\
-     \n          --o ( Arr[sum_mag_scalar_1719] * Arr[sum_mag_vec_1720] ) * Arr[0]\
+      "\226\136\128 sum_mag_vec_1719.\
+     \n  f64 --o Arr[sum_mag_vec_1719] --o Arr[0] --o Arr[sum_mag_vec_1719] * Arr[0]\
      \n")
     (Ok
       "\226\136\128 dot_prod_x_1719.\
      \n  Arr[dot_prod_x_1719] --o \226\136\128 dot_prod_y_1720.\
      \n    Arr[dot_prod_y_1720]\
-     \n    --o ( Arr[dot_prod_x_1719] * Arr[dot_prod_y_1720] ) * Arr[0]\
+     \n    --o ( Arr[dot_prod_x_1719] * Arr[dot_prod_y_1720] ) * f64\
      \n")
+    (Ok "\226\136\128 norm2_1719. Arr[norm2_1719] --o Arr[norm2_1719] * f64\n")
+    (Ok "f64 --o f64 --o Arr[0] --o Arr[0] --o Arr[0] * Arr[0]\n")
+    (Ok "f64 --o f64 --o ( f64 * f64 ) * ( f64 * f64 )\n")
+    (Ok "Arr[0] --o Arr[0] --o f64 * Arr[0]\n")
+    (Ok "f64 * f64 --o f64 * f64 --o ( f64 * f64 ) * ( f64 * Arr[0] )\n")
+    (Ok "f64 --o Arr[0] --o Arr[0]\n")
     (Ok
-     "\226\136\128 norm2_1719. Arr[norm2_1719] --o Arr[norm2_1719] * Arr[0]\n")
-    (Ok
-      "\226\136\128 plane_rot_x_1719.\
-     \n  Arr[0] * Arr[plane_rot_x_1719] --o \226\136\128 plane_rot_y_1720.\
-     \n    Arr[0] * Arr[plane_rot_y_1720] --o \226\136\128 plane_rot_s_1721.\
-     \n      Arr[plane_rot_s_1721] --o \226\136\128 plane_rot_c_1722.\
-     \n        Arr[plane_rot_c_1722]\
-     \n        --o ( ( Arr[plane_rot_x_1719] * Arr[plane_rot_y_1720] )\
-     \n              * ( Arr[plane_rot_s_1721] * Arr[plane_rot_c_1722] ) )\
-     \n            * ( Arr[0] * Arr[0] )\
-     \n")
-    (Ok
-      "Arr[0] --o Arr[0] --o Arr[0]\
-     \n  --o Arr[0] --o ( Arr[0] * Arr[0] ) * ( Arr[0] * Arr[0] )\
-     \n")
-    (Ok
-      "\226\136\128 plane_rot_x_1719.\
-     \n  Arr[0] * Arr[plane_rot_x_1719] --o \226\136\128 plane_rot_y_1720.\
-     \n    Arr[0] * Arr[plane_rot_y_1720] --o \226\136\128 plane_rot_s_1721.\
-     \n      Arr[plane_rot_s_1721]\
-     \n      --o ( ( Arr[plane_rot_x_1719] * Arr[plane_rot_y_1720] )\
-     \n            * Arr[plane_rot_s_1721] )\
-     \n          * ( Arr[0] * Arr[0] )\
-     \n")
-    (Ok
-      "Arr[0] --o Arr[0]\
-     \n  --o Arr[0] --o \226\136\128 mod_givens_y_1719.\
-     \n        Arr[mod_givens_y_1719]\
-     \n          --o Arr[0]\
-     \n              --o Arr[mod_givens_y_1719]\
-     \n                  * ( ( Arr[0] * Arr[0] ) * ( Arr[0] * Arr[0] ) )\
-     \n")
-    (Ok
-      "\226\136\128 scalar_mult_sc_1719.\
-     \n  Arr[scalar_mult_sc_1719] --o \226\136\128 scalar_mult_inc_1720.\
-     \n    Arr[scalar_mult_inc_1720]\
-     \n      --o Arr[0]\
-     \n          --o ( Arr[scalar_mult_sc_1719] * Arr[scalar_mult_inc_1720] )\
-     \n              * Arr[0]\
-     \n")
-    (Ok
-      "\226\136\128 index_max_inc_1719.\
-     \n  Arr[index_max_inc_1719] --o \226\136\128 index_max_x_1720.\
-     \n    Arr[index_max_x_1720]\
-     \n    --o ( Arr[index_max_inc_1719] * Arr[index_max_x_1720] ) * Arr[0]\
-     \n")
-    (Ok
-      "\226\136\128 index_max_inc_1719.\
-     \n  Arr[index_max_inc_1719] --o \226\136\128 index_max_x_1720.\
-     \n    Arr[index_max_x_1720]\
-     \n    --o ( Arr[index_max_inc_1719] * Arr[index_max_x_1720] ) * Arr[0]\
+      "\226\136\128 index_max_abs_1719.\
+     \n  Arr[index_max_abs_1719] --o int * Arr[index_max_abs_1719]\
      \n") |}]
 ;;

@@ -19,7 +19,9 @@ val pp_frac_cap : frac_cap -> string
 (** Standard Linear type system, using fractional capabilities
     and extensions for Linear Algebra. *)
 type linear_t =
-    Unit
+  | Unit
+  | Int
+  | Float64
   | Pair of linear_t * linear_t
   | Fun of linear_t * linear_t
   | ForAll_frac_cap of variable * linear_t
@@ -54,14 +56,17 @@ type primitive =
   | Gen_GivensMod_Rotation (* xROTMG *)
   | Scalar_Mult (* xSCAL *)
   | Index_of_Max_Abs (* IxAMAX *)
-  | Index_of_Min_Abs (* IxAMIN -- Intel only *)
 
 val sexp_of_primitive : primitive -> Sexplib.Sexp.t
 
 (** Expressions of the language. Right now, I've made my life much easier by
-    having type-directed abstract-syntax. Can hopefully elaborate to this later. *)
+    having type-directed abstract-syntax. Can hopefully elaborate to this later.
+    Elimination rules for [Int]s and [Float64]s will come later, after an
+    arithmetic expression language is fixed. *)
 type expression =
-    Var of variable
+  | Var of variable
+  | Int_Intro of int
+  | Float64_Intro of float
   | Unit_Intro
   | Unit_Elim of expression * expression
   | Pair_Intro of expression * expression
@@ -70,8 +75,9 @@ type expression =
   | App of expression * expression
   | ForAll_frac_cap of variable * expression
   | Specialise_frac_cap of expression * frac_cap
-  | Array_Intro of array_type
+  | Array_Intro of expression
   | Array_Elim of variable * expression * expression
+(*| ForAll_Size of variable * expression *)
   | Primitive of primitive
 
 val sexp_of_expression : expression -> Sexplib.Sexp.t

@@ -19,7 +19,7 @@ let execute x =
 ;;
 
 let wf_lt =
-  well_formed_lt ~fail_msg:(lazy "Not well-formed")
+  well_formed_lt ~fmt:"Not well-formed%s" ~arg:""
 ;;
 
 let wf_array_t =

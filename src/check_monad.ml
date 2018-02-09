@@ -16,12 +16,20 @@ type well_formed =
 [@@deriving sexp_of]
 ;;
 
-let wf_arr_zero =
+let wf_Array_t_Zero =
   WF (Ast.(Array_t Zero))
 ;;
 
 let wf_Unit =
   WF Ast.Unit
+;;
+
+let wf_Int =
+  WF Ast.Int
+;;
+
+let wf_Float64 =
+  WF Ast.Float64
 ;;
 
 let wf_Pair (WF x) (WF y) =
@@ -130,11 +138,16 @@ let split_wf_Fun wf ~if_fun ~not_fun =
   | WF inferred_t -> not_fun inferred_t
 ;;
 
-let well_formed_lt ~fail_msg lt =
+let well_formed_lt ~fmt ~arg lt =
   let open Let_syntax in
   let open Ast in
   let rec wf bindings = function
-    | Unit -> return Unit
+    | Unit ->
+      return Unit
+    | Int ->
+      return Int
+    | Float64 ->
+      return Float64
     | Pair (t1, t2) ->
       let%bind t1 = wf bindings t1 in
       let%bind t2 = wf bindings t2 in
@@ -149,7 +162,7 @@ let well_formed_lt ~fail_msg lt =
       else if%bind well_formed_fc fc then
         return (Array_t fc)
       else
-        fail_string (force fail_msg)
+        failf fmt arg
     | ForAll_frac_cap (var, linear_t) ->
       let%bind linear_t = wf (var :: bindings) linear_t in
       return (ForAll_frac_cap (var, linear_t) : Ast.linear_t) in

@@ -15,11 +15,13 @@ type well_formed = private WF of Ast.linear_t
 
 val sexp_of_well_formed : well_formed -> Sexplib.Sexp.t
 
-val wf_arr_zero : well_formed
-val wf_Unit : well_formed
-val wf_Pair : well_formed -> well_formed -> well_formed
-val wf_Fun  : well_formed -> well_formed -> well_formed
-val wf_ForAll : Ast.variable -> well_formed -> well_formed
+val wf_Array_t_Zero : well_formed
+val wf_Unit     : well_formed
+val wf_Int      : well_formed
+val wf_Float64  : well_formed
+val wf_Pair     : well_formed -> well_formed -> well_formed
+val wf_Fun      : well_formed -> well_formed -> well_formed
+val wf_ForAll   : Ast.variable -> well_formed -> well_formed
 
 (** Proof that a type is not used *)
 type not_used
@@ -128,7 +130,9 @@ val split_wf_Fun :
    not_fun:(Ast.linear_t -> 'a t) -> 'a t
 
 (** Linear-type is well-formed if all fractional capabilities are well-formed. *)
-val well_formed_lt : fail_msg:(string lazy_t) -> Ast.linear_t -> well_formed t
+val well_formed_lt :
+  fmt:('a -> Ast.linear_t t, unit, string, 'b t) format4 ->
+  arg:'a -> Ast.linear_t -> well_formed t
 
 (** Marks the [not_used] variable and linear_t as used and returns latter. *)
 val use_var : not_used -> well_formed t

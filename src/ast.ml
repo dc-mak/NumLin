@@ -74,6 +74,8 @@ include
 struct
   type linear_t =
     | Unit
+    | Int
+    | Float64
     | Pair of linear_t * linear_t
     | Fun of linear_t * linear_t
     | ForAll_frac_cap of variable * linear_t
@@ -89,11 +91,17 @@ struct
       | Unit ->
         fprintf ppf "I"
 
+      | Int ->
+        fprintf ppf "int"
+
+      | Float64 ->
+        fprintf ppf "f64"
+
       (* Technically, you don't need parentheses around ForAll_frac_cap when
          it's in the second position, but it makes reading it easier *)
       | Pair (first, second) ->
         let pair_parens = function
-          | Unit | Array_t _ -> "", ""
+          | Unit | Int | Float64 | Array_t _ -> "", ""
           | Pair _ | Fun _ | ForAll_frac_cap _ -> "( ", " )" in
         let fl, fr = pair_parens first in
         let sl, sr = pair_parens second in
@@ -103,13 +111,13 @@ struct
          breaking, align with the "first" argument *)
       | Fun (arg_t, (Fun _ as body_t)) ->
         let al, ar = match arg_t with
-          | Unit | Array_t _ | Pair _ -> "", ""
+          | Unit | Int | Float64 | Array_t _ | Pair _ -> "", ""
           | ForAll_frac_cap _ | Fun _ -> "( ", " )" in
         fprintf ppf "%s%a%s@;<1 2>--o %a" al pp_linear_t arg_t ar pp_linear_t body_t
 
       | Fun (arg_t, body_t) ->
         let al, ar = match arg_t with
-          | Unit | Array_t _ | Pair _ -> "", ""
+          | Unit | Int | Float64 | Array_t _ | Pair _ -> "", ""
           | ForAll_frac_cap _ | Fun _ -> "( ", " )" in
         fprintf ppf "@[%s%a%s@ --o %a@]" al pp_linear_t arg_t ar pp_linear_t body_t
 
@@ -186,7 +194,9 @@ struct
     let open Or_error.Let_syntax in
 
     match linear_t1, linear_t2 with
-    | Unit, Unit ->
+    | Unit, Unit 
+    | Int, Int
+    | Float64, Float64 ->
       return ()
 
     | Pair (fst1, snd1) , Pair(fst2,snd2) ->
@@ -257,14 +267,17 @@ type primitive =
   | Gen_GivensMod_Rotation (* xROTMG *)
   | Scalar_Mult (* xSCAL *)
   | Index_of_Max_Abs (* IxAMAX *)
-  | Index_of_Min_Abs (* IxAMIN -- Intel only *)
 
 [@@deriving sexp_of]
 ;;
 
-(* TODO: Use GADTs. Different type for values? E.g. type value = Unit | Array | Pair of value * value?  *)
+(* NOTE: Is it worth having a GADT/typed-representation AFTER type-checking? *)
+(* Elimination rules for [Int]s and [Float64]s will come later, after an
+   arithmetic expression language is fixed. *)
 type expression =
   | Var of variable
+  | Int_Intro of int
+  | Float64_Intro of float
   | Unit_Intro
   | Unit_Elim of expression * expression
   | Pair_Intro of expression * expression
@@ -273,11 +286,10 @@ type expression =
   | App of expression * expression
   | ForAll_frac_cap of variable * expression
   | Specialise_frac_cap of expression * frac_cap
-  | Array_Intro of array_type
+  | Array_Intro of expression
   | Array_Elim of variable * expression * expression
 (*| ForAll_Size of variable * expression *)
   | Primitive of primitive
-
 [@@deriving sexp_of]
 ;;
 

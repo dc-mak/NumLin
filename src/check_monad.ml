@@ -11,14 +11,39 @@
 open Core_kernel
 ;;
 
+type well_formed =
+  WF of Ast.linear_t
+[@@deriving sexp_of]
+;;
+
+let wf_arr_zero =
+  WF (Ast.(Array_t Zero))
+;;
+
+let wf_Unit =
+  WF Ast.Unit
+;;
+
+let wf_Pair (WF x) (WF y) =
+  WF (Ast.Pair (x, y))
+;;
+
+let wf_Fun (WF x) (WF y) =
+  WF (Ast.Fun (x, y))
+;;
+
+let wf_ForAll var (WF x) =
+  WF (Ast.ForAll_frac_cap (var, x))
+;;
+
 type not_used =
-  Ast.variable * Ast.linear_t
+  Ast.variable * well_formed
 [@@ deriving sexp_of]
 ;;
 
 type tagged_linear_t =
   | Not_used of not_used
-  | Used of Ast.linear_t
+  | Used of well_formed
 [@@deriving sexp_of]
 ;;
 
@@ -60,15 +85,76 @@ let lookup var  =
   return (find linear_t_vars var)
 ;;
 
-let well_formed frac_cap =
+let rec wf_wrt frac_cap_vars = 
+  let open Ast in function
+    | Zero -> true
+    | Succ frac_cap -> wf_wrt frac_cap_vars frac_cap
+    | Var var -> List.exists frac_cap_vars ([%compare.equal : Ast.variable] var)
+;;
+
+let well_formed_fc fc =
   let open Let_syntax in
   let open Ast in
-  let rec well_formed frac_cap_vars = function
-  | Zero -> true
-  | Succ frac_cap -> well_formed frac_cap_vars frac_cap
-  | Var var -> List.exists frac_cap_vars ([%compare.equal : Ast.variable] var) in
   let%bind {frac_cap_vars; _} = get in
-  return (well_formed frac_cap_vars frac_cap)
+  return (wf_wrt frac_cap_vars fc)
+;;
+
+let well_formed_sub wf frac_cap ~not_found ~not_forall =
+  let open Let_syntax in
+  match%bind wf with
+  | WF (ForAll_frac_cap (var, linear_t)) ->
+    if%bind well_formed_fc frac_cap then
+      begin match Ast.substitute_in linear_t var frac_cap with
+      | Ok result ->
+        return (WF result)
+      | Error err ->
+        fail_string (Error.to_string_hum err)
+      end
+    else
+      not_found frac_cap
+  | WF inferred_t ->
+    not_forall inferred_t
+;;
+
+let split_wf_Pair wf ~if_pair ~not_pair =
+  let open Let_syntax in
+  match%bind wf with
+  | WF (Pair (t1, t2)) -> if_pair (WF t1) (WF t2)
+  | WF inferred_t -> not_pair inferred_t
+;;
+
+let split_wf_Fun wf ~if_fun ~not_fun =
+  let open Let_syntax in
+  match%bind wf with
+  | WF (Fun (t1, t2)) -> if_fun (WF t1) (WF t2)
+  | WF inferred_t -> not_fun inferred_t
+;;
+
+let well_formed_lt ~fail_msg lt =
+  let open Let_syntax in
+  let open Ast in
+  let rec wf bindings = function
+    | Unit -> return Unit
+    | Pair (t1, t2) ->
+      let%bind t1 = wf bindings t1 in
+      let%bind t2 = wf bindings t2 in
+      return (Pair (t1, t2))
+    | Fun (fun_t, arg_t) ->
+      let%bind fun_t = wf bindings fun_t in
+      let%bind arg_t = wf bindings arg_t in
+      return (Fun (fun_t, arg_t))
+    | Array_t fc ->
+      if wf_wrt bindings fc then
+        return (Array_t fc)
+      else if%bind well_formed_fc fc then
+        return (Array_t fc)
+      else
+        fail_string (force fail_msg)
+    | ForAll_frac_cap (var, linear_t) ->
+      let%bind linear_t = wf (var :: bindings) linear_t in
+      return (ForAll_frac_cap (var, linear_t) : Ast.linear_t) in
+  let%bind result = wf [] lt in
+  return (WF result)
 ;;
 
 (* NOTE List.Assoc.add actually overrides silently, like a map. *)
@@ -144,9 +230,9 @@ let with_frac_cap bindings linear_t =
   return result
 ;;
 
-let run linear_t ~counter =
+let run well_formed ~counter =
   let open Or_error.Let_syntax in
-  let%bind (result, state) = run linear_t {linear_t_vars=[]; frac_cap_vars=[]; counter} in
+  let%bind (WF result, state) = run well_formed {linear_t_vars=[]; frac_cap_vars=[]; counter} in
   begin match state with
   | {linear_t_vars = []; frac_cap_vars = []; counter} ->
     return result

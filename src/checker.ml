@@ -11,10 +11,6 @@
 open Core_kernel
 ;;
 
-let error ~expected ~inferred_t =
-  Check_monad.failf !"%s\nActual: %{sexp:Ast.linear_t}" expected inferred_t
-;;
-
 let (check_prim : Ast.primitive -> Ast.linear_t Check_monad.t) =
   let open Check_monad in
   let open Let_syntax in
@@ -164,28 +160,34 @@ let (check_prim : Ast.primitive -> Ast.linear_t Check_monad.t) =
          Pair (Array_t (Var inc), Array_t (Var x)), Array_t Zero))))
 ;;
 
+let error ~expected ~inferred_t =
+  Check_monad.failf !"%s\nActual: %{sexp:Ast.linear_t}" expected inferred_t
+;;
+
 (* The actual checking algorithm *)
-let rec (check : Ast.expression -> Ast.linear_t Check_monad.t) =
+let rec (check : Ast.expression -> Check_monad.well_formed Check_monad.t) =
   let open Check_monad in
   let open Let_syntax in
   function
 
   (* Introduction rules are easy to type *)
   | Unit_Intro ->
-    return Ast.Unit
+    return wf_Unit
 
   | Pair_Intro (first, second) ->
     let%bind first_t = check first in
     let%bind second_t = check second in
-    return (Ast.Pair (first_t, second_t))
+    return (wf_Pair first_t second_t)
 
   | Lambda (var, var_t, body) ->
+    let fail_msg = lazy (Printf.sprintf !"Type is not well-formed:\n%{sexp: Ast.linear_t}" var_t) in
+    let%bind var_t = well_formed_lt ~fail_msg var_t in
     let%bind expression_t = check body |> with_linear_t [(var, var_t)] in
-    return (Ast.Fun(var_t, expression_t))
+    return (wf_Fun var_t expression_t)
 
   | ForAll_frac_cap (var, (expression : Ast.expression)) ->
     let%bind expression_t = (check expression) |> with_frac_cap [var] in
-    return ((Ast.ForAll_frac_cap (var, expression_t)) : Ast.linear_t)
+    return (wf_ForAll var expression_t)
 
   | Var var ->
     begin match%bind lookup var with
@@ -199,70 +201,61 @@ let rec (check : Ast.expression -> Ast.linear_t Check_monad.t) =
     end
 
   | Array_Intro _ ->
-    return (Ast.Array_t Zero)
+    return wf_arr_zero
 
   (* Elimination rules are more of a pain *)
   | Unit_Elim (expression, body) ->
-    begin match%bind check expression with
-    | Unit ->
+    begin match%bind (check expression) with
+    | WF Unit ->
       check body
-    | inferred_t ->
+    | WF inferred_t ->
       error "Unit_Elim: expected Unit" inferred_t
     end
 
   | Pair_Elim (first, second, expression, body) ->
-    begin match%bind check expression with
-    | Pair(first_t, second_t) ->
-      check body |> with_linear_t [(first, first_t); (second, second_t)]
-    | inferred_t ->
-      error "Pair_Elim: expected Pair(_,_)" inferred_t
-    end
+    let if_pair first_t second_t =
+      check body |> with_linear_t [(first, first_t); (second, second_t)] in
+    let not_pair inferred_t =
+      error "Pair_Elim: expected Pair(_,_)" inferred_t in
+    split_wf_Pair (check expression) ~if_pair ~not_pair
 
   | Specialise_frac_cap (expression, frac_cap) ->
-    begin match%bind check expression with
-    | ForAll_frac_cap (var, linear_t) ->
-      if%bind well_formed frac_cap then
-        begin match Ast.substitute_in linear_t var frac_cap with
-        | Ok result ->
-          return result
-        | Error err ->
-          fail_string (Error.to_string_hum err)
-        end
-      else
-        failf !"Specialise_frac_cap: %{sexp: Ast.frac_cap} not found in environment." frac_cap
-
-    | inferred_t ->
-      error "Specialise_frac_cap: expected ForAll_frac_cap(_,_)" inferred_t
-    end
+    let not_found =
+      failf !"Specialise_frac_cap: %{sexp: Ast.frac_cap} not found in environment." in
+    let not_forall inferred_t =
+      error "Specialise_frac_cap: expected ForAll_frac_cap(_,_)" inferred_t in
+    well_formed_sub (check expression) frac_cap ~not_found ~not_forall
 
   | Array_Elim (var, expression, body) ->
     begin match%bind check expression with
-    | Array_t frac_cap ->
-      if%bind well_formed frac_cap then
-        check body |> with_linear_t [(var, Array_t frac_cap)]
-      else
-        failf !"Array_Elim: %{sexp: Ast.frac_cap} not found in environment." frac_cap
-
-    | inferred_t ->
+    | WF (Array_t frac_cap) ->
+      let fail_msg = lazy (
+        Printf.sprintf
+          !"Array_Elim: %{sexp: Ast.frac_cap} not found in environment."
+          frac_cap) in
+      let%bind arr_t = well_formed_lt ~fail_msg (Array_t frac_cap) in
+      check body |> with_linear_t [(var, arr_t)]
+    | WF inferred_t ->
       error "Array_Elim: expected Array_t(_)" inferred_t
     end
 
   | App (func, arg) ->
-    begin match%bind check func with
-    | Fun (expected_arg_t, body_t) ->
-      let%bind actual_arg_t = check arg in
-      begin match Ast.same_linear_t expected_arg_t actual_arg_t with
+    let if_fun (WF expected_arg_t) body_t =
+      let%bind (WF actual_arg_t) = check arg in
+      match Ast.same_linear_t expected_arg_t actual_arg_t with
       | Ok () ->
         return body_t
       | Error err ->
-        failf "%a" (Fn.const Error.to_string_hum) err
-      end
-    | inferred_t ->
-      error "App: expected Fun(_,_)" inferred_t
-    end
+        failf "%a" (Fn.const Error.to_string_hum) err in
+    let not_fun inferred_t = error "App: expected Fun(_,_)" inferred_t in
+    split_wf_Fun (check func) ~if_fun ~not_fun
 
   | Primitive prim ->
-    check_prim prim
+    let fail_msg = lazy (
+      Printf.sprintf
+        !"Internal Error: Primitive is not well-formed.\n%{sexp: Ast.primitive}"
+        prim) in
+    check_prim prim >>= well_formed_lt ~fail_msg 
 ;;
 
 let check_expr expr =

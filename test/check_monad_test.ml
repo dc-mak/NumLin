@@ -18,6 +18,14 @@ let execute x =
   |> printf !"%{sexp: Ast.linear_t Or_error.t}\n"
 ;;
 
+let wf_lt =
+  well_formed_lt ~fail_msg:(lazy "Not well-formed")
+;;
+
+let wf_array_t =
+  with_frac_cap [three] (wf_lt (Ast.(Array_t (Var three))))
+;;
+
 (* create_fresh *)
 let%expect_test "create_fresh" =
   let open Let_syntax in
@@ -26,7 +34,7 @@ let%expect_test "create_fresh" =
     printf !"%{sexp:Ast.variable}\n" fresh;
     let%bind fresh = create_fresh ~name:"test" () in
     printf !"%{sexp:Ast.variable}\n" fresh;
-    return Ast.Unit
+    return wf_Unit
   end
   |> run ~counter:1719 |> ignore;
   [%expect {|
@@ -36,7 +44,7 @@ let%expect_test "create_fresh" =
 
 (* with_frac_cap *)
 let%expect_test "with_frac_cap" =
-  with_frac_cap [four] (return Ast.Unit)
+  with_frac_cap [four] (return wf_Unit)
   |> execute;
   [%expect {| (Ok Unit) |}]
 ;;
@@ -44,7 +52,8 @@ let%expect_test "with_frac_cap" =
 (* with_linear_t *)
 let%expect_test "with_linear_t" =
   let open Let_syntax in
-  with_linear_t [(four, Ast.Array_t (Ast.Var three) )] (return Ast.Unit)
+  let%bind wf = wf_array_t in
+  with_linear_t [(four,  wf)] (return wf_Unit);
   |> execute;
   [%expect {|
         (Error "Variable four not used.") |}]
@@ -53,11 +62,9 @@ let%expect_test "with_linear_t" =
 (* lookup *)
 let%expect_test "lookup None (no vars)" =
   let open Let_syntax in
-  begin
-    let%bind var = lookup four in
-    printf !"%{sexp: tagged_linear_t option}\n" var;
-    return Ast.Unit
-  end
+  let%bind var = lookup four in
+  printf !"%{sexp: tagged_linear_t option}\n" var;
+  return wf_Unit;
   |> run ~counter:1719 |> ignore;
   [%expect {| () |}]
 ;;
@@ -67,7 +74,7 @@ let%expect_test "lookup None (with_frac_cap)" =
   with_frac_cap [four] begin
     let%bind var = lookup four in
     printf !"%{sexp: tagged_linear_t option}\n" var;
-    (return Ast.Unit)
+    (return wf_Unit)
   end
   |> execute;
   [%expect {|
@@ -77,12 +84,12 @@ let%expect_test "lookup None (with_frac_cap)" =
 
 let%expect_test "lookup None (with_linear_t)" =
   let open Let_syntax in
-  let linear_t = Ast.Array_t (Ast.Var three) in
-  with_linear_t [(five, linear_t)] begin
+  let%bind wf = wf_array_t in
+  with_linear_t [(five, wf)] begin
     let%bind var = lookup four in
     printf !"%{sexp: tagged_linear_t option}\n" var;
-    (return Ast.Unit)
-  end
+    (return wf_Unit)
+  end;
   |> execute;
   [%expect {|
         ()
@@ -91,27 +98,27 @@ let%expect_test "lookup None (with_linear_t)" =
 
 let%expect_test "lookup (Some (Not_used _))" =
   let open Let_syntax in
-  let linear_t = Ast.Array_t (Ast.Var three) in
-  with_linear_t [(four, linear_t)] begin
+  let%bind wf = wf_array_t in
+  with_linear_t [(four, wf)] begin
     let%bind (Some (Not_used four)) = lookup four in
     printf !"%{sexp: not_used}\n" four;
-    return Ast.Unit
-  end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+    return wf_Unit
+  end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
-        (((id 4) (name four)) (Array_t (Var ((id 3) (name three)))))
+        (((id 4) (name four)) (WF (Array_t (Var ((id 3) (name three))))))
         (Error "Variable four not used.") |}]
 ;;
 
 let%expect_test "lookup (Some (Used _))" =
   let open Let_syntax in
-  let linear_t = Ast.Array_t (Ast.Var three) in
-  with_linear_t [(four, linear_t)] begin
+  let%bind wf = wf_array_t in
+  with_linear_t [(four, wf)] begin
     let%bind (Some (Not_used four')) = lookup four in
     let%bind _ = use_var four' in
     let%bind (Some (Used linear_t)) = lookup four in
     return linear_t
-  end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
         (Ok (Array_t (Var ((id 3) (name three))))) |}]
@@ -120,21 +127,15 @@ let%expect_test "lookup (Some (Used _))" =
 (* well_formed *)
 let%expect_test "well_formed" =
   let open Let_syntax in
-  begin
-    let%bind wf = well_formed (Ast.Zero) in
-    if wf then return Ast.Unit else (fail_string "Not well-formed")
-  end
+  wf_lt Ast.(Array_t Zero) >>= return
   |> execute;
   [%expect {|
-     (Ok Unit) |}]
+     (Ok (Array_t Zero)) |}]
 ;;
 
 let%expect_test "well_formed" =
   let open Let_syntax in
-  begin
-    let%bind wf = well_formed (Ast.Var one) in
-    if wf then return Ast.Unit else (fail_string "Not well-formed")
-  end
+  wf_lt Ast.(Array_t (Var one)) >>= return
   |> execute;
   [%expect {|
      (Error "Not well-formed") |}]
@@ -143,21 +144,15 @@ let%expect_test "well_formed" =
 (* well_formed/with_frac_cap *)
 let%expect_test "well_formed/with_frac_cap" =
   let open Let_syntax in
-  with_frac_cap [one] begin
-    let%bind wf = well_formed (Ast.Var one) in
-    if wf then return Ast.Unit else (fail_string "Not well-formed")
-  end
+  with_frac_cap [one] (wf_lt Ast.(Array_t (Var one)) >>= return)
   |> execute;
   [%expect {|
-     (Ok Unit) |}]
+     (Ok (Array_t (Var ((id 1) (name one))))) |}]
 ;;
 
 let%expect_test "well_formed/with_frac_cap" =
   let open Let_syntax in
-  with_frac_cap [four] begin
-    let%bind wf = well_formed (Ast.Succ (Var one)) in
-    if wf then return Ast.Unit else (fail_string "Not well-formed")
-  end
+  with_frac_cap [four] (wf_lt Ast.(Array_t (Succ (Var one))) >>= return)
   |> execute;
   [%expect {|
      (Error "Not well-formed") |}]
@@ -165,19 +160,16 @@ let%expect_test "well_formed/with_frac_cap" =
 
 let%expect_test "well_formed/with_frac_cap" =
   let open Let_syntax in
-  with_frac_cap [one] begin
-    let%bind wf = well_formed (Ast.Succ (Var one)) in
-    if wf then return Ast.Unit else (fail_string "Not well-formed")
-  end
+  with_frac_cap [one] (wf_lt Ast.(Array_t (Succ (Var one))) >>= return)
   |> execute;
   [%expect {|
-     (Ok Unit) |}]
+     (Ok (Array_t (Succ (Var ((id 1) (name one)))))) |}]
 ;;
 
 (* with_linear_t/use_var *)
 let%expect_test "with_linear_t/use_var" =
   let open Let_syntax in
-  with_linear_t [(four, Ast.Unit)] begin
+  with_linear_t [(four, wf_Unit)] begin
     let%bind (Some (Not_used four')) = lookup four in
     use_var four'
   end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
@@ -188,29 +180,36 @@ let%expect_test "with_linear_t/use_var" =
 
 let%expect_test "with_linear_t/use_var" =
   let open Let_syntax in
-  with_linear_t [(one, Ast.Unit); (three, Ast.Array_t (Var four))] begin
+  let%bind wf = wf_array_t in
+  (* Observable: fractional capabiities and linearly-typed variables are kept
+     in separate environments. *)
+  with_linear_t [(one, wf_Unit); (three, wf)] begin
     (* Boiler plate *)
     let%bind (Some (Not_used one)) = lookup one in
-    let%bind linear_t = use_var one in
+    let%bind WF linear_t = use_var one in
     printf !"%{sexp: Ast.linear_t}\n" linear_t;
     (* Test *)
     let%bind (Some (Not_used three)) = lookup three in
-    let%bind linear_t = use_var three in
+    let%bind WF linear_t = use_var three in
     printf !"%{sexp: Ast.linear_t}\n" linear_t;
-    return Ast.Unit
-  end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+    return wf_Unit
+  end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> run ~counter:1719 |> ignore;
   [%expect {|
         Unit
-        (Array_t (Var ((id 4) (name four)))) |}]
+        (Array_t (Var ((id 3) (name three)))) |}]
 ;;
 
 let%expect_test "with_linear_t/use_var" =
   let open Let_syntax in
-  with_linear_t
-    [ (one, Ast.ForAll_frac_cap (four, Ast.Array_t (Succ (Var (four)))))
-    ; (three, Ast.Array_t (Var four))]
-    (return Ast.Unit)
+  let%bind wf_arr = wf_array_t in
+  with_frac_cap [five] begin
+    let%bind wf_ForAll = wf_lt Ast.(ForAll_frac_cap (four, Array_t (Succ (Var (four))))) in
+    with_linear_t
+    [ (one, wf_ForAll)
+    ; (three, wf_arr) ]
+    (return wf_Unit)
+  end;
   |> execute;
   [%expect {|
     (Error  "Variable three not used.\

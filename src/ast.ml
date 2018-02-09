@@ -135,21 +135,21 @@ struct
   let substitute_in =
     let var_ref = ref {name="INTERNAL_REF"; id=(-1)} in
     let rep_ref = ref Zero in
+    let (=) = [%compare.equal : variable] in
+
     let sub_fun =
       (object(self)
         inherit Ppx_traverse_builtins.map
         inherit map as super
         method variable var =
-          if [%compare.equal : variable] var !var_ref then
-            failwith "INTERNAL ERROR: binding variables are not unique."
-          else
-            var
+          let msg = "INTERNAL ERROR: binding variables are not unique." in
+          if var = !var_ref then failwith msg else var
         method frac_cap = function
           | Zero -> Zero
           | Succ frac_cap -> Succ (self#frac_cap frac_cap)
-          | Var var as frac_cap ->
-            if [%compare.equal : variable] var !var_ref then !rep_ref else frac_cap
+          | Var var as frac_cap -> if var = !var_ref then !rep_ref else frac_cap
       end)#linear_t in
+
     fun linear_t ~var ~replacement ->
       begin
         var_ref := var;

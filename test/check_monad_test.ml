@@ -124,7 +124,7 @@ let%expect_test "lookup (Some (Used _))" =
         (Ok (Array_t (Var ((id 3) (name three))))) |}]
 ;;
 
-(* well_formed *)
+(* TODO: test if_well_formed somehow? *)
 let%expect_test "well_formed" =
   let open Let_syntax in
   wf_lt Ast.(Array_t Zero) >>= return

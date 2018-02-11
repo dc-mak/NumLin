@@ -174,24 +174,29 @@ let rec (check : Ast.expression -> Check_monad.well_formed Check_monad.t) =
     end
 
   | Pair_Elim (first, second, expression, body) ->
-    let if_pair first_t second_t =
-      check body |> with_linear_t [(first, first_t); (second, second_t)] in
-    let not_pair inferred_t =
-      error "Pair_Elim: expected Pair(_,_)" inferred_t in
-    split_wf_Pair (check expression) ~if_pair ~not_pair
+    split_wf_Pair (check expression)
+      ~if_pair:
+        (fun first_t second_t ->
+         check body |> with_linear_t [(first, first_t); (second, second_t)])
+      ~not_pair:
+        (fun inferred_t ->
+           error "Pair_Elim: expected Pair(_,_)" inferred_t)
 
   | Specialise_frac_cap (expression, frac_cap) ->
-    let not_found =
-      failf !"Specialise_frac_cap: %{sexp: Ast.frac_cap} not found in environment." in
-    let not_forall inferred_t =
-      error "Specialise_frac_cap: expected ForAll_frac_cap(_,_)" inferred_t in
-    well_formed_sub (check expression) frac_cap ~not_found ~not_forall
+    split_wf_ForAll (check expression)
+      ~if_forall:
+        (fun var well_formed_t ->
+           if_well_formed frac_cap 
+             ~then_:(wf_substitute_in well_formed_t var)
+             ~else_:(failf !"Specialise_frac_cap: %{sexp: Ast.frac_cap} not found in environment."))
+
+      ~not_forall:
+        (fun inferred_t ->
+           error "Specialise_frac_cap: expected ForAll_frac_cap(_,_)" inferred_t)
 
   | Array_Elim (var, expression, body) ->
     begin match%bind check expression with
-    | WF (Array_t frac_cap) ->
-      let fmt, arg = !"Array_Elim: %{sexp: Ast.frac_cap} not found in environment.", frac_cap in
-      let%bind arr_t = well_formed_lt ~fmt ~arg (Array_t frac_cap) in
+    | WF (Array_t _) as arr_t ->
       check body |> with_linear_t [(var, arr_t)]
     | WF inferred_t ->
       error "Array_Elim: expected Array_t(_)" inferred_t

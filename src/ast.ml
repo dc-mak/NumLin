@@ -35,9 +35,9 @@ struct
 
   let pp_frac_cap =
     let rec count acc = function
-      | Zero -> Caml.string_of_int acc
+      | Zero -> Int.to_string acc
       | Succ frac_cap -> count (acc+1) frac_cap
-      | Var var -> var.name ^ if acc = 0 then "" else "+" ^ Caml.string_of_int acc in
+      | Var var -> var.name ^ if acc = 0 then "" else "+" ^ Int.to_string acc in
     count 0
   ;;
 
@@ -72,6 +72,7 @@ end
 
 include
 struct
+
   type linear_t =
     | Unit
     | Int
@@ -83,7 +84,6 @@ struct
   [@@deriving sexp_of,compare,traverse_map]
   ;;
 
-  (* I should look in to https://mjambon.github.io/mjambon2016/easy-format.html *)
   let pp_linear_t ppf =
     let open Caml.Format in
     let _wrap = ref 0 in

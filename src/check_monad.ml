@@ -18,29 +18,23 @@ type well_formed =
 
 let wf_Array_t_Zero =
   WF (Ast.(Array_t Zero))
-;;
 
-let wf_Unit =
+and wf_Unit =
   WF Ast.Unit
-;;
 
-let wf_Int =
+and wf_Int =
   WF Ast.Int
-;;
 
-let wf_Float64 =
+and wf_Float64 =
   WF Ast.Float64
-;;
 
-let wf_Pair (WF x) (WF y) =
+and wf_Pair (WF x) (WF y) =
   WF (Ast.Pair (x, y))
-;;
 
-let wf_Fun (WF x) (WF y) =
+and wf_Fun (WF x) (WF y) =
   WF (Ast.Fun (x, y))
-;;
 
-let wf_ForAll var (WF x) =
+and wf_ForAll var (WF x) =
   WF (Ast.ForAll_frac_cap (var, x))
 ;;
 
@@ -80,11 +74,10 @@ let create_fresh ?name () =
   return (Ast.({id; name}))
 ;;
 
+(* Shorthands for common utilities *)
 let add, remove, find =
   let equal = [%compare.equal: Ast.variable] in
-  List.Assoc.add ~equal,
-  List.Assoc.remove ~equal,
-  List.Assoc.find ~equal
+  List.Assoc.(add ~equal, remove ~equal, find ~equal)
 ;;
 
 let lookup var  =
@@ -93,6 +86,7 @@ let lookup var  =
   return (find linear_t_vars var)
 ;;
 
+(* Check if fractional-capability is well-formed w.r.t. given list of variables. *)
 let rec wf_wrt frac_cap_vars = 
   let open Ast in function
     | Zero -> true
@@ -100,44 +94,54 @@ let rec wf_wrt frac_cap_vars =
     | Var var -> List.exists frac_cap_vars ([%compare.equal : Ast.variable] var)
 ;;
 
-let well_formed_fc fc =
-  let open Let_syntax in
-  let open Ast in
-  let%bind {frac_cap_vars; _} = get in
-  return (wf_wrt frac_cap_vars fc)
+(* Well-formed manipulations. Probably execessive but fun to experiment with. *)
+type wf_frac_cap =
+  WFC of Ast.frac_cap
 ;;
 
-let well_formed_sub wf frac_cap ~not_found ~not_forall =
+let if_well_formed fc ~then_ ~else_ =
+  let open Let_syntax in
+  let%bind {frac_cap_vars; _} = get in
+  if wf_wrt frac_cap_vars fc then
+    then_ (WFC fc)
+  else
+    else_ fc
+;;
+
+type wf_variable =
+  WFV of Ast.variable
+;;
+
+let wf_substitute_in (WF linear_t) (WFV var) (WFC fc) =
+  let open Let_syntax in
+  match Ast.substitute_in linear_t var fc with
+  | Ok result ->
+    return (WF result)
+  | Error err ->
+    fail_string (Error.to_string_hum err)
+;;
+
+(* Case analysis on well-formed types. *)
+let split_wf_ForAll wf ~if_forall ~not_forall =
   let open Let_syntax in
   match%bind wf with
-  | WF (ForAll_frac_cap (var, linear_t)) ->
-    if%bind well_formed_fc frac_cap then
-      begin match Ast.substitute_in linear_t var frac_cap with
-      | Ok result ->
-        return (WF result)
-      | Error err ->
-        fail_string (Error.to_string_hum err)
-      end
-    else
-      not_found frac_cap
-  | WF inferred_t ->
-    not_forall inferred_t
-;;
+  | WF (ForAll_frac_cap (var, t2)) -> if_forall (WFV var) (WF t2)
+  | WF inferred_t -> not_forall inferred_t
 
-let split_wf_Pair wf ~if_pair ~not_pair =
+and split_wf_Pair wf ~if_pair ~not_pair =
   let open Let_syntax in
   match%bind wf with
   | WF (Pair (t1, t2)) -> if_pair (WF t1) (WF t2)
   | WF inferred_t -> not_pair inferred_t
-;;
 
-let split_wf_Fun wf ~if_fun ~not_fun =
+and split_wf_Fun wf ~if_fun ~not_fun =
   let open Let_syntax in
   match%bind wf with
   | WF (Fun (t1, t2)) -> if_fun (WF t1) (WF t2)
   | WF inferred_t -> not_fun inferred_t
 ;;
 
+(* Checking a linear type is well-formed. *)
 let well_formed_lt ~fmt ~arg lt =
   let open Let_syntax in
   let open Ast in
@@ -159,7 +163,7 @@ let well_formed_lt ~fmt ~arg lt =
     | Array_t fc ->
       if wf_wrt bindings fc then
         return (Array_t fc)
-      else if%bind well_formed_fc fc then
+      else if%bind get >>= fun x -> return (wf_wrt x.frac_cap_vars fc) then
         return (Array_t fc)
       else
         failf fmt arg

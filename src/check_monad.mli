@@ -16,12 +16,12 @@ type well_formed = private WF of Ast.linear_t
 val sexp_of_well_formed : well_formed -> Sexplib.Sexp.t
 
 val wf_Array_t_Zero : well_formed
-val wf_Unit     : well_formed
-val wf_Int      : well_formed
-val wf_Float64  : well_formed
-val wf_Pair     : well_formed -> well_formed -> well_formed
-val wf_Fun      : well_formed -> well_formed -> well_formed
-val wf_ForAll   : Ast.variable -> well_formed -> well_formed
+val wf_Unit         : well_formed
+val wf_Int          : well_formed
+val wf_Float64      : well_formed
+val wf_Pair         : well_formed -> well_formed -> well_formed
+val wf_Fun          : well_formed -> well_formed -> well_formed
+val wf_ForAll       : Ast.variable -> well_formed -> well_formed
 
 (** Proof that a type is not used *)
 type not_used
@@ -109,13 +109,24 @@ val create_fresh : ?name:string -> unit -> Ast.variable t
 (** Look for given variable in linear_vars *)
 val lookup : Ast.variable -> tagged_linear_t option t
 
+(** Proof that a fractional-capability is well-formed. *)
+type wf_frac_cap
+
+(** Check if a fractional capability is well-formed w.r.t. the environment. *)
+val if_well_formed :
+  Ast.frac_cap -> then_:(wf_frac_cap -> 'a t) -> else_:(Ast.frac_cap -> 'a t) -> 'a t
+
+(** Proof that (fractional-capability) variable is well-formed. *)
+type wf_variable
+
 (** Perform a well-formed substitution on a ForAll_frac_cap type *)
-val well_formed_sub :
-  well_formed t ->
-  Ast.frac_cap ->
-  not_found:(Ast.frac_cap -> well_formed t) ->
-  not_forall:(Ast.linear_t -> well_formed t) ->
-  well_formed t
+val wf_substitute_in : well_formed -> wf_variable -> wf_frac_cap -> well_formed t
+
+(** Perform a split on a well-formed typed assuming it is a ForAll_frac_cap. *)
+val split_wf_ForAll :
+   well_formed t ->
+   if_forall:(wf_variable -> well_formed -> 'a t) ->
+   not_forall:(Ast.linear_t -> 'a t) -> 'a t
 
 (** Perform a split on a well-formed typed assuming it is a pair. *)
 val split_wf_Pair :

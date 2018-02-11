@@ -12,3 +12,11 @@
     ))
     (preprocess (pps (ppx_traverse ppx_jane ppx_driver.runner (-inline-test-lib lt4la))))
 ))
+
+(rule (
+  (targets (parser.mli parser.ml))
+  (deps (parser.mly))
+  ; add --infer when jbuilder has pushed support for it
+  (action (ignore-stderr (run menhir --comment --explain ${<})))))
+
+(ocamllex (lexer))

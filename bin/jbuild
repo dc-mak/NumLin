@@ -1,0 +1,12 @@
+(jbuild_version 1)
+
+(executable (
+    (name repl)
+    (libraries (base lt4la))
+))
+
+(alias (
+    (name repl)
+    (deps (repl.exe))
+    (action (chdir ${ROOT} (run ${<})))
+))

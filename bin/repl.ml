@@ -31,7 +31,7 @@ let parse_and_print lexbuf =
   let open Stdio.Out_channel in
   match parse_with_error lexbuf with
   | Ok value ->
-    output_string stdout (Ast.pp_frac_cap value);
+    output_string stdout (string_of_linear_t value);
   | Error err ->
     output_string stdout (Error.to_string_hum err);
 ;;

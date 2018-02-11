@@ -32,7 +32,7 @@ let arr : Ast.expression =
 let%expect_test "checker_unit_intro" =
   check_expr Unit_Intro
   |> pretty;
-  [%expect {| (Ok "I\n") |}]
+  [%expect {| (Ok I) |}]
 ;;
 
 let%expect_test "checker_var_unbound" =
@@ -48,7 +48,7 @@ let unit_elim : Ast.expression =
 let%expect_test "checker_unit_elim" =
   check_expr unit_elim
   |> pretty;
-  [%expect {| (Ok "Arr[0]\n") |}]
+  [%expect {| (Ok Arr[0]) |}]
 ;;
 
 let pair : Ast.expression =
@@ -58,7 +58,7 @@ let pair : Ast.expression =
 let%expect_test "checker_pair_intro" =
   check_expr pair
   |> pretty;
-  [%expect {| (Ok "Arr[0] * I\n") |}]
+  [%expect {| (Ok "Arr[0] * I") |}]
 ;;
 
 let pair_elim : Ast.expression =
@@ -68,7 +68,7 @@ let pair_elim : Ast.expression =
 let%expect_test "checker_pair_elim" = 
   check_expr pair_elim
   |> pretty;
-  [%expect {| (Ok "I * Arr[0]\n") |}]
+  [%expect {| (Ok "I * Arr[0]") |}]
 ;;
 
 let%expect_test "checker_pair_elim" = 
@@ -84,7 +84,7 @@ let unit_lambda : Ast.expression =
 let%expect_test "checker_lambda" =
   check_expr unit_lambda
   |> pretty;
-  [%expect {| (Ok "I --o I\n") |}]
+  [%expect {| (Ok "I --o I") |}]
 ;;
 
 let app : Ast.expression =
@@ -94,7 +94,7 @@ let app : Ast.expression =
 let%expect_test "checker_app" =
   check_expr app
   |> pretty;
-  [%expect {| (Ok "I\n") |}]
+  [%expect {| (Ok I) |}]
 ;;
 
 let forall : Ast.expression =
@@ -104,7 +104,7 @@ let forall : Ast.expression =
 let%expect_test "checker_forall" =
   check_expr forall
   |> pretty;
-  [%expect {| (Ok "\226\136\128 one. Arr[one] --o Arr[one]\n") |}]
+  [%expect {| (Ok "\226\136\128 one. Arr[one] --o Arr[one]") |}]
 ;;
 
 let specialise : Ast.expression =
@@ -114,7 +114,7 @@ let specialise : Ast.expression =
 let%expect_test "checker_specialise" =
   check_expr specialise
   |> pretty;
-  [%expect {| (Ok "Arr[1] --o Arr[1]\n") |}]
+  [%expect {| (Ok "Arr[1] --o Arr[1]") |}]
 ;;
 
 let%expect_test "checker_specialise" =
@@ -128,7 +128,7 @@ let%expect_test "checker_specialise" =
 let%expect_test "checker_array_elim" =
   check_expr (Array_Elim (one, arr, Var one))
   |> pretty;
-  [%expect {| (Ok "Arr[0]\n") |}] 
+  [%expect {| (Ok Arr[0]) |}] 
 ;;
 
 let prims : Ast.primitive list =
@@ -159,35 +159,30 @@ let%expect_test "check_array_elim" =
   [%expect {|
     (Ok
       "\226\136\128 split_perm_1719.\
-     \n  Arr[split_perm_1719] --o Arr[split_perm_1719+1] * Arr[split_perm_1719+1]\
-     \n")
+     \n  Arr[split_perm_1719] --o Arr[split_perm_1719+1] * Arr[split_perm_1719+1]")
     (Ok
       "\226\136\128 merge_perm_1719.\
-     \n  Arr[merge_perm_1719+1] * Arr[merge_perm_1719+1] --o Arr[merge_perm_1719]\
-     \n")
-    (Ok "Arr[0] --o I\n")
-    (Ok "\226\136\128 copy_1719. Arr[copy_1719] --o Arr[copy_1719] * Arr[0]\n")
-    (Ok "Arr[0] * Arr[0] --o Arr[0] * Arr[0]\n")
+     \n  Arr[merge_perm_1719+1] * Arr[merge_perm_1719+1] --o Arr[merge_perm_1719]")
+    (Ok "Arr[0] --o I")
+    (Ok "\226\136\128 copy_1719. Arr[copy_1719] --o Arr[copy_1719] * Arr[0]")
+    (Ok "Arr[0] * Arr[0] --o Arr[0] * Arr[0]")
     (Ok
-     "\226\136\128 sum_mag_1719. Arr[sum_mag_1719] --o Arr[sum_mag_1719] * f64\n")
+     "\226\136\128 sum_mag_1719. Arr[sum_mag_1719] --o Arr[sum_mag_1719] * f64")
     (Ok
       "\226\136\128 sum_mag_vec_1719.\
-     \n  f64 --o Arr[sum_mag_vec_1719] --o Arr[0] --o Arr[sum_mag_vec_1719] * Arr[0]\
-     \n")
+     \n  f64 --o Arr[sum_mag_vec_1719] --o Arr[0] --o Arr[sum_mag_vec_1719] * Arr[0]")
     (Ok
       "\226\136\128 dot_prod_x_1719.\
      \n  Arr[dot_prod_x_1719] --o \226\136\128 dot_prod_y_1720.\
      \n    Arr[dot_prod_y_1720]\
-     \n    --o ( Arr[dot_prod_x_1719] * Arr[dot_prod_y_1720] ) * f64\
-     \n")
-    (Ok "\226\136\128 norm2_1719. Arr[norm2_1719] --o Arr[norm2_1719] * f64\n")
-    (Ok "f64 --o f64 --o Arr[0] --o Arr[0] --o Arr[0] * Arr[0]\n")
-    (Ok "f64 --o f64 --o ( f64 * f64 ) * ( f64 * f64 )\n")
-    (Ok "Arr[0] --o Arr[0] --o f64 * Arr[0]\n")
-    (Ok "f64 * f64 --o f64 * f64 --o ( f64 * f64 ) * ( f64 * Arr[0] )\n")
-    (Ok "f64 --o Arr[0] --o Arr[0]\n")
+     \n    --o ( Arr[dot_prod_x_1719] * Arr[dot_prod_y_1720] ) * f64")
+    (Ok "\226\136\128 norm2_1719. Arr[norm2_1719] --o Arr[norm2_1719] * f64")
+    (Ok "f64 --o f64 --o Arr[0] --o Arr[0] --o Arr[0] * Arr[0]")
+    (Ok "f64 --o f64 --o ( f64 * f64 ) * ( f64 * f64 )")
+    (Ok "Arr[0] --o Arr[0] --o f64 * Arr[0]")
+    (Ok "f64 * f64 --o f64 * f64 --o ( f64 * f64 ) * ( f64 * Arr[0] )")
+    (Ok "f64 --o Arr[0] --o Arr[0]")
     (Ok
       "\226\136\128 index_max_abs_1719.\
-     \n  Arr[index_max_abs_1719] --o int * Arr[index_max_abs_1719]\
-     \n") |}]
+     \n  Arr[index_max_abs_1719] --o int * Arr[index_max_abs_1719]") |}]
 ;;

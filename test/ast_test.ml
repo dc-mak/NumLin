@@ -30,7 +30,10 @@ let rec generate i =
 let%expect_test "pp_linear_type" =
   (* Maximum height 7, drop first two (the base cases) *)
   generate 7 |> Fn.flip List.drop 2 |> Fn.flip List.take 3
-  |> List.iter ~f:(Ast.pp_linear_t Caml.Format.std_formatter);
+  |> (let f lt =
+        Ast.pp_linear_t Format.std_formatter lt;
+        Out_channel.(newline stdout) in
+      List.iter ~f);
   [%expect {|
         ∀ i. ∀ h.
           ( ∀ e. ∀ d. I * Arr[a+2] ) * ( Arr[c+2] * ( ∀ d. I ) )
@@ -100,7 +103,7 @@ let%expect_test "same_linear_t" =
       \n    Arr[one]\
       \nwith\
       \n    Arr[1]\
-      \n" "Could not show one and 1 are equal.")) |}]
+      \n" "Could not show one and 1 are equal.\n")) |}]
 ;;
 
 let%expect_test "same_linear_t" =
@@ -114,7 +117,7 @@ let%expect_test "same_linear_t" =
           \n    \226\136\128 one. Arr[one+2]\
           \nwith\
           \n    \226\136\128 two. Arr[two]\
-          \n" "Could not show one+2 and two are equal.")) |}]
+          \n" "Could not show one+2 and two are equal.\n")) |}]
 ;;
 
 let%expect_test "same_linear_t" =
@@ -148,7 +151,7 @@ let%expect_test "same_linear_t" =
           \n    ( \226\136\128 one. Arr[one+1] ) * I\
           \nwith\
           \n    ( \226\136\128 two. Arr[two] ) * I\
-          \n" "Could not show one+1 and two are equal.")) |}]
+          \n" "Could not show one+1 and two are equal.\n")) |}]
 ;;
 
 let%expect_test "same_linear_t" =
@@ -184,5 +187,5 @@ let%expect_test "same_linear_t" =
       \n    \226\136\128 one. \226\136\128 two. Arr[one] --o Arr[two] --o Arr[one] * Arr[two]\
       \nwith\
       \n    \226\136\128 three. \226\136\128 four. Arr[three] --o Arr[four] --o Arr[four] * Arr[three]\
-      \n" "Could not show one and four and alpha-equivalent.")) |}]
+      \n" "Could not show one and four and alpha-equivalent.\n")) |}]
 ;;

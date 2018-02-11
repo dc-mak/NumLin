@@ -53,11 +53,11 @@ struct
       if List.exists ~f:(fun (x,y) -> x = var1 && y = var2 || y = var1 && x = var2) equiv then
         return ()
       else
-        Or_error.errorf !"Could not show %s and %s and alpha-equivalent." var1.name var2.name
+        Or_error.errorf !"Could not show %s and %s and alpha-equivalent.\n" var1.name var2.name
 
     | _, _ ->
       let pp () = pp_frac_cap in
-      Or_error.errorf !"Could not show %a and %a are equal." pp frac_cap1 pp frac_cap2
+      Or_error.errorf !"Could not show %a and %a are equal.\n" pp frac_cap1 pp frac_cap2
   ;;
 
 end
@@ -86,7 +86,6 @@ struct
 
   let pp_linear_t ppf =
     let open Caml.Format in
-    let _wrap = ref 0 in
     let rec pp_linear_t ppf = function
       | Unit ->
         fprintf ppf "I"
@@ -131,7 +130,7 @@ struct
       | Array_t frac_cap ->
         fprintf ppf "Arr[%s]" (pp_frac_cap frac_cap) in
 
-    fprintf ppf "@[%a@]@." pp_linear_t
+    fprintf ppf "@[%a@]@?" pp_linear_t
   ;;
 
   let string_of_linear_t linear_t =
@@ -224,13 +223,13 @@ struct
 
     | _, _ ->
       let pp () = string_of_linear_t in
-      Or_error.errorf !"Specifically, could not show this equality:\n    %awith\n    %a" pp linear_t1 pp linear_t2
+      Or_error.errorf !"Specifically, could not show this equality:\n    %a\nwith\n    %a\n" pp linear_t1 pp linear_t2
   ;;
 
   let same_linear_t x y : unit Or_error.t =
     Result.map_error (same_linear_t [] x y) (fun err ->
       let pp () = string_of_linear_t in
-      let tag = Printf.sprintf "Could not show equality:\n    %awith\n    %a" pp x pp y in
+      let tag = Printf.sprintf "Could not show equality:\n    %a\nwith\n    %a\n" pp x pp y in
       Error.tag ~tag err)
   ;;
 
@@ -314,21 +313,21 @@ let%test_module "Test" =
       let open Ast in
       same_frac_cap [] Zero (Succ Zero)
       |> printf !"%{sexp: unit Or_error.t}";
-      [%expect {| (Error "Could not show 0 and 1 are equal.") |}]
+      [%expect {| (Error "Could not show 0 and 1 are equal.\n") |}]
     ;;
 
     let%expect_test "same_frac_cap" =
       let open Ast in
       same_frac_cap [] (Succ (Succ (Var one))) (Var one)
       |> printf !"%{sexp: unit Or_error.t}";
-      [%expect {| (Error "Could not show one+2 and one are equal.") |}]
+      [%expect {| (Error "Could not show one+2 and one are equal.\n") |}]
     ;;
 
     let%expect_test "same_frac_cap" =
       let open Ast in
       same_frac_cap [] (Var one) (Succ (Succ (Var three)))
       |> printf !"%{sexp: unit Or_error.t}";
-      [%expect {| (Error "Could not show one and three+2 are equal.") |}]
+      [%expect {| (Error "Could not show one and three+2 are equal.\n") |}]
     ;;
 
     let%expect_test "add" =

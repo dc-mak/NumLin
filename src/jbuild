@@ -17,6 +17,7 @@
   (targets (parser.mli parser.ml))
   (deps (parser.mly))
   ; add --infer when jbuilder has pushed support for it
-  (action (ignore-stderr (run menhir --comment --explain ${<})))))
+  (action (run menhir --strict --comment --explain ${<}))
+))
 
 (ocamllex (lexer))

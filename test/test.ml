@@ -13,6 +13,10 @@ let%test_module "Checker" =
   (module Checker_test)
 ;;
 
+let%test_module "Parser" =
+  (module Parser_test)
+;;
+
 let () =
   Ppx_inline_test_lib.Runtime.exit ()
 ;;

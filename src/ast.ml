@@ -23,6 +23,11 @@ let compare_variable {id=x; _ } {id= y; _} =
   compare_int x y
 ;;
 
+let string_of_variable {name;id} =
+  name ^ (Int.to_string id)
+;;
+
+(* Fractional capabilities *)
 include
 struct
 
@@ -33,7 +38,7 @@ struct
   [@@deriving sexp_of,compare]
   ;;
 
-  let pp_frac_cap =
+  let string_of_frac_cap =
     let rec count acc = function
       | Zero -> Int.to_string acc
       | Succ frac_cap -> count (acc+1) frac_cap
@@ -56,7 +61,7 @@ struct
         Or_error.errorf !"Could not show %s and %s and alpha-equivalent.\n" var1.name var2.name
 
     | _, _ ->
-      let pp () = pp_frac_cap in
+      let pp () = string_of_frac_cap in
       Or_error.errorf !"Could not show %a and %a are equal.\n" pp frac_cap1 pp frac_cap2
   ;;
 
@@ -70,6 +75,7 @@ end
  * ;;
  *)
 
+(* Linear types *)
 include
 struct
 
@@ -128,7 +134,7 @@ struct
         fprintf ppf "∀ %s.@;<1 2>@[%a@]" var.name pp_linear_t linear_t
 
       | Array_t frac_cap ->
-        fprintf ppf "Arr[%s]" (pp_frac_cap frac_cap) in
+        fprintf ppf "Arr[%s]" (string_of_frac_cap frac_cap) in
 
     fprintf ppf "@[%a@]@?" pp_linear_t
   ;;
@@ -193,7 +199,7 @@ struct
     let open Or_error.Let_syntax in
 
     match linear_t1, linear_t2 with
-    | Unit, Unit 
+    | Unit, Unit
     | Int, Int
     | Float64, Float64 ->
       return ()
@@ -235,61 +241,149 @@ struct
 
 end
 
-type array_type =
-  Owl.Arr.arr
-;;
+include
+struct
+  (* Primitives/extensions
+     Intel Level 1: software.intel.com/en-us/mkl-developer-reference-c-blas-level-1-routines-and-functions
+     BLAS Reference: www.netlib.org/blas/blasqr.pdf
+     Not included: xxDOT (derivable), xDOTU, xDOTC (Complex Float32/64) *)
+  type primitive =
+    (* Operators *)
+    | Split_Permission
+    | Merge_Permission
+    | Free
+    | Copy (* xCOPY *)
+    | Swap (* xSWAP *)
 
-let sexp_of_array_type _ =
-  Sexplib.Sexp.Atom "<Array>"
-;;
+    (* Routines/Functions *)
+    | Sum_Mag (* xASUM *)
+    | Scalar_Mult_Then_Add (* xAXPY *)
+    | DotProd (* xDOT *)
+    | Norm2 (* xNRM2 *)
+    | Plane_Rotation (* xROT *)
+    | Givens_Rotation (* xROTG *)
+    | GivensMod_Rotation (* xROTM *)
+    | Gen_GivensMod_Rotation (* xROTMG *)
+    | Scalar_Mult (* xSCAL *)
+    | Index_of_Max_Abs (* IxAMAX *)
 
-(* Primitives/extensions
-   Intel Level 1: software.intel.com/en-us/mkl-developer-reference-c-blas-level-1-routines-and-functions
-   BLAS Reference: www.netlib.org/blas/blasqr.pdf
-   Not included: xxDOT (derivable), xDOTU, xDOTC (Complex Float32/64) *)
-type primitive =
-  (* Operators *)
-  | Split_Permission
-  | Merge_Permission
-  | Free
-  | Copy (* xCOPY *)
-  | Swap (* xSWAP *)
+  [@@deriving sexp_of]
+  ;;
 
-  (* Routines/Functions *)
-  | Sum_Mag (* xASUM *)
-  | Scalar_Mult_Then_Add (* xAXPY *)
-  | DotProd (* xDOT *)
-  | Norm2 (* xNRM2 *)
-  | Plane_Rotation (* xROT *)
-  | Givens_Rotation (* xROTG *)
-  | GivensMod_Rotation (* xROTM *)
-  | Gen_GivensMod_Rotation (* xROTMG *)
-  | Scalar_Mult (* xSCAL *)
-  | Index_of_Max_Abs (* IxAMAX *)
+  let string_of_primitive =
+    function
+    (* Operators *)
+    | Split_Permission -> "split_perm"
+    | Merge_Permission -> "merge_perm"
+    | Free -> "free"
+    | Copy (* xCOPY *) -> "copy"
+    | Swap (* xSWAP *) -> "swap"
 
-[@@deriving sexp_of]
-;;
+    (* Routines/Functions *)
+    | Sum_Mag (* xASUM *) -> "asum"
+    | Scalar_Mult_Then_Add (* xAXPY *) -> "axpy"
+    | DotProd (* xDOT *) -> "dot"
+    | Norm2 (* xNRM2 *) -> "nrm2"
+    | Plane_Rotation (* xROT *) -> "rot"
+    | Givens_Rotation (* xROTG *) -> "rotg"
+    | GivensMod_Rotation (* xROTM *) -> "rotm"
+    | Gen_GivensMod_Rotation (* xROTMG *) -> "rotmg"
+    | Scalar_Mult (* xSCAL *) -> "scal"
+    | Index_of_Max_Abs (* IxAMAX *) -> "amax"
 
-(* NOTE: Is it worth having a GADT/typed-representation AFTER type-checking? *)
-(* Elimination rules for [Int]s and [Float64]s will come later, after an
-   arithmetic expression language is fixed. *)
-type expression =
-  | Var of variable
-  | Int_Intro of int
-  | Float64_Intro of float
-  | Unit_Intro
-  | Unit_Elim of expression * expression
-  | Pair_Intro of expression * expression
-  | Pair_Elim of variable * variable * expression * expression
-  | Lambda of variable * linear_t * expression
-  | App of expression * expression
-  | ForAll_frac_cap of variable * expression
-  | Specialise_frac_cap of expression * frac_cap
-  | Array_Intro of expression
-  | Array_Elim of variable * expression * expression
-(*| ForAll_Size of variable * expression *)
-  | Primitive of primitive
-[@@deriving sexp_of]
+  ;;
+
+  (* NOTE: Is it worth having a GADT/typed-representation AFTER type-checking? *)
+  (* Elimination rules for [Int]s and [Float64]s will come later, after an
+     arithmetic expression language is fixed. *)
+  type expression =
+    | Var of variable
+    | Int_Intro of int
+    | Float64_Intro of float
+    | Unit_Intro
+    | Unit_Elim of expression * expression
+    | Pair_Intro of expression * expression
+    | Pair_Elim of variable * variable * expression * expression
+    | Lambda of variable * linear_t * expression
+    | App of expression * expression
+    | ForAll_frac_cap of variable * expression
+    | Specialise_frac_cap of expression * frac_cap
+    | Array_Intro of expression
+    | Array_Elim of variable * expression * expression
+    (*| ForAll_Size of variable * expression *)
+    | Primitive of primitive
+  [@@deriving sexp_of]
+  ;;
+
+  let rec pp_expression ppf =
+    let open Caml.Format in
+    function
+
+    | Var var  ->
+      fprintf ppf "%s" (string_of_variable var)
+
+    | Unit_Intro ->
+      fprintf ppf "()"
+
+    | Int_Intro i ->
+      fprintf ppf "%d" i
+
+    | Float64_Intro f ->
+      fprintf ppf "%f" f
+
+    | Unit_Elim ( exp1 , exp2 ) ->
+      fprintf ppf "@[<2>let () =@ %a in@ %a@]" pp_expression exp1 pp_expression exp2
+
+    | Pair_Intro ( exp1 , exp2 ) ->
+      fprintf ppf "@[(%a@ @[, %a@]@]" pp_expression exp1 pp_expression exp2
+
+    | Pair_Elim ( var1 , var2 , exp1 , exp2 ) ->
+      fprintf ppf "@[<2>let (%s, %s) =@ %a in@ %a@]"
+        (string_of_variable var1) (string_of_variable var2) pp_expression exp1 pp_expression exp2
+
+    | Lambda ( var , linear_t , exp ) ->
+      fprintf ppf "@[<2>fun %s : (* %a *) ->@ %a @]"
+        (string_of_variable var) pp_linear_t linear_t pp_expression exp
+
+    | App ( exp1 , exp2 ) ->
+      let rec parens ?(left=false) = function
+        | App _ ->
+          if left then ("", "") else ("(", ")")
+        | Var _| Unit_Intro | Int_Intro _ | Float64_Intro _ | Pair_Intro _ | Primitive _ ->
+          "", ""
+        | Unit_Elim _ | Pair_Elim _ | Lambda _ | Array_Intro _ | Array_Elim _ ->
+          "(", ")"
+        | ForAll_frac_cap (_, exp) | Specialise_frac_cap (exp, _) ->
+          parens exp in
+
+      let (l1, r1), (l2, r2) = parens ~left:true exp1, parens exp2 in
+      fprintf ppf "@[<2>%s%a%s@ %s%a%s@]" l1 pp_expression exp1 r1 l2 pp_expression exp2 r2
+
+    | ForAll_frac_cap ( var , exp ) ->
+      fprintf ppf "(* ∀ %s *) %a" (string_of_variable var) pp_expression exp
+
+    | Specialise_frac_cap ( exp , fc ) ->
+      fprintf ppf "%a (* [%s] *) " pp_expression exp (string_of_frac_cap fc)
+
+    | Array_Intro ( exp ) ->
+      let rec parens ?(left=false) = function
+        | Var _| Unit_Intro | Int_Intro _ | Float64_Intro _ | Pair_Intro _ | Primitive _ ->
+          "", ""
+        | App _ | Unit_Elim _ | Pair_Elim _ | Lambda _ | Array_Intro _ | Array_Elim _ ->
+          "(", ")"
+        | ForAll_frac_cap (_, exp) | Specialise_frac_cap (exp, _) ->
+          parens exp in
+      let l,r = parens exp in
+      fprintf ppf "array_intro %s%a%s" l pp_expression exp r
+
+    | Array_Elim ( var , exp1 , exp2 ) ->
+      fprintf ppf "@[<2>let %s =@ %a in@ %a@]"
+        (string_of_variable var) pp_expression exp1 pp_expression exp2
+
+    | Primitive ( primitive ) ->
+      fprintf ppf "Prim.%s" (string_of_primitive primitive)
+  ;;
+end
 ;;
 
 (* TODO Internal tests *)

@@ -14,7 +14,7 @@ val compare_variable : variable -> variable -> int
 type frac_cap = Zero | Succ of frac_cap | Var of variable
 val sexp_of_frac_cap : frac_cap -> Sexplib.Sexp.t
 val compare_frac_cap : frac_cap -> frac_cap -> int
-val pp_frac_cap : frac_cap -> string
+val string_of_frac_cap : frac_cap -> string
 
 (** Standard Linear type system, using fractional capabilities
     and extensions for Linear Algebra. *)
@@ -32,11 +32,10 @@ val pp_linear_t : Caml.Format.formatter -> linear_t -> unit
 val substitute_in : linear_t -> var:variable -> replacement:frac_cap -> linear_t Base.Or_error.t
 val same_linear_t : linear_t -> linear_t -> unit Base.Or_error.t
 
-(** For now, arrays will be interpreted as/implemented using this,
-    due to issues with Dune, linking and Owl. *)
-type array_type = Owl.Arr.arr
-val sexp_of_array_type : array_type -> Sexplib.Sexp.t
-
+(** Primitives/extensions
+    Intel Level 1: software.intel.com/en-us/mkl-developer-reference-c-blas-level-1-routines-and-functions
+    BLAS Reference: www.netlib.org/blas/blasqr.pdf
+    Not included: xxDOT (derivable), xDOTU, xDOTC (Complex Float32/64) *)
 type primitive =
   (* Operators *)
   | Split_Permission
@@ -58,6 +57,8 @@ type primitive =
   | Index_of_Max_Abs (* IxAMAX *)
 
 val sexp_of_primitive : primitive -> Sexplib.Sexp.t
+
+val string_of_primitive : primitive -> string
 
 (** Expressions of the language. Right now, I've made my life much easier by
     having type-directed abstract-syntax. Can hopefully elaborate to this later.
@@ -81,3 +82,5 @@ type expression =
   | Primitive of primitive
 
 val sexp_of_expression : expression -> Sexplib.Sexp.t
+
+val pp_expression : Caml.Format.formatter -> expression -> unit

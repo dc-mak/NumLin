@@ -28,14 +28,14 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 
 ## Quickstart
 
-| Command                   | Where              | Meaning                                        |
-| ---                       | ---                | ----                                           |
-| `utop`                    | anywhere           | Starts interactive REPL. Requires `lt4la.a`.   |
-| `bash utop.sh`            | `src`              | Like above, but for a manual/non-Docker setup. |
-| `jbuilder build lt4la.a`  | `src`              | Build the library (everything inside `src`).   |
-| `jbuilder build test.exe` | `test`             | Build everything.                              |
-| `jbuilder runtest`        | top, `test`        | Build everything _and_ run all tests.          |
-| `jbuilder clean`          | top, `src`, `test` | Delete `_build` directory of build artifacts.  |
+| Command                   | Where                     | Meaning                                       |
+| ---                       | ---                       | ----                                          |
+| `jbuilder build lt4la.a`  | `src`                     | Build the library (everything inside `src`).  |
+| `jbuilder utop            | `src`                     | As above + launches UTop with library loaded. |
+| `jbuilder build test.exe` | `test`                    | Build everything.                             |
+| `jbuilder runtest`        | top, `test`               | Build everything _and_ run all tests.         |
+| `jbuilder build repl.exe` | `bin`                     | Build library & REPL.                         |
+| `jbuilder clean`          | top, `src`, `test`, `bin` | Delete `_build` directory of build artifacts. |
 
 ## Development
 
@@ -47,7 +47,7 @@ Overview of the project structure is in the table below.
 | `src`      | Library being developed.                     |
 | `src/gen`  | For generated files like lexers and parsers. |
 | `test`     | Tests for the library.                       |
-| `bin`      | For executables, like a REPL.                |
+| `bin`      | For executables, like the REPL.              |
 | `docs`     | Documentation.                               |
 | `write-up` | My dissertation on all of this.              |
 
@@ -127,14 +127,23 @@ Triggered with every push to the `master` branch.
 
 ### Roadmap (in _rough_ order of priority)
 
+**In progress:**
+ - Parser/REPL
+ - Code generation
+ - Scalars and arithmetic expressions
+
+**Future:**
  - Array sizes in types.
- - Tough: Add (some) primitives: start off with Level 1 BLAS for float32.
- - Parsing and pretty printing expressions ([Easy Format?](https://mjambon.github.io/mjambon2016/easy-format.html)).
  - Tough: Elaboration/inference.
  - Tough: staging, preferably using [ppx_stage](https://github.com/stedolan/ppx_stage?files=1)
  - ?Documentation with [Read the Docs](https://readthedocs.org/)
  - ?Performance: benchmark, less pure-functional implementations behind `State_or_error` or `Check_monad`.
- - ?Figure out why `jbuilder utop` crashes so spectacularly
+
+**Done:**
+ - Fixed `jbuilder utop` crash
+ - Semantics written in Ott
+ - Well-formed types
+ - Level 1 BLAS Primitives
 
 ### `.mli` Files
 There is currently no straightforward way to "generate" `.mli` files from an `.ml`

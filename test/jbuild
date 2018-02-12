@@ -3,17 +3,17 @@
 (executable (
     (name test)
     (libraries (lt4la ppx_expect.evaluator ppx_inline_test.runner.lib))
-    (preprocess (pps (ppx_jane ppx_driver.runner (-inline-test-lib test))))
+    (preprocess (pps (ppx_jane ppx_driver.runner (-inline-test-lib lt4la_external))))
 ))
 
 (alias (
     (name runtest)
     (deps (test.exe))
-    (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la)))
+    (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la_internal)))
 ))
 
 (alias (
     (name runtest)
     (deps (test.exe))
-    (action (chdir ${ROOT} (run ${<} inline-test-runner test)))
+    (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la_test)))
 ))

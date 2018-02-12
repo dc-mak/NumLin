@@ -22,52 +22,54 @@ let (check_prim : Ast.primitive -> Ast.linear_t Check_monad.t) =
     let%bind x = create_fresh ~name () in
     return (Ast.ForAll_frac_cap(x, f x) : Ast.linear_t) in
 
+  let arr0 = Ast.(Array_t Zero) in
+
   function
 
   (* Operators *)
 
-  (* ∀x. Arr[x] -o Arr[x+1] * Arr[x+1] *)
+  (* ∀x. Arr[x] --o Arr[x+1] * Arr[x+1] *)
   | Split_Permission ->
     let func_t x =
       let component = Ast.Array_t (Succ (Var x)) in
       Ast.Fun (Array_t (Var x), Pair (component, component)) in
     abstract_one "split_perm" func_t
 
-  (* ∀x. Arr[x+1] * Arr[x+1] -o Arr[x] *)
+  (* ∀x. Arr[x+1] * Arr[x+1] --o Arr[x] *)
   | Merge_Permission ->
     let func_t x =
       let component = Ast.Array_t (Succ (Var x)) in
       Ast.Fun (Pair (component, component), Array_t (Var x)) in
     abstract_one "merge_perm" func_t
 
-  (* Arr[0] -o I *)
+  (* Arr[0] --o I *)
   | Free ->
-    return (Ast.Fun(Array_t Zero, Unit))
+    return (Ast.Fun(arr0, Unit))
 
-  (* xCOPY: ∀x. Arr[x] -o Arr[x] * Arr[0] *)
+  (* xCOPY: ∀x. Arr[x] --o Arr[x] * Arr[0] *)
   | Copy ->
-    let func_t x = Ast.Fun(Array_t (Var x), Pair (Array_t (Var x), Array_t Zero)) in
+    let func_t x = Ast.Fun(Array_t (Var x), Pair (Array_t (Var x), arr0)) in
     abstract_one "copy" func_t
 
-  (* xSWAP: Arr[0] * Arr[0] -o Arr[0] * Arr[0] *)
+  (* xSWAP: Arr[0] * Arr[0] --o Arr[0] * Arr[0] *)
   | Swap ->
-    return (Ast.Fun(Pair (Array_t Zero, Array_t Zero), Pair (Array_t Zero, Array_t Zero)))
+    return (Ast.Fun(Pair (arr0, arr0), Pair (arr0, arr0)))
 
   (* Routines/Functions *)
 
-  (* xASUM: ∀x. Arr[x] -> Arr[x] * f64 *)
+  (* xASUM: ∀x. Arr[x] --o Arr[x] * f64 *)
   | Sum_Mag ->
     let func_t x = Ast.Fun(Array_t (Var x), Pair(Array_t (Var x), Float64)) in
     abstract_one "sum_mag" func_t
 
-  (* xAXPY: f64 -o ∀ vec. Arr[vec] -o Arr[0] -o Arr[vec] * Arr[0] *)
+  (* xAXPY: f64 --o ∀ vec. Arr[vec] --o Arr[0] --o Arr[vec] * Arr[0] *)
   | Scalar_Mult_Then_Add ->
     let func_t vec =
-      let return_t = Ast.Pair (Array_t (Var vec), Array_t Zero) in
-      Ast.Fun (Float64, Fun ( Array_t (Var vec), Fun ( Array_t Zero, return_t ))) in
+      let return_t = Ast.Pair (Array_t (Var vec), arr0) in
+      Ast.Fun (Float64, Fun ( Array_t (Var vec), Fun ( arr0, return_t ))) in
     abstract_one "sum_mag_vec" func_t
 
-  (* xDOT: ∀x. Arr[x] -o ∀y. Arr[y] -o (Arr[x] * Arr[y]) * f64 *)
+  (* xDOT: ∀x. Arr[x] --o ∀y. Arr[y] --o (Arr[x] * Arr[y]) * f64 *)
   | DotProd ->
     let%bind x = create_fresh ~name:"dot_prod_x" () in
     let%bind y = create_fresh ~name:"dot_prod_y" () in
@@ -76,34 +78,36 @@ let (check_prim : Ast.primitive -> Ast.linear_t Check_monad.t) =
                 ForAll_frac_cap (y, Fun (Array_t (Var y),
                 result_t)))) : Ast.linear_t)
 
-  (* xNRM2: ∀x. Arr[x] -> Arr[x] * f64 *)
+  (* xNRM2: ∀x. Arr[x] --o Arr[x] * f64 *)
   | Norm2 ->
     let func_t x = Ast.Fun(Array_t (Var x), Pair(Array_t (Var x), Float64)) in
     abstract_one "norm2" func_t
 
-  (* xROT: f64 -o f64 -o Arr[0] -o Arr[0] -o Arr[0] * Arr[0] *)
+  (* xROT: f64 --o f64 --o Arr[0] --o Arr[0] --o Arr[0] * Arr[0] *)
   | Plane_Rotation ->
     return Ast.(Fun (Float64, Fun(Float64, Fun(
-      Array_t Zero, Fun(Array_t Zero, Pair(Array_t Zero, Array_t Zero))))))
+      arr0, Fun(arr0, Pair(arr0, arr0))))))
 
-  (* xROTG: f64 -o f64 -o (f64 * f64) * (f64 * f64) *)
+  (* xROTG: f64 --o f64 --o (f64 * f64) * (f64 * f64) *)
   | Givens_Rotation ->
     return (Ast.Fun (Float64, Fun (Float64, Pair(Pair(Float64, Float64), Pair(Float64, Float64)))))
 
-  (* xROTM: Arr[0] -o Arr[0] -o (f64 * Array_t Zero) *)
+  (* xROTM: Arr[0] --o Arr[0] --o ∀p. Arr[p] --o ((Arr[0] * Arr[0]) * Arr[p] *)
   | GivensMod_Rotation ->
-    return Ast.(Fun (Array_t Zero, Fun(Array_t Zero, Pair (Float64, Array_t Zero))))
+    let%bind rest = abstract_one "rotm" (fun p ->
+      Fun (Array_t (Var p), Pair (Pair (arr0, arr0), Array_t (Var p)))) in
+    return Ast.(Fun (arr0, Fun(arr0, rest)))
 
-  (* xROTMG: (f64 * f64) -o (f64 * f64) -o (f64 * f64) * (f64 * Arr[0]) *)
+  (* xROTMG: (f64 * f64) --o (f64 * f64) --o (f64 * f64) * (f64 * Arr[0]) *)
   | Gen_GivensMod_Rotation ->
     let p2 = Ast.Pair (Float64, Float64) in
-    return Ast.(Fun (p2, Fun(p2, Pair (p2, Pair(Float64, Array_t Zero)))))
+    return Ast.(Fun (p2, Fun(p2, Pair (p2, Pair(Float64, arr0)))))
 
-  (* xSCAL: f64 -o Arr[0] -o Arr[0] *)
+  (* xSCAL: f64 --o Arr[0] --o Arr[0] *)
   | Scalar_Mult ->
-    return Ast.(Fun (Float64, Fun(Array_t Zero, Array_t Zero)))
+    return Ast.(Fun (Float64, Fun(arr0, arr0)))
 
-  (* IxAMAX: ∀x. Arr[x] -o int * Arr[x] *)
+  (* IxAMAX: ∀x. Arr[x] --o int * Arr[x] *)
   | Index_of_Max_Abs ->
     let func_t x =
       Ast.(Fun (Array_t (Var x), Pair (Int, Array_t (Var x)))) in

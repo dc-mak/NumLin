@@ -60,6 +60,11 @@
       Array_t (bind_fc ~str ~in_:fc)
   ;;
 
+  (* impure *)
+  let mk_forall str lt  : Ast.linear_t =
+      Ast.ForAll_frac_cap (mk_id str, bind ~str ~in_:lt)
+  ;;
+
 %}
 
 %token EOF
@@ -76,40 +81,46 @@
 %token ARR_LT
 %token LEFT_BRACKET
 %token RIGHT_BRACKET
+%token LEFT_PAREN
+%token RIGHT_PAREN
 
-(* Recursive simple linear types *)
+(* Linear types *)
 %token STAR
 %token LOLLIPOP
+%token ALL
+%token DOT
 
 (* Associativity and precedence *)
+%nonassoc NON_LOW
 %right LOLLIPOP
+
 
 (* Grammar non-terminals *)
 %start <Ast.linear_t Base.Or_error.t> prog
 
-%type <Ast.linear_t> simple_linear_t
-%type <Ast.linear_t> atom_linear_t
+%type <Ast.linear_t> linear_t simple_lt
 %type <Ast.frac_cap> frac_cap
 
 %%
 
 prog:
-    | EOF                       { err "No input" }
-    | lt = simple_linear_t; EOF { ret lt         }
+    | EOF                { err "No input" }
+    | lt = linear_t; EOF { ret lt         }
     ;
 
-(* So that STAR is not associative *)
-simple_linear_t:
-    | atom_linear_t                                          { $1                  }
-    | fst = atom_linear_t; STAR; snd = atom_linear_t         { Ast.Pair (fst, snd) }
-    | arg = simple_linear_t; LOLLIPOP; res = simple_linear_t { Ast.Fun (arg, res)  }
+linear_t:
+    | simple_lt                                { $1                  }
+    | ALL; str = ID; DOT; lt = linear_t        { mk_forall str lt    } %prec NON_LOW
+    | fst = simple_lt; STAR; snd = simple_lt   { Ast.Pair (fst, snd) }
+    | arg = linear_t; LOLLIPOP; res = linear_t { Ast.Fun (arg, res)  }
     ;
 
-atom_linear_t:
-    | UNIT                                                   { Ast.Unit            }
-    | INT_LT                                                 { Ast.Int             }
-    | F64_LT                                                 { Ast.Float64         }
-    | ARR_LT; LEFT_BRACKET; fc = frac_cap; RIGHT_BRACKET     { Ast.Array_t fc      }
+simple_lt:
+    | UNIT                                               { Ast.Unit       }
+    | INT_LT                                             { Ast.Int        }
+    | F64_LT                                             { Ast.Float64    }
+    | ARR_LT; LEFT_BRACKET; fc = frac_cap; RIGHT_BRACKET { Ast.Array_t fc }
+    | LEFT_PAREN; lt = linear_t; RIGHT_PAREN             { lt             }
     ;
 
 frac_cap :

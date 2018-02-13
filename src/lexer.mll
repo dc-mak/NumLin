@@ -34,6 +34,7 @@ let keywords =
     ; ("int", INT_LT)
     ; ("f64", F64_LT)
     ; ("Arr", ARR_LT)
+    ; ("all", ALL)
     ] in
   let table = Hashtbl.of_alist_exn (module String) keywords in
   fun str -> match Hashtbl.find table str with
@@ -68,8 +69,11 @@ rule read =
   (* simple linear types *)
   | '['      { LEFT_BRACKET }
   | ']'      { RIGHT_BRACKET }
-  (* recursive simple linear types *)
+  | '('      { LEFT_PAREN }
+  | ')'      { RIGHT_PAREN }
+  (* linear types *)
   | '*'      { STAR }
   | "--o"    { LOLLIPOP }
+  | '.'      { DOT }
   (* TODO: make more informative/friendly *)
   | _        { raise (SyntaxError ("unexpected char: " ^ Lexing.lexeme lexbuf)) }

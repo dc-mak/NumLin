@@ -43,6 +43,7 @@ RUN opam install -y           \
         ppx_jane              \
         ppx_traverse          \
         ppx_traverse_builtins \
+        menhir                \
     && opam env
 
 # Environment variables
@@ -78,6 +79,5 @@ ENV LT4LAPATH $HOME/lt4la
 ADD --chown=opam:opam . $LT4LAPATH
 WORKDIR $LT4LAPATH
 RUN jbuilder runtest \
-    && tail -n +4 $LT4LAPATH/utop_init >> $HOME/.ocamlinit \
-    && sed -i -- 's~lt4la.cmo~'"$LT4LAPATH"'/_build/default/src/lt4la.cmo~g' $HOME/.ocamlinit
+    && jbuilder build bin/repl.exe
 ENTRYPOINT /bin/bash

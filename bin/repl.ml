@@ -40,9 +40,9 @@ let parse_with_error lexbuf =
     |> Or_error.error_string
 ;;
 
-let string_of_linear_t linear_t =
+let string_of_exp exp =
   let buffer = Buffer.create 80 in
-  Ast.pp_linear_t (Caml.Format.formatter_of_buffer buffer) linear_t;
+  Ast.pp_expression (Caml.Format.formatter_of_buffer buffer) exp;
   Buffer.contents buffer
 ;;
 
@@ -69,11 +69,15 @@ let parse_and_print lexbuf =
   let open Stdio.Out_channel in
   match parse_with_error lexbuf with
   | Ok value ->
-    string_of_linear_t value
+    string_of_exp value
+    |> String.split ~on:'\n'
+    |> String.concat ~sep:"\n  "
     |> color B_Green
     |> output_string stdout;
   | Error err ->
     Error.to_string_hum err
+    |> String.split ~on:'\n'
+    |> String.concat ~sep:"\n  "
     |> color B_Red
     |> output_string stdout;
 ;;

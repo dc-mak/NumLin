@@ -30,11 +30,32 @@ let next_line lexbuf =
 let keywords =
   let open Base in
   let keywords =
+    (* simple linear types *)
     [ ("I", UNIT)
     ; ("int", INT_LT)
     ; ("f64", F64_LT)
     ; ("Arr", ARR_LT)
+    (* linear types *)
     ; ("all", ALL)
+    (* primitives *)
+    ; ("split_perm", SPLIT_PERM)
+    ; ("merge_perm", MERGE_PERM)
+    ; ("free", FREE)
+    ; ("copy", COPY)
+    ; ("swap", SWAP)
+    ; ("asum", ASUM)
+    ; ("axpy", AXPY)
+    ; ("dot", DOT_PROD)
+    ; ("nrm2", NRM2)
+    ; ("rot", ROT)
+    ; ("rotg", ROTG)
+    ; ("rotm", ROTM)
+    ; ("rotmg", ROTMG)
+    ; ("scal", SCAL)
+    ; ("iamax", IAMAX)
+    (* expressions *)
+    ; ("let", LET )
+    ; ("Array", ARRAY )
     ] in
   let table = Hashtbl.of_alist_exn (module String) keywords in
   fun str -> match Hashtbl.find table str with
@@ -75,5 +96,14 @@ rule read =
   | '*'      { STAR }
   | "--o"    { LOLLIPOP }
   | '.'      { DOT }
+  (* simple expressions *)
+  | int      { INT (int_of_string (Lexing.lexeme lexbuf)) }
+  | float    { FLOAT (float_of_string (Lexing.lexeme lexbuf)) }
+  | ','      { COMMA }
+  | ':'      { COLON }
+  | '\\'     { BACKSLASH }
+  (* expressions *)
+  | '='      { EQUAL }
+  | ';'      { SEMICOLON }
   (* TODO: make more informative/friendly *)
   | _        { raise (SyntaxError ("unexpected char: " ^ Lexing.lexeme lexbuf)) }

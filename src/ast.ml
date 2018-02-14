@@ -24,7 +24,7 @@ let compare_variable {id=x; _ } {id= y; _} =
 ;;
 
 let string_of_variable {name;id} =
-  name ^ (Int.to_string id)
+  name ^ "_" ^ (Int.to_string id)
 ;;
 
 (* Fractional capabilities *)
@@ -42,7 +42,7 @@ struct
     let rec count acc = function
       | Zero -> Int.to_string acc
       | Succ frac_cap -> count (acc+1) frac_cap
-      | Var var -> var.name ^ if acc = 0 then "" else "+" ^ Int.to_string acc in
+      | Var var -> (string_of_variable var) ^ if acc = 0 then "" else "+" ^ Int.to_string acc in
     count 0
   ;;
 
@@ -331,58 +331,64 @@ struct
     | Float64_Intro f ->
       fprintf ppf "%f" f
 
-    | Unit_Elim ( exp1 , exp2 ) ->
-      fprintf ppf "@[<2>let () =@ %a in@ %a@]" pp_expression exp1 pp_expression exp2
+    | Unit_Elim (exp1, exp2) ->
+      fprintf ppf "@[@[<2>let () =@ %a in@]@ %a@]" pp_expression exp1 pp_expression exp2
 
-    | Pair_Intro ( exp1 , exp2 ) ->
-      fprintf ppf "@[(%a@ @[, %a@]@]" pp_expression exp1 pp_expression exp2
+    | Pair_Intro (exp1, exp2) ->
+      fprintf ppf "@[(%a@ @[, %a)@]@]" pp_expression exp1 pp_expression exp2
 
-    | Pair_Elim ( var1 , var2 , exp1 , exp2 ) ->
-      fprintf ppf "@[<2>let (%s, %s) =@ %a in@ %a@]"
+    | Pair_Elim (var1, var2, exp1, exp2) ->
+      fprintf ppf "@[@[<2>let (%s, %s) =@ %a in@]@ %a@]"
         (string_of_variable var1) (string_of_variable var2) pp_expression exp1 pp_expression exp2
 
-    | Lambda ( var , linear_t , exp ) ->
-      fprintf ppf "@[<2>fun %s : (* %a *) ->@ %a @]"
-        (string_of_variable var) pp_linear_t linear_t pp_expression exp
+    | Lambda (var, linear_t, exp) ->
+      fprintf ppf "@[<2>fun %s (* %s *) ->@ %a@]"
+        (string_of_variable var) (string_of_linear_t linear_t) pp_expression exp
 
-    | App ( exp1 , exp2 ) ->
-      let rec parens ?(left=false) = function
-        | App _ ->
+    | App (exp1, exp2) ->
+      let parens ?(left=false) = function
+        | App _ | Specialise_frac_cap _ ->
           if left then ("", "") else ("(", ")")
         | Var _| Unit_Intro | Int_Intro _ | Float64_Intro _ | Pair_Intro _ | Primitive _ ->
           "", ""
-        | Unit_Elim _ | Pair_Elim _ | Lambda _ | Array_Intro _ | Array_Elim _ ->
-          "(", ")"
-        | ForAll_frac_cap (_, exp) | Specialise_frac_cap (exp, _) ->
-          parens exp in
-
+        | Unit_Elim _ | Pair_Elim _ | Lambda _ | Array_Intro _ | Array_Elim _ | ForAll_frac_cap _ ->
+          "(", ")" in
       let (l1, r1), (l2, r2) = parens ~left:true exp1, parens exp2 in
       fprintf ppf "@[<2>%s%a%s@ %s%a%s@]" l1 pp_expression exp1 r1 l2 pp_expression exp2 r2
 
-    | ForAll_frac_cap ( var , exp ) ->
-      fprintf ppf "(* ∀ %s *) %a" (string_of_variable var) pp_expression exp
+    | ForAll_frac_cap (var, exp ) ->
+      fprintf ppf "@[<2>(* ∀ %s *)@ %a@]" (string_of_variable var) pp_expression exp
 
-    | Specialise_frac_cap ( exp , fc ) ->
-      fprintf ppf "%a (* [%s] *) " pp_expression exp (string_of_frac_cap fc)
+    | Specialise_frac_cap (exp, fc) ->
+      let l,r = match exp with
+        | Var _| Unit_Intro | Int_Intro _ | Float64_Intro _ | Pair_Intro _
+        | Primitive _ | Specialise_frac_cap _ | App _ ->
+          "", ""
+        | Unit_Elim _ | Pair_Elim _ | Lambda _ | Array_Intro _ | Array_Elim _ | ForAll_frac_cap _ ->
+          "(", ")" in
+      fprintf ppf "@[<2>%s%a%s@ (* [%s] *)@]" l pp_expression exp r (string_of_frac_cap fc)
 
-    | Array_Intro ( exp ) ->
-      let rec parens ?(left=false) = function
+    | Array_Intro exp ->
+      let l, r = match exp with
         | Var _| Unit_Intro | Int_Intro _ | Float64_Intro _ | Pair_Intro _ | Primitive _ ->
           "", ""
-        | App _ | Unit_Elim _ | Pair_Elim _ | Lambda _ | Array_Intro _ | Array_Elim _ ->
-          "(", ")"
-        | ForAll_frac_cap (_, exp) | Specialise_frac_cap (exp, _) ->
-          parens exp in
-      let l,r = parens exp in
-      fprintf ppf "array_intro %s%a%s" l pp_expression exp r
+        | App _ | Unit_Elim _ | Pair_Elim _ | Lambda _ | Array_Intro _ | Array_Elim _
+        | ForAll_frac_cap _ | Specialise_frac_cap _ ->
+          "(", ")" in
+      fprintf ppf "@[<2>array_intro@ %s%a%s@]" l pp_expression exp r
 
-    | Array_Elim ( var , exp1 , exp2 ) ->
-      fprintf ppf "@[<2>let %s =@ %a in@ %a@]"
+    | Array_Elim (var, exp1, exp2) ->
+      fprintf ppf "@[@[<2>let %s =@ %a in@]@ %a@]"
         (string_of_variable var) pp_expression exp1 pp_expression exp2
 
-    | Primitive ( primitive ) ->
+    | Primitive primitive ->
       fprintf ppf "Prim.%s" (string_of_primitive primitive)
   ;;
+
+  let pp_expression ppf exp =
+    Caml.Format.fprintf ppf "@[%a@]@?" pp_expression exp
+  ;;
+
 end
 ;;
 

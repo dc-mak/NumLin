@@ -28,14 +28,15 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 
 ## Quickstart
 
-| Command                   | Where                     | Meaning                                       |
-| ---                       | ---                       | ----                                          |
-| `jbuilder build lt4la.a`  | `src`                     | Build the library (everything inside `src`).  |
-| `jbuilder utop            | `src`                     | As above + launches UTop with library loaded. |
-| `jbuilder build test.exe` | `test`                    | Build everything.                             |
-| `jbuilder runtest`        | top, `test`               | Build everything _and_ run all tests.         |
-| `jbuilder build repl.exe` | `bin`                     | Build library & REPL.                         |
-| `jbuilder clean`          | top, `src`, `test`, `bin` | Delete `_build` directory of build artifacts. |
+| Command                       | Where                     | Meaning                                       |
+| ---                           | ---                       | ----                                          |
+| `jbuilder build lt4la.a`      | `src`                     | Build the library (everything inside `src`).  |
+| `jbuilder utop`               | `src`                     | As above + launches UTop with library loaded. |
+| `jbuilder build test.exe`     | `test`                    | Build library & tests.                        |
+| `jbuilder runtest`            | top, `test`               | Build library & tests _and_ run all tests.    |
+| `jbuilder build repl.exe`     | `bin`                     | Build library & REPL.                         |
+| `jbuilder clean`              | top, `src`, `test`, `bin` | Delete `_build` directory of build artifacts. |
+| `_build/default/bin/repl.exe` | top                       | Launch the REPL.                              |
 
 ## Development
 
@@ -45,7 +46,6 @@ Overview of the project structure is in the table below.
 | Directory  | Purpose                                      |
 | ---        | ---                                          |
 | `src`      | Library being developed.                     |
-| `src/gen`  | For generated files like lexers and parsers. |
 | `test`     | Tests for the library.                       |
 | `bin`      | For executables, like the REPL.              |
 | `docs`     | Documentation.                               |

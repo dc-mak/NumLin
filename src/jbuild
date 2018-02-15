@@ -5,6 +5,7 @@
     (synopsis "Linear Types for Linear Algebra")
     (libraries (
         owl
+        menhirLib
         core_kernel
         ppx_traverse_builtins
         ppx_expect.evaluator
@@ -17,7 +18,7 @@
   (targets (parser.mli parser.ml))
   (deps (parser.mly))
   ; add --infer when jbuilder has pushed support for it
-  (action (run menhir --strict --comment --explain ${<}))
+  (action (run menhir --table --strict --comment --explain ${<}))
 ))
 
 (ocamllex (lexer))

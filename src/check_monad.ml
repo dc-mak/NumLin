@@ -8,7 +8,7 @@
 
 (* Please read the .mli file for explanations. *)
 
-open Core_kernel
+open Base
 ;;
 
 type well_formed =

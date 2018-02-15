@@ -12,7 +12,7 @@ module Make :
     val fail : ?strict:unit -> string -> 'b -> ('b -> Sexplib.Sexp.t) -> 'a t
     val fail_string : string -> 'a t
     val failf : ('a, unit, string, 'b t) format4 -> 'a
-    val run : 'a t -> State.t -> ('a * State.t) Core_kernel.Or_error.t
+    val run : 'a t -> State.t -> ('a * State.t) Base.Or_error.t
     val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
     val ( >>| ) : 'a t -> ('a -> 'b) -> 'b t
     module Monad_infix :

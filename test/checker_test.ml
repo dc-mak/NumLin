@@ -2,7 +2,7 @@
 (* Lt4la.Checker External Tests *)
 (* These will be easier to write with a parser. *)
 
-open Core_kernel
+open Base
 ;;
 
 open Lt4la
@@ -22,7 +22,7 @@ let string_of_linear_t linear_t =
 ;;
 
 let pretty x =
-  printf !"%{sexp: string Or_error.t}\n" (Or_error.map x ~f:string_of_linear_t)
+  Stdio.printf !"%{sexp: string Or_error.t}\n" (Or_error.map x ~f:string_of_linear_t)
 ;;
 
 let arr : Ast.expression =

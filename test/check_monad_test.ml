@@ -1,7 +1,7 @@
 (* Dhruv Makwana *)
 (* Lt4la.Check_monad External Tests *)
 
-open Core_kernel
+open Base
 ;;
 
 open Lt4la
@@ -15,7 +15,7 @@ open Check_monad
 
 let execute x =
   run ~counter:1719 x
-  |> printf !"%{sexp: Ast.linear_t Or_error.t}\n"
+  |> Stdio.printf !"%{sexp: Ast.linear_t Or_error.t}\n"
 ;;
 
 let wf_lt =
@@ -31,9 +31,9 @@ let%expect_test "create_fresh" =
   let open Let_syntax in
   begin
     let%bind fresh = create_fresh () in
-    printf !"%{sexp:Ast.variable}\n" fresh;
+    Stdio.printf !"%{sexp:Ast.variable}\n" fresh;
     let%bind fresh = create_fresh ~name:"test" () in
-    printf !"%{sexp:Ast.variable}\n" fresh;
+    Stdio.printf !"%{sexp:Ast.variable}\n" fresh;
     return wf_Unit
   end
   |> run ~counter:1719 |> ignore;
@@ -63,7 +63,7 @@ let%expect_test "with_linear_t" =
 let%expect_test "lookup None (no vars)" =
   let open Let_syntax in
   let%bind var = lookup four in
-  printf !"%{sexp: tagged_linear_t option}\n" var;
+  Stdio.printf !"%{sexp: tagged_linear_t option}\n" var;
   return wf_Unit;
   |> run ~counter:1719 |> ignore;
   [%expect {| () |}]
@@ -73,7 +73,7 @@ let%expect_test "lookup None (with_frac_cap)" =
   let open Let_syntax in
   with_frac_cap [four] begin
     let%bind var = lookup four in
-    printf !"%{sexp: tagged_linear_t option}\n" var;
+    Stdio.printf !"%{sexp: tagged_linear_t option}\n" var;
     (return wf_Unit)
   end
   |> execute;
@@ -87,7 +87,7 @@ let%expect_test "lookup None (with_linear_t)" =
   let%bind wf = wf_array_t in
   with_linear_t [(five, wf)] begin
     let%bind var = lookup four in
-    printf !"%{sexp: tagged_linear_t option}\n" var;
+    Stdio.printf !"%{sexp: tagged_linear_t option}\n" var;
     (return wf_Unit)
   end;
   |> execute;
@@ -101,7 +101,7 @@ let%expect_test "lookup (Some (Not_used _))" =
   let%bind wf = wf_array_t in
   with_linear_t [(four, wf)] begin
     let%bind (Some (Not_used four)) = lookup four in
-    printf !"%{sexp: not_used}\n" four;
+    Stdio.printf !"%{sexp: not_used}\n" four;
     return wf_Unit
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
@@ -187,11 +187,11 @@ let%expect_test "with_linear_t/use_var" =
     (* Boiler plate *)
     let%bind (Some (Not_used one)) = lookup one in
     let%bind WF linear_t = use_var one in
-    printf !"%{sexp: Ast.linear_t}\n" linear_t;
+    Stdio.printf !"%{sexp: Ast.linear_t}\n" linear_t;
     (* Test *)
     let%bind (Some (Not_used three)) = lookup three in
     let%bind WF linear_t = use_var three in
-    printf !"%{sexp: Ast.linear_t}\n" linear_t;
+    Stdio.printf !"%{sexp: Ast.linear_t}\n" linear_t;
     return wf_Unit
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> run ~counter:1719 |> ignore;

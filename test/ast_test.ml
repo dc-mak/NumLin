@@ -1,13 +1,20 @@
 (* Dhruv Makwana *)
 (* Lt4la.Ast External Tests *)
 
-open Core_kernel
+open Base
 ;;
 
 open Lt4la
 ;;
 
 open Vars
+;;
+
+let%expect_test "bind_fc_fc" =
+  let open Ast in
+  bind_fc_fc one Zero
+  |> Stdio.printf !"%{sexp: frac_cap}";
+  [%expect {| |}]
 ;;
 
 (* Generate a sample of linear_types of height at most i *)
@@ -31,8 +38,8 @@ let%expect_test "pp_linear_type" =
   (* Maximum height 7, drop first two (the base cases) *)
   generate 7 |> Fn.flip List.drop 2 |> Fn.flip List.take 3
   |> (let f lt =
-        Ast.pp_linear_t Format.std_formatter lt;
-        Out_channel.(newline stdout) in
+        Ast.pp_linear_t Caml.Format.std_formatter lt;
+        Stdio.Out_channel.(newline stdout) in
       List.iter ~f);
   [%expect {|
         ∀ i. ∀ h.
@@ -54,21 +61,21 @@ let%expect_test "pp_linear_type" =
 let%expect_test "substitute_in" =
   let open Ast in
   substitute_in Unit ~var:four ~replacement:(Succ Zero)
-  |> printf !"%{sexp: linear_t Or_error.t}";
+  |> Stdio.printf !"%{sexp: linear_t Or_error.t}";
   [%expect {| (Ok Unit) |}]
 ;;
 
 let%expect_test "substitute_in" =
   let open Ast in
   substitute_in (Array_t (Var four)) ~var:four ~replacement:(Succ Zero)
-  |> printf !"%{sexp: linear_t Or_error.t}";
+  |> Stdio.printf !"%{sexp: linear_t Or_error.t}";
   [%expect {| (Ok (Array_t (Succ Zero))) |}]
 ;;
 
 let%expect_test "substitute_in" =
   let open Ast in
   substitute_in (Array_t (Var three)) ~var:four ~replacement:(Succ Zero)
-  |> printf !"%{sexp: linear_t Or_error.t}";
+  |> Stdio.printf !"%{sexp: linear_t Or_error.t}";
   [%expect {| (Ok (Array_t (Var ((id 3) (name three))))) |}]
 ;;
 
@@ -78,7 +85,7 @@ let%expect_test "substitute_in" =
     (ForAll_frac_cap (three, Array_t (Var four)))
     ~var:four
     ~replacement:(Succ Zero)
-  |> printf !"%{sexp: linear_t Or_error.t}";
+  |> Stdio.printf !"%{sexp: linear_t Or_error.t}";
   [%expect {| (Ok (ForAll_frac_cap ((id 3) (name three)) (Array_t (Succ Zero)))) |}]
 ;;
 
@@ -88,7 +95,7 @@ let%expect_test "substitute_in" =
     (ForAll_frac_cap (four, Array_t (Var four)))
     ~var:four
     ~replacement:(Succ Zero)
-  |> printf !"%{sexp: linear_t Or_error.t}";
+  |> Stdio.printf !"%{sexp: linear_t Or_error.t}";
   [%expect {| (Error "INTERNAL ERROR: binding variables are not unique.") |}]
 ;;
 
@@ -96,7 +103,7 @@ let%expect_test "substitute_in" =
 let%expect_test "same_linear_t" =
   let open Ast in
   same_linear_t (Array_t (Var one)) (Array_t (Succ Zero))
-  |> printf !"%{sexp: unit Or_error.t}";
+  |> Stdio.printf !"%{sexp: unit Or_error.t}";
   [%expect {|
     (Error
      ( "Could not show equality:\
@@ -110,7 +117,7 @@ let%expect_test "same_linear_t" =
   let open Ast in
   same_linear_t (ForAll_frac_cap (one, Array_t (Succ (Succ (Var one)))))
     (ForAll_frac_cap (two, Array_t (Var two)))
-  |> printf !"%{sexp: unit Or_error.t}";
+  |> Stdio.printf !"%{sexp: unit Or_error.t}";
   [%expect {|
         (Error
          ( "Could not show equality:\
@@ -125,7 +132,7 @@ let%expect_test "same_linear_t" =
   same_linear_t
     (Pair (ForAll_frac_cap (one, Array_t (Succ (Var one))), Unit))
     (Pair (ForAll_frac_cap (one, Array_t (Var one)), Unit))
-  |> printf !"%{sexp: unit Or_error.t}";
+  |> Stdio.printf !"%{sexp: unit Or_error.t}";
   [%expect {|
         (Error
          ( "Could not show equality:\
@@ -144,7 +151,7 @@ let%expect_test "same_linear_t" =
   same_linear_t
     (Pair (ForAll_frac_cap (one, Array_t (Succ (Var one))), Unit))
     (Pair (ForAll_frac_cap (two, Array_t (Var two)), Unit))
-  |> printf !"%{sexp: unit Or_error.t}";
+  |> Stdio.printf !"%{sexp: unit Or_error.t}";
   [%expect {|
         (Error
          ( "Could not show equality:\
@@ -157,7 +164,7 @@ let%expect_test "same_linear_t" =
 let%expect_test "same_linear_t" =
   let open Ast in
   same_linear_t Unit (Fun (Unit, Unit))
-  |> printf !"%{sexp: unit Or_error.t}";
+  |> Stdio.printf !"%{sexp: unit Or_error.t}";
   [%expect {|
         (Error
          ( "Could not show equality:\
@@ -180,7 +187,7 @@ let%expect_test "same_linear_t" =
        Array_t (Var two), Pair (Array_t (Var one), Array_t (Var two)))))))
     (ForAll_frac_cap (three, ForAll_frac_cap (four, Fun (Array_t (Var three), Fun (
        Array_t (Var four), Pair (Array_t (Var four), Array_t (Var three)))))))
-  |> printf !"%{sexp: unit Or_error.t}";
+  |> Stdio.printf !"%{sexp: unit Or_error.t}";
   [%expect {|
     (Error
      ( "Could not show equality:\

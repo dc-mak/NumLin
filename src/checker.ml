@@ -8,7 +8,7 @@
 
 (* Please read the .mli file for explanations. *)
 
-open Core_kernel
+open Base
 ;;
 
 (* For simplicity in these types, I'm always assuming that (1) lengths `n` can

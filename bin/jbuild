@@ -2,7 +2,7 @@
 
 (executable (
     (name repl)
-    (libraries (base lt4la))
+    (libraries (lt4la))
 ))
 
 (alias (

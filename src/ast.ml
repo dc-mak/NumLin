@@ -456,10 +456,6 @@ end
 let%test_module "Test" =
   (module struct
 
-    let printf =
-      Core_kernel.printf
-    ;;
-
     (* A stock of variables *)
     let one, two, three, four, five, six, seven, eight, nine, ten, eleven, sentinel =
       ( {id=1; name="one"}   ,   {id=2; name="two"}   ,   {id=3; name="three"}
@@ -471,25 +467,25 @@ let%test_module "Test" =
     (* same_frac_cap (and pp_frac_cap) *)
     let%expect_test "same_frac_cap" =
       same_frac_cap [] Zero (Succ Zero)
-      |> printf !"%{sexp: unit Or_error.t}";
+      |> Stdio.printf !"%{sexp: unit Or_error.t}";
       [%expect {| (Error "Could not show 0 and 1 are equal.\n") |}]
     ;;
 
     let%expect_test "same_frac_cap" =
       same_frac_cap [] (Succ (Succ (Var one))) (Var one)
-      |> printf !"%{sexp: unit Or_error.t}";
+      |> Stdio.printf !"%{sexp: unit Or_error.t}";
       [%expect {| (Error "Could not show one+2 and one are equal.\n") |}]
     ;;
 
     let%expect_test "same_frac_cap" =
       same_frac_cap [] (Var one) (Succ (Succ (Var three)))
-      |> printf !"%{sexp: unit Or_error.t}";
+      |> Stdio.printf !"%{sexp: unit Or_error.t}";
       [%expect {| (Error "Could not show one and three+2 are equal.\n") |}]
     ;;
 
     let%expect_test "add" =
       let ids x = List.map x (fun (x,y) -> (x.id, y.id)) in
-      let show x = printf !"%{sexp: (int * int) list}\n" (ids x) in
+      let show x = Stdio.printf !"%{sexp: (int * int) list}\n" (ids x) in
       let it = add (one, two) []  in show it;
       let it = add (three, four) it in show it;
       let it = add (four, five) it in show it;

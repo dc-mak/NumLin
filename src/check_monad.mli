@@ -162,4 +162,4 @@ val with_frac_cap :
   Ast.variable list -> well_formed t -> well_formed t
 
 (** Evaluates the monadic value. Must ensure [counter] = #variables in expression + 1. *)
-val run : well_formed t -> counter:int -> Ast.linear_t Core_kernel.Or_error.t
+val run : well_formed t -> counter:int -> Ast.linear_t Base.Or_error.t

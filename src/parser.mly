@@ -8,8 +8,8 @@
    - Structuring the project
    - Implementation tips and tricks *)
 
-(* TODO: Use Menhir features such as
- *   - Incremental parsing
+(* TODO:
+ *   - Check bindings while parsing
  *   - .messages error reporting     *)
 
   (* --- Pure helper functions --- *)
@@ -36,108 +36,6 @@
     [@@ocaml.warning "-8"]
   ;;
 
-  let mk_app fn (hd :: tl) =
-    Base.List.fold_left tl ~init:(Ast.App(fn, hd)) ~f:(fun fn arg -> Ast.App (fn, arg))
-    [@@ocaml.warning "-8"]
-  ;;
-
-  let mk_specialise body (hd :: tl) =
-    Base.List.fold_left tl ~init:(Ast.Specialise_frac_cap(body, hd))
-    ~f:(fun fn arg -> Ast.Specialise_frac_cap (fn, arg))
-    [@@ocaml.warning "-8"]
-  ;;
-
-  (* Binding fractional capability variables in different constructs uniformly. *)
-  type _ construct =
-    | Fc : Ast.frac_cap construct
-    | Lt : Ast.linear_t construct
-    | Exp : Ast.expression construct
-  ;;
-
-  let rec bind_fc : type a . a construct -> Ast.variable -> a -> a =
-    fun cons var in_ ->
-    let open Ast in
-    let (=~) {name=x;_} {name=y;_} = String.equal x y in
-
-    match cons with
-    | Fc ->
-
-      let rec bind_fc var = function
-        | Zero -> Zero
-        | Succ fc -> Succ (bind_fc var fc)
-        | Var var' -> Var (if var =~ var' then var else var') in
-      bind_fc var in_
-
-    | Lt ->
-
-      let rec bind_lt var = function
-        | Unit | Int | Float64 as lt -> lt
-        | Pair (fst, snd) -> Pair (bind_lt var fst, bind_lt var snd)
-        | Fun (fst, snd) -> Fun (bind_lt var fst, bind_lt var snd)
-        | Array_t fc -> Array_t (bind_fc Fc var fc)
-        | ForAll_frac_cap (var', lt) as linear_t  ->
-          if var =~ var' then linear_t else ForAll_frac_cap (var, bind_lt var lt) in
-        bind_lt var in_
-
-    | Exp ->
-
-      let rec bind_exp var = function
-
-        | Unit_Intro | Int_Intro _ | Float64_Intro _ | Primitive _ as exp -> exp
-
-        | Unit_Elim (exp1, exp2) -> Unit_Elim (bind_exp var exp1, bind_exp var exp2)
-        | Pair_Intro (exp1, exp2) -> Pair_Intro (bind_exp var exp1, bind_exp var exp2)
-        | App (exp1, exp2) -> App (bind_exp var exp1, bind_exp var exp2)
-        | ForAll_frac_cap (var, exp) -> ForAll_frac_cap (var, bind_exp var exp)
-        | Specialise_frac_cap (exp, fc) -> Specialise_frac_cap (bind_exp var exp, bind_fc Fc var fc)
-        | Array_Intro exp -> Array_Intro (bind_exp var exp)
-
-        | Var var' -> Var (if var =~ var' then var else var')
-
-        | Array_Elim (var', exp1, exp2 ) ->
-          Array_Elim (var', exp1, if var =~ var' then exp2 else bind_exp var exp2)
-
-        | Pair_Elim (var1, var2, exp1, exp2) ->
-          Pair_Elim (var1, var2, bind_exp var exp1,
-            if var =~ var1 || var =~ var2 then exp1 else bind_exp var exp1)
-
-        | Lambda (var', linear_t, exp ) ->
-          Lambda (var', bind_fc Lt var linear_t, if var =~ var' then exp else bind_exp var exp) in
-
-      bind_exp var in_
-  ;;
-
-  (* Bind expression variable in expression *)
-  let bind_exp var in_ =
-    let open Ast in
-    let (=~) {name=x;_} {name=y;_} = String.equal x y in
-
-    let rec replace var = function
-
-      | Unit_Intro | Int_Intro _ | Float64_Intro _ | Primitive _ as exp -> exp
-
-      | Unit_Elim (exp1, exp2) -> Unit_Elim (replace var exp1, replace var exp2)
-      | Pair_Intro (exp1, exp2) -> Pair_Intro (replace var exp1, replace var exp2)
-      | App (exp1, exp2) -> App (replace var exp1, replace var exp2)
-      | ForAll_frac_cap (var, exp) -> ForAll_frac_cap (var, replace var exp)
-      | Specialise_frac_cap (exp, fc) -> Specialise_frac_cap (replace var exp, fc)
-      | Array_Intro exp -> Array_Intro (replace var exp)
-
-      | Var var' -> Var (if var =~ var' then var else var')
-
-      | Array_Elim (var', exp1, exp2 ) ->
-        Array_Elim (var', exp1, if var =~ var' then exp2 else replace var exp2)
-
-      | Pair_Elim (var1, var2, exp1, exp2) ->
-        Pair_Elim (var1, var2, replace var exp1,
-          if var =~ var1 || var =~ var2 then exp1 else replace var exp1)
-
-      | Lambda (var', linear_t, exp ) ->
-        Lambda (var', linear_t, if var =~ var' then exp else replace var exp) in
-
-    replace var in_
-  ;;
-
   (* --- Impure helper functions --- *)
   let new_id =
     let counter = ref 0 in
@@ -148,27 +46,27 @@
 
   let mk_forall name lt : Ast.linear_t =
     let var = Ast.{name; id=new_id ()} in
-    Ast.ForAll_frac_cap (var, bind_fc Lt var lt)
+    Ast.ForAll_frac_cap (var, Ast.bind_fc_lt var lt)
   ;;
 
   let mk_lambda name lt body =
     let var = Ast.{name; id=new_id()} in
-    Ast.Lambda (var, lt, bind_exp var body)
+    Ast.Lambda (var, lt, Ast.bind_exp var body)
   ;;
 
   let mk_pair_elim a b exp body =
     let var_a, var_b = Ast.({name=a; id=new_id()}, {name=b; id=new_id()}) in
-    Ast.Pair_Elim (var_a, var_b, exp, bind_exp var_b (bind_exp var_a body))
+    Ast.Pair_Elim (var_a, var_b, exp, Ast.bind_exp var_b (Ast.bind_exp var_a body))
   ;;
 
   let mk_array_elim name exp body =
     let var = Ast.{name; id=new_id()} in
-    Ast.Array_Elim (var, exp, bind_exp var body)
+    Ast.Array_Elim (var, exp, Ast.bind_exp var body)
   ;;
 
   let mk_forall_exp name exp : Ast.expression =
     let var = Ast.{name; id=new_id() } in
-    Ast.ForAll_frac_cap (var, bind_fc Exp var exp)
+    Ast.ForAll_frac_cap (var, Ast.bind_fc_exp var exp)
   ;;
 
 %}
@@ -299,7 +197,6 @@ simple_lt:
     | ARR_LT fc=delimited_fc             { Ast.Array_t fc }
     | LEFT_PAREN lt=linear_t RIGHT_PAREN { lt             }
 
-
 delimited_fc:
     | LEFT_BRACKET fc=frac_cap RIGHT_BRACKET { fc }
 
@@ -307,4 +204,3 @@ frac_cap:
     | str=ID PLUS n=NAT { mk_fc ~str n }
     | n=NAT             { mk_fc n      }
     | str=ID            { mk_fc ~str 0 }
-

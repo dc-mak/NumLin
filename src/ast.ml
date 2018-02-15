@@ -14,13 +14,13 @@ open Base
 (** Variables are names (parsing/printing) and integers (uniqueness). *)
 type variable =
   { id: int
-  ; name: string (* [@compare.ignore] -- when available *)
+  ; name: string [@compare.ignore]
   }
-[@@deriving sexp_of]
+[@@deriving sexp_of,compare]
 ;;
 
-let compare_variable {id=x; _ } {id= y; _} =
-  compare_int x y
+let (=~) {name=x;_} {name=y;_} =
+  String.equal x y
 ;;
 
 let string_of_variable {name;id} =
@@ -63,6 +63,13 @@ struct
     | _, _ ->
       let pp () = string_of_frac_cap in
       Or_error.errorf !"Could not show %a and %a are equal.\n" pp frac_cap1 pp frac_cap2
+  ;;
+
+  let rec bind_fc_fc var =
+    function
+    | Zero -> Zero
+    | Succ fc -> Succ (bind_fc_fc var fc)
+    | Var var' -> Var (if var =~ var' then var else var')
   ;;
 
 end
@@ -239,6 +246,17 @@ struct
       Error.tag ~tag err)
   ;;
 
+  (* Bind fractional-capability variable in linear type *)
+  let rec bind_fc_lt var =
+    function
+    | Unit | Int | Float64 as lt -> lt
+    | Pair (fst, snd) -> Pair (bind_fc_lt var fst, bind_fc_lt var snd)
+    | Fun (fst, snd) -> Fun (bind_fc_lt var fst, bind_fc_lt var snd)
+    | Array_t fc -> Array_t (bind_fc_fc var fc)
+    | ForAll_frac_cap (var', lt) as linear_t  ->
+      if var =~ var' then linear_t else ForAll_frac_cap (var, bind_fc_lt var lt)
+  ;;
+
 end
 
 include
@@ -389,8 +407,50 @@ struct
     Caml.Format.fprintf ppf "@[%a@]@?" pp_expression exp
   ;;
 
+  (* Bind fractional-capability variable in expression *)
+  let rec bind_fc_exp var =
+    function
+    | Unit_Intro | Int_Intro _ | Float64_Intro _ | Primitive _ | Var _ as exp -> exp
+
+    | Unit_Elim (exp1, exp2) -> Unit_Elim (bind_fc_exp var exp1, bind_fc_exp var exp2)
+    | Pair_Intro (exp1, exp2) -> Pair_Intro (bind_fc_exp var exp1, bind_fc_exp var exp2)
+    | App (exp1, exp2) -> App (bind_fc_exp var exp1, bind_fc_exp var exp2)
+    | Array_Intro exp -> Array_Intro (bind_fc_exp var exp)
+    | Array_Elim (var, exp1, exp2) -> Array_Elim (var, bind_fc_exp var exp1, bind_fc_exp var exp2)
+    | Pair_Elim (var1, var2, exp1, exp2) -> Pair_Elim (var1, var2, bind_fc_exp var exp1, bind_fc_exp var exp2)
+    | Specialise_frac_cap (exp, fc) -> Specialise_frac_cap (bind_fc_exp var exp, bind_fc_fc var fc)
+    | Lambda (var', linear_t, exp) -> Lambda (var', bind_fc_lt var linear_t, bind_fc_exp var exp)
+
+    | ForAll_frac_cap (var', exp) ->
+      ForAll_frac_cap (var', if var =~ var' then exp else bind_fc_exp var exp)
+  ;;
+
+  (* Bind expression variable in expression *)
+  let rec bind_exp var =
+    function
+    | Unit_Intro | Int_Intro _ | Float64_Intro _ | Primitive _ as exp -> exp
+
+    | Unit_Elim (exp1, exp2) -> Unit_Elim (bind_exp var exp1, bind_exp var exp2)
+    | Pair_Intro (exp1, exp2) -> Pair_Intro (bind_exp var exp1, bind_exp var exp2)
+    | App (exp1, exp2) -> App (bind_exp var exp1, bind_exp var exp2)
+    | ForAll_frac_cap (var, exp) -> ForAll_frac_cap (var, bind_exp var exp)
+    | Specialise_frac_cap (exp, fc) -> Specialise_frac_cap (bind_exp var exp, fc)
+    | Array_Intro exp -> Array_Intro (bind_exp var exp)
+
+    | Var var' -> Var (if var =~ var' then var else var')
+
+    | Array_Elim (var', exp1, exp2 ) ->
+      Array_Elim (var', exp1, if var =~ var' then exp2 else bind_exp var exp2)
+
+    | Pair_Elim (var1, var2, exp1, exp2) ->
+      Pair_Elim (var1, var2, bind_exp var exp1,
+        if var =~ var1 || var =~ var2 then exp2 else bind_exp var exp2)
+
+    | Lambda (var', linear_t, exp ) ->
+      Lambda (var', linear_t, if var =~ var' then exp else bind_exp var exp)
+  ;;
+
 end
-;;
 
 (* TODO Internal tests *)
 let%test_module "Test" =
@@ -410,21 +470,18 @@ let%test_module "Test" =
 
     (* same_frac_cap (and pp_frac_cap) *)
     let%expect_test "same_frac_cap" =
-      let open Ast in
       same_frac_cap [] Zero (Succ Zero)
       |> printf !"%{sexp: unit Or_error.t}";
       [%expect {| (Error "Could not show 0 and 1 are equal.\n") |}]
     ;;
 
     let%expect_test "same_frac_cap" =
-      let open Ast in
       same_frac_cap [] (Succ (Succ (Var one))) (Var one)
       |> printf !"%{sexp: unit Or_error.t}";
       [%expect {| (Error "Could not show one+2 and one are equal.\n") |}]
     ;;
 
     let%expect_test "same_frac_cap" =
-      let open Ast in
       same_frac_cap [] (Var one) (Succ (Succ (Var three)))
       |> printf !"%{sexp: unit Or_error.t}";
       [%expect {| (Error "Could not show one and three+2 are equal.\n") |}]

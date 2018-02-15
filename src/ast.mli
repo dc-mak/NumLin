@@ -16,6 +16,9 @@ val sexp_of_frac_cap : frac_cap -> Sexplib.Sexp.t
 val compare_frac_cap : frac_cap -> frac_cap -> int
 val string_of_frac_cap : frac_cap -> string
 
+(** [bind_fc_fc var fc] replaces any [Var var'] in [fc] with [Var var] if [var.name = var'.name]. *)
+val bind_fc_fc : variable -> frac_cap -> frac_cap
+
 (** Standard Linear type system, using fractional capabilities
     and extensions for Linear Algebra. *)
 type linear_t =
@@ -31,6 +34,9 @@ val compare_linear_t : linear_t -> linear_t -> int
 val pp_linear_t : Caml.Format.formatter -> linear_t -> unit
 val substitute_in : linear_t -> var:variable -> replacement:frac_cap -> linear_t Base.Or_error.t
 val same_linear_t : linear_t -> linear_t -> unit Base.Or_error.t
+
+(** [bind_fc_lt var lt] replaces any [Var var'] in [lt] with [Var var] if [var.name = var'.name]. *)
+val bind_fc_lt : variable -> linear_t -> linear_t
 
 (** Primitives/extensions
     Intel Level 1: software.intel.com/en-us/mkl-developer-reference-c-blas-level-1-routines-and-functions
@@ -84,3 +90,11 @@ type expression =
 val sexp_of_expression : expression -> Sexplib.Sexp.t
 
 val pp_expression : Caml.Format.formatter -> expression -> unit
+
+(** [bind_fc_exp var exp] replaces any [Var var' : frac_cap] in [exp] with [Var
+    var] if [var.name = var'.name]. *)
+val bind_fc_exp : variable -> expression -> expression
+
+(** [bind_exp var exp] replaces any [Var var' : expression] in [exp] with [Var
+    var] if [var.name = var'.name]. *)
+val bind_exp : variable -> expression -> expression

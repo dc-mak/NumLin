@@ -38,7 +38,7 @@ let%expect_test "checker_unit_intro" =
 let%expect_test "checker_var_unbound" =
   check_expr (Var one)
   |> pretty;
-  [%expect {| (Error "Unbound variable one (not found in environment)") |}]
+  [%expect {| (Error "Unbound variable one_1 (not found in environment)") |}]
 ;;
 
 let unit_elim : Ast.expression =
@@ -74,7 +74,7 @@ let%expect_test "checker_pair_elim" =
 let%expect_test "checker_pair_elim" = 
   check_expr (Pair_Elim (one, two, pair, Var one))
   |> pretty;
-  [%expect {| (Error "Variable two not used.") |}]
+  [%expect {| (Error "Variable two_2 not used.") |}]
 ;;
 
 let unit_lambda : Ast.expression =
@@ -104,7 +104,7 @@ let forall : Ast.expression =
 let%expect_test "checker_forall" =
   check_expr forall
   |> pretty;
-  [%expect {| (Ok "\226\136\128 one. Arr[one] --o Arr[one]") |}]
+  [%expect {| (Ok "\226\136\128 one_1. Arr[one_1] --o Arr[one_1]") |}]
 ;;
 
 let specialise : Ast.expression =
@@ -174,12 +174,14 @@ let%expect_test "check_array_elim" =
     (Ok
       "\226\136\128 dot_prod_x_1719.\
      \n  Arr[dot_prod_x_1719] --o \226\136\128 dot_prod_y_1720.\
-     \n    Arr[dot_prod_y_1720]\
-     \n    --o ( Arr[dot_prod_x_1719] * Arr[dot_prod_y_1720] ) * f64")
+     \n    Arr[dot_prod_y_1720] --o\
+     \n    ( Arr[dot_prod_x_1719] * Arr[dot_prod_y_1720] ) * f64")
     (Ok "\226\136\128 norm2_1719. Arr[norm2_1719] --o Arr[norm2_1719] * f64")
     (Ok "f64 --o f64 --o Arr[0] --o Arr[0] --o Arr[0] * Arr[0]")
     (Ok "f64 --o f64 --o ( f64 * f64 ) * ( f64 * f64 )")
-    (Ok "Arr[0] --o Arr[0] --o f64 * Arr[0]")
+    (Ok
+      "Arr[0] --o Arr[0] --o \226\136\128 rotm_1719.\
+     \n  Arr[rotm_1719] --o ( Arr[0] * Arr[0] ) * Arr[rotm_1719]")
     (Ok "f64 * f64 --o f64 * f64 --o ( f64 * f64 ) * ( f64 * Arr[0] )")
     (Ok "f64 --o Arr[0] --o Arr[0]")
     (Ok

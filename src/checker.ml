@@ -152,9 +152,9 @@ let rec (check : Ast.expression -> Check_monad.well_formed Check_monad.t) =
   | Var var ->
     begin match%bind lookup var with
     | None ->
-      fail_string ("Unbound variable " ^ var.name ^ " (not found in environment)")
+      fail_string ("Unbound variable " ^ (Ast.string_of_variable var) ^ " (not found in environment)")
     | Some (Used _ ) ->
-      fail_string ("Variable " ^ var.name ^ " used twice (or more).")
+      fail_string ("Variable " ^ (Ast.string_of_variable var) ^ " used twice (or more).")
     | Some (Not_used var) ->
       let%bind linear_t = use_var var in
       return linear_t

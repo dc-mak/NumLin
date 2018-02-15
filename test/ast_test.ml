@@ -14,7 +14,14 @@ let%expect_test "bind_fc_fc" =
   let open Ast in
   bind_fc_fc one Zero
   |> Stdio.printf !"%{sexp: frac_cap}";
-  [%expect {| |}]
+  [%expect {| Zero |}]
+;;
+
+let%expect_test "bind_fc_fc" =
+  let open Ast in
+  bind_fc_fc one (Succ (Var {one with id=(-1)}))
+  |> Stdio.printf !"%{sexp: frac_cap}";
+  [%expect {| (Succ (Var ((id 1) (name one)))) |}]
 ;;
 
 (* Generate a sample of linear_types of height at most i *)
@@ -42,19 +49,25 @@ let%expect_test "pp_linear_type" =
         Stdio.Out_channel.(newline stdout) in
       List.iter ~f);
   [%expect {|
-        ∀ i. ∀ h.
-          ( ∀ e. ∀ d. I * Arr[a+2] ) * ( Arr[c+2] * ( ∀ d. I ) )
-          --o ( ( ( Arr[a+2] --o Arr[a+2] ) --o Arr[b+2] ) * ( I * Arr[a+2] --o I ) )
-              * ( ∀ e. ( I --o I ) * ( Arr[a+2] * Arr[a+2] ) )
-        ∀ i.
-          ( Arr[e+2] --o ( Arr[c+2] --o ∀ d. I )
-            --o ( Arr[a+2] --o Arr[a+2] ) * ( I * I ) --o ( ∀ c. I )
-            --o Arr[a+2] --o Arr[a+2] )
-          * ( ( ( ∀ e. ∀ d. I * Arr[a+2] ) * ( Arr[c+2] * ( ∀ d. I ) ) )
-              * ( ( ( ( Arr[a+2] --o Arr[a+2] ) --o Arr[b+2] )
-                    * ( I * Arr[a+2] --o I ) )
-                  * ( ∀ e. ( I --o I ) * ( Arr[a+2] * Arr[a+2] ) ) ) )
-        ∀ i. ∀ h. ∀ g. ∀ f. ∀ e. I |}]
+        ∀ i_8. Arr[g_6+2]
+        ∀ i_8. ∀ h_7.
+          ( ( ( Arr[a_0+2] * I ) * ( I * Arr[a_0+2] ) --o
+              ( I --o Arr[a_0+2] ) --o Arr[a_0+2] --o Arr[a_0+2] )
+            * ( ( ( Arr[a_0+2] * Arr[a_0+2] ) * ( I * I ) )
+                * ( ( Arr[a_0+2] * Arr[a_0+2] ) * ( Arr[a_0+2] --o I ) ) ) )
+          * ( ( ( Arr[a_0+2] * Arr[a_0+2] ) * ( I * I ) --o
+              ( Arr[a_0+2] * Arr[a_0+2] ) * ( Arr[a_0+2] --o I ) )
+              * ( ( ( Arr[a_0+2] * I ) * ( I * Arr[a_0+2] ) )
+                  * ( ( I --o Arr[a_0+2] ) --o Arr[a_0+2] --o Arr[a_0+2] ) ) )
+        ∀ i_8.
+          ( ( ∀ e_4. Arr[a_0+2] * Arr[a_0+2] --o Arr[a_0+2] --o I )
+            * ( ( Arr[a_0+2] * I --o ∀ c_2. Arr[a_0+2] )
+                * ( Arr[a_0+2] * I --o I * Arr[a_0+2] ) ) --o
+            ( ∀ e_4. Arr[b_1+2] * ( I * Arr[a_0+2] ) ) --o ∀ e_4. Arr[c_2+2] ) --o
+          ( ( Arr[a_0+2] * Arr[a_0+2] --o Arr[a_0+2] * I ) --o
+          ( Arr[a_0+2] * Arr[a_0+2] ) * ( Arr[a_0+2] --o I ) )
+          * ( ( ( I * Arr[a_0+2] ) * ( Arr[a_0+2] * I ) ) * ( ∀ d_3. I * I ) ) --o
+          ( ∀ e_4. Arr[b_1+2] * ( I * Arr[a_0+2] ) ) --o ∀ e_4. Arr[c_2+2] |}]
 ;;
 
 (* substitute_in *)
@@ -107,10 +120,10 @@ let%expect_test "same_linear_t" =
   [%expect {|
     (Error
      ( "Could not show equality:\
-      \n    Arr[one]\
+      \n    Arr[one_1]\
       \nwith\
       \n    Arr[1]\
-      \n" "Could not show one and 1 are equal.\n")) |}]
+      \n" "Could not show one_1 and 1 are equal.\n")) |}]
 ;;
 
 let%expect_test "same_linear_t" =
@@ -121,10 +134,10 @@ let%expect_test "same_linear_t" =
   [%expect {|
         (Error
          ( "Could not show equality:\
-          \n    \226\136\128 one. Arr[one+2]\
+          \n    \226\136\128 one_1. Arr[one_1+2]\
           \nwith\
-          \n    \226\136\128 two. Arr[two]\
-          \n" "Could not show one+2 and two are equal.\n")) |}]
+          \n    \226\136\128 two_2. Arr[two_2]\
+          \n" "Could not show one_1+2 and two_2 are equal.\n")) |}]
 ;;
 
 let%expect_test "same_linear_t" =
@@ -136,9 +149,9 @@ let%expect_test "same_linear_t" =
   [%expect {|
         (Error
          ( "Could not show equality:\
-          \n    ( \226\136\128 one. Arr[one+1] ) * I\
+          \n    ( \226\136\128 one_1. Arr[one_1+1] ) * I\
           \nwith\
-          \n    ( \226\136\128 one. Arr[one] ) * I\
+          \n    ( \226\136\128 one_1. Arr[one_1] ) * I\
           \n"
            "INTERNAL ERROR: binding variables are not unique.\
           \nBody 1: (Array_t (Succ (Var ((id 1) (name one)))))\
@@ -155,10 +168,10 @@ let%expect_test "same_linear_t" =
   [%expect {|
         (Error
          ( "Could not show equality:\
-          \n    ( \226\136\128 one. Arr[one+1] ) * I\
+          \n    ( \226\136\128 one_1. Arr[one_1+1] ) * I\
           \nwith\
-          \n    ( \226\136\128 two. Arr[two] ) * I\
-          \n" "Could not show one+1 and two are equal.\n")) |}]
+          \n    ( \226\136\128 two_2. Arr[two_2] ) * I\
+          \n" "Could not show one_1+1 and two_2 are equal.\n")) |}]
 ;;
 
 let%expect_test "same_linear_t" =
@@ -191,8 +204,9 @@ let%expect_test "same_linear_t" =
   [%expect {|
     (Error
      ( "Could not show equality:\
-      \n    \226\136\128 one. \226\136\128 two. Arr[one] --o Arr[two] --o Arr[one] * Arr[two]\
+      \n    \226\136\128 one_1. \226\136\128 two_2. Arr[one_1] --o Arr[two_2] --o Arr[one_1] * Arr[two_2]\
       \nwith\
-      \n    \226\136\128 three. \226\136\128 four. Arr[three] --o Arr[four] --o Arr[four] * Arr[three]\
-      \n" "Could not show one and four and alpha-equivalent.\n")) |}]
+      \n    \226\136\128 three_3. \226\136\128 four_4.\
+      \n      Arr[three_3] --o Arr[four_4] --o Arr[four_4] * Arr[three_3]\
+      \n" "Could not show one_1 and four_4 and alpha-equivalent.\n")) |}]
 ;;

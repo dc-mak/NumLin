@@ -5,6 +5,7 @@
 type variable = { id : int; name : string; }
 val sexp_of_variable : variable -> Sexplib.Sexp.t
 val compare_variable : variable -> variable -> int
+val string_of_variable : variable -> string
 
 (** We (will) have two kinds in this type system, fractional capabilities of an array
     and sizes of an array.  Fractional capabilities keep track of the linearity

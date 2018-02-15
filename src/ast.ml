@@ -58,7 +58,10 @@ struct
       if List.exists ~f:(fun (x,y) -> x = var1 && y = var2 || y = var1 && x = var2) equiv then
         return ()
       else
-        Or_error.errorf !"Could not show %s and %s and alpha-equivalent.\n" var1.name var2.name
+        Or_error.errorf
+          !"Could not show %s and %s and alpha-equivalent.\n"
+          (string_of_variable var1)
+          (string_of_variable var2)
 
     | _, _ ->
       let pp () = string_of_frac_cap in
@@ -125,20 +128,20 @@ struct
         let al, ar = match arg_t with
           | Unit | Int | Float64 | Array_t _ | Pair _ -> "", ""
           | ForAll_frac_cap _ | Fun _ -> "( ", " )" in
-        fprintf ppf "%s%a%s@;<1 2>--o %a" al pp_linear_t arg_t ar pp_linear_t body_t
+        fprintf ppf "@[%s%a%s --o@ %a@]" al pp_linear_t arg_t ar pp_linear_t body_t
 
       | Fun (arg_t, body_t) ->
         let al, ar = match arg_t with
           | Unit | Int | Float64 | Array_t _ | Pair _ -> "", ""
           | ForAll_frac_cap _ | Fun _ -> "( ", " )" in
-        fprintf ppf "@[%s%a%s@ --o %a@]" al pp_linear_t arg_t ar pp_linear_t body_t
+        fprintf ppf "%s%a%s@ --o@ %a" al pp_linear_t arg_t ar pp_linear_t body_t
 
       (* Series of quantifiers in a line: ∀ i. ∀ j. ∀ k.\n  ... *)
       | ForAll_frac_cap (var, (ForAll_frac_cap _ as linear_t)) ->
-        fprintf ppf "∀ %s. %a" var.name pp_linear_t linear_t
+        fprintf ppf "@,∀ %s. %a" (string_of_variable var) pp_linear_t linear_t
 
       | ForAll_frac_cap (var, linear_t) ->
-        fprintf ppf "∀ %s.@;<1 2>@[%a@]" var.name pp_linear_t linear_t
+        fprintf ppf "∀ %s.@;<1 2>@[%a@]" (string_of_variable var) pp_linear_t linear_t
 
       | Array_t frac_cap ->
         fprintf ppf "Arr[%s]" (string_of_frac_cap frac_cap) in
@@ -235,13 +238,16 @@ struct
       same_frac_cap equiv frac_cap1 frac_cap2
 
     | _, _ ->
-      let pp () = string_of_linear_t in
-      Or_error.errorf !"Specifically, could not show this equality:\n    %a\nwith\n    %a\n" pp linear_t1 pp linear_t2
+      let pp () x = string_of_linear_t x |> String.split ~on:'\n' |> String.concat ~sep:"\n    " in
+      Or_error.errorf
+        !"Specifically, could not show this equality:\n    %a\nwith\n    %a\n"
+        pp linear_t1
+        pp linear_t2
   ;;
 
   let same_linear_t x y : unit Or_error.t =
     Result.map_error (same_linear_t [] x y) (fun err ->
-      let pp () = string_of_linear_t in
+      let pp () x = string_of_linear_t x |> String.split ~on:'\n' |> String.concat ~sep:"\n    " in
       let tag = Printf.sprintf "Could not show equality:\n    %a\nwith\n    %a\n" pp x pp y in
       Error.tag ~tag err)
   ;;

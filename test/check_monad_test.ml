@@ -38,8 +38,8 @@ let%expect_test "create_fresh" =
   end
   |> run ~counter:1719 |> ignore;
   [%expect {|
-    ((id 1719) (name 1719))
-    ((id 1720) (name test_1720)) |}]
+    ((id 1719) (name gen))
+    ((id 1720) (name test)) |}]
 ;;
 
 (* with_frac_cap *)
@@ -56,7 +56,7 @@ let%expect_test "with_linear_t" =
   with_linear_t [(four,  wf)] (return wf_Unit);
   |> execute;
   [%expect {|
-        (Error "Variable four not used.") |}]
+        (Error "Variable four_4 not used.") |}]
 ;;
 
 (* lookup *)
@@ -93,7 +93,7 @@ let%expect_test "lookup None (with_linear_t)" =
   |> execute;
   [%expect {|
         ()
-        (Error "Variable five not used.") |}]
+        (Error "Variable five_5 not used.") |}]
 ;;
 
 let%expect_test "lookup (Some (Not_used _))" =
@@ -107,7 +107,7 @@ let%expect_test "lookup (Some (Not_used _))" =
   |> execute;
   [%expect {|
         (((id 4) (name four)) (WF (Array_t (Var ((id 3) (name three))))))
-        (Error "Variable four not used.") |}]
+        (Error "Variable four_4 not used.") |}]
 ;;
 
 let%expect_test "lookup (Some (Used _))" =
@@ -212,6 +212,6 @@ let%expect_test "with_linear_t/use_var" =
   end;
   |> execute;
   [%expect {|
-    (Error  "Variable three not used.\
-           \nVariable one not used.") |}]
+    (Error  "Variable three_3 not used.\
+           \nVariable one_1 not used.") |}]
 ;;

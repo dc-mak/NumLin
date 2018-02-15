@@ -65,12 +65,10 @@ include State_or_error.Make (struct type t = state end)
 ;;
 
 (* I thought I needed this but clearly not it seems *)
-let create_fresh ?name () =
+let create_fresh ?(name="gen") () =
   let open Let_syntax in
   let%bind {counter=id;_} as state = get in
   let%bind () =  put {state with counter=id+1} in
-  let default = Int.to_string id in
-  let name = Option.value_map ~default ~f:(Fn.flip (^) ("_" ^ default)) name in
   return (Ast.({id; name}))
 ;;
 
@@ -205,7 +203,7 @@ let with_linear_t bindings linear_t =
         let%bind () = put {state with linear_t_vars=remove linear_t_vars var} in
         return err_log
       | Some (Not_used _) ->
-        return ((str "Variable %s not used." var.Ast.name) :: err_log)
+        return ((str "Variable %s not used." (Ast.string_of_variable var)) :: err_log)
       | None ->
         return ((str !"INTERNAL ERROR: %{sexp:Ast.variable} NOT FOUND IN linear_t_vars" var) :: err_log)
     end in

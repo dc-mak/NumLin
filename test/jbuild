@@ -15,5 +15,5 @@
 (alias (
     (name runtest)
     (deps (test.exe))
-    (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la_test)))
+    (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la_external)))
 ))

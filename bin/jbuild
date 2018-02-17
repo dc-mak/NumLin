@@ -2,11 +2,6 @@
 
 (executable (
     (name repl)
-    (libraries (lt4la))
+    (libraries (lt4la lwt lambda-term))
 ))
 
-(alias (
-    (name repl)
-    (deps (repl.exe))
-    (action (chdir ${ROOT} (run ${<})))
-))

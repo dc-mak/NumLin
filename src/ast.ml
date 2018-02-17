@@ -1,17 +1,11 @@
 (* Dhruv Makwana *)
 (* LT4LA Abstract Syntax Tree *)
 (* -------------------------- *)
-(* This is my first time doing anything like this so please feel free to give me feedback on:
-   - OCaml features I should be using, like documentation comments and attributes
-   - Structuring the project
-   - Implementation tips and tricks *)
-
-(* Please read the .mli file for explanations. *)
 
 open Base
 ;;
 
-(** Variables are names (parsing/printing) and integers (uniqueness). *)
+(* Variables *)
 type variable =
   { id: int
   ; name: string [@compare.ignore]
@@ -85,6 +79,13 @@ end
  * ;;
  *)
 
+let string_of_pp ?(size=80) f x =
+  let buffer = Buffer.create size in
+  f (Caml.Format.formatter_of_buffer buffer) x;
+  Buffer.contents buffer
+;;
+
+
 (* Linear types *)
 include
 struct
@@ -149,12 +150,6 @@ struct
     fprintf ppf "@[%a@]@?" pp_linear_t
   ;;
 
-  let string_of_linear_t linear_t =
-    let buffer = Buffer.create 80 in
-    pp_linear_t (Caml.Format.formatter_of_buffer buffer) linear_t;
-    Buffer.contents buffer
-  ;;
-
   let substitute_in =
     let var_ref = ref {name="INTERNAL_REF"; id=(-1)} in
     let rep_ref = ref Zero in
@@ -207,6 +202,7 @@ struct
   (* Same linear_t UP TO alpha-equivalence *)
   let rec same_linear_t equiv linear_t1 linear_t2 =
     let open Or_error.Let_syntax in
+    let string_of_linear_t = string_of_pp pp_linear_t in
 
     match linear_t1, linear_t2 with
     | Unit, Unit
@@ -246,10 +242,15 @@ struct
   ;;
 
   let same_linear_t x y : unit Or_error.t =
-    Result.map_error (same_linear_t [] x y) (fun err ->
-      let pp () x = string_of_linear_t x |> String.split ~on:'\n' |> String.concat ~sep:"\n    " in
-      let tag = Printf.sprintf "Could not show equality:\n    %a\nwith\n    %a\n" pp x pp y in
-      Error.tag ~tag err)
+    Result.map_error
+      (same_linear_t [] x y)
+      (fun err ->
+         let pp () x =
+           string_of_pp pp_linear_t x
+           |> String.split ~on:'\n'
+           |> String.concat ~sep:"\n    " in
+         let tag = Printf.sprintf "Could not show equality:\n    %a\nwith\n    %a\n" pp x pp y in
+         Error.tag ~tag err)
   ;;
 
   (* Bind fractional-capability variable in linear type *)
@@ -367,7 +368,7 @@ struct
 
     | Lambda (var, linear_t, exp) ->
       fprintf ppf "@[<2>fun %s (* %s *) ->@ %a@]"
-        (string_of_variable var) (string_of_linear_t linear_t) pp_expression exp
+        (string_of_variable var) (string_of_pp pp_linear_t linear_t) pp_expression exp
 
     | App (exp1, exp2) ->
       let parens ?(left=false) = function

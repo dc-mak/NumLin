@@ -15,14 +15,10 @@ let check_expr =
   Checker.check_expr ~counter:1719
 ;;
 
-let string_of_linear_t linear_t =
-  let buffer = Buffer.create 80 in
-  Ast.pp_linear_t (Caml.Format.formatter_of_buffer buffer) linear_t;
-  Buffer.contents buffer
-;;
-
 let pretty x =
-  Stdio.printf !"%{sexp: string Or_error.t}\n" (Or_error.map x ~f:string_of_linear_t)
+  Stdio.printf
+    !"%{sexp: string Or_error.t}\n"
+    (Or_error.map x ~f:(Ast.(string_of_pp pp_linear_t)))
 ;;
 
 let arr : Ast.expression =

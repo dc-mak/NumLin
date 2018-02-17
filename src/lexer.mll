@@ -2,11 +2,6 @@
 (* Dhruv Makwana *)
 (* LT4LA Lexer *)
 (* ----------- *)
-(* This is my first time doing anything like this so please feel free to give me feedback on:
-   - OCaml features I should be using, like documentation comments and attributes
-   - Structuring the project
-   - Implementation tips and tricks *)
-
 (* TODO: Unicode *)
 
 open Lexing

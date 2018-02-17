@@ -1,124 +1,92 @@
 (* Dhruv Makwana *)
-(* LT4LA REPL *)
-(* ---------- *)
-(* This is my first time doing anything like this so please feel free to give me feedback on:
-   - OCaml features I should be using, like documentation comments and attributes
-   - Structuring the project
-   - Implementation tips and tricks *)
+(* REPL *)
+(* ---- *)
+(* Copyright : (c) 2015, Martin DeMello <mdemello@google.com>
+   Licence   : BSD3
+   This file was adapted from examples/repl.ml of Lambda-Term. *)
 
-(* TODO: split out useful functions for testing into a Parser_utils module in src. *)
-
-open Base
+open React
 ;;
 
-open Lt4la
+open Lwt
 ;;
 
-let string_of_exp exp =
-  let buffer = Buffer.create 80 in
-  Ast.pp_expression (Caml.Format.formatter_of_buffer buffer) exp;
-  Buffer.contents buffer
+open LTerm_style
 ;;
 
-type colors =
-  | B_Red
-  | B_Green
-  | B_Cyan
-  | B_Yellow
+open LTerm_text
 ;;
 
-let color col str = 
-  let code =
-    let col = match col with
-      | B_Red -> "1;31"
-      | B_Green -> "1;32"
-      | B_Cyan -> "1;36"
-      | B_Yellow -> "1;33" in
-    "\027[" ^ col ^ "m" in
-  let reset = "\027[0m" in
-  code ^ str ^ reset
+module I =
+  Interpreter
 ;;
 
-module Inc =
-  Parser.MenhirInterpreter
+(* Prompt based on current interpreter state *)
+let make_prompt state =
+  let prompt = Printf.sprintf "In  [%d]: " state.I.n in
+  eval [B_fg cyan; S prompt; E_fg]
 ;;
 
-let rec loop lexbuf = function
-  | Inc.InputNeeded _ as checkpoint ->
-    let token = Lexer.read lexbuf in
-    let startp, endp = lexbuf.lex_start_p, lexbuf.lex_curr_p in
-    let checkpoint = Inc.offer checkpoint (token, startp, endp) in
-    loop lexbuf checkpoint
-
-  | Inc.Shifting (_, _, _)
-  | Inc.AboutToReduce (_, _) as checkpoint ->
-    let checkpoint = Inc.resume checkpoint in
-    loop lexbuf checkpoint
-
-  | Inc.HandlingError env ->
-    let open Lexing in
-    let pos = lexbuf.lex_curr_p in
-    let cpos = pos.pos_cnum - pos.pos_bol in
-    let bytes = Bytes.create cpos in
-    for i = 0 to cpos - 2 do
-      Bytes.set bytes i ' ';
-    done;
-    Bytes.set bytes (cpos-1) '^';
-    Bytes.to_string bytes;
-    (* Printf.sprintf "%s:%d:%d" pos.pos_fname *)
-    (* pos.pos_lnum (cpos)                     *)
-    |> color B_Red
-    |> Stdio.Out_channel.(output_string stdout)
-
-  | Inc.Accepted v ->
-    let open Stdio.Out_channel in
-    begin match v with
-    | Ok value ->
-      string_of_exp value
-      |> String.split ~on:'\n'
-      |> String.concat ~sep:"\n  "
-      |> color B_Green
-      |> output_string stdout;
-    | Error err ->
-      Error.to_string_hum err
-      |> String.split ~on:'\n'
-      |> String.concat ~sep:"\n  "
-      |> color B_Red
-      |> output_string stdout;
-    end
-
-  | Inc.Rejected ->
-    Stdio.Out_channel.(output_string stdout "Uh-oh")
+(* Format the interpreter output for REPL display *)
+let make_output state out =
+  let pre = Printf.sprintf "Out [%d]: " (state.I.n - 1) in
+  let out, col = match out with 
+    | Ok str -> str, green
+    | Error str -> str, red in
+  eval [B_fg col; S pre; E_fg; S out]
 ;;
 
-(*
- * let loop_ filename =
- *   let inx = Stdio.In_channel.create filename in
- *   let lexbuf = Lexing.from_channel inx in
- *   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
- *   parse_and_print lexbuf;
- *   Stdio.In_channel.close inx
- * ;;
- *)
+(* Customization of the read-line engine *)
+class read_line ~term ~history ~state =
+  object(self)
+    inherit LTerm_read_line.read_line ~history ()
+    inherit [Zed_utf8.t] LTerm_read_line.term term
+    method! show_box = false
+    initializer self#set_prompt (S.const (make_prompt state))
+  end
 
-let loop = function
-  | ":q" ->
-    Stdio.Out_channel.(output_string stdout) (color B_Yellow "- Bye!\n");
-    Caml.exit 0
-  | str ->
-    let putstr = Stdio.Out_channel.(output_string stdout) in
-    let lexbuf = Lexing.from_string str in
-    lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = "repl" };
-    putstr (color B_Yellow "- ");
-    loop lexbuf (Parser.Incremental.prog lexbuf.lex_curr_p);
-    putstr (color B_Cyan ("\n> "));
-    Stdio.Out_channel.(flush stdout)
+(* Main loop *)
+let rec loop term history state =
+  Lwt.catch
+
+    (fun () ->
+       let history = LTerm_history.contents history in
+       let rl = new read_line ~term ~history ~state in
+       rl#run >|= fun command -> Some command)
+
+    (function
+      | Sys.Break -> return None
+      | exn -> Lwt.fail exn)
+
+  >>= function
+
+  | Some command ->
+    let state, out = I.eval state command in
+    LTerm.fprintls term (make_output state out) >>= fun () ->
+    LTerm_history.add history command;
+    loop term history state
+
+  | None ->
+    loop term history state
+;;
+
+(* Entry point *)
+let main () =
+  LTerm_inputrc.load () >>= fun () ->
+  Lwt.catch
+
+    (fun () ->
+       let state = { I.n = 1 } in
+       LTerm.printls (eval [S "LT4LA REPL"]) >>= fun () ->
+       Lazy.force LTerm.stdout >>= fun term ->
+       loop term (LTerm_history.create []) state)
+
+    (function
+      | LTerm_read_line.Interrupt -> Lwt.return ()
+      | exn -> Lwt.fail exn)
 ;;
 
 let () =
-  let header = "LT4LA REPL (type ':q<Enter>' to quit)\n" in
-  let banner = String.(make (length header - 1) '-' ^ "\n> ") in
-  let msg = color B_Cyan (header ^ banner) in
-  Stdio.Out_channel.(output_string stdout msg; flush stdout);
-  Stdio.In_channel.(iter_lines stdin) ~f:loop
+  Lwt_main.run (main ())
 ;;
+

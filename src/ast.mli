@@ -2,6 +2,10 @@
 (* LT4LA Abstract Syntax Tree *)
 (* -------------------------- *)
 
+(** Make a pretty-printer output a string. *)
+val string_of_pp : ?size:int -> (Caml.Format.formatter -> 'a -> 'b) -> 'a -> string
+
+(** Variables have a [name] for pretty-printing and an [id] for uniqueness. *)
 type variable = { id : int; name : string; }
 val sexp_of_variable : variable -> Sexplib.Sexp.t
 val compare_variable : variable -> variable -> int

@@ -105,7 +105,7 @@
 %token ROTM
 %token ROTMG
 %token SCAL
-%token IAMAX
+%token AMAX
 
 (* Simple expressions *)
 %token <int> INT
@@ -178,7 +178,7 @@ primitive:
     | ROTM       { Ast.GivensMod_Rotation     }
     | ROTMG      { Ast.Gen_GivensMod_Rotation }
     | SCAL       { Ast.Scalar_Mult            }
-    | IAMAX      { Ast.Index_of_Max_Abs       }
+    | AMAX       { Ast.Index_of_Max_Abs       }
 
 linear_t:
     | simple_lt                          { $1                  }

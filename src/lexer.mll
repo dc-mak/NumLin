@@ -47,7 +47,7 @@ let keywords =
     ; ("rotm", ROTM)
     ; ("rotmg", ROTMG)
     ; ("scal", SCAL)
-    ; ("iamax", IAMAX)
+    ; ("amax", AMAX)
     (* expressions *)
     ; ("let", LET )
     ; ("Array", ARRAY )

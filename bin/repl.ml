@@ -44,25 +44,27 @@ class read_line ~term ~history ~state =
     method! show_box = false
     initializer self#set_prompt (S.const (make_prompt state))
   end
+;;
 
 (* Main loop *)
 let rec loop term history state =
-  Lwt.catch
 
-    (fun () ->
-       let history = LTerm_history.contents history in
-       let rl = new read_line ~term ~history ~state in
-       rl#run >|= fun command -> Some command)
+  match%lwt
 
-    (function
-      | Sys.Break -> return None
-      | exn -> Lwt.fail exn)
+    begin try%lwt 
+      let history = LTerm_history.contents history in
+      let rl = new read_line ~term ~history ~state in
+      rl#run >|= Base.Option.return
+    with
+    | Sys.Break -> return None
+    | exn -> Lwt.fail exn
+    end
 
-  >>= function
+  with
 
   | Some command ->
     let state, out = I.eval state command in
-    LTerm.fprintls term (make_output state out) >>= fun () ->
+    let%lwt () = LTerm.fprintls term (make_output state out) in
     LTerm_history.add history command;
     loop term history state
 
@@ -72,18 +74,15 @@ let rec loop term history state =
 
 (* Entry point *)
 let main () =
-  LTerm_inputrc.load () >>= fun () ->
-  Lwt.catch
-
-    (fun () ->
-       let state = { I.n = 1 } in
-       LTerm.printls (eval [S "LT4LA REPL"]) >>= fun () ->
-       Lazy.force LTerm.stdout >>= fun term ->
-       loop term (LTerm_history.create []) state)
-
-    (function
-      | LTerm_read_line.Interrupt -> Lwt.return ()
-      | exn -> Lwt.fail exn)
+  let%lwt () =  LTerm_inputrc.load () in
+  try%lwt
+    let state = { I.n = 1 } in
+    let%lwt () = LTerm.printls (eval [S "LT4LA REPL"]) in
+    let%lwt term = Lazy.force LTerm.stdout in
+    loop term (LTerm_history.create []) state
+  with
+  | LTerm_read_line.Interrupt -> Lwt.return ()
+  | exn -> Lwt.fail exn
 ;;
 
 let () =

@@ -36,7 +36,7 @@ RUN opam install -y           \
         plplot                \
         "gsl=1.20.0"          \
         # LT4LA               \
-        core_kernel           \
+        base                  \
         ppx_driver            \
         ppx_expect            \
         ppx_inline_test       \
@@ -44,6 +44,8 @@ RUN opam install -y           \
         ppx_traverse          \
         ppx_traverse_builtins \
         menhir                \
+        lambda-term           \
+        lwt lwt_ppx           \
     && opam env
 
 # Environment variables

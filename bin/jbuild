@@ -3,5 +3,5 @@
 (executable (
     (name repl)
     (libraries (lt4la lwt lambda-term))
+    (preprocess (pps (lwt_ppx ppx_driver.runner)))
 ))
-

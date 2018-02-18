@@ -5,9 +5,6 @@
 open Base
 ;;
 
-open Lt4la
-;;
-
 type state =
   { n : int }
 ;;
@@ -28,7 +25,7 @@ let handler lexbuf =
 let accept v =
   match v with
   | Ok value ->
-    Ast.(string_of_pp pp_expression value)
+    Lt4la.Ast.(string_of_pp pp_expression value)
     |> String.split ~on:'\n'
     |> String.concat ~sep:"\n  "
     |> Result.return
@@ -42,7 +39,7 @@ let accept v =
 let eval state str =
   let lexbuf = Lexing.from_string str in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = "repl" };
-  let out = Parser_utils.(drive {handler;accept}) lexbuf
-              (Parser.Incremental.prog lexbuf.lex_curr_p) in
+  let out = Lt4la.(Parser_utils.(drive {handler;accept}) lexbuf
+              (Parser.Incremental.prog lexbuf.lex_curr_p)) in
   ({ n = state.n + 1 }, out)
 ;;

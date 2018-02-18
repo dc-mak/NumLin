@@ -2,6 +2,7 @@
 
 (executable (
     (name test)
+    (flags (:standard -short-paths))
     (libraries (lt4la ppx_expect.evaluator ppx_inline_test.runner.lib))
     (preprocess (pps (ppx_jane ppx_driver.runner (-inline-test-lib lt4la_external))))
 ))

@@ -5,14 +5,15 @@
 open Base
 ;;
 
-open Lt4la
-;;
-
 open Vars
 ;;
 
+module Ast =
+  Lt4la.Ast
+;;
+
 let check_expr = 
-  Checker.check_expr ~counter:1719
+  Lt4la.Checker.check_expr ~counter:1719
 ;;
 
 let pretty x =

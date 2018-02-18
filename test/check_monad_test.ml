@@ -4,13 +4,14 @@
 open Base
 ;;
 
-open Lt4la
-;;
-
 open Vars
 ;;
 
-open Check_monad
+module Ast =
+  Lt4la.Ast
+;;
+
+open Lt4la.Check_monad
 ;;
 
 let execute x =

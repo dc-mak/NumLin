@@ -1,8 +1,8 @@
 (* Dhruv Makwana *)
 (* LT4LA State_or_error *)
 (* -------------------- *)
-(* Basic monad for expressing stateful computation with terminating errors. *)
 
+(** Basic monad for expressing stateful computation with terminating errors. *)
 module Make :
   functor (State : sig type t end) ->
   sig

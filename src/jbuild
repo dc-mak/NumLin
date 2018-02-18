@@ -3,6 +3,7 @@
 (library (
     (name lt4la)
     (synopsis "Linear Types for Linear Algebra")
+    (flags (:standard -short-paths))
     (libraries (
         owl
         menhirLib

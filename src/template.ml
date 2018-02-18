@@ -11,10 +11,6 @@ module Arr =
   Bigarray.Array1
 ;;
 
-type f64 =
-  Bigarray.float64_elt
-;;
-
 type zero =
     Zero
 ;;
@@ -24,7 +20,7 @@ type 'a succ =
 ;;
 
 type 'a arr = 
-  (float, f64, Bigarray.c_layout) Arr.t
+  (float, Bigarray.float64_elt, Bigarray.c_layout) Arr.t
 ;;
 
 type arr0 =

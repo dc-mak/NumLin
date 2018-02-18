@@ -76,14 +76,22 @@ for more information.
 
 ### Library
 
-Right now, it's just an Abstract Syntax Tree and a Checker. I use
+At its core, it's just an Abstract Syntax Tree and a Checker. I use
 [ppx_let](https://github.com/janestreet/ppx_let) and try and keep everything
-pure functional , returning `'a Or_error.t` for informative error messages.
+pure functional, returning `'a Or_error.t` for informative error messages.
 
 `State_or_error` is a Error-monad with state as the result-type. `Check_monad`
 uses it to provide very constrained "mutation" interface to the checker, and
 attempts to use OCaml's type system to prevent invalid use of the interfaces
 (see `Check_monad.use_var`).
+
+`src/ast.ml[i]` also contains the pretty-printing/code-generation for the AST.
+They assume/use the functions provided by `src/template.ml`.
+
+Parsing and lexing are available for convenience in writing expressions (see
+the REPL for details).
+
+Combinators is the starting point of the user-visible interface to this library.
 
 ### Tests
 

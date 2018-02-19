@@ -252,9 +252,7 @@ let run well_formed ~counter =
   end
 ;;
 
-(* TODO Internal tests *)
 let%test_module "Test" =
   (module struct
-    let%test "test" = true
   end)
 ;;

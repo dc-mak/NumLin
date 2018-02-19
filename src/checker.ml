@@ -222,9 +222,7 @@ let check_expr expr =
   Check_monad.run (check expr)
 ;;
 
-(* TODO Internal tests *)
 let%test_module "Test" =
   (module struct
-    let%test "test" = true
   end)
 ;;

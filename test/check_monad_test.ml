@@ -125,9 +125,38 @@ let%expect_test "lookup (Some (Used _))" =
         (Ok (Array_t (Var ((id 3) (name three))))) |}]
 ;;
 
-(* TODO: test if_well_formed somehow? *)
+(* if_well_formed *)
+let%expect_test "if_well_formed" =
+  if_well_formed (Succ Zero)
+    ~then_:(Fn.const (fail_string "Yay"))
+    ~else_:(Fn.const (fail_string "Nay"))
+  |> execute;
+  [%expect {|
+     (Error Yay) |}]
+;;
+
+let%expect_test "if_well_formed" =
+  if_well_formed (Var one)
+    ~then_:(Fn.const (fail_string "Yay"))
+    ~else_:(Fn.const (fail_string "Nay"))
+  |> execute;
+  [%expect {|
+     (Error Nay) |}]
+;;
+
+let%expect_test "if_well_formed" =
+  with_frac_cap [one] begin
+    if_well_formed (Var one)
+      ~then_:(Fn.const (fail_string "Yay"))
+      ~else_:(Fn.const (fail_string "Nay"))
+  end
+  |> execute;
+  [%expect {|
+     (Error Yay) |}]
+;;
+
+(* well_formed_lt *)
 let%expect_test "well_formed" =
-  let open Let_syntax in
   wf_lt Ast.(Array_t Zero) >>= return
   |> execute;
   [%expect {|
@@ -135,7 +164,6 @@ let%expect_test "well_formed" =
 ;;
 
 let%expect_test "well_formed" =
-  let open Let_syntax in
   wf_lt Ast.(Array_t (Var one)) >>= return
   |> execute;
   [%expect {|
@@ -144,7 +172,6 @@ let%expect_test "well_formed" =
 
 (* well_formed/with_frac_cap *)
 let%expect_test "well_formed/with_frac_cap" =
-  let open Let_syntax in
   with_frac_cap [one] (wf_lt Ast.(Array_t (Var one)) >>= return)
   |> execute;
   [%expect {|
@@ -152,7 +179,6 @@ let%expect_test "well_formed/with_frac_cap" =
 ;;
 
 let%expect_test "well_formed/with_frac_cap" =
-  let open Let_syntax in
   with_frac_cap [four] (wf_lt Ast.(Array_t (Succ (Var one))) >>= return)
   |> execute;
   [%expect {|
@@ -160,7 +186,6 @@ let%expect_test "well_formed/with_frac_cap" =
 ;;
 
 let%expect_test "well_formed/with_frac_cap" =
-  let open Let_syntax in
   with_frac_cap [one] (wf_lt Ast.(Array_t (Succ (Var one))) >>= return)
   |> execute;
   [%expect {|

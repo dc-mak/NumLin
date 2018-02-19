@@ -3,67 +3,83 @@
 (* Dhruv Makwana *)
 (* LT4LA Parser *)
 (* ------------ *)
+(* TODO:                                                  *)
+(*   - Check variables are bound while parsing            *)
+(*   - Make 'let (a,a) = (); Array a' error more accurate *)
+(*     (change return type to loc * Ast.expression)       *)
+(*   - .messages error reporting                          *)
 
-(* TODO:
- *   - Check bindings while parsing
- *   - .messages error reporting     *)
+(* --- Pure helper functions --- *)
+let err, ret =
+  Base.Or_error.(error_string, return)
+;;
 
-  (* --- Pure helper functions --- *)
-  let err, ret =
-    Base.Or_error.(error_string, return)
-  ;;
+let mk_id name =
+  Ast.{name; id=(-1)}
+;;
 
-  let mk_id name =
-    Ast.{name; id=(-1)}
-  ;;
+let rec mk_fc ?str m =
+  let zero = match str with None -> Ast.Zero | Some str -> Ast.Var (mk_id str) in
+  let rec loop zero m = if m <= 0 then zero else Ast.Succ (loop zero (m-1)) in
+  loop zero m
+;;
 
-  let rec mk_fc ?str m =
-    let zero = match str with None -> Ast.Zero | Some str -> Ast.Var (mk_id str) in
-    let rec loop zero m = if m <= 0 then zero else Ast.Succ (loop zero (m-1)) in
-    loop zero m
-  ;;
+let mk_app_like exp (hd :: tl) =
+  let open Base.Either in
+  let f exp hd = match hd with
+    | First hd -> Ast.Specialise_frac_cap (exp, hd)
+    | Second hd -> Ast.App (exp, hd) in
+  Base.List.fold_left tl ~init:(f exp hd) ~f
+  [@@ocaml.warning "-8"]
+;;
 
-  let mk_app_like exp (hd :: tl) =
-    let open Base.Either in
-    let f exp hd = match hd with
-      | First hd -> Ast.Specialise_frac_cap (exp, hd)
-      | Second hd -> Ast.App (exp, hd) in
-    Base.List.fold_left tl ~init:(f exp hd) ~f
-    [@@ocaml.warning "-8"]
-  ;;
+type pat =
+  | Unit
+  | Pair of Ast.variable * Ast.variable
+  | Array of Ast.variable
 
-  (* --- Impure helper functions --- *)
-  let new_id =
-    let counter = ref 0 in
-    fun () ->
-      let result = !counter in
-      (counter := !counter + 1; result)
-  ;;
-
-  let mk_forall name lt : Ast.linear_t =
-    let var = Ast.{name; id=new_id ()} in
-    Ast.ForAll_frac_cap (var, Ast.bind_fc_lt var lt)
-  ;;
-
-  let mk_lambda name lt body =
-    let var = Ast.{name; id=new_id()} in
-    Ast.Lambda (var, lt, Ast.bind_exp var body)
-  ;;
-
-  let mk_pair_elim a b exp body =
-    let var_a, var_b = Ast.({name=a; id=new_id()}, {name=b; id=new_id()}) in
-    Ast.Pair_Elim (var_a, var_b, exp, Ast.bind_exp var_b (Ast.bind_exp var_a body))
-  ;;
-
-  let mk_array_elim name exp body =
-    let var = Ast.{name; id=new_id()} in
+let mk_let exp body = function
+  | Unit ->
+    Ast.Unit_Elim(exp, body)
+  | Array var ->
     Ast.Array_Elim (var, exp, Ast.bind_exp var body)
-  ;;
+  | Pair (var_a, var_b) ->
+    Ast.Pair_Elim (var_a, var_b, exp, Ast.bind_exp var_b (Ast.bind_exp var_a body))
+;;
 
-  let mk_forall_exp name exp : Ast.expression =
-    let var = Ast.{name; id=new_id() } in
-    Ast.ForAll_frac_cap (var, Ast.bind_fc_exp var exp)
-  ;;
+(* --- Impure helper functions --- *)
+let new_id =
+  let counter = ref 0 in
+  fun () ->
+    let result = !counter in
+    (counter := !counter + 1; result)
+;;
+
+let bind_array a =
+  Array Ast.({name=a; id=new_id()})
+;;
+
+let bind_pair a b : pat =
+  let () = if Base.String.equal a b then raise Error in
+  let a,b = Ast.({name=a; id=new_id()}, {name=b; id=new_id()}) in
+  Pair (a,b)
+;;
+
+let mk_forall name lt : Ast.linear_t =
+  let var = Ast.{name; id=new_id ()} in
+  Ast.ForAll_frac_cap (var, Ast.bind_fc_lt var lt)
+;;
+
+let mk_lambda name lt body =
+  let var = Ast.{name; id=new_id()} in
+  Ast.Lambda (var, lt, Ast.bind_exp var body)
+;;
+
+
+let mk_forall_exp name exp : Ast.expression =
+  let var = Ast.{name; id=new_id() } in
+  Ast.ForAll_frac_cap (var, Ast.bind_fc_exp var exp)
+;;
 
 %}
 
@@ -128,6 +144,8 @@
 %start <Ast.expression Base.Or_error.t> prog
 
 %type <Ast.expression> simple_exp exp
+%type <pat> pat
+%type <(Ast.frac_cap,Ast.expression) Base.Either.t> arg_like
 %type <Ast.primitive> primitive
 %type <Ast.linear_t> linear_t simple_lt
 %type <Ast.frac_cap> frac_cap delimited_fc
@@ -143,12 +161,14 @@ exp:
     | ALL str=ID DOT exp=exp                           { mk_forall_exp str exp      }
     | BACKSLASH str=ID  COLON lt=linear_t DOT body=exp { mk_lambda str lt body      }
     | ARRAY arg=simple_exp                             { Ast.Array_Intro arg        }
-    | LET LEFT_PAREN RIGHT_PAREN EQUAL
-      exp=exp SEMICOLON body=exp                       { Ast.Unit_Elim (exp, body)  }
-    | LET LEFT_PAREN a=ID COMMA b=ID RIGHT_PAREN EQUAL
-      exp=exp SEMICOLON body=exp                       { mk_pair_elim a b exp body  }
-    | LET str=ID EQUAL exp=exp SEMICOLON body=exp      { mk_array_elim str exp body }
+    | LET pat=pat EQUAL exp=exp SEMICOLON body=exp     { mk_let exp body pat        }
     | exp=simple_exp args=arg_like+                    { mk_app_like exp args       }
+
+pat:
+    | LEFT_PAREN RIGHT_PAREN                 { Unit           }
+    | str=ID                                 { bind_array str }
+    | LEFT_PAREN a=ID COMMA b=ID RIGHT_PAREN { bind_pair a b  }
+    | LEFT_PAREN pat=pat RIGHT_PAREN         { pat            }
 
 arg_like:
     | fc=delimited_fc { Base.Either.First fc   }

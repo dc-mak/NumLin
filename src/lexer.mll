@@ -2,7 +2,8 @@
 (* Dhruv Makwana *)
 (* LT4LA Lexer *)
 (* ----------- *)
-(* TODO: Unicode *)
+(* TODO: Remove exception
+ *       Unicode *)
 
 open Lexing
 ;;

@@ -423,7 +423,7 @@ struct
     | Pair_Intro (exp1, exp2) -> Pair_Intro (bind_fc_exp var exp1, bind_fc_exp var exp2)
     | App (exp1, exp2) -> App (bind_fc_exp var exp1, bind_fc_exp var exp2)
     | Array_Intro exp -> Array_Intro (bind_fc_exp var exp)
-    | Array_Elim (var, exp1, exp2) -> Array_Elim (var, bind_fc_exp var exp1, bind_fc_exp var exp2)
+    | Array_Elim (var', exp1, exp2) -> Array_Elim (var', bind_fc_exp var exp1, bind_fc_exp var exp2)
     | Pair_Elim (var1, var2, exp1, exp2) -> Pair_Elim (var1, var2, bind_fc_exp var exp1, bind_fc_exp var exp2)
     | Specialise_frac_cap (exp, fc) -> Specialise_frac_cap (bind_fc_exp var exp, bind_fc_fc var fc)
     | Lambda (var', linear_t, exp) -> Lambda (var', bind_fc_lt var linear_t, bind_fc_exp var exp)
@@ -447,7 +447,7 @@ struct
     | Var var' -> Var (if var =~ var' then var else var')
 
     | Array_Elim (var', exp1, exp2 ) ->
-      Array_Elim (var', exp1, if var =~ var' then exp2 else bind_exp var exp2)
+      Array_Elim (var', bind_exp var exp1, if var =~ var' then exp2 else bind_exp var exp2)
 
     | Pair_Elim (var1, var2, exp1, exp2) ->
       Pair_Elim (var1, var2, bind_exp var exp1,
@@ -459,7 +459,6 @@ struct
 
 end
 
-(* TODO Internal tests *)
 let%test_module "Test" =
   (module struct
 

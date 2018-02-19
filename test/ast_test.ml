@@ -4,12 +4,14 @@
 open Base
 ;;
 
-open Lt4la
+module Ast =
+  Lt4la.Ast
 ;;
 
 open Vars
 ;;
 
+(* Fractional capabilities *)
 let%expect_test "bind_fc_fc" =
   let open Ast in
   bind_fc_fc one Zero
@@ -17,12 +19,18 @@ let%expect_test "bind_fc_fc" =
   [%expect {| Zero |}]
 ;;
 
+let one' =
+  { one with id=(-1) }
+;;
+
 let%expect_test "bind_fc_fc" =
   let open Ast in
-  bind_fc_fc one (Succ (Var {one with id=(-1)}))
+  bind_fc_fc one (Succ (Var one'))
   |> Stdio.printf !"%{sexp: frac_cap}";
   [%expect {| (Succ (Var ((id 1) (name one)))) |}]
 ;;
+
+(* Linear types *)
 
 (* Generate a sample of linear_types of height at most i *)
 let rec generate i =
@@ -44,10 +52,9 @@ let rec generate i =
 let%expect_test "pp_linear_type" =
   (* Maximum height 7, drop first two (the base cases) *)
   generate 7 |> Fn.flip List.drop 2 |> Fn.flip List.take 3
-  |> (let f lt =
-        Ast.pp_linear_t Caml.Format.std_formatter lt;
-        Stdio.Out_channel.(newline stdout) in
-      List.iter ~f);
+  |> List.iter ~f:(fun lt ->
+       Ast.pp_linear_t Caml.Format.std_formatter lt;
+       Stdio.Out_channel.(newline stdout));
   [%expect {|
         ∀ i_8. Arr[g_6+2]
         ∀ i_8. ∀ h_7.
@@ -209,4 +216,154 @@ let%expect_test "same_linear_t" =
       \n    \226\136\128 three_3. \226\136\128 four_4.\
       \n      Arr[three_3] --o Arr[four_4] --o Arr[four_4] * Arr[three_3]\
       \n" "Could not show one_1 and four_4 and alpha-equivalent.\n")) |}]
+;;
+
+(* bind_fc_lt *)
+let%expect_test "bind_fc_lt" =
+  let open Ast in
+  bind_fc_lt one (Pair (Unit, Unit))
+  |> Stdio.printf !"%{sexp: linear_t}";
+  [%expect {| (Pair Unit Unit) |}]
+;;
+
+let%expect_test "bind_fc_lt" =
+  let open Ast in
+  let x = (Array_t (Var one')) in
+  bind_fc_lt one (Fun (x,x))
+  |> Stdio.printf !"%{sexp: linear_t}";
+  [%expect {| (Fun (Array_t (Var ((id 1) (name one)))) (Array_t (Var ((id 1) (name one))))) |}]
+;;
+
+let%expect_test "bind_fc_lt" =
+  let open Ast in
+  bind_fc_lt one (ForAll_frac_cap(one', Array_t(Var one')))
+  |> Stdio.printf !"%{sexp: linear_t}";
+  [%expect {| (ForAll_frac_cap ((id -1) (name one)) (Array_t (Var ((id -1) (name one))))) |}]
+;;
+
+(* Expressions *)
+let pretty x =
+  Stdio.printf !"%{sexp: Ast.expression}\n" x;
+  Ast.pp_expression Caml.Format.std_formatter x;
+  Stdio.Out_channel.(newline stdout)
+;;
+
+(* bind_fc_exp *)
+let%expect_test "bind_fc_exp" =
+  let open Ast in
+  bind_fc_exp one (Pair_Intro (Unit_Intro, Unit_Intro))
+  |> pretty;
+  [%expect {|
+    (Pair_Intro Unit_Intro Unit_Intro)
+    (() , ()) |}]
+;;
+
+let%expect_test "bind_fc_exp" =
+  let open Ast in
+  bind_fc_exp one (App (ForAll_frac_cap(one', Lambda (
+    one', Array_t (Var one'), Unit_Intro)), Unit_Intro))
+  |> pretty;
+  [%expect {|
+    (App
+     (ForAll_frac_cap ((id -1) (name one))
+      (Lambda ((id -1) (name one)) (Array_t (Var ((id -1) (name one))))
+       Unit_Intro))
+     Unit_Intro)
+    ((* ∀ one_-1 *) fun one_-1 (* Arr[one_-1] *) -> ()) () |}]
+;;
+
+let%expect_test "bind_fc_exp" =
+  let open Ast in
+  bind_fc_exp one (Lambda (one', Array_t (Var one'), Unit_Intro))
+  |> pretty;
+  [%expect {|
+    (Lambda ((id -1) (name one)) (Array_t (Var ((id 1) (name one)))) Unit_Intro)
+    fun one_-1 (* Arr[one_1] *) -> () |}]
+;;
+
+let%expect_test "bind_fc_exp" =
+  let open Ast in
+  bind_fc_exp one (Array_Elim (one', ForAll_frac_cap(two, Lambda (
+    two, Array_t (Var one'), Unit_Intro)), Primitive DotProd))
+  |> pretty;
+  [%expect {|
+    (Array_Elim ((id -1) (name one))
+     (ForAll_frac_cap ((id 2) (name two))
+      (Lambda ((id 2) (name two)) (Array_t (Var ((id 1) (name one)))) Unit_Intro))
+     (Primitive DotProd))
+    let one_-1 = (* ∀ two_2 *) fun two_2 (* Arr[one_1] *) -> () in Prim.dot |}]
+;;
+
+(* bind_exp *)
+let%expect_test "bind_exp" =
+  let open Ast in
+  bind_exp one (Pair_Intro (Unit_Intro, Unit_Intro))
+  |> pretty;
+  [%expect {|
+    (Pair_Intro Unit_Intro Unit_Intro)
+    (() , ()) |}]
+;;
+
+let%expect_test "bind_exp" =
+  let open Ast in
+  bind_exp one (App (ForAll_frac_cap(one', Lambda (
+    one', Array_t (Var one'), (Var one'))), (Var one')))
+  |> pretty;
+  [%expect {|
+    (App
+     (ForAll_frac_cap ((id -1) (name one))
+      (Lambda ((id -1) (name one)) (Array_t (Var ((id -1) (name one))))
+       (Var ((id -1) (name one)))))
+     (Var ((id 1) (name one))))
+    ((* ∀ one_-1 *) fun one_-1 (* Arr[one_-1] *) -> one_-1) one_1 |}]
+;;
+
+let%expect_test "bind_exp" =
+  let open Ast in
+  bind_exp one (Unit_Elim(Var one', Array_Elim (one', ForAll_frac_cap(two, Lambda (
+    two, Array_t (Var one'), Unit_Intro)), (Var one'))))
+  |> pretty;
+  [%expect {|
+    (Unit_Elim (Var ((id 1) (name one)))
+     (Array_Elim ((id -1) (name one))
+      (ForAll_frac_cap ((id 2) (name two))
+       (Lambda ((id 2) (name two)) (Array_t (Var ((id -1) (name one))))
+        Unit_Intro))
+      (Var ((id -1) (name one)))))
+    let () = one_1 in
+    let one_-1 = (* ∀ two_2 *) fun two_2 (* Arr[one_-1] *) -> () in one_-1 |}]
+;;
+
+let%expect_test "bind_exp" =
+  let open Ast in
+  bind_exp one (Unit_Elim(Var one', Pair_Elim (three, four, ForAll_frac_cap(two, Lambda (
+    two, Array_t (Var one'), Unit_Intro)), (Var one'))))
+  |> pretty;
+  [%expect {|
+    (Unit_Elim (Var ((id 1) (name one)))
+     (Pair_Elim ((id 3) (name three)) ((id 4) (name four))
+      (ForAll_frac_cap ((id 2) (name two))
+       (Lambda ((id 2) (name two)) (Array_t (Var ((id -1) (name one))))
+        Unit_Intro))
+      (Var ((id 1) (name one)))))
+    let () = one_1 in
+    let (three_3, four_4) = (* ∀ two_2 *) fun two_2 (* Arr[one_-1] *) -> () in
+    one_1 |}]
+;;
+
+let%expect_test "bind_exp" =
+  let open Ast in
+  bind_exp one (Unit_Elim(Var one', Pair_Elim (one', four, ForAll_frac_cap(two, Lambda (
+    two, Array_t (Var one'), Unit_Intro)), (Var one'))))
+  |> pretty;
+  [%expect {|
+    (Unit_Elim (Var ((id 1) (name one)))
+     (Pair_Elim ((id -1) (name one)) ((id 4) (name four))
+      (ForAll_frac_cap ((id 2) (name two))
+       (Lambda ((id 2) (name two)) (Array_t (Var ((id -1) (name one))))
+        Unit_Intro))
+      (Var ((id -1) (name one)))))
+    let () = one_1 in
+    let (one_-1, four_4) = (* ∀ two_2 *) fun two_2 (* Arr[one_-1] *) -> () in
+    one_-1 |}]
 ;;

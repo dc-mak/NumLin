@@ -8,18 +8,17 @@
         owl
         menhirLib
         base
-        ppx_traverse_builtins
         ppx_expect.evaluator
         ppx_inline_test.runner.lib
     ))
-    (preprocess (pps (ppx_traverse ppx_jane ppx_driver.runner (-inline-test-lib lt4la_internal))))
+    ; (inline_tests) when jbuilder has pushed support for it
+    (preprocess (pps (ppx_jane ppx_driver.runner (-inline-test-lib lt4la))))
 ))
 
-(rule (
-  (targets (parser.mli parser.ml))
-  (deps (parser.mly))
-  ; add --infer when jbuilder has pushed support for it
-  (action (run menhir --table --strict --comment --explain ${<}))
+(menhir (
+    (modules (parser))
+    ; add --infer when jbuilder has pushed support for it
+    (flags (--table --strict --comment --explain))
 ))
 
 (ocamllex (lexer))

@@ -1,14 +1,14 @@
 (* Dhruv Makwana *)
-(* Lt4la.Combinators External Tests *)
+(* Old.Combinators External Tests *)
 
 open Base
 ;;
 
 module Ast =
-  Lt4la.Ast
+  Old.Ast
 ;;
 
-open Lt4la.Combinators
+open Old.Combinators
 ;;
 
 let pretty f x =

@@ -1,8 +1,8 @@
 (jbuild_version 1)
 
-(executable (
-    (name repl)
+(executables (
+    (names (repl transpile))
     (libraries (lt4la lwt lambda-term))
     (flags (:standard -short-paths))
-    (preprocess (pps (lwt_ppx ppx_driver.runner)))
+    (preprocess (pps (ppx_jane lwt_ppx ppx_driver.runner)))
 ))

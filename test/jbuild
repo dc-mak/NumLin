@@ -10,11 +10,17 @@
 (alias (
     (name runtest)
     (deps (test.exe))
-    (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la_internal)))
+    (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la)))
 ))
 
 (alias (
     (name runtest)
     (deps (test.exe))
     (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la_external)))
+))
+
+(rule (
+    (targets (examples.ml))
+    (deps (examples/generate.exe (glob_files examples/*.lt)))
+    (action (run ${<}))
 ))

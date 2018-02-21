@@ -11,7 +11,7 @@ open Lexing
 open Parser
 ;;
 
-exception SyntaxError of position * string
+exception SyntaxError of string
 ;;
 
 let next_line lexbuf =
@@ -27,54 +27,31 @@ let keywords =
   let open Base in
   let keywords =
     (* simple linear types *)
-    [ ("unit", UNIT)
+    [ ("I", UNIT)
     ; ("int", INT_LT)
-    ; ("elt", ELT_LT)
-    ; ("arr", ARR_LT)
+    ; ("f64", F64_LT)
+    ; ("Arr", ARR_LT)
     (* linear types *)
     ; ("all", ALL)
     (* primitives *)
-    ; ("addI", ADD_INT)
-    ; ("subI", SUB_INT)
-    ; ("mulI", MUL_INT)
-    ; ("divI", DIV_INT)
-    ; ("eqI", EQ_INT)
-    ; ("ltI", LT_INT)
-    ; ("addE", ADD_ELT)
-    ; ("subE", SUB_ELT)
-    ; ("mulE", MUL_ELT)
-    ; ("devE", DIV_ELT)
-    ; ("eqE", EQ_ELT)
-    ; ("ltE", LT_ELT)
-    ; ("and", AND)
-    ; ("or", OR)
-    ; ("not", NOT)
-    ; ("set", SET)
-    ; ("get", GET)
-    ; ("share", SHARE)
-    ; ("unshare", UNSHARE)
+    ; ("split_perm", SPLIT_PERM)
+    ; ("merge_perm", MERGE_PERM)
     ; ("free", FREE)
-    ; ("array", ARRAY)
     ; ("copy", COPY)
-    ; ("sin", SIN)
-    ; ("hypot", HYPOT)
+    ; ("swap", SWAP)
     ; ("asum", ASUM)
     ; ("axpy", AXPY)
-    ; ("dot", DOTP)
+    ; ("dot", DOT_PROD)
+    ; ("nrm2", NRM2)
+    ; ("rot", ROT)
+    ; ("rotg", ROTG)
+    ; ("rotm", ROTM)
     ; ("rotmg", ROTMG)
     ; ("scal", SCAL)
     ; ("amax", AMAX)
     (* expressions *)
-    ; ("true", TRUE)
-    ; ("false", FALSE)
-    ; ("if", IF)
-    ; ("then", THEN)
-    ; ("else", ELSE)
-    ; ("let", LET)
-    ; ("rec", REC)
-    ; ("in", IN)
-    ; ("fun", FUN)
-    ; ("Many", MANY)
+    ; ("let", LET )
+    ; ("Array", ARRAY )
     ] in
   let table = Hashtbl.of_alist_exn (module String) keywords in
   fun str -> match Hashtbl.find table str with
@@ -96,35 +73,33 @@ let float = digit* frac? exp?
 let white = [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
 let id = ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_']*
-(* Make more like OCaml? let fcvar = ''' id *)
 
 rule read =
   parse
   | white    { read lexbuf }
   | newline  { next_line lexbuf; read lexbuf }
   | eof      { EOF }
-  | ";;"     { EOP }
   (* fractional capabilities *)
-  | nat      { NAT (Base.Int.of_string (Lexing.lexeme lexbuf)) }
+  | nat      { NAT (int_of_string (Lexing.lexeme lexbuf)) }
   | '+'      { PLUS }
   | id       { keywords (Lexing.lexeme lexbuf) }
   (* simple linear types *)
-  | '['      { L_BRACKET }
-  | ']'      { R_BRACKET }
-  | '('      { L_PAREN }
-  | ')'      { R_PAREN }
+  | '['      { LEFT_BRACKET }
+  | ']'      { RIGHT_BRACKET }
+  | '('      { LEFT_PAREN }
+  | ')'      { RIGHT_PAREN }
   (* linear types *)
-  | '!'      { BANG }
   | '*'      { STAR }
   | "--o"    { LOLLIPOP }
   | '.'      { DOT }
   (* simple expressions *)
-  | int      { INT (Base.Int.of_string (Lexing.lexeme lexbuf)) }
-  | float    { FLOAT (Base.Float.of_string (Lexing.lexeme lexbuf)) }
+  | int      { INT (int_of_string (Lexing.lexeme lexbuf)) }
+  | float    { FLOAT (float_of_string (Lexing.lexeme lexbuf)) }
   | ','      { COMMA }
   | ':'      { COLON }
+  | '\\'     { BACKSLASH }
   (* expressions *)
   | '='      { EQUAL }
-  | "->"     { ARROW }
+  | ';'      { SEMICOLON }
   (* TODO: make more informative/friendly *)
-  | _        { raise (SyntaxError (lexbuf.lex_curr_p, "unexpected char: " ^ Lexing.lexeme lexbuf)) }
+  | _        { raise (SyntaxError ("unexpected char: " ^ Lexing.lexeme lexbuf)) }

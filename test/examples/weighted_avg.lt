@@ -1,0 +1,22 @@
+let rec f (i : !int) : !int --o !elt --o arr[0] --o all x . arr[x] --o (arr[0] * arr[x]) =
+    let Many i = i in let Many i = Many (Many i) in
+    fun n : !int -> let Many n = n in let Many n = Many (Many n) in
+    fun x0 : !elt -> let Many x0 = x0 in let Many x0 = Many (Many x0) in
+    fun write : arr[0] -> all x . fun weights : arr[x] ->
+    if eqI n i then (write, weights) else
+    let (w0, weights) = get [x] weights 0 in
+    let Many w0 = w0 in let Many w0 = Many (Many w0) in
+    let (w1, weights) = get [x] weights 1 in
+    let Many w1 = w1 in let Many w1 = Many (Many w1) in
+    let (w2, weights) = get [x] weights 2 in
+    let Many w2 = w2 in let Many w2 = Many (Many w2) in
+    let (x1, write) = get [0] write i in
+    let Many x1 = x1 in let Many x1 = Many (Many x1) in
+    let (x2, write) = get [0] write (addI i 1) in
+    let Many x2 = x2 in let Many x2 = Many (Many x2) in
+    let newx : !elt = addE (mulE w0 x0) (addE (mulE w1 x1) (mulE w2 x2)) in
+    let Many newx = newx in let Many newx = Many (Many newx) in
+    let write : arr[0] = set write i newx in
+    f (addI i 1) n x1 write [x] weights in
+  f
+;;

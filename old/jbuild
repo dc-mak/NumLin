@@ -1,0 +1,25 @@
+(jbuild_version 1)
+
+(library (
+    (name old)
+    (synopsis "Linear Types for Linear Algebra")
+    (flags (:standard -short-paths))
+    (libraries (
+        owl
+        menhirLib
+        base
+        ppx_traverse_builtins
+        ppx_expect.evaluator
+        ppx_inline_test.runner.lib
+    ))
+    (preprocess (pps (ppx_traverse ppx_jane ppx_driver.runner (-inline-test-lib old_internal))))
+))
+
+(rule (
+  (targets (parser.mli parser.ml))
+  (deps (parser.mly))
+  ; add --infer when jbuilder has pushed support for it
+  (action (run menhir --table --strict --comment --explain ${<}))
+))
+
+(ocamllex (lexer))

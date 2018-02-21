@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(executable (
+    (name generate)
+    (flags (:standard -short-paths))
+    (libraries (lt4la))
+))
+

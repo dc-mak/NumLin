@@ -15,16 +15,20 @@ open Lt4la.Check_monad
 ;;
 
 let execute x =
-  run ~counter:1719 x
-  |> Stdio.printf !"%{sexp: Ast.linear_t Or_error.t}\n"
+  let x = run ~counter:1719 x in
+  Stdio.printf !"%{sexp: Ast.lin Or_error.t}\n%s" x
+    begin match x with
+    | Ok v -> Ast.(string_of_pp pp_lin v)
+    | Error _ -> ""
+    end
 ;;
 
-let wf_lt =
-  well_formed_lt ~fmt:"Not well-formed%s" ~arg:""
+let wf_lin =
+  wf_lin ~fmt:"Not well-formed%s" ~arg:""
 ;;
 
-let wf_array_t =
-  with_frac_cap [three] (wf_lt (Ast.(Array_t (Var three))))
+let wf_arr =
+  with_fc three (wf_lin Ast.(Arr (V three)))
 ;;
 
 (* create_fresh *)
@@ -32,102 +36,106 @@ let%expect_test "create_fresh" =
   let open Let_syntax in
   begin
     let%bind fresh = create_fresh () in
-    Stdio.printf !"%{sexp:Ast.variable}\n" fresh;
+    Stdio.printf !"%{sexp:Ast.var}\n" fresh;
     let%bind fresh = create_fresh ~name:"test" () in
-    Stdio.printf !"%{sexp:Ast.variable}\n" fresh;
+    Stdio.printf !"%{sexp:Ast.var}\n" fresh;
     return wf_Unit
   end
   |> run ~counter:1719 |> ignore;
   [%expect {|
-    ((id 1719) (name gen))
-    ((id 1720) (name test)) |}]
+    gen_1719
+    test_1720 |}]
 ;;
 
-(* with_frac_cap *)
-let%expect_test "with_frac_cap" =
-  with_frac_cap [four] (return wf_Unit)
-  |> execute;
-  [%expect {| (Ok Unit) |}]
-;;
-
-(* with_linear_t *)
-let%expect_test "with_linear_t" =
-  let open Let_syntax in
-  let%bind wf = wf_array_t in
-  with_linear_t [(four,  wf)] (return wf_Unit);
+(* with_fc *)
+let%expect_test "with_fc" =
+  with_fc four (return wf_Unit)
   |> execute;
   [%expect {|
-        (Error "Variable four_4 not used.") |}]
+    (Ok Unit)
+    unit |}]
+;;
+
+(* with_lin *)
+let%expect_test "with_lin" =
+  let open Let_syntax in
+  let%bind wf = wf_arr in
+  with_lin four wf (return wf_Unit);
+  |> execute;
+  [%expect {|
+        (Error "Variable four not used.\n") |}]
 ;;
 
 (* lookup *)
 let%expect_test "lookup None (no vars)" =
   let open Let_syntax in
   let%bind var = lookup four in
-  Stdio.printf !"%{sexp: tagged_linear_t option}\n" var;
+  Stdio.printf !"%{sexp: tagged option}\n" var;
   return wf_Unit;
   |> run ~counter:1719 |> ignore;
   [%expect {| () |}]
 ;;
 
-let%expect_test "lookup None (with_frac_cap)" =
+let%expect_test "lookup None (with_fc)" =
   let open Let_syntax in
-  with_frac_cap [four] begin
+  with_fc four begin
     let%bind var = lookup four in
-    Stdio.printf !"%{sexp: tagged_linear_t option}\n" var;
+    Stdio.printf !"%{sexp: tagged option}\n" var;
     (return wf_Unit)
   end
   |> execute;
   [%expect {|
         ()
-        (Ok Unit) |}]
+        (Ok Unit)
+        unit |}]
 ;;
 
-let%expect_test "lookup None (with_linear_t)" =
+let%expect_test "lookup None (with_lin)" =
   let open Let_syntax in
-  let%bind wf = wf_array_t in
-  with_linear_t [(five, wf)] begin
+  let%bind wf = wf_arr in
+  with_lin five wf begin
     let%bind var = lookup four in
-    Stdio.printf !"%{sexp: tagged_linear_t option}\n" var;
+    Stdio.printf !"%{sexp: tagged option}\n" var;
     (return wf_Unit)
   end;
   |> execute;
   [%expect {|
         ()
-        (Error "Variable five_5 not used.") |}]
+        (Error "Variable five not used.\n") |}]
 ;;
 
 let%expect_test "lookup (Some (Not_used _))" =
   let open Let_syntax in
-  let%bind wf = wf_array_t in
-  with_linear_t [(four, wf)] begin
+  let%bind wf = wf_arr in
+  with_lin four wf begin
     let%bind (Some (Not_used four)) = lookup four in
     Stdio.printf !"%{sexp: not_used}\n" four;
     return wf_Unit
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
-        (((id 4) (name four)) (WF (Array_t (Var ((id 3) (name three))))))
-        (Error "Variable four_4 not used.") |}]
+        ((var four) (t (WFL (Arr (V three)))))
+        (Error "Variable four not used.\n") |}]
 ;;
 
 let%expect_test "lookup (Some (Used _))" =
   let open Let_syntax in
-  let%bind wf = wf_array_t in
-  with_linear_t [(four, wf)] begin
-    let%bind (Some (Not_used four')) = lookup four in
-    let%bind _ = use_var four' in
-    let%bind (Some (Used linear_t)) = lookup four in
-    return linear_t
+  let%bind wf = wf_arr in
+  with_lin four wf begin
+    let%bind Some (Not_used four') = lookup four in
+    let%bind lin = use_var four' in
+    let%bind Some Used = lookup four in
+    return lin
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
-        (Ok (Array_t (Var ((id 3) (name three))))) |}]
+        (Ok (Arr (V three)))
+        'three arr |}]
 ;;
 
-(* if_well_formed *)
-let%expect_test "if_well_formed" =
-  if_well_formed (Succ Zero)
+(* if_wf *)
+let%expect_test "if_wf" =
+  if_wf (S Z)
     ~then_:(Fn.const (fail_string "Yay"))
     ~else_:(Fn.const (fail_string "Nay"))
   |> execute;
@@ -135,8 +143,8 @@ let%expect_test "if_well_formed" =
      (Error Yay) |}]
 ;;
 
-let%expect_test "if_well_formed" =
-  if_well_formed (Var one)
+let%expect_test "if_wf" =
+  if_wf (V one)
     ~then_:(Fn.const (fail_string "Yay"))
     ~else_:(Fn.const (fail_string "Nay"))
   |> execute;
@@ -144,9 +152,9 @@ let%expect_test "if_well_formed" =
      (Error Nay) |}]
 ;;
 
-let%expect_test "if_well_formed" =
-  with_frac_cap [one] begin
-    if_well_formed (Var one)
+let%expect_test "if_wf" =
+  with_fc one begin
+    if_wf (V one)
       ~then_:(Fn.const (fail_string "Yay"))
       ~else_:(Fn.const (fail_string "Nay"))
   end
@@ -155,89 +163,322 @@ let%expect_test "if_well_formed" =
      (Error Yay) |}]
 ;;
 
-(* well_formed_lt *)
-let%expect_test "well_formed" =
-  wf_lt Ast.(Array_t Zero) >>= return
+(* wf_lin *)
+let%expect_test "wf_lin" =
+  wf_lin Ast.(Arr Z) >>= return
   |> execute;
   [%expect {|
-     (Ok (Array_t Zero)) |}]
+     (Ok (Arr Z))
+     z arr |}]
 ;;
 
-let%expect_test "well_formed" =
-  wf_lt Ast.(Array_t (Var one)) >>= return
-  |> execute;
-  [%expect {|
-     (Error "Not well-formed") |}]
-;;
-
-(* well_formed/with_frac_cap *)
-let%expect_test "well_formed/with_frac_cap" =
-  with_frac_cap [one] (wf_lt Ast.(Array_t (Var one)) >>= return)
-  |> execute;
-  [%expect {|
-     (Ok (Array_t (Var ((id 1) (name one))))) |}]
-;;
-
-let%expect_test "well_formed/with_frac_cap" =
-  with_frac_cap [four] (wf_lt Ast.(Array_t (Succ (Var one))) >>= return)
+let%expect_test "wf_lin" =
+  wf_lin Ast.(Arr (V one)) >>= return
   |> execute;
   [%expect {|
      (Error "Not well-formed") |}]
 ;;
 
-let%expect_test "well_formed/with_frac_cap" =
-  with_frac_cap [one] (wf_lt Ast.(Array_t (Succ (Var one))) >>= return)
+(* wf_lin/with_fc *)
+let%expect_test "wf_lin/with_fc" =
+  with_fc one (wf_lin Ast.(Arr (V one)) >>= return)
   |> execute;
   [%expect {|
-     (Ok (Array_t (Succ (Var ((id 1) (name one)))))) |}]
+     (Ok (Arr (V one)))
+     'one arr |}]
 ;;
 
-(* with_linear_t/use_var *)
-let%expect_test "with_linear_t/use_var" =
+let%expect_test "wf_lin/with_fc" =
+  with_fc four (wf_lin Ast.(Arr (S (V one))) >>= return)
+  |> execute;
+  [%expect {|
+     (Error "Not well-formed") |}]
+;;
+
+let%expect_test "wf_lin/with_fc" =
+  with_fc one (wf_lin Ast.(Arr (S (V one))) >>= return)
+  |> execute;
+  [%expect {|
+     (Ok (Arr (S (V one))))
+     'one s arr |}]
+;;
+
+(* with_lin/use_var *)
+let%expect_test "with_lin/use_var" =
   let open Let_syntax in
-  with_linear_t [(four, wf_Unit)] begin
-    let%bind (Some (Not_used four')) = lookup four in
+  with_lin four wf_Unit begin
+    let%bind Some (Not_used four') = lookup four in
     use_var four'
   end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
-        (Ok Unit) |}]
+        (Ok Unit)
+        unit |}]
 ;;
 
-let%expect_test "with_linear_t/use_var" =
+let%expect_test "with_lin (scoping)/use_var" =
   let open Let_syntax in
-  let%bind wf = wf_array_t in
-  (* Observable: fractional capabiities and linearly-typed variables are kept
-     in separate environments. *)
-  with_linear_t [(one, wf_Unit); (three, wf)] begin
-    (* Boiler plate *)
-    let%bind (Some (Not_used one)) = lookup one in
-    let%bind WF linear_t = use_var one in
-    Stdio.printf !"%{sexp: Ast.linear_t}\n" linear_t;
-    (* Test *)
-    let%bind (Some (Not_used three)) = lookup three in
-    let%bind WF linear_t = use_var three in
-    Stdio.printf !"%{sexp: Ast.linear_t}\n" linear_t;
+  with_lin four wf_Unit @@
+  with_lin four (wf_Bang wf_Int) begin
+    let%bind Some (Not_used four') = lookup four in
+    let%bind (WFL t) as res = use_var four' in
+    Stdio.printf !"%{sexp:Ast.lin}\n" t;
+    return res
+  end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+        (Bang Int)
+        (Error "Variable four not used.\n") |}]
+;;
+
+let%expect_test "with_lin/use_var" =
+  let open Let_syntax in
+  let%bind wf = wf_arr in
+  (* Observable: fractional capabiities and linear/intuitionistic *)
+  (*  variables are kept in separate environments.                *)
+  with_int one wf @@
+  with_lin three wf begin
+    (* Intuition *)
+    let%bind Some (Intuition (WFL one)) = lookup one in
+    Stdio.printf !"%{sexp: Ast.lin}\n" one;
+    (* Linear *)
+    let%bind Some (Not_used three) = lookup three in
+    let%bind WFL lin = use_var three in
+    Stdio.printf !"%{sexp: Ast.lin}\n" lin;
     return wf_Unit
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> run ~counter:1719 |> ignore;
   [%expect {|
-        Unit
-        (Array_t (Var ((id 3) (name three)))) |}]
+        (Arr (V three))
+        (Arr (V three)) |}]
 ;;
 
-let%expect_test "with_linear_t/use_var" =
+let%expect_test "with_lin/use_var" =
   let open Let_syntax in
-  let%bind wf_arr = wf_array_t in
-  with_frac_cap [five] begin
-    let%bind wf_ForAll = wf_lt Ast.(ForAll_frac_cap (four, Array_t (Succ (Var (four))))) in
-    with_linear_t
-    [ (one, wf_ForAll)
-    ; (three, wf_arr) ]
-    (return wf_Unit)
+  let%bind wf_arr = wf_arr in
+  with_fc five begin
+    let%bind wf_ForAll = wf_lin Ast.(All (four, Arr (S (V (four))))) in
+    with_lin one wf_ForAll @@
+    with_lin three wf_arr  @@
+    return wf_Unit
   end;
   |> execute;
   [%expect {|
-    (Error  "Variable three_3 not used.\
-           \nVariable one_1 not used.") |}]
+    (Error "Variable three not used.\n") |}]
+;;
+
+(* with_int *)
+let%expect_test "with_int" =
+  let open Let_syntax in
+  with_int one wf_Unit @@ return wf_Unit
+  |> execute;
+  [%expect {|
+    (Ok Unit)
+    unit |}]
+;;
+
+let%expect_test "with_int" =
+  let open Let_syntax in
+  with_int one wf_Unit begin
+    let%bind Some (Intuition t) = lookup one in
+    return t
+  end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Ok Unit)
+    unit |}]
+;;
+
+let%expect_test "with_int" =
+  let open Let_syntax in
+  with_int one wf_Unit begin
+    let%bind None = lookup two in
+    return @@ wf_Bang wf_Int
+  end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Ok (Bang Int))
+    !int |}]
+;;
+
+let%expect_test "with_int (scoping)" =
+  let open Let_syntax in
+  with_int one wf_Unit @@
+  with_int one (wf_Bang wf_Bool) begin
+    let%bind Some (Intuition t) = lookup one in
+    return t
+  end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Ok (Bang Bool))
+    !bool |}]
+;;
+
+(* Scoping: with_int/with_lin *)
+let%expect_test "wtih_lin/with_int" =
+  let open Let_syntax in
+  with_lin one wf_Unit @@
+  with_int one (wf_Bang wf_Int) @@
+  return wf_Unit
+  |> execute;
+  [%expect {|
+    (Error "Variable one not used.\n") |}]
+;;
+
+let%expect_test "with_int/with_lin" =
+  let open Let_syntax in
+  with_int one (wf_Bang wf_Int) @@
+  with_lin one wf_Unit begin
+    let%bind Some (Not_used t) = lookup one in
+    let%bind t = use_var t in
+    return t
+  end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Ok Unit)
+    unit |}]
+;;
+
+(* in_empty *)
+let%expect_test "in_empty" =
+  let open Let_syntax in
+  let%bind wf_arr = wf_arr in
+  in_empty @@
+  with_lin one wf_arr @@
+  begin
+    let%bind Some (Not_used t) = lookup one in
+    let%bind t = use_var t in
+    return t
+  end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Ok (Arr (V three)))
+    'three arr |}]
+;;
+
+let%expect_test "in_empty" =
+  let open Let_syntax in
+  let%bind wf_arr = wf_arr in
+  with_lin one (wf_Bang wf_Int) @@
+  in_empty @@ begin
+    let%bind Some (Not_used t) = lookup one in
+    let%bind t = use_var t in
+    return t
+  end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Error  "Cannot use linearly-typed variables in Fix/Many\
+           \n    one\
+           \n") |}]
+;;
+
+let%expect_test "in_empty" =
+  let open Let_syntax in
+  in_empty @@ return @@ wf_Bang wf_Elt
+  |> execute;
+  [%expect {|
+    (Ok (Bang Elt))
+    !float |}]
+;;
+
+(* same_resources *)
+let%expect_test "same_resources" =
+  let open Let_syntax in
+  with_int two (wf_Bang wf_Int) @@
+  with_lin one wf_Arr_Z begin
+    let prog_one =
+      let%bind Some (Not_used one) = lookup one in
+      let%bind t1 = use_var one in
+      let%bind Some (Intuition t2) = lookup two in
+      return @@ wf_Pair t1 t2 in
+    let prog_two =
+      let%bind Some (Not_used one) = lookup one in
+      let%bind t1 = use_var one in
+      let%bind Some (Intuition t2) = lookup two in
+      return @@ wf_Pair t1 t2 in
+    let%bind (a,b) = same_resources prog_one prog_two in
+    return @@ wf_Pair a b
+  end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Ok (Pair (Pair (Arr Z) (Bang Int)) (Pair (Arr Z) (Bang Int))))
+    ( z arr * !int ) * ( z arr * !int ) |}]
+;;
+
+let%expect_test "same_resources" =
+  let open Let_syntax in
+  with_int two (wf_Bang wf_Int) @@
+  with_lin one wf_Arr_Z begin
+    let prog_one =
+      let%bind Some (Intuition t2) = lookup two in
+      return @@ wf_Pair (wf_Arr_Z) t2 in
+    let prog_two =
+      let%bind Some (Not_used one) = lookup one in
+      let%bind t1 = use_var one in
+      let%bind Some (Intuition t2) = lookup two in
+      return @@ wf_Pair t1 t2 in
+    let%bind (a,b) = same_resources prog_one prog_two in
+    return @@ wf_Pair a b
+  end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Error  "Second term used these variables not used by the first:\
+           \n  one\
+           \n") |}]
+;;
+
+let%expect_test "same_resources" =
+  let open Let_syntax in
+  with_lin two (wf_Bang wf_Int) @@
+  with_int three (wf_Bang wf_Elt) @@
+  with_lin one wf_Arr_Z begin
+    let prog_one =
+      let%bind Some (Not_used one) = lookup one in
+      let%bind t1 = use_var one in
+      let%bind Some (Intuition t3) = lookup three in
+      return @@ wf_Pair t1 t3 in
+    let prog_two =
+      let%bind Some (Not_used two) = lookup two in
+      let%bind t2 = use_var two in
+      let%bind Some (Intuition t3) = lookup three in
+      return @@ wf_Pair t2 t3 in
+    let%bind (a,b) = same_resources prog_two prog_one in
+    return @@ wf_Pair a b
+  end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Error
+      "First term used these variables not used by the second:\
+     \n  two\
+     \nSecond term used these variables not used by the first:\
+     \n  one\
+     \n") |}]
+;;
+
+let%expect_test "same_resources" =
+  let open Let_syntax in
+  with_lin two wf_Arr_Z @@
+  with_int three (wf_Bang wf_Elt) @@
+  with_lin one wf_Arr_Z begin
+    let prog_one =
+      let%bind Some (Not_used one) = lookup one in
+      let%bind t1 = use_var one in
+      let%bind Some (Intuition t3) = lookup three in
+      return @@ wf_Pair t1 t3 in
+    let prog_two =
+      let%bind Some (Not_used two) = lookup two in
+      let%bind t2 = use_var two in
+      let%bind Some (Intuition t3) = lookup three in
+      return @@ wf_Pair t2 t3 in
+    let%bind (a,b) = same_resources prog_two prog_one in
+    return @@ wf_Pair a b
+  end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
+  |> execute;
+  [%expect {|
+    (Error
+      "First term used these variables not used by the second:\
+     \n  two\
+     \nSecond term used these variables not used by the first:\
+     \n  one\
+     \n") |}]
 ;;

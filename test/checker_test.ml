@@ -1,6 +1,5 @@
 (* Dhruv Makwana *)
-(* Lt4la.Checker External Tests *)
-(* These will be easier to write with a parser. *)
+(* LT4LA.Checker External Tests *)
 
 open Base
 ;;
@@ -19,169 +18,236 @@ let check_expr =
 let pretty x =
   Stdio.printf
     !"%{sexp: string Or_error.t}\n"
-    (Or_error.map x ~f:(Ast.(string_of_pp pp_linear_t)))
+    (Or_error.map x ~f:(Ast.(string_of_pp pp_lin)))
 ;;
 
-let arr : Ast.expression =
-  Array_Intro (Int_Intro 5)
+let arr : Ast.exp =
+  (App (Prim Array, (Int_I 5)))
 ;;
 
-let%expect_test "checker_unit_intro" =
-  check_expr Unit_Intro
+let%expect_test "Unit_I" =
+  check_expr Unit_I
   |> pretty;
-  [%expect {| (Ok I) |}]
+  [%expect {| (Ok unit) |}]
 ;;
 
-let%expect_test "checker_var_unbound" =
+let%expect_test "Elt_I" =
+  check_expr (Elt_I 4.0)
+  |> pretty;
+  [%expect {| (Ok !float) |}]
+;;
+
+let%expect_test "Var (unbound)" =
   check_expr (Var one)
   |> pretty;
-  [%expect {| (Error "Unbound variable one_1 (not found in environment)") |}]
+  [%expect {| (Error "Unbound variable one (not found in environment)\n") |}]
 ;;
 
-let unit_elim : Ast.expression =
-  Unit_Elim (Unit_Intro, arr)
+let pair : Ast.exp =
+  Pair_I (arr, Unit_I)
 ;;
 
-let%expect_test "checker_unit_elim" =
-  check_expr unit_elim
-  |> pretty;
-  [%expect {| (Ok Arr[0]) |}]
-;;
-
-let pair : Ast.expression =
-  Pair_Intro (arr, Unit_Intro)
-;;
-
-let%expect_test "checker_pair_intro" =
+let%expect_test "Pair_I" =
   check_expr pair
   |> pretty;
-  [%expect {| (Ok "Arr[0] * I") |}]
+  [%expect {| (Ok "z arr * unit") |}]
 ;;
 
-let pair_elim : Ast.expression =
-  Pair_Elim (one, two, pair, Pair_Intro (Var two, Var one))
-;;
-
-let%expect_test "checker_pair_elim" = 
-  check_expr pair_elim
+let%expect_test "Bang_I (not value)" =
+  check_expr (Bang_I pair)
   |> pretty;
-  [%expect {| (Ok "I * Arr[0]") |}]
+  [%expect {| (Error "Can only call 'Many' on values.\n") |}]
 ;;
 
-let%expect_test "checker_pair_elim" = 
-  check_expr (Pair_Elim (one, two, pair, Var one))
+let%expect_test "Bang_I (value)" =
+  check_expr (Bang_I (Pair_I (Unit_I, Unit_I)))
   |> pretty;
-  [%expect {| (Error "Variable two_2 not used.") |}]
+  [%expect {| (Ok "!( unit * unit )") |}]
 ;;
 
-let unit_lambda : Ast.expression =
+let%expect_test "Fix/App" =
+  check_expr @@
+  Fix (one, two, Bang Int, Bang Bool, App (App (Prim (IntOp Eq), Var two), Int_I 0))
+  |> pretty;
+  [%expect {| (Ok "!( !int --o !bool )") |}]
+;;
+
+let gen : Ast.exp =
+  Gen (one, Lambda (two, Arr (V one), Var two))
+;;
+
+let%expect_test "Gen" =
+  check_expr gen
+  |> pretty;
+  [%expect {| (Ok "'one. 'one arr --o 'one arr") |}]
+;;
+
+
+let spc : Ast.exp =
+  Spc(gen, S Z)
+;;
+
+let%expect_test "Spc" =
+  check_expr spc
+  |> pretty;
+  [%expect {| (Ok "z s arr --o z s arr") |}]
+;;
+
+let%expect_test "Spc" =
+  check_expr (Spc(gen, S (V three)))
+  |> pretty;
+  [%expect {|
+    (Error "Spc: (S (V three)) not found in environment.\n") |}]
+;;
+
+let%expect_test "Bang_E" =
+  check_expr @@
+  Lambda (one, Bang Elt,
+    Bang_E (one, Var one,
+    Bang_E (one, Bang_I (Bang_I (Var one)),
+    App (App (Prim (EltOp Add), Var one), Var one))))
+  |> pretty;
+  [%expect {| (Ok "!float --o !float") |}]
+;;
+
+let pair_e : Ast.exp =
+  Pair_E (one, two, pair, Pair_I (Var two, Var one))
+;;
+
+let%expect_test "Pair_E" = 
+  check_expr pair_e
+  |> pretty;
+  [%expect {| (Ok "unit * z arr") |}]
+;;
+
+let%expect_test "Pair_E" = 
+  check_expr (Pair_E (one, two, pair, Var one))
+  |> pretty;
+  [%expect {| (Error "Variable two not used.\n") |}]
+;;
+
+let unit_lambda : Ast.exp =
   Lambda (one, Unit, Var one)
 ;;
 
-let%expect_test "checker_lambda" =
+let%expect_test "Lambda" =
   check_expr unit_lambda
   |> pretty;
-  [%expect {| (Ok "I --o I") |}]
+  [%expect {| (Ok "unit --o unit") |}]
 ;;
 
-let app : Ast.expression =
-  App (unit_lambda, Unit_Intro)
+let app : Ast.exp =
+  App (unit_lambda, Unit_I)
 ;;
 
-let%expect_test "checker_app" =
+let%expect_test "App" =
   check_expr app
   |> pretty;
-  [%expect {| (Ok I) |}]
+  [%expect {| (Ok unit) |}]
 ;;
 
-let forall : Ast.expression =
-  ForAll_frac_cap (one, Lambda (two, Array_t (Var one), Var two))
-;;
-
-let%expect_test "checker_forall" =
-  check_expr forall
-  |> pretty;
-  [%expect {| (Ok "\226\136\128 one_1. Arr[one_1] --o Arr[one_1]") |}]
-;;
-
-let specialise : Ast.expression =
-  Specialise_frac_cap(forall, Succ Zero)
-;;
-
-let%expect_test "checker_specialise" =
-  check_expr specialise
-  |> pretty;
-  [%expect {| (Ok "Arr[1] --o Arr[1]") |}]
-;;
-
-let%expect_test "checker_specialise" =
-  check_expr (Specialise_frac_cap(forall, Succ (Var three)))
+let%expect_test "If" =
+  check_expr @@ 
+  Lambda (one, Bang Bool,
+  Lambda (two, Bang Int,
+    If (Var one, Var two, Unit_I)))
   |> pretty;
   [%expect {|
-    (Error
-     "Specialise_frac_cap: (Succ (Var ((id 3) (name three)))) not found in environment.") |}]
+    (Error  "First term used these variables not used by the second:\
+           \n  two\
+           \n") |}]
 ;;
 
-let%expect_test "checker_array_elim" =
-  check_expr (Array_Elim (one, arr, Var one))
+let%expect_test "If" =
+  check_expr @@ 
+  Lambda (one, Bang Bool,
+  Lambda (two, Bang Int,
+    If (Var one, Var two, Var two)))
   |> pretty;
-  [%expect {| (Ok Arr[0]) |}] 
+  [%expect {| (Ok "!bool --o !int --o !int") |}]
 ;;
 
-let prims : Ast.primitive list =
-   (* Operators *)
-  [ Split_Permission
-  ; Merge_Permission
-  ; Free
-  ; Copy (* xCOPY *)
-  ; Swap (* xSWAP *)
-
-   (* Routines/Functions *)
-  ; Sum_Mag (* xASUM *)
-  ; Scalar_Mult_Then_Add (* xAXPY *)
-  ; DotProd (* xDOT *)
-  ; Norm2 (* xNRM2 *)
-  ; Plane_Rotation (* xROT *)
-  ; Givens_Rotation (* xROTG *)
-  ; GivensMod_Rotation (* xROTM *)
-  ; Gen_GivensMod_Rotation (* xROTMG *)
-  ; Scalar_Mult (* xSCAL *)
-  ; Index_of_Max_Abs (* IxAMAX *)
+let arith : Ast.arith list =
+  [ Add
+  ; Sub
+  ; Mul
+  ; Div
+  ; Eq
+  ; Lt
   ]
 ;;
 
+let ops =
+  List.concat_map ~f:(fun x -> Ast.[IntOp x; EltOp x]) arith
+;;
+
+let prims : Ast.prim list =
+  (* Arithmetic *)
+  ops @
+   (* Operators *)
+  [ And_
+  ; Or_
+  ; Not_
+  (* Arrays *)
+  ; Set
+  ; Get
+  ; Share
+  ; Unshare
+  ; Free
+  (* Owl - no polymorphism so no Mapi :'( *)
+  ; Array
+  ; Copy
+  ; Sin
+  ; Hypot
+  (* Level 1 BLAS *)
+  ; Asum
+  ; Axpy
+  ; Dot
+  ; Rotmg
+  ; Scal
+  ; Amax
+  ]
+;;
+
+let pretty (x,t) =
+  Stdio.printf "%s: %s\n"
+    Ast.(string_of_prim x)
+    (Ast.(string_of_pp pp_lin @@ Or_error.ok_exn t))
+;;
+
 let%expect_test "check_array_elim" =
-  List.map ~f:(fun x -> check_expr (Primitive x)) prims
+  List.map ~f:(fun x -> x, check_expr (Prim x)) prims
   |> List.iter ~f:pretty;
   [%expect {|
-    (Ok
-      "\226\136\128 split_perm_1719.\
-     \n  Arr[split_perm_1719] --o Arr[split_perm_1719+1] * Arr[split_perm_1719+1]")
-    (Ok
-      "\226\136\128 merge_perm_1719.\
-     \n  Arr[merge_perm_1719+1] * Arr[merge_perm_1719+1] --o Arr[merge_perm_1719]")
-    (Ok "Arr[0] --o I")
-    (Ok "\226\136\128 copy_1719. Arr[copy_1719] --o Arr[copy_1719] * Arr[0]")
-    (Ok "Arr[0] * Arr[0] --o Arr[0] * Arr[0]")
-    (Ok
-     "\226\136\128 sum_mag_1719. Arr[sum_mag_1719] --o Arr[sum_mag_1719] * f64")
-    (Ok
-      "\226\136\128 sum_mag_vec_1719.\
-     \n  f64 --o Arr[sum_mag_vec_1719] --o Arr[0] --o Arr[sum_mag_vec_1719] * Arr[0]")
-    (Ok
-      "\226\136\128 dot_prod_x_1719.\
-     \n  Arr[dot_prod_x_1719] --o \226\136\128 dot_prod_y_1720.\
-     \n    Arr[dot_prod_y_1720] --o\
-     \n    ( Arr[dot_prod_x_1719] * Arr[dot_prod_y_1720] ) * f64")
-    (Ok "\226\136\128 norm2_1719. Arr[norm2_1719] --o Arr[norm2_1719] * f64")
-    (Ok "f64 --o f64 --o Arr[0] --o Arr[0] --o Arr[0] * Arr[0]")
-    (Ok "f64 --o f64 --o ( f64 * f64 ) * ( f64 * f64 )")
-    (Ok
-      "Arr[0] --o Arr[0] --o \226\136\128 rotm_1719.\
-     \n  Arr[rotm_1719] --o ( Arr[0] * Arr[0] ) * Arr[rotm_1719]")
-    (Ok "f64 * f64 --o f64 * f64 --o ( f64 * f64 ) * ( f64 * Arr[0] )")
-    (Ok "f64 --o Arr[0] --o Arr[0]")
-    (Ok
-      "\226\136\128 index_max_abs_1719.\
-     \n  Arr[index_max_abs_1719] --o int * Arr[index_max_abs_1719]") |}]
+    addI: !int --o !int --o !int
+    addE: !float --o !float --o !float
+    subI: !int --o !int --o !int
+    subE: !float --o !float --o !float
+    mulI: !int --o !int --o !int
+    mulE: !float --o !float --o !float
+    divI: !int --o !int --o !int
+    divE: !float --o !float --o !float
+    eqI: !int --o !int --o !bool
+    eqE: !float --o !float --o !bool
+    ltI: !int --o !int --o !bool
+    ltE: !float --o !float --o !bool
+    and_: !bool --o !bool --o !bool
+    or_: !bool --o !bool --o !bool
+    not_: !bool --o !bool
+    set: z arr --o !int --o !float --o z arr
+    get: 'x. 'x arr --o !int --o !float * 'x arr
+    share: 'x. 'x arr --o 'x s arr * 'x s arr
+    unshare: 'x. 'x s arr --o 'x s arr --o 'x arr
+    free: z arr --o unit
+    array: !int --o z arr
+    copy: 'x. 'x arr --o z arr
+    sin: z arr --o z arr
+    hypot: z arr --o 'x. 'x arr --o z arr * 'x arr
+    asum: 'x. 'x arr --o !float * 'x arr
+    axpy: z arr --o !float --o 'x. 'x arr --o z arr * 'x arr
+    dot: 'x. 'x arr --o 'y. 'y arr --o !float * ( 'x arr * 'y arr )
+    rotmg: !float * !float --o !float * !float --o
+    ( !float * !float ) * ( !float * z arr )
+    scal: !float --o z arr --o z arr
+    amax: 'x. 'x arr --o !int * 'x arr |}]
 ;;

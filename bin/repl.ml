@@ -17,19 +17,15 @@ open LTerm_style
 open LTerm_text
 ;;
 
-module I =
-  Interpreter
-;;
-
 (* Prompt based on current interpreter state *)
 let make_prompt state =
-  let prompt = Printf.sprintf "In  [%d]: " state.I.n in
+  let prompt = Printf.sprintf "In  [%d]: " state in
   eval [B_fg cyan; S prompt; E_fg]
 ;;
 
 (* Format the interpreter output for REPL display *)
 let make_output state out =
-  let pre = Printf.sprintf "Out [%d]: " (state.I.n - 1) in
+  let pre = Printf.sprintf "Out [%d]: " (state - 1) in
   let out, col = match out with 
     | Ok str -> str, green
     | Error str -> str, red in
@@ -46,40 +42,52 @@ class read_line ~term ~history ~state =
   end
 ;;
 
-(* Main loop *)
-let rec loop term history state =
+let get_line term history state =
 
-  match%lwt
-
-    begin try%lwt 
-      let history = LTerm_history.contents history in
-      let rl = new read_line ~term ~history ~state in
-      rl#run >|= Base.Option.return
-    with
-    | Sys.Break -> return None
-    | exn -> Lwt.fail exn
-    end
-
+  try%lwt 
+    let history = LTerm_history.contents history in
+    let rl = new read_line ~term ~history ~state in
+    rl#run >|= Base.Option.return
   with
+  | Sys.Break -> return None
+  | exn -> Lwt.fail exn
+
+;;
+
+(* Main loop *)
+let rec loop term history ?cont state =
+
+  match%lwt get_line term history state with
 
   | Some command ->
-    let state, out = I.eval state command in
+    step term history command @@
+    begin match cont with 
+    | Some cont -> cont (Lexing.from_string command)
+    | None -> Eval.eval state command
+    end
+
+  | None ->
+    loop term history state
+
+and step term history command = function
+
+  | Eval.Done (state, out) ->
     let%lwt () = LTerm.fprintls term (make_output state out) in
     LTerm_history.add history command;
     loop term history state
 
-  | None ->
-    loop term history state
+  | Eval.More (state, cont) ->
+    LTerm_history.add history command;
+    loop term history ~cont state
 ;;
 
 (* Entry point *)
 let main () =
   let%lwt () =  LTerm_inputrc.load () in
   try%lwt
-    let state = { I.n = 1 } in
     let%lwt () = LTerm.printls (eval [S "LT4LA REPL"]) in
     let%lwt term = Lazy.force LTerm.stdout in
-    loop term (LTerm_history.create []) state
+    loop term (LTerm_history.create []) 0
   with
   | LTerm_read_line.Interrupt -> Lwt.return ()
   | exn -> Lwt.fail exn

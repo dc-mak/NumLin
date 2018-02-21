@@ -28,15 +28,38 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 
 ## Quickstart
 
-| Command                       | Where                     | Meaning                                       |
-| ---                           | ---                       | ----                                          |
-| `jbuilder build lt4la.a`      | `src`                     | Build the library (everything inside `src`).  |
-| `jbuilder utop`               | `src`                     | As above + launches UTop with library loaded. |
-| `jbuilder build test.exe`     | `test`                    | Build library & tests.                        |
-| `jbuilder runtest`            | top, `test`               | Build library & tests _and_ run all tests.    |
-| `jbuilder build repl.exe`     | `bin`                     | Build library & REPL.                         |
-| `jbuilder clean`              | top, `src`, `test`, `bin` | Delete `_build` directory of build artifacts. |
-| `_build/default/bin/repl.exe` | top                       | Launch the REPL.                              |
+| Command                                   | Meaning                                       |
+| ---                                       | ----                                          |
+| `jbuilder build src/lt4la.a`              | Build the library (everything inside `src`).  |
+| `pushd src && jbuilder utop && popd`      | As above + launches UTop with library loaded. |
+| `jbuilder build test/test.exe`            | Build library & tests.                        |
+| `jbuilder runtest`                        | Build library & tests _and_ run all tests.    |
+| `jbuilder build bin/{repl,transpile}.exe` | Build library, REPL and transpiler.           |
+| `jbuilder clean`                          | Delete `_build` directory of build artifacts. |
+| `_build/default/bin/*.exe`                | Launch {repl,transpile}.exe                   |
+
+### Roadmap (in _rough_ order of priority)
+
+**In progress:**
+ - Combinators interface
+ - Syntactic sugar/parsing grammar
+ - Elaboration/inference
+
+**Future:**
+ - Array sizes in types.
+ - Tough: staging, preferably using [ppx_stage](https://github.com/stedolan/ppx_stage?files=1)
+ - ?Documentation with [Read the Docs](https://readthedocs.org/)
+ - ?Performance: benchmark, less pure-functional implementations behind `State_or_error` or `Check_monad`.
+
+**Done:**
+ - Fixed `jbuilder utop` crash
+ - Semantics written in Ott
+ - Well-formed types
+ - (Some) Owl/Level 1 BLAS Primitives
+ - Parser/REPL
+ - Code generation
+ - Scalars and arithmetic expressions
+ - Recursion, conditionals and !-types
 
 ## Development
 
@@ -132,26 +155,6 @@ to update the test file with the _if_ it is correct/what you expect.
 Just a Travis-CI system building the Dockerfile (which includes running tests).
 
 Triggered with every push to the `master` branch.
-
-### Roadmap (in _rough_ order of priority)
-
-**In progress:**
- - Parser/REPL
- - Code generation
- - Scalars and arithmetic expressions
-
-**Future:**
- - Array sizes in types.
- - Tough: Elaboration/inference.
- - Tough: staging, preferably using [ppx_stage](https://github.com/stedolan/ppx_stage?files=1)
- - ?Documentation with [Read the Docs](https://readthedocs.org/)
- - ?Performance: benchmark, less pure-functional implementations behind `State_or_error` or `Check_monad`.
-
-**Done:**
- - Fixed `jbuilder utop` crash
- - Semantics written in Ott
- - Well-formed types
- - Level 1 BLAS Primitives
 
 ### `.mli` Files
 There is currently no straightforward way to "generate" `.mli` files from an `.ml`

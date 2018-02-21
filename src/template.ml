@@ -8,139 +8,190 @@ open Owl
 ;;
 
 module Arr =
-  Bigarray.Array1
+  Owl.Dense.Ndarray.D
 ;;
 
-type zero =
-    Zero
+type z =
+    Z
 ;;
 
-type 'a succ =
+type 'a s =
     Succ
 ;;
 
 type 'a arr = 
-  (float, Bigarray.float64_elt, Bigarray.c_layout) Arr.t
+  A of Arr.arr
+[@@ocaml.unboxed]
 ;;
 
-type arr0 =
-  zero arr
-;;
-
-let (=) (x: int) (y: int) =
-  x = y
+type 'a bang =
+  Many of 'a
+[@@ocaml.unboxed]
 ;;
 
 module Prim =
 struct
 
-  let array_intro n : arr0 =
-    Arr.(create Float64 C_layout n)
+  let extract (Many x) =
+    x
   ;;
 
-  let split_perm : 'a . 'a arr -> ('a succ) arr * ('a succ) arr  = 
-    fun arr ->
-      (arr, arr)
+  (* Boolean *)
+  let and_ (Many x) (Many y) =
+    Many (x && y)
   ;;
 
-  let merg_perm : 'a. ('a succ) arr * ('a succ) arr -> 'a arr =
-    fun (arr1, arr2) ->
-      (* Is this correct? *)
-      let () = assert (arr1 == arr2) in
-      arr1
+  let or_ (Many x) (Many y) =
+    Many (x || y)
   ;;
 
-  (* Can we "actually" free it? *)
-  let free : arr0 -> unit =
-    fun _ ->
-      ()
+  let not_ (Many x) =
+    Many (not x)
   ;;
 
-  let copy : 'a. 'a arr  -> 'a arr * arr0 =
-    fun read ->
-      let n = Arr.dim read in 
-      let copied = array_intro n in
-      let () = Cblas.copy n read 1 copied 1 in
-      (read, copied)
+  (* IntOp *)
+  let addI (Many x) (Many y) =
+    Many (x + y)
   ;;
 
-  let same_dim_exn : 'a 'b. 'a arr -> 'b arr -> int =
-    fun read_a read_b ->
-      let n_a, n_b = Arr.(dim read_a, dim read_b) in
+  let subI (Many x) (Many y) =
+    Many (x - y)
+  ;;
+
+  let mulI (Many x) (Many y) =
+    Many (x * y)
+  ;;
+
+  let divI (Many x) (Many y) =
+    Many (x / y)
+  ;;
+
+  let eqI (Many x : int bang) (Many y : int bang) =
+    Many (x = y)
+  ;;
+
+  let ltI (Many x : int bang) (Many y : int bang) =
+    Many (x < y)
+  ;;
+
+  (* EltOp *)
+  let addE (Many x) (Many y) =
+    Many (x +. y)
+  ;;
+
+  let subE (Many x) (Many y) =
+    Many (x -. y)
+  ;;
+
+  let mulE (Many x) (Many y) =
+    Many (x *. y)
+  ;;
+
+  let divE (Many x) (Many y) =
+    Many (x /. y)
+  ;;
+
+  let eqE (Many x : int bang) (Many y : int bang) =
+    Many (x = y)
+  ;;
+
+  let ltE (Many x : int bang) (Many y : int bang) =
+    Many (x < y)
+  ;;
+
+  (* Array operations *)
+  let set (A arr : z arr) (Many i : int bang) (Many v : float bang)  : z arr = 
+    Arr.set arr [|i|] v;
+    A arr
+  ;;
+
+  let get (A arr : 'a arr) (Many i : int bang) =
+    (Many (Arr.get arr [|i|]), A arr)
+  ;;
+
+  let share (A arr : 'a arr) : 'a s arr *  'a s arr =
+    (A arr, A arr)
+  ;;
+
+  let unshare (A arr1 : 'a s arr) (A arr2 : 'a s arr) : 'a arr =
+    assert (Base.phys_equal arr1 arr2);
+    A arr1
+  ;;
+
+  let free (A arr : z arr) =
+    ()
+  ;;
+
+  (* Owl *)
+  let array (Many n : int bang) : z arr =
+    A Arr.(empty [| n |])
+  ;;
+
+  let copy (A arr : 'a arr) : 'a arr * z arr =
+    (A arr, A Arr.(copy arr))
+  ;;
+
+  let sin (A arr : z arr) : z arr =
+    Arr.sin_ arr;
+    A arr
+  ;;
+
+  let hypot (A arr1 : z arr) (A arr2 : 'a arr) : z arr * 'a arr =
+    Arr.hypot_ arr1 arr2;
+    (A arr1, A arr2)
+  ;;
+
+  (* BLAS helper *)
+  let same_dim_exn read_a read_b =
+      let n_a, n_b = Arr.(numel read_a, numel read_b) in
       let () = assert (n_a = n_b) in
       n_a
   ;;
 
-  let swap : arr0 * arr0 -> arr0 * arr0  =
-    fun (write_x, write_y) ->
-      let n = same_dim_exn write_x write_y in
-      let () = Cblas.swap n write_x 1 write_y 1 in
-      (write_x, write_y)
+  let conv =
+    Bigarray.array1_of_genarray
   ;;
 
+  let inv =
+    Bigarray.genarray_of_array1
+  ;;
+
+  (* BLAS *)
   let asum : 'a. 'a arr -> 'a arr * float =
-    fun read ->
-      let result = Cblas.asum (Arr.dim read) read 1 in
-      (read , result)
+    fun (A read) ->
+      let result = Cblas.asum (Arr.numel read) (conv read) 1 in
+      (A read , result)
   ;;
 
-  let axpy : 'a. float -> 'a arr -> arr0 -> 'a arr * arr0 =
-    fun scalar read write ->
+  let axpy scalar (A read: 'a arr) (A write: z arr) : 'a arr * z arr =
       let n = same_dim_exn read write in
-      let () = Cblas.axpy n scalar read 1 write 1 in
-      (read, write)
+      let () = Cblas.axpy n scalar (conv read) 1 (conv write) 1 in
+      (A read, A write)
   ;;
 
   let dot : 'a 'b. 'a arr -> 'b arr -> (('a arr * 'b arr) * float) = 
-    fun fst snd ->
+    fun (A fst) (A snd) ->
       let n = same_dim_exn fst snd in
-      let result = Cblas.dot n fst 1 snd 1 in
-      ((fst, snd), result)
+      let result = Cblas.dot n (conv fst) 1 (conv snd) 1 in
+      ((A fst, A snd), result)
   ;;
 
-  let nrm2 : 'a. 'a arr -> 'a arr * float =
-    fun read ->
-      let result = Cblas.nrm2 (Arr.dim read) read 1 in
-      (read, result)
-  ;;
-
-  (* This one makes me questions the order of c/s before x/y. *)
-  let rot : float -> float -> arr0 -> arr0 -> (arr0 * arr0) =
-    fun c s write_x write_y ->
-      let n = same_dim_exn write_x write_y in
-      let () = Cblas.rot n write_x 1 write_y 1 c s in
-      (write_x, write_y)
-  ;;
-
-  let rotg : float -> float -> (float * float) * (float * float) =
-    fun a b ->
-      let (a,b,c,s) = Cblas.rotg a b in
-      ((a,b),(c,s))
-  ;;
-
-  let rotm : 'param. arr0 -> arr0 -> 'param arr -> (arr0 * arr0) * 'param arr =
-    fun write_a write_b param ->
-      let n = same_dim_exn write_a write_b in
-      let () = Cblas.rotm n write_a 1 write_b 1 param in
-      ((write_a, write_b), param)
-  ;;
-
-  let rotmg : float * float -> float * float -> (float * float) * (float * arr0) =
+  let rotmg : float * float -> float * float -> (float * float) * (float * z arr) =
     fun (d1, d2) (b1, b2) ->
       let (d1, d2, b1, p) = Cblas.rotmg Bigarray.Float64 d1 d2 b1 b2 in
-      ((d1, d2), (b1, p))
+      ((d1, d2), (b1, A (inv p)))
   ;;
 
-  let scal : float -> arr0 -> arr0 =
-    fun scal write ->
-      let () = Cblas.scal (Arr.dim write) scal write 1 in
-      write
+  let scal : float -> z arr -> z arr =
+    fun scal (A write) ->
+      let () = Cblas.scal (Arr.numel write) scal (conv write) 1 in
+      A write
   ;;
 
   let amax : 'a. 'a arr -> int * 'a arr =
-    fun read ->
-      let result = Cblas.amax (Arr.dim read) read 1 in
-      (result, read)
+    fun (A read) ->
+      let result = Cblas.amax (Arr.numel read) (conv read) 1 in
+      (result, A read)
   ;;
       
   end

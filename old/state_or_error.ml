@@ -31,8 +31,11 @@ struct
   include Monad.Make
       (struct
 
-        type nonrec 'a t =
+        type 'a tmp =
           'a t
+
+        type 'a t =
+          'a tmp
 
         let bind t ~f state =
           let open Or_error.Let_syntax in

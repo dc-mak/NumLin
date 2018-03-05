@@ -224,7 +224,7 @@ let rec same_lin equiv lin1 lin2 =
 let same_lin equiv x y : unit Or_error.t =
   Result.map_error
     (same_lin equiv x y)
-    (fun err ->
+    ~f:(fun err ->
        let pp () x =
          string_of_pp pp_lin x
          |> String.split ~on:'\n'
@@ -411,11 +411,8 @@ let%test_module "Test" =
   (module struct
 
     (* A stock of variables *)
-    let one, two, three, four, five, six, seven, eight, nine, ten, eleven, sentinel =
-      ( "one"   , "two"    , "three"
-      , "four"  , "five"   , "six"
-      , "seven" , "eight"  , "nine"
-      , "ten"   , "eleven" , "sentinel" )
+    let one, two, three, four, five =
+      ( "one", "two", "three", "four", "five" )
     ;;
 
     (* same_fc/string_of_fc *)

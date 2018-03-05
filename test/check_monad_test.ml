@@ -358,7 +358,6 @@ let%expect_test "in_empty" =
 
 let%expect_test "in_empty" =
   let open Let_syntax in
-  let%bind wf_arr = wf_arr in
   with_lin one (wf_Bang wf_Int) @@
   in_empty @@ begin
     let%bind Some (Not_used t) = lookup one in

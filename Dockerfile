@@ -5,7 +5,7 @@
 #    Liang Wang <liang.wang@cl.cam.ac.uk>
 ############################################################
 
-FROM ocaml/opam2:ubuntu-16.04-ocaml-4.06.0
+FROM ocaml/opam2:ubuntu-16.04-opam
 MAINTAINER Dhruv Makwana
 
 # OS Prerequisites
@@ -26,6 +26,7 @@ RUN chown opam:opam $HOME $HOME/*
 WORKDIR $HOME
 
 # OCaml Packages Used
+RUN opam init -y
 RUN opam install -y           \
         oasis                 \
         "ocamlmod=0.0.9"      \
@@ -49,11 +50,11 @@ RUN opam install -y           \
     && opam env
 
 # Environment variables
-ENV OPAM_SWITCH_PREFIX /home/opam/.opam/4.06.0
-ENV CAML_LD_LIBRARY_PATH /home/opam/.opam/4.06.0/lib/stublibs:/home/opam/.opam/4.06.0/lib/ocaml/stublibs:/home/opam/.opam/4.06.0/lib/ocaml
-ENV OCAML_TOPLEVEL_PATH /home/opam/.opam/4.06.0/lib/toplevel
-ENV MANPATH /home/opam/.opam/4.06.0/man
-ENV PATH /home/opam/.opam/4.06.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
+ENV OPAM_SWITCH_PREFIX /home/opam/.opam/default
+ENV CAML_LD_LIBRARY_PATH /home/opam/.opam/default/lib/stublibs:/home/opam/.opam/default/lib/ocaml/stublibs:/home/opam/.opam/default/lib/ocaml
+ENV OCAML_TOPLEVEL_PATH /home/opam/.opam/default/lib/toplevel
+ENV MANPATH /home/opam/.opam/default/man
+ENV PATH /home/opam/.opam/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 
 # Eigen from source
 ENV EIGENPATH $HOME/eigen
@@ -71,8 +72,6 @@ ENV OWLPATH $HOME/owl
 RUN git clone https://github.com/ryanrhymes/owl.git                            \
     # Owl: FIXME (hacking ... needs to be fixed)                               \
     && sed -i -- 's/-lopenblas/-lopenblas -llapacke/g' $OWLPATH/src/owl/jbuild \
-    # LT4LA: Allows jbuilder to build executables with Owl                     \
-    && sed -i -- 's/-flto/ /g' $OWLPATH/src/owl/jbuild                         \
     && make -C $OWLPATH                                                        \
     && make -C $OWLPATH install
 
@@ -80,6 +79,7 @@ RUN git clone https://github.com/ryanrhymes/owl.git                            \
 ENV LT4LAPATH $HOME/lt4la
 ADD --chown=opam:opam . $LT4LAPATH
 WORKDIR $LT4LAPATH
-RUN jbuilder runtest \
+RUN sed -i -- 's~(name runtest)~& (locks (../dot_owl_dir))~g' test/jbuild oldtest/jbuild
+RUN jbuilder runtest --dev --display=short \
     && jbuilder build bin/repl.exe
 ENTRYPOINT /bin/bash

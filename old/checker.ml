@@ -159,7 +159,7 @@ let rec (check : Ast.expression -> Check_monad.well_formed Check_monad.t) =
     | WF Int ->
       return wf_Array_t_Zero
     | WF inferred_t ->
-      error "Array_Intro: expected Int" inferred_t
+      error ~expected:"Array_Intro: expected Int" ~inferred_t
     end
 
   (* Elimination rules are more of a pain *)
@@ -168,7 +168,7 @@ let rec (check : Ast.expression -> Check_monad.well_formed Check_monad.t) =
     | WF Unit ->
       check body
     | WF inferred_t ->
-      error "Unit_Elim: expected Unit" inferred_t
+      error ~expected:"Unit_Elim: expected Unit" ~inferred_t
     end
 
   | Pair_Elim (first, second, expression, body) ->
@@ -178,7 +178,7 @@ let rec (check : Ast.expression -> Check_monad.well_formed Check_monad.t) =
          check body |> with_linear_t [(first, first_t); (second, second_t)])
       ~not_pair:
         (fun inferred_t ->
-           error "Pair_Elim: expected Pair(_,_)" inferred_t)
+           error ~expected:"Pair_Elim: expected Pair(_,_)" ~inferred_t)
 
   | Specialise_frac_cap (expression, frac_cap) ->
     split_wf_ForAll (check expression)
@@ -190,14 +190,14 @@ let rec (check : Ast.expression -> Check_monad.well_formed Check_monad.t) =
 
       ~not_forall:
         (fun inferred_t ->
-           error "Specialise_frac_cap: expected ForAll_frac_cap(_,_)" inferred_t)
+           error ~expected:"Specialise_frac_cap: expected ForAll_frac_cap(_,_)" ~inferred_t)
 
   | Array_Elim (var, expression, body) ->
     begin match%bind check expression with
     | WF (Array_t _) as arr_t ->
       check body |> with_linear_t [(var, arr_t)]
     | WF inferred_t ->
-      error "Array_Elim: expected Array_t(_)" inferred_t
+      error ~expected:"Array_Elim: expected Array_t(_)" ~inferred_t
     end
 
   | App (func, arg) ->
@@ -208,7 +208,7 @@ let rec (check : Ast.expression -> Check_monad.well_formed Check_monad.t) =
         return body_t
       | Error err ->
         failf "%a" (Fn.const Error.to_string_hum) err in
-    let not_fun inferred_t = error "App: expected Fun(_,_)" inferred_t in
+    let not_fun inferred_t = error ~expected:"App: expected Fun(_,_)" ~inferred_t in
     split_wf_Fun (check func) ~if_fun ~not_fun
 
   | Primitive prim ->

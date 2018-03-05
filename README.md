@@ -74,6 +74,44 @@ Overview of the project structure is in the table below.
 | `docs`     | Documentation.                               |
 | `write-up` | My dissertation on all of this.              |
 
+To understand this project, consider what happens when you use the REPL:
+  1. An input string is taken and fed to `Eval.eval`.
+  2. `bin/eval.ml` in turn uses `src/parse.ml`: this file needs four things to
+     run a parser over an input: a lexical-token buffer, a way to handle a
+     successful parse, a way to handle an error, and optionally, a way to
+     handle a request for a new lexical-buffer. How these are implemented in
+     `bin/eval.ml` is not relevant for the big-picture.
+  3. `src/parse.ml` uses `lexer.mll` and `parser.mly` to drive an incremental
+     parser.  Making it incremental allows for using `parser.messages` and
+     `error_msg.ml` for better error-messages. Upon success, `src/parse.ml`
+     returns a value of type `Ast.exp`, upon failure, a position, to be used by
+     handle in showing a useful error-message.
+  4. `src/ast.ml` defines fractional-capabilities, linear types and expressions,
+     as well as pretty-printing code-generation. The code is generated on the
+     assumption that it comes after either the contents of the file `template.ml`
+     or an `open Lt4la.Template` statement.
+     - `template.ml[i]` is a full implementation of LT4LA's DSL's primitives in OCaml.
+  5. Given a value of type `Ast.exp`, the `accept` function in `bin/eval.ml`
+     passes it to `check_expr` in `src/checker.ml`.
+  6. `src/checker.ml` checks types, linearity and scoping. It uses operations
+     defined in `src/check_monad.ml` to implement typing rules.
+     - `check_monad.ml[i]` hides implementation details of functions used in
+       the type-checker as well as constraining how those functions are used. For
+       example, `wf_lin` is how the type-checker ensures fractional-capabilities
+       and linear-types are "well-formed" with respect to the environment.
+       Similarly, `not_used` is a proof that a variable is not used: it is
+       returned only by `lookup` and accepted only by `use_var`: you cannot
+       extract the type of a linear variable unless you mark it as used first.
+  7. Regardless of whether checking is successful or not, `accept` in
+     `bin/eval.ml` does two things (1) output OCaml code representing a
+     translation of the expression entered (2) output the full AST in
+     s-expression form.
+     If the checking is successful, then the type is output, otherwise an error.
+  8. Similarly, `bin/transpile.ml` reads an entire file as input rather than an
+     interactive, line-by-line entry. It acts as a thin-wrapper around
+     `src/transpile.ml` which can take either `in_channel`/`out_channel` pairs
+     or file names to translate DSL expressions to OCaml.
+
 ### Formatting conventions
 I'm sticking to to following conventions (except for `.mli` files and small modules)
  - Max 100 characters line-width
@@ -176,7 +214,7 @@ building eigen. My attempt to install eigen failed (something to do with
 ocamlbuild cmi version for too new a version of OCaml, I tried reinstalling the
 switch/ocamlbuild but to no result), so:
  - I skipped over it
- - Pinned gls to version 1.20.0 (`opam pin gsl 1.20.0`)
+ - Pinned gsl to version 1.20.0 (`opam pin gsl 1.20.0`)
  - Installed eigen from opam
  - Continued with the rest of the Dockerfile instructions.
 

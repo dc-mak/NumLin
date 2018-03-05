@@ -45,7 +45,7 @@ let drive_no_resume accept handler lexbuf =
 ;;
 
 (* TODO Catch Lexer.SyntaxError *)
-let rec drive accept handler resume lexbuf =
+let drive accept handler resume lexbuf =
   let module Intp = Parser.MenhirInterpreter in
   let rec loop lexbuf = function
   | Intp.InputNeeded _ as checkpoint ->

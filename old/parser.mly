@@ -18,7 +18,7 @@ let mk_id name =
   Ast.{name; id=(-1)}
 ;;
 
-let rec mk_fc ?str m =
+let mk_fc ?str m =
   let zero = match str with None -> Ast.Zero | Some str -> Ast.Var (mk_id str) in
   let rec loop zero m = if m <= 0 then zero else Ast.Succ (loop zero (m-1)) in
   loop zero m
@@ -81,6 +81,7 @@ let mk_forall_exp name exp : Ast.expression =
   Ast.ForAll_frac_cap (var, Ast.bind_fc_exp var exp)
 ;;
 
+[@@@ ocaml.warning "-9" (* labels not found in record pattern *) ]
 %}
 
 %token EOF

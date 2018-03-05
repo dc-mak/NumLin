@@ -3,7 +3,7 @@
 (* -------------------------- *)
 
 (** Make a pretty-printer output a string. *)
-val string_of_pp : ?size:int -> (Caml.Format.formatter -> 'a -> 'b) -> 'a -> string
+val string_of_pp : ?size:int -> (Caml.Format.formatter -> 'a -> unit) -> 'a -> string
 
 (** Variables have a [name] for pretty-printing and an [id] for uniqueness. *)
 type variable = { id : int; name : string; }

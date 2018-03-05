@@ -91,7 +91,7 @@ let create_fresh ?(name="gen") () =
   let open Let_syntax in
   let%bind {counter=id;_} as state = get in
   let%bind () =  put {state with counter=id+1} in
-  return Ast.(name ^ "_" ^ Int.to_string id)
+  return @@ name ^ "_" ^ Int.to_string id
 ;;
 
 (* Environment manipulation. Invariants:                   *)
@@ -131,7 +131,7 @@ let mark_used var env used_vars =
     Result.return (t, env, used_vars)
 ;;
 
-let use_var {var;t} =
+let use_var {var;t=_} =
   let open Let_syntax in
   let%bind {env; used_vars; _} as state = get in
   match mark_used var env used_vars with
@@ -262,12 +262,13 @@ let run wf_lin ~counter =
   let init = {env=[]; fc_vars=[]; counter; used_vars=empty_used} in
   let%bind (WFL result, state) = run wf_lin init in
   begin match state with
-  | {env = []; fc_vars = []; counter} ->
+  | {env = []; fc_vars = []; used_vars; counter=_} when Set.is_empty used_vars ->
     return result
   | state ->
     Or_error.errorf
-      !"INTERNAL ERROR: After checking (%{sexp:Ast.lin}), environment is not empty\n%{sexp:state}\n"
-      result state
+      !"INTERNAL ERROR: After checking (%{sexp:Ast.lin}), environment is not empty\n\
+        %{sexp:state}\nused_vars:\n%{sexp:Ast.var list}\n"
+      result state (Set.to_list state.used_vars)
   end
 ;;
 
@@ -281,7 +282,7 @@ let rec wf_wrt fc_vars =
   let open Ast in function
     | Z -> true
     | S fc -> wf_wrt fc_vars fc
-    | V var -> List.exists fc_vars ([%compare.equal : Ast.var] var)
+    | V var -> List.exists fc_vars ~f:([%compare.equal : Ast.var] var)
 ;;
 
 (* Checking a linear type is well-formed. *)
@@ -330,7 +331,7 @@ let if_wf fc ~then_ ~else_ =
 ;;
 
 let wf_substitute_in (WFL lin) (WFV var) (WFC fc) =
-  WFL (Ast.substitute_in lin var fc)
+  WFL (Ast.substitute_in lin ~var ~replace:fc)
 ;;
 
 let split_wf_Pair wfl ~if_pair ~not_pair =
@@ -361,11 +362,8 @@ and split_wf_Fun wfl ~if_fun ~not_fun =
 let%test_module "Test" =
   (module struct
 
-    let one, two, three, four, five, six, seven, eight, nine, ten, eleven, sentinel =
-      ( "one"   , "two"    , "three"
-      , "four"  , "five"   , "six"
-      , "seven" , "eight"  , "nine"
-      , "ten"   , "eleven" , "sentinel" )
+    let two, three, six = 
+      ("two", "three", "six")
     ;;
 
     let env =

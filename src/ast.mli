@@ -1,6 +1,6 @@
 (** Utilities *)
 val string_of_pp :
-  ?size:int -> (Caml.Format.formatter -> 'a -> 'b) -> 'a -> string
+  ?size:int -> (Caml.Format.formatter -> 'a -> unit) -> 'a -> string
 
 (** Variables *)
 type var = string

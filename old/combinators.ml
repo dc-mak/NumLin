@@ -84,7 +84,7 @@ struct
     let ( %% ) = app
     let ( & ) = pair
     let ( // ) = spc
-    let ( !! ) = all
+    let ( !! ) = all [@@ ocaml.warning "-32" (* unused value *) ]
   end
 
   let split_perm : ('x fc -> 'x arr -> 'x s arr * 'x s arr) t = Primitive Split_Permission

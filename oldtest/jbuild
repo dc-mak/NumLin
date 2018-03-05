@@ -10,7 +10,7 @@
 (alias (
     (name runtest)
     (deps (test.exe))
-    (action (chdir ${ROOT} (run ${<} inline-test-runner old_internal)))
+    (action (chdir ${ROOT} (run ${<} inline-test-runner old)))
 ))
 
 (alias (

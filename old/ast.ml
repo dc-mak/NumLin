@@ -158,7 +158,7 @@ struct
     let sub_fun =
       (object(self)
         inherit Ppx_traverse_builtins.map
-        inherit map as super
+        inherit map
         method variable var =
           let msg = "INTERNAL ERROR: binding variables are not unique." in
           if var = !var_ref then failwith msg else var
@@ -244,7 +244,7 @@ struct
   let same_linear_t x y : unit Or_error.t =
     Result.map_error
       (same_linear_t [] x y)
-      (fun err ->
+      ~f:(fun err ->
          let pp () x =
            string_of_pp pp_linear_t x
            |> String.split ~on:'\n'
@@ -463,11 +463,9 @@ let%test_module "Test" =
   (module struct
 
     (* A stock of variables *)
-    let one, two, three, four, five, six, seven, eight, nine, ten, eleven, sentinel =
+    let one, two, three, four, five =
       ( {id=1; name="one"}   ,   {id=2; name="two"}   ,   {id=3; name="three"}
-      , {id=4; name="four"}  ,   {id=5; name="five"}  ,     {id=6; name="six"}
-      , {id=7; name="seven"} ,  {id=8; name="eight"}  ,    {id=9; name="nine"}
-      , {id=10; name="ten"}  , {id=11; name="eleven"} , {id=(-1); name="sentinel"} )
+      , {id=4; name="four"}  ,   {id=5; name="five"}  )
     ;;
 
     (* same_frac_cap (and pp_frac_cap) *)
@@ -480,17 +478,17 @@ let%test_module "Test" =
     let%expect_test "same_frac_cap" =
       same_frac_cap [] (Succ (Succ (Var one))) (Var one)
       |> Stdio.printf !"%{sexp: unit Or_error.t}";
-      [%expect {| (Error "Could not show one+2 and one are equal.\n") |}]
+      [%expect {| (Error "Could not show one_1+2 and one_1 are equal.\n") |}]
     ;;
 
     let%expect_test "same_frac_cap" =
       same_frac_cap [] (Var one) (Succ (Succ (Var three)))
       |> Stdio.printf !"%{sexp: unit Or_error.t}";
-      [%expect {| (Error "Could not show one and three+2 are equal.\n") |}]
+      [%expect {| (Error "Could not show one_1 and three_3+2 are equal.\n") |}]
     ;;
 
     let%expect_test "add" =
-      let ids x = List.map x (fun (x,y) -> (x.id, y.id)) in
+      let ids x = List.map x ~f:(fun (x,y) -> (x.id, y.id)) in
       let show x = Stdio.printf !"%{sexp: (int * int) list}\n" (ids x) in
       let it = add (one, two) []  in show it;
       let it = add (three, four) it in show it;

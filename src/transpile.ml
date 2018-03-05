@@ -16,7 +16,7 @@ let handler lexbuf ~msg =
 let accept chan value =
   match Checker.check_expr value ~counter:0 with
 
-  | Ok lin ->
+  | Ok (_ : Ast.lin) ->
     Out.output_lines chan ["open Lt4la.Template"; ";;"; ""];
     Caml.Format.(fprintf @@ formatter_of_out_channel chan)
       "@[<2>let it =@;@[%a@]@]" Ast.pp_exp value;

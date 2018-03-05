@@ -9,8 +9,6 @@ open Base
    be retrieved at runtime and (2) incx = incy = 1. *)
 
 let check_prim =
-  let open Check_monad in
-  let open Let_syntax in
   let open Ast in
 
   let x = "x" and y = "y" in
@@ -83,7 +81,7 @@ let rec check =
 
   | Bang_I exp ->
     if Ast.is_value exp then
-      let%bind (WFL lin) as res = in_empty @@ check exp in
+      let%bind res = in_empty @@ check exp in
       return @@ wf_Bang res
     else
       failf "Can only call 'Many' on values.\n"

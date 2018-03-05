@@ -26,8 +26,8 @@ struct
     | Fun : 'a lin * 'b lin -> ('a -> 'b) lin
     | All : ('fc fc -> 'a lin) -> ('fc fc -> 'a) lin
 
-  let t = All (fun x -> Arr x)
-  let t = All (fun x -> Arr Z)
+  let _ = All (fun x -> Arr x)
+  let t = All (fun _ -> Arr Z)
 
   let ( * ) x y = Pair (x,y)
   let ( @-> ) x y = Fun (x, y)
@@ -94,8 +94,8 @@ struct
   let (n,p) as two = Nxt n, Ext p
   let (n,p) as three = Nxt n, Ext p
 
-  let t = All (one, fun x -> Arr x)
-  let t = All (one, fun x -> Arr Z)
+  let _ = All (one, fun x -> Arr x)
+  let t = All (one, fun _ -> Arr Z)
 
   let ( * ) x y = Pair (x,y)
   let ( @-> ) x y = Fun (x, y)
@@ -161,7 +161,7 @@ struct
     | All : ('env, 'fc, 'env2) index * ('env, 'a) lin -> ('env2, 'a) lin
 
   (* Old *)
-  let t = All (Fst, Arr (V Fst))
+  let _ = All (Fst, Arr (V Fst))
   let t = All (Fst, Arr Z)
 
   let one = Fst 

@@ -11,7 +11,7 @@
 (* - .messages error reporting                                 *)
 
 (* --- Pure helper functions --- *)
-let rec mk_fc ?str m =
+let mk_fc ?str m =
   let zero = match str with None -> Ast.Z | Some str -> Ast.V str in
   let rec loop zero m = if m <= 0 then zero else Ast.S (loop zero (m-1)) in
   loop zero m
@@ -27,15 +27,12 @@ let mk_app_like exp (hd :: tl) =
 ;;
 
 type pat =
-  | Var of Ast.var
   | Many of Ast.var
   | Let of Ast.var * Ast.lin
   | Pair of Ast.var * Ast.var
   | Fix of Ast.var * Ast.var * Ast.lin * Ast.lin
 
 let mk_let exp body = function
-  | Var var ->
-    Ast.Var var
   | Many var ->
     Ast.Bang_E(var, exp, body)
   | Let (var, lin) ->
@@ -57,6 +54,7 @@ let bind_fix f x tx tres : pat =
   Fix (f,x,tx,tres)
 ;;
 
+[@@@ ocaml.warning "-9" (* labels not found in record pattern *) ]
 %}
 
 %token EOF

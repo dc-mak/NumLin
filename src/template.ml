@@ -118,7 +118,7 @@ struct
     A arr1
   ;;
 
-  let free (A arr : z arr) =
+  let free (A _ : z arr) =
     ()
   ;;
 

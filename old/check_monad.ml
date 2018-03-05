@@ -74,7 +74,7 @@ let add, remove, find =
 
 let lookup var  =
   let open Let_syntax in
-  let%bind {linear_t_vars; frac_cap_vars; _} = get in
+  let%bind {linear_t_vars; _} = get in
   return (find linear_t_vars var)
 ;;
 
@@ -83,7 +83,7 @@ let rec wf_wrt frac_cap_vars =
   let open Ast in function
     | Zero -> true
     | Succ frac_cap -> wf_wrt frac_cap_vars frac_cap
-    | Var var -> List.exists frac_cap_vars ([%compare.equal : Ast.variable] var)
+    | Var var -> List.exists frac_cap_vars ~f:([%compare.equal : Ast.variable] var)
 ;;
 
 (* Well-formed manipulations. Probably execessive but fun to experiment with. *)
@@ -106,7 +106,7 @@ type wf_variable =
 
 let wf_substitute_in (WF linear_t) (WFV var) (WFC fc) =
   let open Let_syntax in
-  match Ast.substitute_in linear_t var fc with
+  match Ast.substitute_in linear_t ~var ~replacement:fc with
   | Ok result ->
     return (WF result)
   | Error err ->
@@ -180,7 +180,7 @@ let with_linear_t bindings linear_t =
 
   (* FIRST update state *)
   let%bind () =
-    let bindings = List.map bindings (fun (var,lt) -> (var, Not_used (var, lt))) in
+    let bindings = List.map bindings ~f:(fun (var,lt) -> (var, Not_used (var, lt))) in
     (* Yes, I'm cheating by appending *)
     put { state with linear_t_vars =  bindings @ linear_t_vars } in
 
@@ -230,9 +230,8 @@ let with_frac_cap bindings linear_t =
   (* THEN remove the fraction_capability variables and return *)
   let%bind () =
     let remove_frac_cap_var var =
-      let open Let_syntax in
       let%bind {frac_cap_vars; _} as state = get in
-      put { state with frac_cap_vars = List.filter frac_cap_vars (fun x ->
+      put { state with frac_cap_vars = List.filter frac_cap_vars ~f:(fun x ->
         not ( [%compare.equal : Ast.variable] var x ) ) } in
     List.map bindings ~f:remove_frac_cap_var |> all_ignore in
 
@@ -243,7 +242,7 @@ let run well_formed ~counter =
   let open Or_error.Let_syntax in
   let%bind (WF result, state) = run well_formed {linear_t_vars=[]; frac_cap_vars=[]; counter} in
   begin match state with
-  | {linear_t_vars = []; frac_cap_vars = []; counter} ->
+  | {linear_t_vars = []; frac_cap_vars = []; counter=_} ->
     return result
   | state ->
     Or_error.errorf

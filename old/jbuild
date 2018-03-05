@@ -12,7 +12,7 @@
         ppx_expect.evaluator
         ppx_inline_test.runner.lib
     ))
-    (preprocess (pps (ppx_traverse ppx_jane ppx_driver.runner (-inline-test-lib old_internal))))
+    (preprocess (pps (ppx_traverse ppx_jane ppx_driver.runner (-inline-test-lib old))))
 ))
 
 (rule (

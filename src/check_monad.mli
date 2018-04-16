@@ -67,7 +67,8 @@ module Let_syntax :
 val create_fresh : ?name:string -> unit -> Ast.var t
 val lookup : Ast.var -> tagged option t
 val use_var : not_used -> wf_lin t
-val same_lin : wf_lin -> wf_lin -> unit Base.Or_error.t t
+val same_lin : wf_lin -> wf_lin -> (Ast.var * Ast.fc) list Base.Or_error.t t
+val apply : (string * Ast.fc) list -> wf_lin -> wf_lin
 val with_lin : Ast.var -> wf_lin -> 'a t -> 'a t
 val with_int : Ast.var -> wf_lin -> 'a t -> 'a t
 val with_fc : Ast.var -> 'a t -> 'a t

@@ -1,12 +1,12 @@
-let rec f (i : !int) : !int --o !elt --o all x . arr[x] --o !elt * arr[x] =
+let rec f (i : !int) : !int --o !elt --o 'x . 'x arr --o !elt * 'x arr =
     let Many i = i in let Many i = Many (Many i) in
     fun n : !int -> let Many n = n in let Many n = Many (Many n) in
     fun x0 : !elt -> let Many x0 = x0 in let Many x0 = Many (Many x0) in
-    all x . fun row : arr[x] ->
+    fun 'x -> fun row : 'x arr ->
     if eqI i n then
         (x0, row)
     else
-        let (x1, row) = get [x] row i in
-        f (addI i 1) n (addE x0 x1) [x] row in
+        let (x1, row) = get 'x row i in
+        f (addI i 1) n (addE x0 x1) 'x row in
     f
 ;;

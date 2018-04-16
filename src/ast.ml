@@ -31,6 +31,7 @@ type fc =
   | Z
   | S of fc
   | V of var
+  | U of var
 [@@deriving sexp_of,compare]
 ;;
 
@@ -42,8 +43,23 @@ let string_of_fc fc =
   let rec count acc = function
     | Z -> "z" :: acc
     | S fc -> count ("s" :: acc) fc
-    | V var -> ("'" ^ var) :: acc in
+    | V var -> ("'" ^ var) :: acc
+    | U var -> ("?" ^ var) :: acc in
   String.concat ~sep:" " @@ count [] fc
+;;
+
+let rec occurs_unify var = function
+  | Z -> false
+  | S fc -> occurs_unify var fc
+  | V _ -> false
+  | U var' -> String.(var = var')
+;;
+
+let rec occurs_var (=)  var = function
+  | Z -> false
+  | S fc -> occurs_var (=) var fc
+  | U _ -> false
+  | V var' -> var = var'
 ;;
 
 (* [equiv] is the minimal description of alpha-equivalent variables, that is if
@@ -51,18 +67,36 @@ let string_of_fc fc =
 let rec same_fc equiv fc1 fc2 =
   let open Result.Let_syntax in
   match fc1, fc2 with
+  | U var, fc | fc, U var ->
+    if occurs_unify var fc then
+      Result.failf "Occurs check failed: ?%s found in %a.\n" var (Fn.const string_of_fc) fc
+    else
+      return [(var, fc)]
+
   | Z, Z ->
-    return ()
+    return []
   | S fc1, S fc2 ->
     same_fc equiv fc1 fc2
   | V var1, V var2 ->
     if List.exists ~f:(fun (x,y) -> x = var1 && y = var2 || y = var1 && x = var2) equiv then
-      return ()
+      return []
     else
-      Result.failf !"Could not show '%s and '%s and alpha-equivalent.\n" var1 var2
+      Result.failf "Could not show '%s and '%s and alpha-equivalent.\n" var1 var2
+
+  | V var, fc | fc, V var ->
+    let (=) var1 var2 =
+      List.exists equiv
+        ~f:(fun (x,y) -> x = var1 && y = var2 || y = var1 && x = var2) in
+    if occurs_var (=) var fc then
+      Result.failf !"Occurs check failed: '%s found in %a, under alpha-equivalences:\
+                     \n%{sexp: (var*var) list}\n"
+        var (Fn.const string_of_fc) fc  equiv
+    else
+      return []
+
   | _, _ ->
     let pp () = string_of_fc in
-    Result.failf !"Could not show %a and %a are equal.\n" pp fc1 pp fc2
+    Result.failf "Could not show %a and %a are equal.\n" pp fc1 pp fc2
 ;;
 
 (* Linear types *)
@@ -96,7 +130,7 @@ let pp_lin ppf =
       fprintf ppf "float"
 
     | Bang lin ->
-      let l, r = match lin with 
+      let l, r = match lin with
         | Unit | Bool | Int | Elt | Bang _ -> "", ""
         | Pair _ | Arr _ | Fun _ | All _ -> "( ", " )" in
       fprintf ppf "!%s%a%s" l pp_lin lin r
@@ -134,39 +168,52 @@ let pp_lin ppf =
   fprintf ppf "@[%a@]@?" pp_lin
 ;;
 
-let rec substitute_in lin ~var ~replace = 
+let rec substitute_in lin ~unify ~var ~replace =
   match lin with
   | Unit | Bool | Int | Elt as lin -> lin
-  | Arr fc -> 
+  | Arr fc ->
     let rec loop = function
       | Z -> Z
       | S fc -> S (loop fc)
-      | V var' as fc -> if var = var' then replace else fc in
+      | U var' | V var' as fc -> if var = var' then replace else fc in
     Arr (loop fc)
 
   | Pair (fst, snd) ->
-    Pair (substitute_in fst ~var ~replace,
-          substitute_in snd ~var ~replace)
+    Pair (substitute_in fst ~unify ~var ~replace,
+          substitute_in snd ~unify ~var ~replace)
 
   | Bang lin ->
-    Bang (substitute_in lin ~var ~replace)
+    Bang (substitute_in lin ~unify ~var ~replace)
 
   | Fun (arg, res) ->
-    Fun (substitute_in arg ~var ~replace,
-         substitute_in res ~var ~replace)
+    Fun (substitute_in arg ~unify ~var ~replace,
+         substitute_in res ~unify ~var ~replace)
 
   | All (var', rest) as lin ->
-    if var = var' then lin else All (var', substitute_in rest ~var ~replace)
+    if not unify && var = var' then lin else All (var', substitute_in rest ~unify ~var ~replace)
+;;
+
+let substitute_unify lin ~var ~replace =
+  substitute_in lin ~unify:true ~var ~replace
+;;
+
+let substitute_in lin ~var ~replace =
+  substitute_in lin ~unify:false ~var ~replace
 ;;
 
 (* Alpha-equivalence sucks *)
+(* Think of this logic as joining two lines by the endpoints to form a trianlge.
+   Case 1-2: if both endpoints are same (modulo flipping) then already in.
+   Case 3-6: check if all pairs of endpoints match, and fill in missing edge.
+   Case   7: neither endpoints match, so continue as before. *)
 let add (x,y) equiv =
   let (=) = [%compare.equal : var] in
+  let msg = "LT4LA: don't add" in
   try
     (x, y) :: List.fold_left equiv ~init:[] ~f:(fun rest (u,v) ->
       let rest = (u, v) :: rest in
       if u = x && v = y || u = y && v = x then
-        failwith "don't add" (* ({u,v}={x,y}) + rest *)
+        failwith msg         (* ({u,v}={x,y}) + rest *)
       else if u = x then
         (y, v) :: rest       (* {x/u,v} + {x/u,y} + {y,v} + rest *)
       else if u = y then
@@ -177,12 +224,15 @@ let add (x,y) equiv =
         (u, x) :: rest       (* {u,v/y} + {x,v/y} + {u,x} + rest *)
       else
         rest)                (* {u,v} + {x,y} + rest *)
-  with _ -> equiv
+  with Failure msg' as exn ->
+    if phys_equal msg msg' then equiv else raise exn
 ;;
 
 (* Same lin UP TO alpha-equivalence *)
 let rec same_lin equiv lin1 lin2 =
   let open Result.Let_syntax in
+  let apply subs lin =
+    List.fold subs ~init:lin ~f:(fun lin (var, fc) -> substitute_unify lin ~var ~replace:fc) in
   let to_string = string_of_pp pp_lin in
 
   match lin1, lin2 with
@@ -190,7 +240,7 @@ let rec same_lin equiv lin1 lin2 =
   | Bool, Bool
   | Int, Int
   | Elt, Elt ->
-    return ()
+    return []
 
   | Bang lin1, Bang lin2 ->
     same_lin equiv lin1 lin2
@@ -199,14 +249,14 @@ let rec same_lin equiv lin1 lin2 =
     same_fc equiv fc1 fc2
 
   | Pair (fst1, snd1) , Pair(fst2,snd2) ->
-    let%bind () = same_lin equiv fst1 fst2 in
-    let%bind () = same_lin equiv snd1 snd2 in
-    return ()
+    let%bind subs1 = same_lin equiv fst1 fst2 in
+    let%bind subs2 = same_lin equiv (apply subs1 snd1) (apply subs1 snd2) in
+    return @@ subs1 @ subs2
 
   | Fun (arg1, body1) , Fun(arg2,body2) ->
-    let%bind () = same_lin equiv arg1 arg2 in
-    let%bind () = same_lin equiv body1 body2 in
-    return ()
+    let%bind subs1 = same_lin equiv arg1 arg2 in
+    let%bind subs2 = same_lin equiv (apply subs1 body1) (apply subs1 body2) in
+    return @@ subs1 @ subs2
 
   | All (var1,lin1), All (var2,lin2) ->
     same_lin (add (var1, var2) equiv) lin1 lin2
@@ -221,7 +271,7 @@ let rec same_lin equiv lin1 lin2 =
       pp lin1 pp lin2
 ;;
 
-let same_lin equiv x y : unit Or_error.t =
+let same_lin equiv x y : (var * fc) list Or_error.t =
   Result.map_error
     (same_lin equiv x y)
     ~f:(fun err ->
@@ -315,7 +365,7 @@ let prec = function
 
 let rec is_value = function
   | Prim _ | Unit_I | True | False | Int_I _ | Elt_I _ | Var _ | Fix _ | Lambda _ -> true
-  | App _ | Bang_E _ | Pair_E _ | If _ -> false 
+  | App _ | Bang_E _ | Pair_E _ | If _ -> false
   | Gen (_, exp) | Spc (exp, _) | Bang_I exp -> is_value exp
   | Pair_I (fst, snd) -> is_value fst && is_value snd
 ;;
@@ -418,20 +468,31 @@ let%test_module "Test" =
     (* same_fc/string_of_fc *)
     let%expect_test "same_fc" =
       same_fc [] Z (S Z)
-      |> Stdio.printf !"%{sexp:(unit,string)Result.t}";
+      |> Stdio.printf !"%{sexp:((var * fc) list,string)Result.t}";
       [%expect {| (Error "Could not show z and z s are equal.\n") |}]
     ;;
 
     let%expect_test "same_fc" =
       same_fc [] (S (S (V one))) (V one)
-      |> Stdio.printf !"%{sexp:(unit,string)Result.t}";
-      [%expect {| (Error "Could not show 'one s s and 'one are equal.\n") |}]
+      |> Stdio.printf !"%{sexp:((var * fc) list,string)Result.t}";
+      [%expect {| (Ok ()) |}]
     ;;
 
     let%expect_test "same_fc" =
+      same_fc [(one,one)] (S (S (V one))) (V one)
+      |> Stdio.printf !"%{sexp:((var * fc) list,string)Result.t}";
+      [%expect {|
+        (Error
+          "Occurs check failed: 'one found in 'one s s, under alpha-equivalences:\
+         \n((one one))\
+         \n") |}]
+    ;;
+
+
+    let%expect_test "same_fc" =
       same_fc [] (V one) (S (S (V three)))
-      |> Stdio.printf !"%{sexp:(unit,string)Result.t}";
-      [%expect {| (Error "Could not show 'one and 'three s s are equal.\n") |}]
+      |> Stdio.printf !"%{sexp:((var * fc) list,string)Result.t}";
+      [%expect {| (Ok ()) |}]
     ;;
 
     let%expect_test "add" =

@@ -1,7 +1,6 @@
-let rec f (x : !int) : !int =
-    let Many x = x in let Many x = Many (Many x) in
-    if or (eqI x 0) (ltI x 0)
-        then 1
+let rec f ( !x : !int ) : !int =
+    if or (eqI x 0) (ltI x 0) then
+        1
     else
         mulI x (f (subI x 1)) in f
 ;;

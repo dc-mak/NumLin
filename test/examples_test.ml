@@ -48,3 +48,18 @@ let%expect_test "one_d_conv" =
   Stdio.printf !"%{sexp: float array}" (Owl.Arr.to_array row);
   [%expect {| (10 40 40 30 19.999999999999996 30 40) |}]
 ;;
+
+(* With inferred fractional capabilities *)
+let%expect_test "one_d_conv" =
+  let one_d_conv = Examples.Weighted_avg_infer.it in
+  let n = 7 in
+  let f i _ = match i with
+    | 0 -> 10. | 1 -> 50. | 2 -> 60. | 3 -> 10.
+    | 4 -> 20. | 5 -> 30. | 6 -> 40. | _ -> assert false in
+  let row : z arr = A Owl.Arr.(mapi f (empty [| n |])) in
+  let f _ _ = 1. /. 3. in
+  let weights : z arr = A Owl.Arr.(mapi f @@ empty [| n |]) in
+  let (A row, _) = one_d_conv (Many 1) (Many (n-1)) (Many 10.) row weights in
+  Stdio.printf !"%{sexp: float array}" (Owl.Arr.to_array row);
+  [%expect {| (10 40 40 30 19.999999999999996 30 40) |}]
+;;

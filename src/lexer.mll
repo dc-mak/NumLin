@@ -26,13 +26,14 @@ let next_line lexbuf =
 let keywords =
   let open Base in
   let keywords =
+    (* fractional capabilities *)
+    [ ("z", ZED)
+    ; ("s", ES)
     (* simple linear types *)
-    [ ("unit", UNIT)
+    ; ("unit", UNIT)
     ; ("int", INT_LT)
     ; ("elt", ELT_LT)
     ; ("arr", ARR_LT)
-    (* linear types *)
-    ; ("all", ALL)
     (* primitives *)
     ; ("addI", ADD_INT)
     ; ("subI", SUB_INT)
@@ -75,6 +76,8 @@ let keywords =
     ; ("in", IN)
     ; ("fun", FUN)
     ; ("Many", MANY)
+    (* Inference *)
+    ; ("_", UNDERSCORE)
     ] in
   let table = Hashtbl.of_alist_exn (module String) keywords in
   fun str -> match Hashtbl.find table str with
@@ -85,9 +88,7 @@ let keywords =
 }
 
 let digit = ['0'-'9']
-
-let nat = digit digit*
-let int = '-'? nat
+let int = '-'? digit+
 
 let frac = '.' digit*
 let exp = ['e' 'E'] ['-' '+']? digit+
@@ -96,35 +97,37 @@ let float = digit* frac? exp?
 let white = [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
 let id = ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_']*
+let fc_var = ''' id
 (* Make more like OCaml? let fcvar = ''' id *)
 
 rule read =
   parse
-  | white    { read lexbuf }
-  | newline  { next_line lexbuf; read lexbuf }
-  | eof      { EOF }
-  | ";;"     { EOP }
+  | white   { read lexbuf }
+  | newline { next_line lexbuf; read lexbuf }
+  | eof     { EOF }
+  | ";;"    { EOP }
   (* fractional capabilities *)
-  | nat      { NAT (Base.Int.of_string (Lexing.lexeme lexbuf)) }
-  | '+'      { PLUS }
-  | id       { keywords (Lexing.lexeme lexbuf) }
+  | fc_var  { FC_VAR (Lexing.lexeme lexbuf) }
+  | id      { keywords (Lexing.lexeme lexbuf) }
   (* simple linear types *)
-  | '['      { L_BRACKET }
-  | ']'      { R_BRACKET }
-  | '('      { L_PAREN }
-  | ')'      { R_PAREN }
+  | '('     { L_PAREN }
+  | ')'     { R_PAREN }
   (* linear types *)
-  | '!'      { BANG }
-  | '*'      { STAR }
-  | "--o"    { LOLLIPOP }
-  | '.'      { DOT }
+  | '!'     { BANG }
+  | '*'     { STAR }
+  | "--o"   { LOLLIPOP }
+  | '.'     { DOT }
   (* simple expressions *)
-  | int      { INT (Base.Int.of_string (Lexing.lexeme lexbuf)) }
-  | float    { FLOAT (Base.Float.of_string (Lexing.lexeme lexbuf)) }
-  | ','      { COMMA }
-  | ':'      { COLON }
+  | int     { INT (Base.Int.of_string (Lexing.lexeme lexbuf)) }
+  | float   { FLOAT (Base.Float.of_string (Lexing.lexeme lexbuf)) }
+  | ','     { COMMA }
+  | ':'     { COLON }
   (* expressions *)
-  | '='      { EQUAL }
-  | "->"     { ARROW }
+  | '='     { EQUAL }
+  | "->"    { ARROW }
+  (* sugar *)
+  | '['     { L_BRACKET }
+  | ']'     { R_BRACKET }
+  | ":="    { COLON_EQ }
   (* TODO: make more informative/friendly *)
-  | _        { raise (SyntaxError (lexbuf.lex_curr_p, "unexpected char: " ^ Lexing.lexeme lexbuf)) }
+  | _       { raise (SyntaxError (lexbuf.lex_curr_p, "unexpected char: " ^ Lexing.lexeme lexbuf)) }

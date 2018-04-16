@@ -94,8 +94,8 @@ let rec check =
            let%bind actual =
              in_empty (check body |> with_lin x tx |> with_int f (wf_Fun tx res)) in
            match%bind same_lin res actual with
-           | Ok () ->
-             return @@ wf_Bang @@ wf_Fun tx res
+           | Ok subs ->
+             return @@ apply subs @@ wf_Bang @@ wf_Fun tx res
            | Error err ->
              fail_string @@ Error.to_string_hum err)
 
@@ -118,8 +118,8 @@ let rec check =
         (fun expected body_t ->
            let%bind actual = check arg in
            match%bind same_lin expected actual with
-           | Ok () ->
-             return body_t
+           | Ok subs ->
+             return @@ apply subs body_t
            | Error err ->
              fail_string @@ Error.to_string_hum err)
       ~not_fun:
@@ -146,7 +146,7 @@ let rec check =
     | WFL (Bang Bool) ->
       let%bind (t, f) = same_resources (check true_) (check false_) in
       begin match%bind same_lin t f with
-      | Ok () -> return t
+      | Ok subs -> return @@ apply subs t
       | Error err -> fail_string @@ Error.to_string_hum err
       end
 

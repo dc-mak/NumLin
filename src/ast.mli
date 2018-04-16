@@ -10,7 +10,7 @@ type comparator_witness
 val comparator : (var, comparator_witness) Base.Comparator.t
 
 (** Fractional Capabilities *)
-type fc = Z | S of fc | V of var
+type fc = Z | S of fc | V of var | U of var
 val sexp_of_fc : fc -> Base.Sexp.t
 val compare_fc : fc -> fc -> int
 val string_of_fc : fc -> string
@@ -30,9 +30,10 @@ val sexp_of_lin : lin -> Base.Sexp.t
 val compare_lin : lin -> lin -> int
 val pp_lin : Caml.Format.formatter -> lin -> unit
 val substitute_in : lin -> var:var -> replace:fc -> lin
+val substitute_unify : lin -> var:var -> replace:fc -> lin
 (** [same_lin] [ (x,x) | x is a free-variable] t1 t2 determines whether two
     types are the same up to alpha-equivalence. *)
-val same_lin : (var * var) list -> lin -> lin -> unit Base.Or_error.t
+val same_lin : (var * var) list -> lin -> lin -> (var * fc) list Base.Or_error.t
 
 (** Arithmetic expressions *)
 type arith = Add | Sub | Mul | Div | Eq | Lt

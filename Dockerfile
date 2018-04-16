@@ -69,10 +69,12 @@ RUN git clone https://github.com/ryanrhymes/eigen.git                           
 
 # Owl from source
 ENV OWLPATH $HOME/owl
-RUN git clone https://github.com/ryanrhymes/owl.git                            \
-    # Owl: FIXME (hacking ... needs to be fixed)                               \
-    && sed -i -- 's/-lopenblas/-lopenblas -llapacke/g' $OWLPATH/src/owl/jbuild \
-    && make -C $OWLPATH                                                        \
+RUN echo bust cache
+RUN git clone https://github.com/ryanrhymes/owl.git                                                   \
+    # Owl: FIXME (hacking ... needs to be fixed)                                                      \
+    && sed -i -- 's/-lopenblas/-lopenblas -llapacke/g' $OWLPATH/src/owl/jbuild                        \
+    && sed -i -- 's:/usr/local/opt/openblas/lib:/usr/lib/x86_64-linux-gnu/:g' $OWLPATH/src/owl/jbuild \
+    && make -C $OWLPATH                                                                               \
     && make -C $OWLPATH install
 
 # Build LT4LA in the current (host) directory

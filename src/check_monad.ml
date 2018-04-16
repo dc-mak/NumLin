@@ -149,6 +149,10 @@ let same_lin (WFL expected) (WFL actual) =
   return @@ Ast.same_lin fc_vars expected actual
 ;;
 
+let apply subs (WFL lin) =
+  WFL (List.fold subs ~init:lin ~f:(fun lin (var, fc) -> Ast.substitute_unify lin ~var ~replace:fc))
+;;
+
 let with_var var wf_lin result =
   let open Let_syntax in
   let%bind {env; used_vars=prev; _} as state = get in
@@ -280,7 +284,7 @@ let run wf_lin ~counter =
 (* Check if fractional-capability is well-formed w.r.t. given list of variables. *)
 let rec wf_wrt fc_vars =
   let open Ast in function
-    | Z -> true
+    | Z | U _ -> true
     | S fc -> wf_wrt fc_vars fc
     | V var -> List.exists fc_vars ~f:([%compare.equal : Ast.var] var)
 ;;

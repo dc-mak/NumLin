@@ -8,6 +8,7 @@
         owl
         menhirLib
         base
+        sexplib
         ppx_traverse_builtins
         ppx_expect.evaluator
         ppx_inline_test.runner.lib

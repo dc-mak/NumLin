@@ -50,70 +50,99 @@ let%expect_test "pp_lin" =
           * !( ( float --o 'd. float --o int ) --o int ) |}]
 ;;
 
-(* substitute_in *)
-let pretty x =
-  Stdio.printf !"%{sexp: Ast.lin}\n%s" x Ast.(string_of_pp pp_lin x)
+(* substitute_in, substitute_unify *)
+let pretty msg x =
+  Stdio.printf !"%s:\t%{sexp: Ast.lin}\t%s\n" msg x Ast.(string_of_pp pp_lin x)
 ;;
 
-let%expect_test "substitute_in" =
-  let open Ast in
-  substitute_in Unit ~var:four ~replace:(S Z)
-  |> pretty;
-  [%expect {|
-    Unit
-    unit |}]
+let both lin ~var ~replace = 
+  pretty "Normal" @@ Ast.substitute_in lin ~var ~replace;
+  pretty "Unify" @@ Ast.substitute_unify lin ~var ~replace;
 ;;
 
-let%expect_test "substitute_in" =
+let%expect_test "substitute_{in,unify}" =
   let open Ast in
-  substitute_in (Arr (V four)) ~var:four ~replace:(S Z)
-  |> pretty;
+  both Unit ~var:four ~replace:(S Z);
   [%expect {|
-    (Arr (S Z))
-    z s arr |}]
+    Normal:	Unit	unit
+    Unify:	Unit	unit |}]
 ;;
 
-let%expect_test "substitute_in" =
+let%expect_test "substitute_{in,unify}" =
   let open Ast in
-  substitute_in (Arr (V three)) ~var:four ~replace:(S Z)
-  |> pretty;
+  both (Arr (V four)) ~var:four ~replace:(S Z);
   [%expect {|
-    (Arr (V three))
-    'three arr |}]
+    Normal:	(Arr (S Z))	z s arr
+    Unify:	(Arr (S Z))	z s arr |}]
 ;;
 
-let%expect_test "substitute_in" =
+let%expect_test "substitute_{in,unify}" =
   let open Ast in
-  substitute_in (All (three, Arr (V four))) ~var:four ~replace:(S Z)
-  |> pretty;
+  both (Arr (U four)) ~var:four ~replace:(S Z);
   [%expect {|
-    (All three (Arr (S Z)))
-    'three. z s arr |}]
+    Normal:	(Arr (S Z))	z s arr
+    Unify:	(Arr (S Z))	z s arr |}]
 ;;
 
-let%expect_test "substitute_in" =
+let%expect_test "substitute_{in,unify}" =
   let open Ast in
-  substitute_in (All (four, Arr (V four))) ~var:four ~replace:(S Z)
-  |> pretty;
+  both (Arr (V three)) ~var:four ~replace:(S Z);
   [%expect {|
-    (All four (Arr (V four)))
-    'four. 'four arr |}]
+    Normal:	(Arr (V three))	'three arr
+    Unify:	(Arr (V three))	'three arr |}]
+;;
+
+let%expect_test "substitute_{in,unify}" =
+  let open Ast in
+  both (Arr (U three)) ~var:four ~replace:(S Z);
+  [%expect {|
+    Normal:	(Arr (U three))	?three arr
+    Unify:	(Arr (U three))	?three arr |}]
+;;
+
+let%expect_test "substitute_{in,unify}" =
+  let open Ast in
+  both (All (three, Arr (V four))) ~var:four ~replace:(S Z);
+  [%expect {|
+    Normal:	(All three (Arr (S Z)))	'three. z s arr
+    Unify:	(All three (Arr (S Z)))	'three. z s arr |}]
+;;
+
+let%expect_test "substitute_{in,unify}" =
+  let open Ast in
+  both (All (three, Arr (U four))) ~var:four ~replace:(S Z);
+  [%expect {|
+    Normal:	(All three (Arr (S Z)))	'three. z s arr
+    Unify:	(All three (Arr (S Z)))	'three. z s arr |}]
+;;
+
+let%expect_test "substitute_{in,unify}" =
+  let open Ast in
+  both (All (four, Arr (V four))) ~var:four ~replace:(S Z);
+  [%expect {|
+    Normal:	(All four (Arr (V four)))	'four. 'four arr
+    Unify:	(All four (Arr (S Z)))	'four. z s arr |}]
+;;
+
+let%expect_test "substitute_{in,unify}" =
+  let open Ast in
+  both (All (four, Arr (U four))) ~var:four ~replace:(S Z);
+  [%expect {|
+    Normal:	(All four (Arr (U four)))	'four. ?four arr
+    Unify:	(All four (Arr (S Z)))	'four. z s arr |}]
 ;;
 
 (* same_lin *)
+let pretty =
+  Stdio.printf !"%{sexp: (Ast.var * Ast.fc) list Or_error.t}"
+;;
+
 let%expect_test "same_lin" =
   let open Ast in
   same_lin [] (Arr (V one)) (Arr (S Z))
-  |> Stdio.printf !"%{sexp: unit Or_error.t}";
+  |> pretty;
   [%expect {|
-    (Error
-      "Could not show equality:\
-     \n    'one arr\
-     \nwith\
-     \n    z s arr\
-     \n\
-     \nCould not show 'one and z s are equal.\
-     \n") |}]
+    (Ok ()) |}]
 ;;
 
 let%expect_test "same_lin" =
@@ -121,7 +150,7 @@ let%expect_test "same_lin" =
   same_lin []
     (All (one, Arr (S (S (V one)))))
     (All (two, Arr (V two)))
-  |> Stdio.printf !"%{sexp: unit Or_error.t}";
+  |> pretty;
   [%expect {|
         (Error
           "Could not show equality:\
@@ -129,7 +158,8 @@ let%expect_test "same_lin" =
          \nwith\
          \n    'two. 'two arr\
          \n\
-         \nCould not show 'one s s and 'two are equal.\
+         \nOccurs check failed: 'two found in 'one s s, under alpha-equivalences:\
+         \n((one two))\
          \n") |}]
 ;;
 
@@ -138,7 +168,7 @@ let%expect_test "same_lin" =
   same_lin []
     (Pair (All (one, Arr (S (V one))), Unit))
     (Pair (All (one, Arr (V one)), Unit))
-  |> Stdio.printf !"%{sexp: unit Or_error.t}";
+  |> pretty;
   [%expect {|
         (Error
           "Could not show equality:\
@@ -146,7 +176,8 @@ let%expect_test "same_lin" =
          \nwith\
          \n    ( 'one. 'one arr ) * unit\
          \n\
-         \nCould not show 'one s and 'one are equal.\
+         \nOccurs check failed: 'one found in 'one s, under alpha-equivalences:\
+         \n((one one))\
          \n") |}]
 ;;
 
@@ -156,7 +187,7 @@ let%expect_test "same_lin" =
   same_lin []
     (Pair (All (one, Arr (S (V one))), Unit))
     (Pair (All (two, Arr (V two)), Unit))
-  |> Stdio.printf !"%{sexp: unit Or_error.t}";
+  |> pretty;
   [%expect {|
         (Error
           "Could not show equality:\
@@ -164,14 +195,15 @@ let%expect_test "same_lin" =
          \nwith\
          \n    ( 'two. 'two arr ) * unit\
          \n\
-         \nCould not show 'one s and 'two are equal.\
+         \nOccurs check failed: 'two found in 'one s, under alpha-equivalences:\
+         \n((one two))\
          \n") |}]
 ;;
 
 let%expect_test "same_lin" =
   let open Ast in
   same_lin [] Unit (Fun (Unit, Unit))
-  |> Stdio.printf !"%{sexp: unit Or_error.t}";
+  |> pretty;
   [%expect {|
         (Error
           "Could not show equality:\
@@ -194,7 +226,7 @@ let%expect_test "same_lin" =
        Arr (V two), Pair (Arr (V one), Arr (V two)))))))
     (All (three, All (four, Fun (Arr (V three), Fun (
        Arr (V four), Pair (Arr (V four), Arr (V three)))))))
-  |> Stdio.printf !"%{sexp: unit Or_error.t}";
+  |> pretty;
   [%expect {|
     (Error
       "Could not show equality:\
@@ -204,4 +236,39 @@ let%expect_test "same_lin" =
      \n\
      \nCould not show 'one and 'four and alpha-equivalent.\
      \n") |}]
+;;
+
+let%expect_test "same_lin" =
+  let open Ast in
+  same_lin [] (Arr (U one)) (Arr (S Z))
+  |> pretty;
+  [%expect {|
+    (Ok ((one (S Z)))) |}]
+;;
+
+let%expect_test "same_lin" =
+  let open Ast in
+  same_lin []
+    (All (one, Arr (S (S (U one)))))
+    (All (one, Arr (U one)))
+  |> pretty;
+  [%expect {|
+        (Error
+          "Could not show equality:\
+         \n    'one. ?one s s arr\
+         \nwith\
+         \n    'one. ?one arr\
+         \n\
+         \nOccurs check failed: ?one found in ?one s s.\
+         \n") |}]
+;;
+
+let%expect_test "same_lin" =
+  let open Ast in
+  same_lin []
+    (Pair (All (one, Arr (S (U one))), Unit))
+    (Pair (All (one, Arr (U two)), Unit))
+  |> pretty;
+  [%expect {|
+        (Ok ((two (S (U one))))) |}]
 ;;

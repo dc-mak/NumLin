@@ -6,8 +6,6 @@ type 'a bang = Many of 'a [@@unboxed]
 module Prim :
 sig
   val extract : 'a bang -> 'a
-  val and_ : bool bang -> bool bang -> bool bang
-  val or_ : bool bang -> bool bang -> bool bang
   val not_ : bool bang -> bool bang
   val addI : int bang -> int bang -> int bang
   val subI : int bang -> int bang -> int bang

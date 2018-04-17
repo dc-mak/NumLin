@@ -19,7 +19,6 @@ let check_prim =
     | Eq | Lt -> Fun(x, Fun (x, bool)) in
 
   function
-  | And_ | Or_ -> Fun (bool, Fun (bool, bool))
   | Not_ -> Fun (bool, bool)
   | IntOp op -> binary int op
   | EltOp op -> binary elt op

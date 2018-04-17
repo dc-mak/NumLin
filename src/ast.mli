@@ -43,8 +43,6 @@ val compare_arith : arith -> arith -> int
 (** Primitives *)
 type prim =
   (** Boolean *)
-  | And_
-  | Or_
   | Not_
   (** Arithmetic *)
   | IntOp of arith

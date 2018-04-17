@@ -1,6 +1,6 @@
 let rec f ( !x : !int ) : !int =
-    if or (eqI x 0) (ltI x 0) then
+    if x < 0 || x = 0 then
         1
     else
-        mulI x (f (subI x 1)) in f
+        x * f (x - 1) in f
 ;;

@@ -185,9 +185,7 @@ let prims : Ast.prim list =
   (* Arithmetic *)
   ops @
    (* Operators *)
-  [ And_
-  ; Or_
-  ; Not_
+  [ Not_
   (* Arrays *)
   ; Set
   ; Get
@@ -231,8 +229,6 @@ let%expect_test "check_array_elim" =
     eqE: !float --o !float --o !bool
     ltI: !int --o !int --o !bool
     ltE: !float --o !float --o !bool
-    and_: !bool --o !bool --o !bool
-    or_: !bool --o !bool --o !bool
     not_: !bool --o !bool
     set: z arr --o !int --o !float --o z arr
     get: 'x. 'x arr --o !int --o !float * 'x arr

@@ -69,7 +69,6 @@ RUN git clone https://github.com/ryanrhymes/eigen.git                           
 
 # Owl from source
 ENV OWLPATH $HOME/owl
-RUN echo bust cache
 RUN git clone https://github.com/ryanrhymes/owl.git                                                   \
     # Owl: FIXME (hacking ... needs to be fixed)                                                      \
     && sed -i -- 's/-lopenblas/-lopenblas -llapacke/g' $OWLPATH/src/owl/jbuild                        \

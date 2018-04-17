@@ -37,14 +37,6 @@ struct
   ;;
 
   (* Boolean *)
-  let and_ (Many x) (Many y) =
-    Many (x && y)
-  ;;
-
-  let or_ (Many x) (Many y) =
-    Many (x || y)
-  ;;
-
   let not_ (Many x) =
     Many (not x)
   ;;

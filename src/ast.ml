@@ -296,8 +296,6 @@ type arith =
 
 type prim =
   (* Boolean: NOT SHORT-CIRCUITING YET *)
-  | And_
-  | Or_
   | Not_
   (* Arithmetic *)
   | IntOp of arith
@@ -374,6 +372,7 @@ let pp_exp ppf =
   let open Caml.Format in
   let parens exp ref = if prec exp > prec ref then "","" else "(", ")" in
   let rec pp_exp ppf = function
+
     | Prim prim ->
       fprintf ppf "Prim.%s" (string_of_prim prim)
 
@@ -436,8 +435,19 @@ let pp_exp ppf =
       fprintf ppf "@[@[<2>let rec %s (%s (* %s *)) (* %s *) =@ %a in@]@ Many %s@]"
         f x (string_of_pp pp_lin tx) (string_of_pp pp_lin res) pp_exp body f
 
+    | If (cond, True, False) ->
+      pp_exp ppf cond
+
+    | If (cond, true_, False) ->
+      fprintf ppf "@[<hv>(Many ( (Prim.extract %@%@ @[%a@]) && (Prim.extract %@%@@ @[%a@])))@]"
+        pp_exp cond pp_exp true_
+
+    | If (cond, True, false_) ->
+      fprintf ppf "@[<hv>(Many ( (Prim.extract %@%@ @[%a@]) || (Prim.extract %@%@@ @[%a@])))@]"
+        pp_exp cond pp_exp false_
+
     | If (cond, true_, false_) ->
-      fprintf ppf "@[<hv>if Prim.extract %@%@ %a then@;<1 2>@[%a@]@;else@;<1 2>@[%a@]@]"
+      fprintf ppf "@[<hv>if Prim.extract %@%@@;<1 3> %a then@;<1 2>@[%a@]@;else@;<1 2>@[%a@]@]"
         pp_exp cond pp_exp true_ pp_exp false_
 
     | Gen (var, (Gen _ | Lambda _ as exp)) ->

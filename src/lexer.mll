@@ -35,20 +35,6 @@ let keywords =
     ; ("elt", ELT_LT)
     ; ("arr", ARR_LT)
     (* primitives *)
-    ; ("addI", ADD_INT)
-    ; ("subI", SUB_INT)
-    ; ("mulI", MUL_INT)
-    ; ("divI", DIV_INT)
-    ; ("eqI", EQ_INT)
-    ; ("ltI", LT_INT)
-    ; ("addE", ADD_ELT)
-    ; ("subE", SUB_ELT)
-    ; ("mulE", MUL_ELT)
-    ; ("devE", DIV_ELT)
-    ; ("eqE", EQ_ELT)
-    ; ("ltE", LT_ELT)
-    ; ("and", AND)
-    ; ("or", OR)
     ; ("not", NOT)
     ; ("set", SET)
     ; ("get", GET)
@@ -125,9 +111,23 @@ rule read =
   (* expressions *)
   | '='     { EQUAL }
   | "->"    { ARROW }
-  (* sugar *)
+  (* sugar, arrays *)
   | '['     { L_BRACKET }
   | ']'     { R_BRACKET }
   | ":="    { COLON_EQ }
+  | "||"    { DOUBLE_BAR }
+  | "&&"    { DOUBLE_AND }
+  (* integer arithmetic *)
+  | '<'     { LESS_THAN }
+  | '+'     { PLUS }
+  | '-'     { MINUS }
+  | '/'     { FWD_SLASH }
+  (* element arithmetic *)
+  | "=."     { EQUAL_DOT }
+  | "<."     { LESS_THAN_DOT }
+  | "+."     { PLUS_DOT }
+  | "-."     { MINUS_DOT }
+  | "*."     { STAR_DOT }
+  | "/."     { FWD_SLASH_DOT }
   (* TODO: make more informative/friendly *)
   | _       { raise (SyntaxError (lexbuf.lex_curr_p, "unexpected char: " ^ Lexing.lexeme lexbuf)) }

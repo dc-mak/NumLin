@@ -1,11 +1,11 @@
-let rec f (!i : !int) (!n : !int) (!x0 : !elt) (write : z arr) ('x) (weights : 'x arr) : (z arr * 'x arr) =
-    if eqI n i then (write, weights) else
+let rec f (!i : !int) (!n : !int) (!x0 : !elt) (write : z arr) ('x) (weights : 'x arr) : z arr * 'x arr =
+    if n = i then (write, weights) else
     let ( !w0, weights ) = weights[0] in
     let ( !w1, weights ) = weights[1] in
     let ( !w2, weights ) = weights[2] in
     let ( !x1, write ) = write[i] in
-    let ( !x2, write ) = write[addI i 1] in
-    let !newx : !elt = addE (mulE w0 x0) (addE (mulE w1 x1) (mulE w2 x2)) in
-    f (addI i 1) n x1 (write[i] := newx) _ weights in
+    let ( !x2, write ) = write[i + 1] in
+    let !newx : !elt = w0 *. x0 +. (w1 *. x1 +. w2 *. x2) in
+    f (i + 1) n x1 (write[i] := newx) _ weights in
   f
 ;;

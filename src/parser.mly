@@ -91,13 +91,73 @@ let desugar_let exp body = function
         | Second x -> (Ast.All (x, tres), Ast.Gen (x, exp)) in
     let (tres, exp) = loop xs in
     let fix = match x with
-      | NotB x -> Fix (f, x, tx, tres, exp)
-      | Bang x -> Fix (f, x, tx, tres, mk_bang x exp) in
+      | NotB x -> Ast.Fix (f, x, tx, tres, exp)
+      | Bang x -> Ast.Fix (f, x, tx, tres, mk_bang x exp) in
     Ast.App (Lambda(f, Bang (Fun (tx, tres)), Bang_E (f, Var f, body)), fix)
 ;;
 
+(* arrays *)
 let desugar_assign str ~index exp =
   Ast.App(App(App(Prim Set, Var str), index), exp)
+;;
+
+(* boolean *)
+let desugar_or fst snd =
+  Ast.If (fst, True, snd)
+;;
+
+let desugar_and fst snd =
+  Ast.If (fst, snd, False)
+;;
+
+(* integer *)
+let desugar_eq fst snd =
+  Ast.App(App(Prim (IntOp Eq), fst), snd)
+;;
+
+let desugar_lt fst snd =
+  Ast.App(App(Prim (IntOp Lt), fst), snd)
+;;
+
+let desugar_add fst snd =
+  Ast.App(App(Prim (IntOp Add), fst), snd)
+;;
+
+let desugar_sub fst snd =
+  Ast.App(App(Prim (IntOp Sub), fst), snd)
+;;
+
+let desugar_mul fst snd =
+  Ast.App(App(Prim (IntOp Mul), fst), snd)
+;;
+
+let desugar_div fst snd =
+  Ast.App(App(Prim (IntOp Div), fst), snd)
+;;
+
+(* element *)
+let desugar_eqE fst snd =
+  Ast.App(App(Prim (EltOp Eq), fst), snd)
+;;
+
+let desugar_ltE fst snd =
+  Ast.App(App(Prim (EltOp Lt), fst), snd)
+;;
+
+let desugar_addE fst snd =
+  Ast.App(App(Prim (EltOp Add), fst), snd)
+;;
+
+let desugar_subE fst snd =
+  Ast.App(App(Prim (EltOp Sub), fst), snd)
+;;
+
+let desugar_mulE fst snd =
+  Ast.App(App(Prim (EltOp Mul), fst), snd)
+;;
+
+let desugar_divE fst snd =
+  Ast.App(App(Prim (EltOp Div), fst), snd)
 ;;
 
 (* --- Impure helper functions --- *)
@@ -164,20 +224,6 @@ let desugar_index str exp =
 %token BANG
 
 (* Prims *)
-%token ADD_INT
-%token SUB_INT
-%token MUL_INT
-%token DIV_INT
-%token EQ_INT
-%token LT_INT
-%token ADD_ELT
-%token SUB_ELT
-%token MUL_ELT
-%token DIV_ELT
-%token EQ_ELT
-%token LT_ELT
-%token AND
-%token OR
 %token NOT
 %token SET
 %token GET
@@ -218,10 +264,30 @@ let desugar_index str exp =
 %token L_BRACKET
 %token R_BRACKET
 %token COLON_EQ
+(* boolean *)
+%token DOUBLE_BAR
+%token DOUBLE_AND
+(* integer *)
+%token LESS_THAN
+%token PLUS
+%token MINUS
+%token FWD_SLASH
+(* element *)
+%token EQUAL_DOT
+%token LESS_THAN_DOT
+%token PLUS_DOT
+%token STAR_DOT
+%token MINUS_DOT
+%token FWD_SLASH_DOT
 
 (* Associativity and precedence *)
-%nonassoc NON_LOW
-%right LOLLIPOP
+%nonassoc IN ELSE ARROW COLON_EQ NON_LOW
+%left PLUS PLUS_DOT MINUS MINUS_DOT
+%left STAR STAR_DOT FWD_SLASH FWD_SLASH_DOT
+%right DOUBLE_BAR
+%right DOUBLE_AND LOLLIPOP
+%nonassoc LESS_THAN LESS_THAN_DOT
+%nonassoc EQUAL EQUAL_DOT
 
 (* Grammar non-terminals *)
 %start <Ast.exp> prog
@@ -244,16 +310,34 @@ prog:
     | exp=exp EOP { exp         }
 
 exp:
-    | simple_exp                                  { $1                       }
-    | MANY exp=simple_exp                         { Ast.Bang_I exp           }
-    | FUN str=fc_var ARROW exp=exp                { Ast.Gen (str, exp)       }
-    | exp=simple_exp args=arg_like+               { mk_app_like exp args     }
-    | IF cond=exp THEN t=exp ELSE f=exp           { Ast.If(cond, t, f)       }
-    | FUN str=bang_id COLON lt=lin ARROW body=exp { mk_lambda str lt body    }
+    | simple_exp                                            { $1                            }
+    | MANY exp=simple_exp                                   { Ast.Bang_I exp                }
+    | FUN str=fc_var ARROW exp=exp                          { Ast.Gen (str, exp)            }
+    | exp=simple_exp args=arg_like+                         { mk_app_like exp args          }
+    | IF cond=exp THEN t=exp ELSE f=exp                     { Ast.If(cond, t, f)            }
+    | FUN str=bang_id COLON lt=lin ARROW body=exp           { mk_lambda str lt body         }
     (* sugar *)
-    | LET pat=pat EQUAL exp=exp IN body=exp       { desugar_let exp body pat }
-    | str=ID L_BRACKET exp=exp R_BRACKET          { desugar_index str exp    }
+    | LET pat=pat EQUAL exp=exp IN body=exp                 { desugar_let exp body pat      }
+    (* arrays *)
+    | str=ID L_BRACKET exp=exp R_BRACKET                    { desugar_index str exp         }
     | str=ID L_BRACKET index=exp R_BRACKET COLON_EQ exp=exp { desugar_assign str ~index exp }
+    (* boolean *)
+    | fst=exp DOUBLE_BAR snd=exp                            { desugar_or fst snd            }
+    | fst=exp DOUBLE_AND snd=exp                            { desugar_and fst snd           }
+    (* integer *)
+    | fst=exp EQUAL snd=exp                                 { desugar_eq fst snd            }
+    | fst=exp LESS_THAN snd=exp                             { desugar_lt fst snd            }
+    | fst=exp PLUS snd=exp                                  { desugar_add fst snd           }
+    | fst=exp MINUS snd=exp                                 { desugar_sub fst snd           }
+    | fst=exp STAR snd=exp                                  { desugar_mul fst snd           }
+    | fst=exp FWD_SLASH snd=exp                             { desugar_div fst snd           }
+    (* element *)
+    | fst=exp EQUAL_DOT snd=exp                             { desugar_eqE fst snd           }
+    | fst=exp LESS_THAN_DOT snd=exp                         { desugar_ltE fst snd           }
+    | fst=exp PLUS_DOT snd=exp                              { desugar_addE fst snd          }
+    | fst=exp MINUS_DOT snd=exp                             { desugar_subE fst snd          }
+    | fst=exp STAR_DOT snd=exp                              { desugar_mulE fst snd          }
+    | fst=exp FWD_SLASH_DOT snd=exp                         { desugar_divE fst snd          }
 
 pat:
     | MANY str=ID                                                             { Many str                }
@@ -289,20 +373,6 @@ simple_exp:
     | L_PAREN body=exp R_PAREN              { body                  }
 
 prim:
-    | ADD_INT { Ast.(IntOp Add) }
-    | SUB_INT { Ast.(IntOp Sub) }
-    | MUL_INT { Ast.(IntOp Mul) }
-    | DIV_INT { Ast.(IntOp Div) }
-    | EQ_INT  { Ast.(IntOp Eq)  }
-    | LT_INT  { Ast.(IntOp Lt)  }
-    | ADD_ELT { Ast.(EltOp Add) }
-    | SUB_ELT { Ast.(EltOp Sub) }
-    | MUL_ELT { Ast.(EltOp Mul) }
-    | DIV_ELT { Ast.(EltOp Div) }
-    | EQ_ELT  { Ast.(EltOp Eq)  }
-    | LT_ELT  { Ast.(EltOp Lt)  }
-    | AND     { Ast.And_        }
-    | OR      { Ast.Or_         }
     | NOT     { Ast.Not_        }
     | SET     { Ast.Set         }
     | GET     { Ast.Get         }

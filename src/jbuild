@@ -8,11 +8,10 @@
         owl
         menhirLib
         base
-        ppx_expect.evaluator
-        ppx_inline_test.runner.lib
+        stdio
     ))
-    ; (inline_tests) when jbuilder has pushed support for it
-    (preprocess (pps (ppx_jane ppx_driver.runner (-inline-test-lib lt4la))))
+    (inline_tests)
+    (preprocess (pps (ppx_jane)))
 ))
 
 (menhir (

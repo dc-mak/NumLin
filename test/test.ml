@@ -22,6 +22,3 @@ let%test_module "Examples" =
   (module Examples_test)
 ;;
 
-let () =
-  Ppx_inline_test_lib.Runtime.exit ()
-;;

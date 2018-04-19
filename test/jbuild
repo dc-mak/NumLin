@@ -1,22 +1,11 @@
 (jbuild_version 1)
 
-(executable (
+(library (
     (name test)
     (flags (:standard -short-paths))
-    (libraries (lt4la ppx_expect.evaluator ppx_inline_test.runner.lib))
-    (preprocess (pps (ppx_jane ppx_driver.runner (-inline-test-lib lt4la_external))))
-))
-
-(alias (
-    (name runtest)
-    (deps (test.exe))
-    (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la)))
-))
-
-(alias (
-    (name runtest)
-    (deps (test.exe))
-    (action (chdir ${ROOT} (run ${<} inline-test-runner lt4la_external)))
+    (libraries (lt4la))
+    (preprocess (pps (ppx_jane)))
+    (inline_tests)
 ))
 
 (rule (

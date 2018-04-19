@@ -1,22 +1,102 @@
 \chapter{Background}
 
-\begin{guidance}
-    A more extensive coverage of what's required to understand your
-    work. In general you should assume the reader has a good undergraduate
-    degree in computer science, but is not necessarily an expert in
-    the particular area you've been working on. Hence this chapter
-    may need to summarize some ``text book'' material.
+% \begin{guidance}
+%     A more extensive coverage of what's required to understand your
+%     work. In general you should assume the reader has a good undergraduate
+%     degree in computer science, but is not necessarily an expert in
+%     the particular area you've been working on. Hence this chapter
+%     may need to summarize some ``text book'' material.
+%
+%     This is not something you'd normally require in an academic paper,
+%     and it may not be appropriate for your particular circumstances.
+%     Indeed, in some cases it's possible to cover all of the ``background''
+%     material either in the introduction or at appropriate places in
+%     the rest of the dissertation.
+% \end{guidance}
 
-    This is not something you'd normally require in an academic paper,
-    and it may not be appropriate for your particular circumstances.
-    Indeed, in some cases it's possible to cover all of the ``background''
-    material either in the introduction or at appropriate places in
-    the rest of the dissertation.
-
-\end{guidance}
+\prechapter{%
+    In this chapter, I will outline the concept of linear types and show how
+    they can be used to solve the problems faced by programmers writing code
+    using linear-algebra libraries. I will be emphasising the \emph{practical}
+    and intuitive explanations of linear types to keep this thesis accessible
+    to working programmers as well as academics not familiar with type-theory;
+    giving only a terse overview of the history and theory behind linear types
+    for the interested reader to pursue further.
+}%
 
 \section{Tracking Resources with Linearity}
+Familiar examples of using a type-system to express program-invariants are
+existential-types for abstraction and encapsulation, polymorphic types for
+parametricity and composition (a.k.a generics). Less-known examples include
+dependent-types (contracts or pre- and post-conditions). The advantages of
+using a type-system to express program invariants are summarised by saying the
+stronger the rules you follow, the better the guarantees you can get about your
+program, \emph{before} you run it. At first, the rules seems restrictive, but
+similar to how the rules of grammar, spelling and more generally writing help a
+writer make it easier and clearer to communicate the ideas they wish to express,
+so to do rules about typing make it easier to communicate the intent and
+assumptions under which a program is written. An added, but often overlooked
+benefit is automated-checking: a programmer can boldly refactor in certain
+ways and the compiler will \emph{assist} in ensuring the relevant invariants
+the type-system enforces are updated and kept consistent by pointing-out
+where they are violated.
+
+Linear types are a way to help a programmer track and manage resources. In
+practical programming terms, they enforce the restriction that a value may be
+used exactly once.\footnote{This definition may differ from more colloquial
+uses in discussions surrounding \emph{substructural} type systems and/or Rust.
+A brief explanation can be found in Section~\ref{sec:further}.} While this
+restriction may seem limiting at first, precisely these constraints can be used
+to express common invariants of the programs written by working programmers
+every day. For example: a file or a socket, once opened \emph{must} closed; all
+memory that is manually allocated must be freed.  C++'s destructors and Rust's
+Drop-trait (and more generally, its borrow-checker) attempt to enforce these
+constraints by basically doing the same thing: any resource that has not been
+moved is deallocated at the end of the current lexical scope. Notably, these
+languages also permit aliasing, alongside rules enforcing when it is acceptable
+to do so.  On face value, the above one-line description of linear types
+prevents aliasing or functions such as $\lambda x.\;x \times x$, such features
+are still allowed (albeit in a more restricted fashion) in a \emph{usable}
+linear type system designed for working with linear-algebra libraries.
 
 \section{Problem in Detail}
+Given this background, the most pertinent question at hand is: what problems do
+linear-algebra library users (and writers) typically face? The answer to this
+question depends on which of two buckets a programmer falls (or is forced by
+domain) into. On one side, we have users of high-level linear-algebra libraries such
+as Owl (for OCaml), Julia and Numpy (for Python); other the other, we have
+users of more manual, lower-level libraries such as BLAS (Basic Linear Algebra
+Subroutines) and Eigen for languages like C++ and FORTRAN.\footnote{I am not including
+Rust in this comparison because its linear-algebra libraries are under active
+development and not as well-known/used. Later on, given that it is a language
+with in-built support of substructural features to track resources, Rust will
+be compared and constrasted with this project to evaluate the classic
+(E)DSL-versus-language-feature debate as it applies to the domain of
+linear-algebra libraries.}
+% https://github.com/AtheMathmo/rulinalg/blob/e0d8b76ddf8bbb5547cb9c98172e594605ab5fef/src/matrix/impl_ops.rs
+% Which operand is overwritten determines scope. Would make sense to argue
+% pros-cons of implicitness vs explicitness, emulating Rust's Affine with
+% linear sugar.
+
+\subsection{One Too Many Copies and a Thousand Bytes Behind}
+% CODE EXAMPLES
+
+\subsection{IHNIWTNM}
+The title of this subsection\footnote{I Have No Idea What Those Names Mean.}
+illustrates the problem with the C++/FORTRAN side: legibility (and ease of
+reasoning) is sacrified at the alter of performance and efficiency.
+
+% CODE EXAMPLES
 
 \section{Proposed Solution}
+A (E)DSL!
+
+% CODE EXAMPLES
+
+\section{Further Reading and Theory}\label{sec:further}
+\begin{itemize}
+    \item History - Girard and so on
+    \item Congratulations, it's a co-monad
+    \item Co-effects
+    \item General direction of field - Haskell, Rust, RAML, Atkey/McBride \& Idris, Krishnaswami
+\end{itemize}

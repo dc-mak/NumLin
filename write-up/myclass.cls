@@ -35,7 +35,7 @@
 
 % Allow flexible pages
 \raggedbottom{}
-\sloppy
+\sloppy%
 % penalise orphan lines/paragraphs
 \clubpenalty1000%
 \widowpenalty1000%
@@ -43,6 +43,13 @@
 % Paragraph formatting
 \parindent0pt%
 \parskip6pt%
+
+% Full width footnote rule
+\renewcommand{\footnoterule}{}%
+%   \kern -3pt
+%   \hrule width \textwidth height 1pt
+%   \kern 2pt
+% }
 
 % Nice tables
 \RequirePackage{booktabs}

@@ -24,22 +24,31 @@
 
 %% FRONTMATTER (TITLE PAGE, DECLARATION, ABSTRACT, ETC)
 \pagestyle{empty}
-\singlespacing
+\singlespacing%
 \input{titlepage}
-\onehalfspacing
+\onehalfspacing%
 \input{declaration}
-\singlespacing
+\singlespacing%
 \input{abstract}
 
+% Minitoc
+\dominitoc%
 % No resetting page numbers: ISO 7144
 % \pagenumbering{roman}
 % \setcounter{page}{0}
 \pagestyle{plain}
-\tableofcontents
-\listoffigures
-\listoftables
+\setcounter{tocdepth}{1}
+\tableofcontents%
+\listoffigures%
+\listoftables%
 
-\onehalfspacing
+% For Bold minitoc Section Headings, minitoc & tocloft conflict
+\renewcommand{\cftsecfont}{\normalfont\sffamily\bfseries}% Bold Sans mintoc Section font
+\renewcommand{\cftsecleader}{\normalfont\sffamily\bfseries\cftdotfill{\cftdotsep}}% Bold Sans dots for Sections
+\renewcommand{\cftsecpagefont}{\bfseries}% Bold (not sans for ToC & page consistency) page numbers
+\cleardoublepage{}
+
+\onehalfspacing%
 
 %% START OF MAIN TEXT
 
@@ -55,8 +64,8 @@
 
 \include{conclusion}
 
-\appendix
-\singlespacing
+\appendix%
+\singlespacing%
 
 \bibliographystyle{unsrt}
 \bibliography{proposal}

@@ -6,9 +6,19 @@ the idea is that you have one (or a few) ``meat'' chapters which
 describe the work you did in technical detail.
 \end{guidance}
 
-\section{Core Language}
+\prechapter{%
+    I implemented this project in OCaml, however I strongly believe the ideas
+    described in this chapter can be applied easily to other languages and also
+    are modular enough to extend the OCaml implementation to output to different
+    back-end languages. I will show how a small core language with a few features
+    can be the target of heavy-desugaring of typical linear-algebra programs. This
+    core language can then be elaborated and checked for linearity before
+    performing some simple and predictable optimisations and emitting (in this
+    particular implementation) OCaml code that is not obviously safe, correct
+    and performant.
+}%
 
-Here, I will describe the syntax and semantics.
+\section{Core Language}
 
 \section{Elaboration and Inference}
 

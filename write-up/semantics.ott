@@ -17,17 +17,17 @@ metavar el ::=
 grammar
 
   terminals {{ tex symb }} :: 'terminals_' ::=
-    | \    ::  :: lambda    {{ tex \lambda       }}
-    | 0    ::  :: product   {{ tex \otimes       }}
-    | --o  ::  :: lollipop  {{ tex \multimap     }}
-    | |-   ::  :: turnstile {{ tex \vdash        }}
-    | mem  ::  :: member    {{ tex \in           }}
-    | all  ::  :: all       {{ tex \forall       }}
-    | Cap  ::  :: cap       {{ tex \textsf{Cap}  }}
-    | Type ::  :: type      {{ tex \textsf{Type} }}
-    | !    ::  :: bang      {{ tex \: !          }}
-    | ->   ::  :: arrow     {{ tex \rightarrow   }}
-    | !=   ::  :: neq       {{ tex \neq          }}
+    | \     ::  :: lambda    {{ tex \lambda       }}
+    | 0     ::  :: product   {{ tex \otimes       }}
+    | --o   ::  :: lollipop  {{ tex \multimap     }}
+    | |-    ::  :: turnstile {{ tex \vdash        }}
+    | mem   ::  :: member    {{ tex \in           }}
+    | all   ::  :: all       {{ tex \forall       }}
+    | Cap   ::  :: cap       {{ tex \textsf{Cap}  }}
+    | Type  ::  :: type      {{ tex \textsf{Type} }}
+    | !     ::  :: bang      {{ tex \: !          }}
+    | ->    ::  :: arrow     {{ tex \rightarrow   }}
+    | value ::  :: value
 
 
   f :: 'f_' ::=       {{ com fractional capability }}
@@ -42,13 +42,14 @@ grammar
     | int          ::   :: Int     {{ com 63-bit integers           }}
     | elt          ::   :: Elt     {{ com array element             }}
     | f arr        ::   :: Array   {{ com arrays                    }}
+    | f mat        ::   :: Matrix  {{ com matrices                  }}
     | ! t          ::   :: Bang    {{ com multiple-use type         }}
     | all fc . t   ::   :: Gen     (+ bind fc in t                  +)
                                    {{ com frac. cap. generalisation }}
     | t 0 t'       ::   :: Pair    {{ com pair                      }}
     | t --o t'     ::   :: Lolly   {{ com linear function           }}
     | t { f / fc } :: M :: Sub     {{ com substitution              }}
-%   | ( t )        :: S :: Paren   {{ com parentheses               }}
+    | ( t )        :: S :: Paren   {{ com parentheses               }}
 
 
   e :: 'e_' ::=                                   {{ com expression                            }}
@@ -70,42 +71,57 @@ grammar
     | fun x : t -> e          ::   :: Lambda      (+ bind x in e                               +)
                                                   {{ com abstraction                           }}
     | e e'                    ::   :: App         {{ com application                           }}
+    | fix ( g , x : t , e : t' )  ::   :: Fix     (+ bind g union x in e                       +)
+                                                  {{ com fixpoint                              }}
 %   | ( e )                   :: S :: Paren       {{ com parentheses                           }}
 
 
-   p :: 'p_' ::=              {{ com primitive                             }}
-     | fix     ::  :: Fix     {{ com fixpoint                              }}
-     | set     ::  :: Set     {{ com array index assignment                }}
-     | get     ::  :: Get     {{ com array indexing                        }}
-     | ( + )   ::  :: Int_Add {{ com integer addition                      }}
-     | ( - )   ::  :: Int_Sub {{ com integer subtraction                   }}
-     | ( * )   ::  :: Int_Mul {{ com integer multiplication                }}
-     | ( / )   ::  :: Int_Div {{ com integer division                      }}
-     | ( = )   ::  :: Int_Eq  {{ com integer equality                      }}
-     | ( < )   ::  :: Int_Lt  {{ com integer less-than                     }}
-     | ( +. )  ::  :: Elt_Add {{ com element addition                      }}
-     | ( -. )  ::  :: Elt_Sub {{ com element subtraction                   }}
-     | ( *. )  ::  :: Elt_Mul {{ com element multiplication                }}
-     | ( /. )  ::  :: Elt_Div {{ com element division                      }}
-     | ( =. )  ::  :: Elt_Eq  {{ com element equality                      }}
-     | ( <. )  ::  :: Elt_Lt  {{ com element comparsion (less-than)        }}
-     | ( && )  ::  :: And     {{ com boolean conjuction                    }}
-     | ( || )  ::  :: Or      {{ com boolean disjunction                   }}
-     | not     ::  :: Not     {{ com boolean negation                      }}
-     | share   ::  :: Share   {{ com share array                           }}
-     | unshare ::  :: Unshare {{ com unshare array                         }}
-     | free    ::  :: Free    {{ com free arrary                           }}
-     | array   ::  :: Array   {{ com Owl:  make array                      }}
-     | copy    ::  :: Copy    {{ com Owl:  copy array                      }}
-     | sin     ::  :: Sin     {{ com Owl:  sine of all elements in array   }}
-     | hypot   ::  :: Hypot   {{ com Owl:  $x_i := \sqrt{x_i^2 + y_i^2}$   }}
-     | mapi    ::  :: Mapi    {{ com Owl:  $x_i := f (i,x_i)$              }}
-     | asum    ::  :: Asum    {{ com BLAS: $\sum_i | x_i |$                }}
-     | axpy    ::  :: Axpy    {{ com BLAS: $x := \alpha x + y$             }}
-     | dot     ::  :: Dot     {{ com BLAS: $x \cdot y$                     }}
-     | rotmg   ::  :: Rotmg   {{ com BLAS: gen. mod. Givens rotation       }}
-     | scal    ::  :: Scal    {{ com BLAS: $x := \alpha x$                 }}
-     | amax    ::  :: Amax    {{ com BLAS: index of maximum absolute value }}
+   p :: 'p_' ::=                {{ com primitive                                             }}
+     | set      ::  :: Set      {{ com array index assignment                                }}
+     | get      ::  :: Get      {{ com array indexing                                        }}
+     | ( + )    ::  :: Int_Add  {{ com integer addition                                      }}
+     | ( - )    ::  :: Int_Sub  {{ com integer subtraction                                   }}
+     | ( * )    ::  :: Int_Mul  {{ com integer multiplication                                }}
+     | ( / )    ::  :: Int_Div  {{ com integer division                                      }}
+     | ( = )    ::  :: Int_Eq   {{ com integer equality                                      }}
+     | ( < )    ::  :: Int_Lt   {{ com integer less-than                                     }}
+     | ( +. )   ::  :: Elt_Add  {{ com element addition                                      }}
+     | ( -. )   ::  :: Elt_Sub  {{ com element subtraction                                   }}
+     | ( *. )   ::  :: Elt_Mul  {{ com element multiplication                                }}
+     | ( /. )   ::  :: Elt_Div  {{ com element division                                      }}
+     | ( =. )   ::  :: Elt_Eq   {{ com element equality                                      }}
+     | ( <. )   ::  :: Elt_Lt   {{ com element comparsion (less-than)                        }}
+     | ( && )   ::  :: And      {{ com boolean conjuction                                    }}
+     | ( || )   ::  :: Or       {{ com boolean disjunction                                   }}
+     | not      ::  :: Not      {{ com boolean negation                                      }}
+     | share    ::  :: Share    {{ com share array                                           }}
+     | unshare  ::  :: Unshare  {{ com unshare array                                         }}
+     | free     ::  :: Free     {{ com free arrary                                           }}
+     | array    ::  :: Array    {{ com Owl:  make array                                      }}
+     | copy     ::  :: Copy     {{ com Owl:  copy array                                      }}
+     | sin      ::  :: Sin      {{ com Owl:  sine of all elements in array                   }}
+     | hypot    ::  :: Hypot    {{ com Owl:  $x_i := \sqrt{x_i^2 + y_i^2}$                   }}
+     | asum     ::  :: Asum     {{ com BLAS: $\sum_i | x_i |$                                }}
+     | axpy     ::  :: Axpy     {{ com BLAS: $x := \alpha x + y$                             }}
+     | dot      ::  :: Dot      {{ com BLAS: $x \cdot y$                                     }}
+     | rotmg    ::  :: Rotmg    {{ com BLAS: gen. mod. Givens rotation                       }}
+     | scal     ::  :: Scal     {{ com BLAS: $x := \alpha x$                                 }}
+     | amax     ::  :: Amax     {{ com BLAS: index of maximum absolute value                 }}
+     | setM     ::  :: SetM     {{ com matrix index assignment                               }}
+     | getM     ::  :: GetM     {{ com matrix indexing                                       }}
+     | shareM   ::  :: ShareM   {{ com share matrix                                          }}
+     | unshareM ::  :: UnshareM {{ com unshare matrix                                        }}
+     | freeM    ::  :: FreeM    {{ com free matrix                                           }}
+     | matrix   ::  :: Matrix   {{ com Owl:  make matrix                                     }}
+     | copyM    ::  :: CopyM    {{ com Owl:  copy matrix                                     }}
+     | gemv     ::  :: Gemv     {{ com BLAS: $y := \alpha A^{T?} x + \beta y$                }}
+     | symv     ::  :: Symv     {{ com BLAS: $y := \alpha A_\textrm{sym} x + \beta y$        }}
+     | trmv     ::  :: Trmv     {{ com BLAS: $x := A^{T?} * x$                               }}
+     | trsv     ::  :: Trsv     {{ com BLAS: $x := A^{-1 \cdot T?} * x$                      }}
+     | ger      ::  :: Ger      {{ com BLAS: $A := \alpha * x * y^T + A$                     }}
+     | gemm     ::  :: Gemm     {{ com BLAS: $C := \alpha * A^{T?}* B^{T?} + \beta C$        }}
+     | trmm     ::  :: Trmm     {{ com BLAS: $B := \alpha * A^{T?} * B$ and swapped          }}
+     | trsm     ::  :: Trsm     {{ com BLAS: $B := \alpha * A^{-1 \cdot T?} * B$ and swapped }}
 
 
   T {{ tex \Theta }} :: 'T_' ::= {{ com fractional capability environment }}
@@ -194,11 +210,62 @@ defns
 
 
 defns
+  Values :: 'Val_' ::=
+
+
+  defn
+  value ( e ) :: ::Value_:: '' {{ com Value restriction for !-introduction }} by
+
+  ----------- :: Prim
+  value ( p ) 
+
+  ------------ :: Unit_Intro
+  value ( () )
+
+  -------------- :: Bool_True
+  value ( true )
+
+  --------------- :: Bool_False
+  value ( false )
+
+  ----------- :: Int_Intro
+  value ( k )
+
+  ------------ :: Elt_Intro
+  value ( el )
+
+  ----------- :: Var
+  value ( x )
+
+  ------------------------------- :: Fix
+  value ( fix ( g , x : t , e : t' ) )
+
+  ------------------------ :: Lambda
+  value ( fun x : t -> e )
+
+  value ( e )
+  --------------------- :: Gen
+  value ( fun fc -> e )
+
+  value ( e )
+  ------------------ :: Spc
+  value ( e [ fc ] )
+
+  value ( e )
+  ---------------- :: Bang_Intro
+  value ( many e )
+
+  value ( e1 )
+  value ( e2 )
+  --------------------- :: Pair_Intro
+  value ( ( e1 , e2 ) )
+
+defns
   Types :: 'Ty_' ::=
 
 
   defn
-  T ; D ; G |- e : t :: ::Type_:: '' {{ com Tying rules for expressions (no primitives yet) }} by
+  T ; D ; G |- e : t :: ::Type_:: '' {{ com Typing rules for expressions (no primitives yet) }} by
 
 
     ---------------------- :: Var_Lin
@@ -237,7 +304,7 @@ defns
     T ; D ; nil |- el : ! elt
 
 
-    t != f arr
+    value ( e )
     T ; D ; nil |- e : t
     --------------------------- :: Bang_Intro
     T ; D ; nil |- many e : ! t
@@ -284,14 +351,18 @@ defns
     T ; D ; G |- e [ f ] : t { f / fc }
 
 
+    T ; D , g : t --o t'  ; nil, x : t |- e : t'
+    ---------------------------------------------------------- :: Fix
+    T ; D ; nil |- fix ( g , x : t , e : t' ) : ! ( t --o t' )
+
 grammar
 
   formula :: 'formula_' ::=
-    | judgement   ::  :: judgement
-    | x : t mem D ::  :: xtD
-    | x : t mem G ::  :: xtG
-    | fc    mem T ::  :: fcT
-    | t != t'    ::  :: t_neq_t
+    | judgement      ::  :: judgement
+    | x : t mem D    ::  :: xtD
+    | x : t mem G    ::  :: xtG
+    | fc    mem T    ::  :: fcT
+    | value ( e  )   ::  :: valE
 
 
 % vim: sw=2 sts=2

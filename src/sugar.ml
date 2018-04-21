@@ -196,9 +196,15 @@ and exp =
 [@@deriving sexp_of]
 ;;
 
-let unify_var =
-  let x = ref 0 in
-  fun () -> let y = !x in (x := y + 1; Printf.sprintf "__unify%d" y)
+let reset, inc =
+  let init = 0 in
+  let x = ref init in
+  (fun () -> x := init),
+  (fun () -> let y = !x in (x := y + 1; y))
+;;
+
+let unify_var () =
+  Printf.sprintf "__unify%d" (inc ())
 ;;
 
 let rec ds_exp : exp -> Ast.exp = function
@@ -270,7 +276,8 @@ let rec ds_exp : exp -> Ast.exp = function
           Gen(fc_var, body))
 
   | Index (var, fst, snd) ->
-    let one get : Ast.exp = App(App(Spc(Prim get, U (unify_var ())), Var var), ds_exp fst) in
+    let one get : Ast.exp =
+      App(App(Spc(Prim get, U (unify_var ())), Var var), ds_exp fst) in
     begin match snd with
     | None -> one Get
     | Some snd -> App(one Get_mat, ds_exp snd)
@@ -361,4 +368,8 @@ let rec ds_exp : exp -> Ast.exp = function
     App (Lambda (fun_var, Bang(Fun(arg_lin, res_lin)),
                  Bang_E (fun_var, Var fun_var, ds_exp in_body)),
          Fix (fun_var, arg_var, arg_lin, res_lin, res_exp))
+;;
+
+let ds_exp exp =
+  (reset(); ds_exp exp)
 ;;

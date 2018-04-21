@@ -12,6 +12,7 @@ val wf_Elt : wf_lin
 val wf_Pair : wf_lin -> wf_lin -> wf_lin
 val wf_Bang : wf_lin -> wf_lin
 val wf_Arr_Z : wf_lin
+val wf_Mat_Z : wf_lin
 val wf_Fun : wf_lin -> wf_lin -> wf_lin
 val wf_All : Ast.var -> wf_lin -> wf_lin
 

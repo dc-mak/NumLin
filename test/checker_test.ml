@@ -204,6 +204,23 @@ let prims : Ast.prim list =
   ; Rotmg
   ; Scal
   ; Amax
+  (* matrix *)
+  ; Get_mat
+  ; Set_mat
+  ; Share_mat
+  ; Unshare_mat
+  ; Free_mat
+  ; Matrix
+  ; Copy_mat
+  (* Level 2/3 BLAS *)
+  ; Symv
+  ; Gemv
+  ; Trmv
+  ; Trsv
+  ; Ger
+  ; Gemm
+  ; Trmm
+  ; Trsm
   ]
 ;;
 
@@ -236,7 +253,7 @@ let%expect_test "check_array_elim" =
     unshare: 'x. 'x s arr --o 'x s arr --o 'x arr
     free: z arr --o unit
     array: !int --o z arr
-    copy: 'x. 'x arr --o z arr
+    copy: 'x. 'x arr --o 'x arr * z arr
     sin: z arr --o z arr
     hypot: z arr --o 'x. 'x arr --o z arr * 'x arr
     asum: 'x. 'x arr --o !float * 'x arr
@@ -245,5 +262,26 @@ let%expect_test "check_array_elim" =
     rotmg: !float * !float --o !float * !float --o
     ( !float * !float ) * ( !float * z arr )
     scal: !float --o z arr --o z arr
-    amax: 'x. 'x arr --o !int * 'x arr |}]
+    amax: 'x. 'x arr --o !int * 'x arr
+    get_mat: 'x. 'x arr --o !int --o !int --o !float * 'x mat
+    set_mat: z mat --o !int --o !int --o !float --o z mat
+    share_mat: 'x. 'x mat --o 'x s mat * 'x s mat
+    unshare_mat: 'x. 'x s mat --o 'x s mat --o 'x mat
+    free_mat: z mat --o unit
+    matrix: !int --o !int --o z mat
+    copy_mat: 'x. 'x mat --o 'x mat * z mat
+    symv: !float --o 'x.
+      'x mat --o 'y. 'y arr --o !float --o z arr --o ( 'x mat * 'y arr ) * z arr
+    gemv: !float --o 'x.
+      'x mat * !bool --o 'y.
+        'y arr --o !float --o z arr --o ( 'x mat * 'y arr ) * z arr
+    trmv: 'x. 'x mat * !bool --o z arr --o 'x mat * z arr
+    trsv: 'x. 'x mat * !bool --o z arr --o 'x mat * z arr
+    ger: !float --o 'x.
+      'x arr --o 'y. 'y arr --o z mat --o ( 'x arr * 'y arr ) * z mat
+    gemm: !float --o 'x.
+      'x mat * !bool --o 'y.
+        'y mat * !bool --o !float --o z mat --o ( 'x mat * 'y mat ) * z mat
+    trmm: !float --o !bool --o z mat --o 'x. 'x mat * !bool --o 'x mat * z mat
+    trsm: !float --o !bool --o z mat --o 'x. 'x mat * !bool --o 'x mat * z mat |}]
 ;;

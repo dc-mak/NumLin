@@ -46,6 +46,9 @@ and wf_Bang (WFL x) =
 and wf_Arr_Z =
   WFL Ast.(Arr Z)
 
+and wf_Mat_Z =
+  WFL Ast.(Mat Z)
+
 and wf_Fun (WFL x) (WFL y) =
   WFL Ast.(Fun (x, y))
 
@@ -302,6 +305,14 @@ let wf_lin ~fmt ~arg lt =
         return @@ Arr fc
       else if%bind get >>= fun x -> return @@ wf_wrt x.fc_vars fc then
         return @@ Arr fc
+      else
+        failf fmt arg
+
+    | Mat fc ->
+      if wf_wrt bindings fc then
+        return @@ Mat fc
+      else if%bind get >>= fun x -> return @@ wf_wrt x.fc_vars fc then
+        return @@ Mat fc
       else
         failf fmt arg
 

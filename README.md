@@ -41,15 +41,16 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 ### Roadmap (in _rough_ order of priority)
 
 **In progress:**
- - Combinators interface
  - Syntactic sugar/parsing grammar
- - Elaboration/inference
+ - Matrices (some Level 2/3 BLAS primitives)
 
 **Future:**
- - Array sizes in types.
- - Tough: staging, preferably using [ppx_stage](https://github.com/stedolan/ppx_stage?files=1)
- - ?Documentation with [Read the Docs](https://readthedocs.org/)
+ - ?Documentation with [MkDocs](http://www.mkdocs.org/)
  - ?Performance: benchmark, less pure-functional implementations behind `State_or_error` or `Check_monad`.
+ - Combinators interface
+ - PPX extension
+ - Staging, preferably using [ppx_stage](https://github.com/stedolan/ppx_stage?files=1)
+ - Size types
 
 **Done:**
  - Fixed `jbuilder utop` crash
@@ -60,6 +61,7 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
  - Code generation
  - Scalars and arithmetic expressions
  - Recursion, conditionals and !-types
+ - Elaboration/inference
 
 ## Development
 
@@ -179,14 +181,10 @@ let%expect_test "addition" =
   [%expect {| 3 |}]
 ```
 
-Almost all types can be printed with `printf !"%{sexp: <type>}" <value>"`. You can simply write
-`[%expect {||}]` when first writing the test, run `jbuilder runtest` then 
-
-```
-cp <path-to-repo>/_build/default/test/test.ml.corrected <path-to-repo>/test/test.ml
-```
-
-to update the test file with the _if_ it is correct/what you expect.
+Almost all types can be printed with `printf !"%{sexp: <type>}" <value>"`. You
+can simply write `[%expect {||}]` when first writing the test, run `jbuilder
+runtest` then `jbuilder promote` to update the test file with the _if_ it is
+correct/what you expect.
 
 ### Continuous Integration
 

@@ -22,6 +22,7 @@ type lin =
   | Int
   | Elt
   | Arr of fc
+  | Mat of fc
   | Pair of lin * lin
   | Bang of lin
   | Fun of lin * lin
@@ -65,6 +66,23 @@ type prim =
   | Rotmg
   | Scal
   | Amax
+  (* matrix *)
+  | Get_mat
+  | Set_mat
+  | Share_mat
+  | Unshare_mat
+  | Free_mat
+  | Matrix
+  | Copy_mat
+  (* Level 2/3 BLAS *)
+  | Symv
+  | Gemv
+  | Trmv
+  | Trsv
+  | Ger
+  | Gemm
+  | Trmm
+  | Trsm
 val sexp_of_prim : prim -> Base.Sexp.t
 val compare_prim : prim -> prim -> int
 val string_of_prim : prim -> string

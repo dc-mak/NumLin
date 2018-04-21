@@ -36,7 +36,7 @@ let drive_no_resume accept handler lexbuf =
         Printf.sprintf "Error raised in state %d\n" state)
 
   | Intp.Accepted v ->
-    accept v
+    accept @@ Sugar.ds_exp v
 
   | Intp.Rejected ->
     assert false
@@ -70,7 +70,7 @@ let drive accept handler resume lexbuf =
         Printf.sprintf "Error raised in state %d\n" state)
 
   | Intp.Accepted v ->
-    accept v
+    accept @@ Sugar.ds_exp v
 
   | Intp.Rejected ->
     assert false

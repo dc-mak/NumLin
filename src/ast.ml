@@ -106,6 +106,7 @@ type lin =
   | Int
   | Elt
   | Arr of fc
+  | Mat of fc
   | Pair of lin * lin
   | Bang of lin
   | Fun of lin * lin
@@ -132,30 +133,33 @@ let pp_lin ppf =
     | Bang lin ->
       let l, r = match lin with
         | Unit | Bool | Int | Elt | Bang _ -> "", ""
-        | Pair _ | Arr _ | Fun _ | All _ -> "( ", " )" in
+        | Pair _ | Arr _ | Mat _ | Fun _ | All _ -> "( ", " )" in
       fprintf ppf "!%s%a%s" l pp_lin lin r
 
     | Arr fc ->
       fprintf ppf "%s arr" @@ string_of_fc fc
 
+    | Mat fc ->
+      fprintf ppf "%s mat" @@ string_of_fc fc
+
     | Pair (fst, snd) ->
       let fl, fr = match fst with
-        | Unit | Bool | Int | Elt | Bang _ | Arr _ -> "", ""
+        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Mat _ -> "", ""
         | Pair _ | Fun _ | All _ -> "( ", " )"
       and sl, sr = match snd with
-        | Unit | Bool | Int | Elt | Bang _ | Arr _ -> "", ""
+        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Mat _ -> "", ""
         | Pair _ | Fun _ | All _ -> "( ", " )" in
       fprintf ppf "@[%s%a%s@ @[* %s%a%s@]@]" fl pp_lin fst fr sl pp_lin snd sr
 
     | Fun (arg, (Fun _ as res)) ->
       let al, ar = match arg with
-        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Pair _-> "",""
+        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Mat _ | Pair _-> "",""
         | Fun _ | All _ -> "( ", " )" in
       fprintf ppf "@[%s%a%s --o@ %a@]" al pp_lin arg ar pp_lin res
 
     | Fun (arg, res) ->
       let al, ar = match arg with
-        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Pair _-> "",""
+        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Mat _ | Pair _-> "",""
         | Fun _ | All _ -> "( ", " )" in
       fprintf ppf "%s%a%s@ --o@ %a" al pp_lin arg ar pp_lin res
 
@@ -169,14 +173,14 @@ let pp_lin ppf =
 ;;
 
 let rec substitute_in lin ~unify ~var ~replace =
+  let rec loop = function
+    | Z -> Z
+    | S fc -> S (loop fc)
+    | U var' | V var' as fc -> if var = var' then replace else fc in
   match lin with
   | Unit | Bool | Int | Elt as lin -> lin
-  | Arr fc ->
-    let rec loop = function
-      | Z -> Z
-      | S fc -> S (loop fc)
-      | U var' | V var' as fc -> if var = var' then replace else fc in
-    Arr (loop fc)
+  | Arr fc -> Arr (loop fc)
+  | Mat fc -> Mat (loop fc)
 
   | Pair (fst, snd) ->
     Pair (substitute_in fst ~unify ~var ~replace,
@@ -245,7 +249,8 @@ let rec same_lin equiv lin1 lin2 =
   | Bang lin1, Bang lin2 ->
     same_lin equiv lin1 lin2
 
-  | Arr fc1, Arr fc2 ->
+  | Arr fc1, Arr fc2
+  | Mat fc1, Mat fc2 ->
     same_fc equiv fc1 fc2
 
   | Pair (fst1, snd1) , Pair(fst2,snd2) ->
@@ -295,7 +300,7 @@ type arith =
 ;;
 
 type prim =
-  (* Boolean: NOT SHORT-CIRCUITING YET *)
+  (* Boolean *)
   | Not_
   (* Arithmetic *)
   | IntOp of arith
@@ -318,6 +323,23 @@ type prim =
   | Rotmg
   | Scal
   | Amax
+  (* matrix *)
+  | Get_mat
+  | Set_mat
+  | Share_mat
+  | Unshare_mat
+  | Free_mat
+  | Matrix
+  | Copy_mat
+  (* Level 2/3 BLAS *)
+  | Symv
+  | Gemv
+  | Trmv
+  | Trsv
+  | Ger
+  | Gemm
+  | Trmm
+  | Trsm
 [@@deriving sexp_of,compare]
 ;;
 
@@ -423,6 +445,12 @@ let pp_exp ppf =
       let fl, fr = if prec fun_ >= prec app then "","" else "(", ")"
       and al, ar = parens arg app in
       fprintf ppf "@[<2>%s%a%s@ %s%a%s@]" fl pp_exp fun_ fr al pp_exp arg ar
+
+    | Bang_E (var1, Var var2, Bang_E (var3, Bang_I (Bang_I (Var var4)), body))
+      when var1 = var2 &&
+           var3 = var4 &&
+           var1 = var4 ->
+      fprintf ppf "@[%a@]" pp_exp body
 
     | Bang_E (var, exp, body) ->
       fprintf ppf "@[@[<2>let Many %s =@ %a in@]@ %a@]" var pp_exp exp pp_exp body

@@ -1,0 +1,4 @@
+let !f ('x) ( in_arr : 'x arr) ( ( !x, Many !y ) : !int * !!int ) : 'x arr * !int =
+  (in_arr, x + y) in
+ ( f , fun (Many !zero : !!int) -> fun 'y -> fun ('x) ( !i : !int ) -> i + 2 * zero )
+;;

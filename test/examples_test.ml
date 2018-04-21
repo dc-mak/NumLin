@@ -63,3 +63,12 @@ let%expect_test "one_d_conv" =
   Stdio.printf !"%{sexp: float array}" (Owl.Arr.to_array row);
   [%expect {| (10 40 40 30 19.999999999999996 30 40) |}]
 ;;
+
+let%expect_test "sugar" =
+  let (f, g) = Examples.Sugar.it in
+  let row : _ arr = A Owl.Arr.(ones [| 3 |]) in
+  let (A row, Many x) = f row (Many 1, Many (Many 2)) in
+  let Many y = g (Many (Many 4)) (Many 1) in
+  Stdio.printf !"%{sexp: float array} and %d and %d" (Owl.Arr.to_array row) x y;
+  [%expect {| (1 1 1) and 3 and 9 |}]
+;;

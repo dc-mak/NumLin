@@ -5,7 +5,6 @@ let rec f (!i : !int) (!n : !int) (!x0 : !elt) (write : z arr) ('x) (weights : '
     let ( !w2, weights ) = weights[2] in
     let ( !x1, write ) = write[i] in
     let ( !x2, write ) = write[i + 1] in
-    let !newx : !elt = w0 *. x0 +. (w1 *. x1 +. w2 *. x2) in
-    f (i + 1) n x1 (write[i] := newx) _ weights in
+    f (i + 1) n x1 (write[i] := w0 *. x0 +. (w1 *. x1 +. w2 *. x2)) _ weights in
   f
 ;;

@@ -5,195 +5,52 @@
 (* ------------ *)
 (* TODO:                                                         *)
 (* - Make 'let (a,a) = (); Array a' error more accurate          *)
-(*   (change return type to loc * Ast.exp and remove exceptions) *)
+(*   (change return type to loc * Sugar.exp and remove exceptions) *)
 (* - arithmetic, boolean and matrix expressions                  *)
-(* - short-circuiting boolean operators                          *)
 (* - .messages error reporting                                   *)
 
-(* --- Pure helper functions --- *)
-let mk_app_like exp (hd :: tl) =
-  let open Base.Either in
-  let f exp hd = match hd with
-    | First hd -> Ast.Spc (exp, hd)
-    | Second hd -> Ast.App (exp, hd) in
-  Base.List.fold_left tl ~init:(f exp hd) ~f
+let mk_app_like exp (first :: rest) =
+  Sugar.(AppLike (exp, {first; rest}))
   [@@ocaml.warning "-8"]
 ;;
 
-let mk_bang var body =
-  Ast.Bang_E (var, Var var, Bang_E (var, Bang_I (Bang_I (Var var)), body))
-;;
-
-type bang_id =
-  | Bang of Ast.var
-  | NotB of Ast.var
-;;
-
-let unwrap = function
-  | Bang x
-  | NotB x -> x
-;;
-
-let mk_lambda var lin body =
-  match var with
-  | NotB var -> Ast.Lambda (var, lin, body)
-  | Bang var -> Ast.Lambda (var, lin, mk_bang var body)
-;;
-
-type pat =
-  | Many of Ast.var
-  | Let of Ast.var * Ast.lin
-  | LetBang of Ast.var * Ast.lin
-  | Pair of Ast.var * Ast.var
-  | PairBangL of Ast.var * Ast.var
-  | PairBangR of Ast.var * Ast.var
-  | PairBangLR of Ast.var * Ast.var
-  | Fix of Ast.var * bang_id * Ast.lin * (bang_id * Ast.lin, Ast.var) Base.Either.t list * Ast.lin
-;;
-
-let bind_let (var, lin) =
-  match var with
-  | NotB var -> Let (var, lin)
-  | Bang var -> LetBang (var, lin)
-;;
-
-let desugar_let exp body = function
-  | Many var ->
-    Ast.Bang_E (var, exp, body)
-
-  | Let (var, lin) ->
-    Ast.(App (Lambda (var, lin, body), exp))
-
-  | LetBang (var, lin) ->
-    Ast.(App (Lambda (var, lin, mk_bang var body), exp))
-
-  | Pair (var_a, var_b) ->
-    Ast.Pair_E (var_a, var_b, exp, body)
-
-  | PairBangL (var_a, var_b) ->
-    Ast.Pair_E (var_a, var_b, exp, mk_bang var_a body)
-
-  | PairBangR (var_a, var_b) ->
-    Ast.Pair_E (var_a, var_b, exp, mk_bang var_b body)
-
-  | PairBangLR (var_a, var_b) ->
-    Ast.Pair_E (var_a, var_b, exp, mk_bang var_a @@ mk_bang var_b body)
-
-  | Fix (f, x, tx, xs, tres) ->
-    let open Base.Either in
-    let rec loop = function
-      | [] -> (tres, exp)
-      | x :: xs ->
-        let (tres, exp) = loop xs in
-        match x with
-        | First (Bang x, tx) -> (Ast.Fun (tx, tres), Ast.Lambda (x, tx, mk_bang x exp))
-        | First (NotB x, tx) -> (Ast.Fun (tx, tres), Ast.Lambda (x, tx, exp))
-        | Second x -> (Ast.All (x, tres), Ast.Gen (x, exp)) in
-    let (tres, exp) = loop xs in
-    let fix = match x with
-      | NotB x -> Ast.Fix (f, x, tx, tres, exp)
-      | Bang x -> Ast.Fix (f, x, tx, tres, mk_bang x exp) in
-    Ast.App (Lambda(f, Bang (Fun (tx, tres)), Bang_E (f, Var f, body)), fix)
-;;
-
-(* arrays *)
-let desugar_assign str ~index exp =
-  Ast.App(App(App(Prim Set, Var str), index), exp)
-;;
-
-(* boolean *)
-let desugar_or fst snd =
-  Ast.If (fst, True, snd)
-;;
-
-let desugar_and fst snd =
-  Ast.If (fst, snd, False)
-;;
-
-(* integer *)
-let desugar_eq fst snd =
-  Ast.App(App(Prim (IntOp Eq), fst), snd)
-;;
-
-let desugar_lt fst snd =
-  Ast.App(App(Prim (IntOp Lt), fst), snd)
-;;
-
-let desugar_add fst snd =
-  Ast.App(App(Prim (IntOp Add), fst), snd)
-;;
-
-let desugar_sub fst snd =
-  Ast.App(App(Prim (IntOp Sub), fst), snd)
-;;
-
-let desugar_mul fst snd =
-  Ast.App(App(Prim (IntOp Mul), fst), snd)
-;;
-
-let desugar_div fst snd =
-  Ast.App(App(Prim (IntOp Div), fst), snd)
-;;
-
-(* element *)
-let desugar_eqE fst snd =
-  Ast.App(App(Prim (EltOp Eq), fst), snd)
-;;
-
-let desugar_ltE fst snd =
-  Ast.App(App(Prim (EltOp Lt), fst), snd)
-;;
-
-let desugar_addE fst snd =
-  Ast.App(App(Prim (EltOp Add), fst), snd)
-;;
-
-let desugar_subE fst snd =
-  Ast.App(App(Prim (EltOp Sub), fst), snd)
-;;
-
-let desugar_mulE fst snd =
-  Ast.App(App(Prim (EltOp Mul), fst), snd)
-;;
-
-let desugar_divE fst snd =
-  Ast.App(App(Prim (EltOp Div), fst), snd)
-;;
-
-(* --- Impure helper functions --- *)
-let unify_var =
-  let v = ref 0 and f = Format.sprintf "__unify%d" in
-  fun () -> let x = !v in (v := x + 1; Ast.U (f x))
-;;
-
-let bind_pair a b : pat =
-  let () = if Base.String.(unwrap a = unwrap b) then raise Error in
-  match a,b with
-  | NotB a, NotB b -> Pair (a,b)
-  | Bang a, NotB b -> PairBangL (a,b)
-  | NotB a, Bang b -> PairBangR (a,b)
-  | Bang a, Bang b -> PairBangLR (a,b)
-;;
-
-let rec split (fst, snd) = function
-  | [] -> (fst, snd)
-  | Base.Either.First (x, _) :: xs -> split (unwrap x :: fst, snd) xs
-  | Base.Either.Second x :: xs -> split (fst, x :: snd) xs
-;;
-
-let rec all_distinct f = function
-  | [] -> true
-  | x :: xs -> Base.String.(f <> x) && all_distinct f xs && all_distinct x xs
-;;
-
-let bind_fix f (x,tx) xs tres : pat =
-  let () = let (fst, snd) = split ([], []) xs in
-           if not @@ all_distinct f (unwrap x :: fst) && all_distinct f snd then raise Error in
-  Fix (f, x, tx, xs, tres)
+let mk_lambda (first :: rest) body =
+  Sugar.(Lambda ({first;rest}, body))
   [@@ocaml.warning "-8"]
+;;
 
-let desugar_index str exp =
-  Ast.App(App(Spc(Prim Get, unify_var ()), Var str), exp)
+let mk_index str (fst, snd) =
+  Sugar.Index (str, fst, snd)
+;;
+
+let mk_assign str (fst, snd) exp =
+  Sugar.Assign (str, fst, snd, exp)
+;;
+
+type ('a, 'b) either = ('a, 'b) Base.Either.t =
+  | First of 'a
+  | Second of 'b
+;;
+
+let mk_let destruct exp body =
+  match destruct with
+  | First (bang_var, lin) ->
+    Sugar.LetAnnot (bang_var, lin, exp, body)
+  | Second pat ->
+    Sugar.LetPat (pat, exp, body)
+;;
+
+let mk_rec str arg binds lin exp body =
+  Sugar.LetRecFun (str, arg, binds, lin, exp, body)
+;;
+
+let mk_fun str (first :: rest) lin exp body =
+  Sugar.(LetFun (str, {first;rest}, lin, exp, body))
+  [@@ocaml.warning "-8"]
+;;
+
+type destruct =
+  (Sugar.bang_var * Sugar.lin, (Sugar.pat, Sugar.pat * Sugar.pat) either) either
 ;;
 
 [@@@ ocaml.warning "-9" (* labels not found in record pattern *) ]
@@ -214,6 +71,7 @@ let desugar_index str exp =
 %token INT_LT
 %token ELT_LT
 %token ARR_LT
+%token MAT_LT
 %token L_PAREN
 %token R_PAREN
 
@@ -225,8 +83,6 @@ let desugar_index str exp =
 
 (* Prims *)
 %token NOT
-%token SET
-%token GET
 %token SHARE
 %token UNSHARE
 %token FREE
@@ -240,6 +96,21 @@ let desugar_index str exp =
 %token ROTMG
 %token SCAL
 %token AMAX
+
+(* Matrix primitives *)
+%token SHARE_M
+%token UNSHARE_M
+%token FREE_M
+%token MATRIX
+%token COPY_M
+%token SYMV
+%token GEMV
+%token TRMV
+%token TRSV
+%token GER
+%token GEMM
+%token TRMM
+%token TRSM
 
 (* Simple expressions *)
 %token TRUE
@@ -290,18 +161,22 @@ let desugar_index str exp =
 %nonassoc EQUAL EQUAL_DOT
 
 (* Grammar non-terminals *)
-%start <Ast.exp> prog
+%start <Sugar.exp> prog
 
-%type <Ast.exp> simple_exp exp
-%type <pat> pat
-%type <(bang_id * Ast.lin, Ast.var) Base.Either.t> bind_arg_like
-%type <bang_id * Ast.lin> bind_arg
-%type <bang_id> bang_id
-%type <(Ast.fc, Ast.exp) Base.Either.t> arg_like
-%type <Ast.prim> prim
-%type <Ast.lin> lin simple_lin
-%type <Ast.fc> fc unit_fc simple_fc
-%type <Ast.var> fc_var
+%type < Sugar.exp                           > simple_exp exp
+%type < Sugar.exp -> Sugar.exp -> Sugar.exp > fun_args
+%type < Sugar.op                            > op
+%type < Sugar.exp * Sugar.exp option        > index
+%type < (Sugar.annot_arg, Sugar.var) either > bind
+%type < destruct                            > destruct
+%type < Sugar.annot_arg                     > annot_arg
+%type < Sugar.pat                           > pat
+%type < Sugar.bang_var                      > bang_var
+%type < Sugar.arg_like                      > arg_like
+%type < Sugar.prim                          > prim
+%type < Sugar.lin                           > lin simple_lin
+%type < Sugar.fc                            > fc unit_fc simple_fc
+%type < Sugar.var                           > fc_var
 
 %%
 
@@ -310,111 +185,141 @@ prog:
     | exp=exp EOP { exp         }
 
 exp:
-    | simple_exp                                            { $1                            }
-    | MANY exp=simple_exp                                   { Ast.Bang_I exp                }
-    | FUN str=fc_var ARROW exp=exp                          { Ast.Gen (str, exp)            }
-    | exp=simple_exp args=arg_like+                         { mk_app_like exp args          }
-    | IF cond=exp THEN t=exp ELSE f=exp                     { Ast.If(cond, t, f)            }
-    | FUN str=bang_id COLON lt=lin ARROW body=exp           { mk_lambda str lt body         }
-    (* sugar *)
-    | LET pat=pat EQUAL exp=exp IN body=exp                 { desugar_let exp body pat      }
-    (* arrays *)
-    | str=ID L_BRACKET exp=exp R_BRACKET                    { desugar_index str exp         }
-    | str=ID L_BRACKET index=exp R_BRACKET COLON_EQ exp=exp { desugar_assign str ~index exp }
+    | simple_exp                                      { $1                         }
+    | MANY exp=simple_exp                             { Sugar.Bang_I exp           }
+    | exp=simple_exp args=arg_like+                   { mk_app_like exp args       }
+    | IF cond=exp THEN t=exp ELSE f=exp               { Sugar.If (cond, t, f)      }
+    | FUN binds=binds ARROW body=exp                  { mk_lambda binds body       }
+    | LET fun_args=fun_args EQUAL exp=exp IN body=exp { fun_args exp body          }
+    | str=ID index=index                              { mk_index str index         }
+    | str=ID index=index  COLON_EQ exp=exp            { mk_assign str index exp    }
+    | fst=exp op=op snd=exp                           { Sugar.Infix (fst, op, snd) }
+
+fun_args:
+    | destruct=destruct                                                  { mk_let destruct          }
+    | REC str=ID L_PAREN arg=annot_arg R_PAREN binds=bind* COLON lin=lin { mk_rec str arg binds lin }
+    | str=bang_var binds=bind+ COLON lin=lin                             { mk_fun str binds lin     }
+
+%inline op:
     (* boolean *)
-    | fst=exp DOUBLE_BAR snd=exp                            { desugar_or fst snd            }
-    | fst=exp DOUBLE_AND snd=exp                            { desugar_and fst snd           }
+    | DOUBLE_BAR     { Sugar.Or       }
+    | DOUBLE_AND     { Sugar.And      }
     (* integer *)
-    | fst=exp EQUAL snd=exp                                 { desugar_eq fst snd            }
-    | fst=exp LESS_THAN snd=exp                             { desugar_lt fst snd            }
-    | fst=exp PLUS snd=exp                                  { desugar_add fst snd           }
-    | fst=exp MINUS snd=exp                                 { desugar_sub fst snd           }
-    | fst=exp STAR snd=exp                                  { desugar_mul fst snd           }
-    | fst=exp FWD_SLASH snd=exp                             { desugar_div fst snd           }
+    | EQUAL          { Sugar.Eq       }
+    | LESS_THAN      { Sugar.Lt       }
+    | PLUS           { Sugar.Plus     }
+    | MINUS          { Sugar.Minus    }
+    | STAR           { Sugar.Times    }
+    | FWD_SLASH      { Sugar.Div      }
     (* element *)
-    | fst=exp EQUAL_DOT snd=exp                             { desugar_eqE fst snd           }
-    | fst=exp LESS_THAN_DOT snd=exp                         { desugar_ltE fst snd           }
-    | fst=exp PLUS_DOT snd=exp                              { desugar_addE fst snd          }
-    | fst=exp MINUS_DOT snd=exp                             { desugar_subE fst snd          }
-    | fst=exp STAR_DOT snd=exp                              { desugar_mulE fst snd          }
-    | fst=exp FWD_SLASH_DOT snd=exp                         { desugar_divE fst snd          }
+    | EQUAL_DOT      { Sugar.EqDot    }
+    | LESS_THAN_DOT  { Sugar.LtDot    }
+    | PLUS_DOT       { Sugar.PlusDot  }
+    | MINUS_DOT      { Sugar.MinusDot }
+    | STAR_DOT       { Sugar.TimesDot }
+    | FWD_SLASH_DOT  { Sugar.DivDot   }
+
+index:
+    | L_BRACKET index=exp               R_BRACKET { (index, None)     }
+    | L_BRACKET index=exp COMMA snd=exp R_BRACKET { (index, Some snd) }
+
+binds:
+    | res=annot_arg { [First res]  }
+    | str=fc_var    { [Second str] }
+    | bind+         { $1           }
+
+bind:
+    | L_PAREN res=annot_arg R_PAREN { First res  }
+    | L_PAREN str=fc_var R_PAREN    { Second str }
+
+annot_arg:
+    | pat=pat COLON lin=lin { Sugar.({pat;lin}) }
+
+destruct:
+    | str=bang_var COLON lin=lin        { First (str, lin)      }
+    | MANY pat=pat                      { Second (First pat)    }
+    | L_PAREN a=pat COMMA b=pat R_PAREN { Second (Second (a,b)) }
 
 pat:
-    | MANY str=ID                                                             { Many str                }
-    | L_PAREN a=bang_id COMMA b=bang_id R_PAREN                               { bind_pair a b           }
-    | res=bind_arg                                                            { bind_let res            }
-    | REC f=ID L_PAREN x_tx=bind_arg R_PAREN xs=bind_arg_like* COLON tres=lin { bind_fix f x_tx xs tres }
+    | bang_var                          { Sugar.Base $1    }
+    | MANY pat=pat                      { Sugar.Many pat   }
+    | L_PAREN a=pat COMMA b=pat R_PAREN { Sugar.Pair (a,b) }
 
-bind_arg_like:
-    | L_PAREN res=bind_arg R_PAREN { Base.Either.First res  }
-    | L_PAREN str=fc_var R_PAREN   { Base.Either.Second str }
-
-bind_arg:
-    | x=bang_id COLON tx=lin { (x, tx) }
-
-bang_id:
-    | res=ID      { NotB res }
-    | BANG res=ID { Bang res }
+bang_var:
+    | res=ID      { Sugar.NotB res }
+    | BANG res=ID { Sugar.Bang res }
 
 arg_like:
-    | fc=simple_fc   { Base.Either.First fc             }
-    | UNDERSCORE     { Base.Either.First (unify_var ()) }
-    | exp=simple_exp { Base.Either.Second exp           }
+    | fc=simple_fc   { Sugar.Fc fc      }
+    | UNDERSCORE     { Sugar.Underscore }
+    | exp=simple_exp { Sugar.Exp exp    }
 
 simple_exp:
-    | prim                                  { Ast.Prim $1           }
-    | str=ID                                { Ast.Var str           }
-    | L_PAREN R_PAREN                       { Ast.Unit_I            }
-    | TRUE                                  { Ast.True              }
-    | FALSE                                 { Ast.False             }
-    | i=INT                                 { Ast.Int_I i           }
-    | f=FLOAT                               { Ast.Elt_I f           }
-    | L_PAREN fst=exp COMMA snd=exp R_PAREN { Ast.Pair_I (fst, snd) }
-    | L_PAREN body=exp R_PAREN              { body                  }
+    | prim                                  { Sugar.Prim $1           }
+    | str=ID                                { Sugar.Var str           }
+    | L_PAREN R_PAREN                       { Sugar.Unit_I            }
+    | TRUE                                  { Sugar.True              }
+    | FALSE                                 { Sugar.False             }
+    | i=INT                                 { Sugar.Int_I i           }
+    | f=FLOAT                               { Sugar.Elt_I f           }
+    | L_PAREN fst=exp COMMA snd=exp R_PAREN { Sugar.Pair_I (fst, snd) }
+    | L_PAREN body=exp R_PAREN              { body                    }
 
 prim:
-    | NOT     { Ast.Not_        }
-    | SET     { Ast.Set         }
-    | GET     { Ast.Get         }
-    | SHARE   { Ast.Share       }
-    | UNSHARE { Ast.Unshare     }
-    | FREE    { Ast.Free        }
-    | ARRAY   { Ast.Array       }
-    | COPY    { Ast.Copy        }
-    | SIN     { Ast.Sin         }
-    | HYPOT   { Ast.Hypot       }
-    | ASUM    { Ast.Asum        }
-    | AXPY    { Ast.Axpy        }
-    | DOTP    { Ast.Dot         }
-    | ROTMG   { Ast.Rotmg       }
-    | SCAL    { Ast.Scal        }
-    | AMAX    { Ast.Amax        }
+    | NOT       { Sugar.Not_        }
+    | SHARE     { Sugar.Share       }
+    | UNSHARE   { Sugar.Unshare     }
+    | FREE      { Sugar.Free        }
+    | ARRAY     { Sugar.Array       }
+    | COPY      { Sugar.Copy        }
+    | SIN       { Sugar.Sin         }
+    | HYPOT     { Sugar.Hypot       }
+    | ASUM      { Sugar.Asum        }
+    | AXPY      { Sugar.Axpy        }
+    | DOTP      { Sugar.Dot         }
+    | ROTMG     { Sugar.Rotmg       }
+    | SCAL      { Sugar.Scal        }
+    | AMAX      { Sugar.Amax        }
+    | SHARE_M   { Sugar.Share_mat   }
+    | UNSHARE_M { Sugar.Unshare_mat }
+    | FREE_M    { Sugar.Free_mat    }
+    | MATRIX    { Sugar.Matrix      }
+    | COPY_M    { Sugar.Copy_mat    }
+    | SYMV      { Sugar.Symv        }
+    | GEMV      { Sugar.Gemv        }
+    | TRMV      { Sugar.Trmv        }
+    | TRSV      { Sugar.Trsv        }
+    | GER       { Sugar.Ger         }
+    | GEMM      { Sugar.Gemm        }
+    | TRMM      { Sugar.Trmm        }
+    | TRSM      { Sugar.Trsm        }
 
 lin:
-    | simple_lin                         { $1                  }
-    | str=fc_var DOT lt=lin              { Ast.All (str, lt)   } %prec NON_LOW
-    | fst=simple_lin STAR snd=simple_lin { Ast.Pair (fst, snd) }
-    | arg=lin LOLLIPOP res=lin           { Ast.Fun (arg, res)  }
+    | simple_lin                         { $1                    }
+    | str=fc_var DOT lt=lin              { Sugar.All (str, lt)   } %prec NON_LOW
+    | fst=simple_lin STAR snd=simple_lin { Sugar.Pair (fst, snd) }
+    | arg=lin LOLLIPOP res=lin           { Sugar.Fun (arg, res)  }
 
 simple_lin:
-    | UNIT                   { Ast.Unit    }
-    | INT_LT                 { Ast.Int     }
-    | ELT_LT                 { Ast.Elt     }
-    | fc=fc ARR_LT           { Ast.Arr fc  }
-    | BANG lt=simple_lin     { Ast.Bang lt }
-    | L_PAREN lt=lin R_PAREN { lt          }
+    | UNIT                   { Sugar.Unit    }
+    | INT_LT                 { Sugar.Int     }
+    | ELT_LT                 { Sugar.Elt     }
+    | fc=fc ARR_LT           { Sugar.Arr fc  }
+    | fc=fc MAT_LT           { Sugar.Arr fc  }
+    | BANG lt=simple_lin     { Sugar.Bang lt }
+    | L_PAREN lt=lin R_PAREN { lt        }
 
 simple_fc:
-  | L_PAREN fc=fc R_PAREN { fc }
-  | fc=unit_fc            { fc }
+    | L_PAREN fc=fc R_PAREN { fc }
+    | fc=unit_fc            { fc }
 
 fc:
-  | unit_fc  { $1       }
-  | fc=fc ES { Ast.S fc }
+    | unit_fc  { $1         }
+    | fc=fc ES { Sugar.S fc }
 
 unit_fc:
-    | ZED         { Ast.Z     }
-    | str=fc_var  { Ast.V str }
+    | ZED         { Sugar.Z     }
+    | str=fc_var  { Sugar.V str }
 
 fc_var:
     | str=FC_VAR { Base.String.chop_prefix_exn ~prefix:"'" str}

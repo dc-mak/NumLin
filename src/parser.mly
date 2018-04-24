@@ -10,21 +10,21 @@
 (* - .messages error reporting                                   *)
 
 let mk_app_like exp (first :: rest) =
-  Sugar.(AppLike (exp, {first; rest}))
+  Sugar.(AppLike (loc exp, exp, {first; rest}))
   [@@ocaml.warning "-8"]
 ;;
 
-let mk_lambda (first :: rest) body =
-  Sugar.(Lambda ({first;rest}, body))
+let mk_lambda loc (first :: rest) body =
+  Sugar.Lambda (loc, {first;rest}, body)
   [@@ocaml.warning "-8"]
 ;;
 
-let mk_index str (fst, snd) =
-  Sugar.Index (str, fst, snd)
+let mk_index loc str (fst, snd) =
+  Sugar.Index (loc, str, fst, snd)
 ;;
 
-let mk_assign str (fst, snd) exp =
-  Sugar.Assign (str, fst, snd, exp)
+let mk_assign loc str (fst, snd) exp =
+  Sugar.Assign (loc, str, fst, snd, exp)
 ;;
 
 type ('a, 'b) either = ('a, 'b) Base.Either.t =
@@ -32,21 +32,25 @@ type ('a, 'b) either = ('a, 'b) Base.Either.t =
   | Second of 'b
 ;;
 
-let mk_let destruct exp body =
+let mk_let destruct loc exp body =
   match destruct with
   | First (bang_var, lin) ->
-    Sugar.LetAnnot (bang_var, lin, exp, body)
+    Sugar.LetAnnot (loc, bang_var, lin, exp, body)
   | Second pat ->
-    Sugar.LetPat (pat, exp, body)
+    Sugar.LetPat (loc, pat, exp, body)
 ;;
 
-let mk_rec str arg binds lin exp body =
-  Sugar.LetRecFun (str, arg, binds, lin, exp, body)
+let mk_rec str arg binds lin loc exp body =
+  Sugar.LetRecFun (loc, str, arg, binds, lin, exp, body)
 ;;
 
-let mk_fun str (first :: rest) lin exp body =
-  Sugar.(LetFun (str, {first;rest}, lin, exp, body))
+let mk_fun str (first :: rest) lin loc exp body =
+  Sugar.LetFun (loc, str, {first;rest}, lin, exp, body)
   [@@ocaml.warning "-8"]
+;;
+
+let mk_op loc op fst snd =
+  Sugar.Infix (loc, fst, op, snd)
 ;;
 
 type destruct =
@@ -163,20 +167,21 @@ type destruct =
 (* Grammar non-terminals *)
 %start <Sugar.exp> prog
 
-%type < Sugar.exp                           > simple_exp exp
-%type < Sugar.exp -> Sugar.exp -> Sugar.exp > fun_args
-%type < Sugar.op                            > op
-%type < Sugar.exp * Sugar.exp option        > index
-%type < (Sugar.annot_arg, Sugar.var) either > bind
-%type < destruct                            > destruct
-%type < Sugar.annot_arg                     > annot_arg
-%type < Sugar.pat                           > pat
-%type < Sugar.bang_var                      > bang_var
-%type < Sugar.arg_like                      > arg_like
-%type < Sugar.prim                          > prim
-%type < Sugar.lin                           > lin simple_lin
-%type < Sugar.fc                            > fc unit_fc simple_fc
-%type < Sugar.var                           > fc_var
+%type < Sugar.exp                                            > simple_exp exp
+%type < Sugar.loc -> Sugar.exp -> Sugar.exp -> Sugar.exp     > fun_args
+%type < Sugar.exp -> Sugar.exp -> Sugar.exp                  > op
+%type < Sugar.exp * Sugar.exp option                         > index
+%type < (Sugar.annot_arg, Sugar.loc * Sugar.var) either list > binds
+%type < (Sugar.annot_arg, Sugar.loc * Sugar.var) either      > bind
+%type < destruct                                             > destruct
+%type < Sugar.annot_arg                                      > annot_arg
+%type < Sugar.pat                                            > pat
+%type < Sugar.bang_var                                       > bang_var
+%type < Sugar.arg_like                                       > arg_like
+%type < Sugar.prim                                           > prim
+%type < Sugar.lin                                            > lin simple_lin
+%type < Sugar.fc                                             > fc unit_fc simple_fc
+%type < Sugar.var                                            > fc_var
 
 %%
 
@@ -185,15 +190,15 @@ prog:
     | exp=exp EOP { exp         }
 
 exp:
-    | simple_exp                                      { $1                         }
-    | MANY exp=simple_exp                             { Sugar.Bang_I exp           }
-    | exp=simple_exp args=arg_like+                   { mk_app_like exp args       }
-    | IF cond=exp THEN t=exp ELSE f=exp               { Sugar.If (cond, t, f)      }
-    | FUN binds=binds ARROW body=exp                  { mk_lambda binds body       }
-    | LET fun_args=fun_args EQUAL exp=exp IN body=exp { fun_args exp body          }
-    | str=ID index=index                              { mk_index str index         }
-    | str=ID index=index  COLON_EQ exp=exp            { mk_assign str index exp    }
-    | fst=exp op=op snd=exp                           { Sugar.Infix (fst, op, snd) }
+    | simple_exp                                      { $1                                          }
+    | MANY exp=simple_exp                             { Sugar.Bang_I ($symbolstartpos, exp)         }
+    | exp=simple_exp args=arg_like+                   { mk_app_like exp args                        }
+    | IF cond=exp THEN t=exp ELSE f=exp               { Sugar.If ($symbolstartpos, cond, t, f)      }
+    | FUN binds=binds ARROW body=exp                  { mk_lambda ($symbolstartpos) binds body      }
+    | LET fun_args=fun_args EQUAL exp=exp IN body=exp { fun_args ($symbolstartpos) exp body         }
+    | str=ID index=index                              { mk_index ($symbolstartpos) str index        }
+    | str=ID index=index  COLON_EQ exp=exp            { mk_assign ($symbolstartpos) str index exp   }
+    | fst=exp op=op snd=exp                           { op fst snd                                  }
 
 fun_args:
     | destruct=destruct                                                  { mk_let destruct          }
@@ -202,35 +207,35 @@ fun_args:
 
 %inline op:
     (* boolean *)
-    | DOUBLE_BAR     { Sugar.Or       }
-    | DOUBLE_AND     { Sugar.And      }
+    | DOUBLE_BAR     { mk_op $symbolstartpos Or       }
+    | DOUBLE_AND     { mk_op $symbolstartpos And      }
     (* integer *)
-    | EQUAL          { Sugar.Eq       }
-    | LESS_THAN      { Sugar.Lt       }
-    | PLUS           { Sugar.Plus     }
-    | MINUS          { Sugar.Minus    }
-    | STAR           { Sugar.Times    }
-    | FWD_SLASH      { Sugar.Div      }
+    | EQUAL          { mk_op $symbolstartpos Eq       }
+    | LESS_THAN      { mk_op $symbolstartpos Lt       }
+    | PLUS           { mk_op $symbolstartpos Plus     }
+    | MINUS          { mk_op $symbolstartpos Minus    }
+    | STAR           { mk_op $symbolstartpos Times    }
+    | FWD_SLASH      { mk_op $symbolstartpos Div      }
     (* element *)
-    | EQUAL_DOT      { Sugar.EqDot    }
-    | LESS_THAN_DOT  { Sugar.LtDot    }
-    | PLUS_DOT       { Sugar.PlusDot  }
-    | MINUS_DOT      { Sugar.MinusDot }
-    | STAR_DOT       { Sugar.TimesDot }
-    | FWD_SLASH_DOT  { Sugar.DivDot   }
+    | EQUAL_DOT      { mk_op $symbolstartpos EqDot    }
+    | LESS_THAN_DOT  { mk_op $symbolstartpos LtDot    }
+    | PLUS_DOT       { mk_op $symbolstartpos PlusDot  }
+    | MINUS_DOT      { mk_op $symbolstartpos MinusDot }
+    | STAR_DOT       { mk_op $symbolstartpos TimesDot }
+    | FWD_SLASH_DOT  { mk_op $symbolstartpos DivDot   }
 
 index:
     | L_BRACKET index=exp               R_BRACKET { (index, None)     }
     | L_BRACKET index=exp COMMA snd=exp R_BRACKET { (index, Some snd) }
 
 binds:
-    | res=annot_arg { [First res]  }
-    | str=fc_var    { [Second str] }
-    | bind+         { $1           }
+    | res=annot_arg { [First res]           }
+    | str=fc_var    { [Second ($symbolstartpos, str)] }
+    | bind+         { $1                    }
 
 bind:
-    | L_PAREN res=annot_arg R_PAREN { First res  }
-    | L_PAREN str=fc_var R_PAREN    { Second str }
+    | L_PAREN res=annot_arg R_PAREN { First res           }
+    | L_PAREN str=fc_var R_PAREN    { Second ($symbolstartpos, str) }
 
 annot_arg:
     | pat=pat COLON lin=lin { Sugar.({pat;lin}) }
@@ -241,29 +246,29 @@ destruct:
     | L_PAREN a=pat COMMA b=pat R_PAREN { Second (Second (a,b)) }
 
 pat:
-    | bang_var                          { Sugar.Base $1    }
-    | MANY pat=pat                      { Sugar.Many pat   }
-    | L_PAREN a=pat COMMA b=pat R_PAREN { Sugar.Pair (a,b) }
+    | bang_var                          { Sugar.Base ($symbolstartpos, $1 )  }
+    | MANY pat=pat                      { Sugar.Many ($symbolstartpos, pat)  }
+    | L_PAREN a=pat COMMA b=pat R_PAREN { Sugar.Pair ($symbolstartpos, a,b)  }
 
 bang_var:
     | res=ID      { Sugar.NotB res }
     | BANG res=ID { Sugar.Bang res }
 
 arg_like:
-    | fc=simple_fc   { Sugar.Fc fc      }
-    | UNDERSCORE     { Sugar.Underscore }
-    | exp=simple_exp { Sugar.Exp exp    }
+    | fc=simple_fc   { Sugar.Fc ($symbolstartpos, fc)   }
+    | UNDERSCORE     { Sugar.Underscore $symbolstartpos }
+    | exp=simple_exp { Sugar.Exp exp                    }
 
 simple_exp:
-    | prim                                  { Sugar.Prim $1           }
-    | str=ID                                { Sugar.Var str           }
-    | L_PAREN R_PAREN                       { Sugar.Unit_I            }
-    | TRUE                                  { Sugar.True              }
-    | FALSE                                 { Sugar.False             }
-    | i=INT                                 { Sugar.Int_I i           }
-    | f=FLOAT                               { Sugar.Elt_I f           }
-    | L_PAREN fst=exp COMMA snd=exp R_PAREN { Sugar.Pair_I (fst, snd) }
-    | L_PAREN body=exp R_PAREN              { body                    }
+    | prim                                  { Sugar.Prim ($symbolstartpos, $1)         }
+    | str=ID                                { Sugar.Var ($symbolstartpos, str)         }
+    | L_PAREN R_PAREN                       { Sugar.Unit_I ($symbolstartpos)           }
+    | TRUE                                  { Sugar.True ($symbolstartpos)             }
+    | FALSE                                 { Sugar.False ($symbolstartpos)            }
+    | i=INT                                 { Sugar.Int_I ($symbolstartpos, i)         }
+    | f=FLOAT                               { Sugar.Elt_I ($symbolstartpos, f)         }
+    | L_PAREN fst=exp COMMA snd=exp R_PAREN { Sugar.Pair_I ($symbolstartpos, fst, snd) }
+    | L_PAREN body=exp R_PAREN              { body                                     }
 
 prim:
     | NOT       { Sugar.Not_        }

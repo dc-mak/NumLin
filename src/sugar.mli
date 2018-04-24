@@ -52,15 +52,12 @@ val sexp_of_prim : prim -> Base.Sexp.t
 type bang_var = NotB of var | Bang of var
 val sexp_of_bang_var : bang_var -> Base.Sexp.t
 
-type pat = Base of bang_var | Many of pat | Pair of pat * pat
-val sexp_of_pat : pat -> Base.Sexp.t
-val ds_pat : pat -> Ast.exp -> var * Ast.exp
+type loc = Lexing.position
+val sexp_of_loc : loc -> Base.Sexp.t
 
-type matrix_atom =
-    Plain of var
-  | Transp of var
-  | Inv of var
-  | InvTransp of var
+type pat = Base of loc * bang_var | Many of loc * pat | Pair of loc * pat * pat
+val sexp_of_pat : pat -> Base.Sexp.t
+val ds_pat : pat -> Ast.exp -> loc * Ast.var * Ast.exp
 
 type op =
     Or
@@ -79,8 +76,6 @@ type op =
   | LtDot
 val sexp_of_op : op -> Base.Sexp.t
 
-type matrix_exp = Atom of matrix_atom | Op of matrix_exp * op * matrix_exp
-
 type 'a non_empty = { first : 'a; rest : 'a list; }
 val sexp_of_non_empty :
   ('a -> Base.Sexp.t) -> 'a non_empty -> Base.Sexp.t
@@ -88,29 +83,30 @@ val sexp_of_non_empty :
 type annot_arg = { pat : pat; lin : lin; }
 val sexp_of_annot_arg : annot_arg -> Base.Sexp.t
 
-type arg_like = Underscore | Fc of fc | Exp of exp
+type arg_like = Underscore of loc | Fc of loc * fc | Exp of exp
 and exp =
-    Prim of prim
-  | Var of var
-  | Unit_I
-  | True
-  | False
-  | Int_I of int
-  | Elt_I of float
-  | Pair_I of exp * exp
-  | Bang_I of exp
-  | AppLike of exp * arg_like non_empty
-  | If of exp * exp * exp
-  | Lambda of (annot_arg, var) Base.Either.t non_empty * exp
-  | Index of var * exp * exp option
-  | Assign of var * exp * exp option * exp
-  | Infix of exp * op * exp
-  | LetAnnot of bang_var * lin * exp * exp
-  | LetPat of (pat, pat * pat) Base.Either.t * exp * exp
-  | LetFun of bang_var * (annot_arg, var) Base.Either.t non_empty * lin *
-      exp * exp
-  | LetRecFun of var * annot_arg * (annot_arg, var) Base.Either.t list *
-      lin * exp * exp
+    Prim of loc * prim
+  | Var of loc * var
+  | Unit_I of loc
+  | True of loc
+  | False of loc
+  | Int_I of loc * int
+  | Elt_I of loc * float
+  | Pair_I of loc * exp * exp
+  | Bang_I of loc * exp
+  | AppLike of loc * exp * arg_like non_empty
+  | If of loc * exp * exp * exp
+  | Lambda of loc * (annot_arg, loc * var) Base.Either.t non_empty * exp
+  | Index of loc * var * exp * exp option
+  | Assign of loc * var * exp * exp option * exp
+  | Infix of loc * exp * op * exp
+  | LetAnnot of loc * bang_var * lin * exp * exp
+  | LetPat of loc * (pat, pat * pat) Base.Either.t * exp * exp
+  | LetFun of loc * bang_var * (annot_arg, loc * var) Base.Either.t non_empty
+              * lin * exp * exp
+  | LetRecFun of loc * var * annot_arg * (annot_arg, loc * var) Base.Either.t list
+                 * lin * exp * exp
 val sexp_of_arg_like : arg_like -> Base.Sexp.t
 val sexp_of_exp : exp -> Base.Sexp.t
+val loc : exp -> loc
 val ds_exp : exp -> Ast.exp

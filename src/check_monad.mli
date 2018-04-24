@@ -21,7 +21,7 @@ type not_used
 val sexp_of_not_used : not_used -> Sexplib0.Sexp.t
 
 (** A type is either used, not used, or intuitionistic. *)
-type tagged = private Not_used of not_used | Used | Intuition of wf_lin
+type tagged = private Not_used of not_used | Used of Ast.loc | Intuition of wf_lin
 val sexp_of_tagged : tagged -> Sexplib0.Sexp.t
 
 (** Type checker state *)
@@ -67,7 +67,7 @@ module Let_syntax :
 (** Checker utilities *)
 val create_fresh : ?name:string -> unit -> Ast.var t
 val lookup : Ast.var -> tagged option t
-val use_var : not_used -> wf_lin t
+val use_var : Ast.loc -> not_used -> wf_lin t
 val same_lin : wf_lin -> wf_lin -> (Ast.var * Ast.fc) list Base.Or_error.t t
 val apply : (string * Ast.fc) list -> wf_lin -> wf_lin
 val with_lin : Ast.var -> wf_lin -> 'a t -> 'a t
@@ -75,7 +75,7 @@ val with_int : Ast.var -> wf_lin -> 'a t -> 'a t
 val with_fc : Ast.var -> 'a t -> 'a t
 val run : wf_lin t -> counter:int -> Ast.lin Base.Or_error.t
 val in_empty : 'a t -> 'a t
-val same_resources : 'a t -> 'b t -> ('a * 'b) t
+val same_resources : ('a t * Ast.loc) -> ('b t * Ast.loc) -> ('a * 'b) t
 
 (** Well-formed destructors *)
 val if_wf : Ast.fc -> then_:(wf_fc -> 'a t) -> else_:(Ast.fc -> 'a t) -> 'a t
@@ -96,5 +96,5 @@ val split_wf_Fun :
   if_fun:(wf_lin -> wf_lin -> 'a t) ->
   not_fun:(Ast.lin -> 'a t) -> 'a t
 val wf_lin :
-  fmt:('a -> Ast.lin t, unit, string, 'b t) format4 ->
-  arg:'a -> Ast.lin -> wf_lin t
+  fmt:('a -> Ast.loc -> Ast.lin t, unit, string, 'b t) format4 ->
+  arg:'a -> loc:Ast.loc -> Ast.lin -> wf_lin t

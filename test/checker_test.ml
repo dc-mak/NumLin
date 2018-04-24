@@ -22,29 +22,33 @@ let pretty x =
 ;;
 
 let arr : Ast.exp =
-  (App (Prim Array, (Int_I 5)))
+  App (Ast.dummy, Prim (Ast.dummy, Array), (Int_I (Ast.dummy, 5)))
 ;;
 
 let%expect_test "Unit_I" =
-  check_expr Unit_I
+  check_expr (Unit_I  Ast.dummy)
   |> pretty;
   [%expect {| (Ok unit) |}]
 ;;
 
 let%expect_test "Elt_I" =
-  check_expr (Elt_I 4.0)
+  check_expr (Elt_I (Ast.dummy, 4.0))
   |> pretty;
   [%expect {| (Ok !float) |}]
 ;;
 
 let%expect_test "Var (unbound)" =
-  check_expr (Var one)
+  check_expr (Var (Ast.dummy, one))
   |> pretty;
-  [%expect {| (Error "Unbound variable one (not found in environment)\n") |}]
+  [%expect {|
+    (Error
+      "Unbound variable one (not found in enviornment)\
+     \nIn dummy, at line: 0 and column: 1\
+     \n") |}]
 ;;
 
 let pair : Ast.exp =
-  Pair_I (arr, Unit_I)
+  Pair_I (Ast.dummy, arr, Unit_I Ast.dummy)
 ;;
 
 let%expect_test "Pair_I" =
@@ -54,26 +58,30 @@ let%expect_test "Pair_I" =
 ;;
 
 let%expect_test "Bang_I (not value)" =
-  check_expr (Bang_I pair)
+  check_expr (Bang_I (Ast.dummy, pair))
   |> pretty;
-  [%expect {| (Error "Can only call 'Many' on values.\n") |}]
+  [%expect {|
+    (Error
+      "Can only call 'Many' on values.\
+     \nIn dummy, at line: 0 and column: 1\
+     \n") |}]
 ;;
 
 let%expect_test "Bang_I (value)" =
-  check_expr (Bang_I (Pair_I (Unit_I, Unit_I)))
+  check_expr (Bang_I (Ast.dummy, Pair_I (Ast.dummy, Unit_I Ast.dummy, Unit_I Ast.dummy)))
   |> pretty;
   [%expect {| (Ok "!( unit * unit )") |}]
 ;;
 
 let%expect_test "Fix/App" =
   check_expr @@
-  Fix (one, two, Bang Int, Bang Bool, App (App (Prim (IntOp Eq), Var two), Int_I 0))
+  Fix (Ast.dummy, one, two, Bang Int, Bang Bool, App (Ast.dummy, App (Ast.dummy, Prim (Ast.dummy, IntOp Eq), Var (Ast.dummy, two)), Int_I (Ast.dummy, 0)))
   |> pretty;
   [%expect {| (Ok "!( !int --o !bool )") |}]
 ;;
 
 let gen : Ast.exp =
-  Gen (one, Lambda (two, Arr (V one), Var two))
+  Gen (Ast.dummy, one, Lambda (Ast.dummy, two, Arr (V one), Var (Ast.dummy, two)))
 ;;
 
 let%expect_test "Gen" =
@@ -84,7 +92,7 @@ let%expect_test "Gen" =
 
 
 let spc : Ast.exp =
-  Spc(gen, S Z)
+  Spc (Ast.dummy, gen, S Z)
 ;;
 
 let%expect_test "Spc" =
@@ -94,24 +102,27 @@ let%expect_test "Spc" =
 ;;
 
 let%expect_test "Spc" =
-  check_expr (Spc(gen, S (V three)))
+  check_expr (Spc (Ast.dummy, gen, S (V three)))
   |> pretty;
   [%expect {|
-    (Error "Spc: (S (V three)) not found in environment.\n") |}]
+    (Error
+      "Spc: (S (V three)) not found in environment.\
+     \nIn dummy, at line: 0 and column: 1\
+     \n") |}]
 ;;
 
 let%expect_test "Bang_E" =
   check_expr @@
-  Lambda (one, Bang Elt,
-    Bang_E (one, Var one,
-    Bang_E (one, Bang_I (Bang_I (Var one)),
-    App (App (Prim (EltOp Add), Var one), Var one))))
+  Lambda (Ast.dummy, one, Bang Elt,
+    Bang_E (Ast.dummy, one, Var (Ast.dummy, one),
+    Bang_E (Ast.dummy, one, Bang_I (Ast.dummy, Bang_I (Ast.dummy, Var (Ast.dummy, one))),
+    App (Ast.dummy, App (Ast.dummy, Prim (Ast.dummy, EltOp Add), Var (Ast.dummy, one)), Var (Ast.dummy, one)))))
   |> pretty;
   [%expect {| (Ok "!float --o !float") |}]
 ;;
 
 let pair_e : Ast.exp =
-  Pair_E (one, two, pair, Pair_I (Var two, Var one))
+  Pair_E (Ast.dummy, one, two, pair, Pair_I (Ast.dummy, Var (Ast.dummy, two), Var (Ast.dummy, one)))
 ;;
 
 let%expect_test "Pair_E" = 
@@ -121,13 +132,13 @@ let%expect_test "Pair_E" =
 ;;
 
 let%expect_test "Pair_E" = 
-  check_expr (Pair_E (one, two, pair, Var one))
+  check_expr (Pair_E (Ast.dummy, one, two, pair, Var (Ast.dummy, one)))
   |> pretty;
   [%expect {| (Error "Variable two not used.\n") |}]
 ;;
 
 let unit_lambda : Ast.exp =
-  Lambda (one, Unit, Var one)
+  Lambda (Ast.dummy, one, Unit, Var (Ast.dummy, one))
 ;;
 
 let%expect_test "Lambda" =
@@ -137,7 +148,7 @@ let%expect_test "Lambda" =
 ;;
 
 let app : Ast.exp =
-  App (unit_lambda, Unit_I)
+  App (Ast.dummy, unit_lambda, Unit_I Ast.dummy)
 ;;
 
 let%expect_test "App" =
@@ -148,21 +159,22 @@ let%expect_test "App" =
 
 let%expect_test "If" =
   check_expr @@ 
-  Lambda (one, Bang Bool,
-  Lambda (two, Bang Int,
-    If (Var one, Var two, Unit_I)))
+  Lambda (Ast.dummy, one, Bang Bool,
+  Lambda (Ast.dummy, two, Bang Int,
+    If (Ast.dummy, Var (Ast.dummy, one), Var (Ast.dummy, two), Unit_I Ast.dummy)))
   |> pretty;
   [%expect {|
-    (Error  "First term used these variables not used by the second:\
-           \n  two\
-           \n") |}]
+    (Error
+      "Then-branch (0:1) used these variables not used by else-branch:\
+     \n  two (0:1)\
+     \n") |}]
 ;;
 
 let%expect_test "If" =
   check_expr @@ 
-  Lambda (one, Bang Bool,
-  Lambda (two, Bang Int,
-    If (Var one, Var two, Var two)))
+  Lambda (Ast.dummy, one, Bang Bool,
+  Lambda (Ast.dummy, two, Bang Int,
+    If (Ast.dummy, Var (Ast.dummy, one), Var (Ast.dummy, two), Var (Ast.dummy, two))))
   |> pretty;
   [%expect {| (Ok "!bool --o !int --o !int") |}]
 ;;
@@ -231,7 +243,7 @@ let pretty (x,t) =
 ;;
 
 let%expect_test "check_array_elim" =
-  List.map ~f:(fun x -> x, check_expr (Prim x)) prims
+  List.map ~f:(fun x -> x, check_expr (Prim (Ast.dummy, x))) prims
   |> List.iter ~f:pretty;
   [%expect {|
     addI: !int --o !int --o !int

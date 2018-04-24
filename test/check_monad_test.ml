@@ -1,4 +1,4 @@
-(* Dhruv Makwana *)
+
 (* Lt4la.Check_monad External Tests *)
 
 open Base
@@ -24,7 +24,8 @@ let execute x =
 ;;
 
 let wf_lin =
-  wf_lin ~fmt:"Not well-formed%s" ~arg:""
+  let ignore_loc _ = "" in
+  wf_lin ~fmt:!"Not well-formed%s%{ignore_loc}" ~arg:"" ~loc:Ast.dummy
 ;;
 
 let wf_arr =
@@ -123,8 +124,8 @@ let%expect_test "lookup (Some (Used _))" =
   let%bind wf = wf_arr in
   with_lin four wf begin
     let%bind Some (Not_used four') = lookup four in
-    let%bind lin = use_var four' in
-    let%bind Some Used = lookup four in
+    let%bind lin = use_var Ast.dummy four' in
+    let%bind Some (Used _) = lookup four in
     return lin
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
@@ -208,7 +209,7 @@ let%expect_test "with_lin/use_var" =
   let open Let_syntax in
   with_lin four wf_Unit begin
     let%bind Some (Not_used four') = lookup four in
-    use_var four'
+    use_var Ast.dummy four'
   end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
@@ -221,7 +222,7 @@ let%expect_test "with_lin (scoping)/use_var" =
   with_lin four wf_Unit @@
   with_lin four (wf_Bang wf_Int) begin
     let%bind Some (Not_used four') = lookup four in
-    let%bind (WFL t) as res = use_var four' in
+    let%bind (WFL t) as res = use_var Ast.dummy four' in
     Stdio.printf !"%{sexp:Ast.lin}\n" t;
     return res
   end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
@@ -243,7 +244,7 @@ let%expect_test "with_lin/use_var" =
     Stdio.printf !"%{sexp: Ast.lin}\n" one;
     (* Linear *)
     let%bind Some (Not_used three) = lookup three in
-    let%bind WFL lin = use_var three in
+    let%bind WFL lin = use_var Ast.dummy three in
     Stdio.printf !"%{sexp: Ast.lin}\n" lin;
     return wf_Unit
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
@@ -330,7 +331,7 @@ let%expect_test "with_int/with_lin" =
   with_int one (wf_Bang wf_Int) @@
   with_lin one wf_Unit begin
     let%bind Some (Not_used t) = lookup one in
-    let%bind t = use_var t in
+    let%bind t = use_var Ast.dummy t in
     return t
   end [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
@@ -347,7 +348,7 @@ let%expect_test "in_empty" =
   with_lin one wf_arr @@
   begin
     let%bind Some (Not_used t) = lookup one in
-    let%bind t = use_var t in
+    let%bind t = use_var Ast.dummy t in
     return t
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
@@ -361,13 +362,13 @@ let%expect_test "in_empty" =
   with_lin one (wf_Bang wf_Int) @@
   in_empty @@ begin
     let%bind Some (Not_used t) = lookup one in
-    let%bind t = use_var t in
+    let%bind t = use_var Ast.dummy t in
     return t
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
     (Error  "Cannot use linearly-typed variables in Fix/Many\
-           \n    one\
+           \n    one (0:1)\
            \n") |}]
 ;;
 
@@ -387,15 +388,15 @@ let%expect_test "same_resources" =
   with_lin one wf_Arr_Z begin
     let prog_one =
       let%bind Some (Not_used one) = lookup one in
-      let%bind t1 = use_var one in
+      let%bind t1 = use_var Ast.dummy one in
       let%bind Some (Intuition t2) = lookup two in
       return @@ wf_Pair t1 t2 in
     let prog_two =
       let%bind Some (Not_used one) = lookup one in
-      let%bind t1 = use_var one in
+      let%bind t1 = use_var Ast.dummy one in
       let%bind Some (Intuition t2) = lookup two in
       return @@ wf_Pair t1 t2 in
-    let%bind (a,b) = same_resources prog_one prog_two in
+    let%bind (a,b) = same_resources (prog_one, Ast.dummy) (prog_two, Ast.dummy) in
     return @@ wf_Pair a b
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
@@ -413,17 +414,18 @@ let%expect_test "same_resources" =
       return @@ wf_Pair (wf_Arr_Z) t2 in
     let prog_two =
       let%bind Some (Not_used one) = lookup one in
-      let%bind t1 = use_var one in
+      let%bind t1 = use_var Ast.dummy one in
       let%bind Some (Intuition t2) = lookup two in
       return @@ wf_Pair t1 t2 in
-    let%bind (a,b) = same_resources prog_one prog_two in
+    let%bind (a,b) = same_resources (prog_one, Ast.dummy) (prog_two, Ast.dummy) in
     return @@ wf_Pair a b
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
-    (Error  "Second term used these variables not used by the first:\
-           \n  one\
-           \n") |}]
+    (Error
+      "Else-branch (0:1) used these variables not used by then-branch:\
+     \n  one (0:1)\
+     \n") |}]
 ;;
 
 let%expect_test "same_resources" =
@@ -433,24 +435,24 @@ let%expect_test "same_resources" =
   with_lin one wf_Arr_Z begin
     let prog_one =
       let%bind Some (Not_used one) = lookup one in
-      let%bind t1 = use_var one in
+      let%bind t1 = use_var Ast.dummy one in
       let%bind Some (Intuition t3) = lookup three in
       return @@ wf_Pair t1 t3 in
     let prog_two =
       let%bind Some (Not_used two) = lookup two in
-      let%bind t2 = use_var two in
+      let%bind t2 = use_var Ast.dummy two in
       let%bind Some (Intuition t3) = lookup three in
       return @@ wf_Pair t2 t3 in
-    let%bind (a,b) = same_resources prog_two prog_one in
+    let%bind (a,b) = same_resources (prog_one, Ast.dummy) (prog_two, Ast.dummy) in
     return @@ wf_Pair a b
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
     (Error
-      "First term used these variables not used by the second:\
-     \n  two\
-     \nSecond term used these variables not used by the first:\
-     \n  one\
+      "Then-branch (0:1) used these variables not used by else-branch:\
+     \n  one (0:1)\
+     \nElse-branch (0:1) used these variables not used by then-branch:\
+     \n  two (0:1)\
      \n") |}]
 ;;
 
@@ -461,23 +463,23 @@ let%expect_test "same_resources" =
   with_lin one wf_Arr_Z begin
     let prog_one =
       let%bind Some (Not_used one) = lookup one in
-      let%bind t1 = use_var one in
+      let%bind t1 = use_var Ast.dummy one in
       let%bind Some (Intuition t3) = lookup three in
       return @@ wf_Pair t1 t3 in
     let prog_two =
       let%bind Some (Not_used two) = lookup two in
-      let%bind t2 = use_var two in
+      let%bind t2 = use_var Ast.dummy two in
       let%bind Some (Intuition t3) = lookup three in
       return @@ wf_Pair t2 t3 in
-    let%bind (a,b) = same_resources prog_two prog_one in
+    let%bind (a,b) = same_resources (prog_one, Ast.dummy) (prog_two, Ast.dummy) in
     return @@ wf_Pair a b
   end; [@ocaml.warning "-8" (* Non-exhaustive patterns *) ]
   |> execute;
   [%expect {|
     (Error
-      "First term used these variables not used by the second:\
-     \n  two\
-     \nSecond term used these variables not used by the first:\
-     \n  one\
+      "Then-branch (0:1) used these variables not used by else-branch:\
+     \n  one (0:1)\
+     \nElse-branch (0:1) used these variables not used by then-branch:\
+     \n  two (0:1)\
      \n") |}]
 ;;

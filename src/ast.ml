@@ -32,7 +32,7 @@ type fc =
   | S of fc
   | V of var
   | U of var
-[@@deriving sexp_of,compare]
+[@@deriving sexp_of]
 ;;
 
 let (=) =
@@ -111,7 +111,7 @@ type lin =
   | Bang of lin
   | Fun of lin * lin
   | All of var * lin
-[@@deriving sexp_of,compare]
+[@@deriving sexp_of]
 ;;
 
 let pp_lin ppf =
@@ -296,7 +296,7 @@ type arith =
   | Div
   | Eq
   | Lt
-[@@deriving sexp_of,compare]
+[@@deriving sexp_of]
 ;;
 
 type prim =
@@ -340,7 +340,7 @@ type prim =
   | Gemm
   | Trmm
   | Trsm
-[@@deriving sexp_of,compare]
+[@@deriving sexp_of]
 ;;
 
 let string_of_prim x =
@@ -356,141 +356,185 @@ let string_of_prim x =
 ;;
 
 (* Expressions *)
+type loc = Lexing.position = {
+  pos_fname : string;
+  pos_lnum : int;
+  pos_bol : int;
+  pos_cnum : int;
+}
+[@@deriving sexp_of]
+;;
+
+let dummy = {
+  pos_fname = "dummy";
+  pos_lnum = 0;
+  pos_bol = 0;
+  pos_cnum = 0;
+}
+;;
+
+let line_col (loc : loc) =
+  Int.(to_string loc.pos_lnum ^ ":" ^
+       to_string @@ loc.pos_cnum - loc.pos_bol + 1)
+;;
+
 type exp =
-  | Prim of prim
-  | Var of var
-  | Unit_I
-  | True
-  | False
-  | Int_I of int
-  | Elt_I of float
-  | Pair_I of exp * exp
-  | Bang_I of exp
-  | Spc of exp * fc
-  | App of exp * exp
-  | Bang_E of var * exp * exp
-  | Pair_E of var * var * exp * exp
-  | Fix of var * var * lin * lin * exp
-  | If of exp * exp * exp
-  | Gen of var * exp
-  | Lambda of var * lin * exp
-[@@deriving sexp_of,compare]
+  | Prim of loc sexp_opaque * prim
+  | Var of loc sexp_opaque * var
+  | Unit_I of loc sexp_opaque
+  | True of loc sexp_opaque
+  | False of loc sexp_opaque
+  | Int_I of loc sexp_opaque * int
+  | Elt_I of loc sexp_opaque * float
+  | Pair_I of loc sexp_opaque * exp * exp
+  | Bang_I of loc sexp_opaque * exp
+  | Spc of loc sexp_opaque * exp * fc
+  | App of loc sexp_opaque * exp * exp
+  | Bang_E of loc sexp_opaque * var * exp * exp
+  | Pair_E of loc sexp_opaque * var * var * exp * exp
+  | Fix of loc sexp_opaque * var * var * lin * lin * exp
+  | If of loc sexp_opaque * exp * exp * exp
+  | Gen of loc sexp_opaque * var * exp
+  | Lambda of loc sexp_opaque * var * lin * exp
+[@@deriving sexp_of]
+;;
+
+let loc = function
+  | Prim (loc, _)
+  | Var (loc, _)
+  | Unit_I loc
+  | True loc
+  | False loc
+  | Int_I (loc, _)
+  | Elt_I (loc, _)
+  | Pair_I (loc, _, _)
+  | Bang_I (loc, _)
+  | Spc (loc, _, _)
+  | App (loc, _, _)
+  | Bang_E (loc, _, _, _)
+  | Pair_E (loc, _, _, _, _)
+  | Fix (loc, _, _, _, _, _)
+  | If (loc, _, _, _)
+  | Gen (loc, _, _)
+  | Lambda (loc, _, _, _) -> loc
 ;;
 
 let prec = function
-  | Prim _ | Var _ | Unit_I | Pair_I _ -> 0
-  | True | False | Int_I _ | Elt_I _ | Spc _ | App _ | Bang_I _ -> -1
+  | Prim _ | Var _ | Unit_I _ | Pair_I _ -> 0
+  | True _ | False _ | Int_I _ | Elt_I _ | Spc _ | App _ | Bang_I _ -> -1
   | Bang_E _ | Pair_E _ | Fix _ | Gen _ | Lambda _ | If _ -> -2
 ;;
 
 let rec is_value = function
-  | Prim _ | Unit_I | True | False | Int_I _ | Elt_I _ | Var _ | Fix _ | Lambda _ -> true
+  | Prim _ | Unit_I _ | True _ | False _ | Int_I _ | Elt_I _ | Var _ | Fix _ | Lambda _ -> true
   | App _ | Bang_E _ | Pair_E _ | If _ -> false
-  | Gen (_, exp) | Spc (exp, _) | Bang_I exp -> is_value exp
-  | Pair_I (fst, snd) -> is_value fst && is_value snd
+  | Gen (_, _, exp) | Spc (_, exp, _) | Bang_I (_, exp) -> is_value exp
+  | Pair_I (_, fst, snd) -> is_value fst && is_value snd
 ;;
 
 let pp_exp ppf =
   let open Caml.Format in
   let parens exp ref = if prec exp > prec ref then "","" else "(", ")" in
+  let string_of_lin = string_of_pp pp_lin in
   let rec pp_exp ppf = function
 
-    | Prim prim ->
+    | Prim (_, prim) ->
       fprintf ppf "Prim.%s" (string_of_prim prim)
 
-    | Var var ->
+    | Var (_, var) ->
       fprintf ppf "%s" var
 
-    | Unit_I ->
+    | Unit_I _ ->
       fprintf ppf "()"
 
-    | True ->
+    | True _ ->
       fprintf ppf "Many true"
 
-    | False ->
+    | False _ ->
       fprintf ppf "Many false"
 
-    | Int_I i ->
+    | Int_I (_, i) ->
       fprintf ppf "Many %d" i
 
-    | Elt_I e ->
+    | Elt_I (_, e) ->
       fprintf ppf "Many %f" e
 
-    | Pair_I (exp1, exp2) ->
+    | Pair_I (_, exp1, exp2) ->
       fprintf ppf "@[(%a@ @[, %a)@]@]" pp_exp exp1 pp_exp exp2
 
-    | Bang_I exp as bang ->
+    | Bang_I (_, exp) as bang ->
       let l,r = parens exp bang in
       fprintf ppf "Many %s%a%s" l pp_exp exp r
 
-    | Spc (exp, fc) as spc ->
+    | Spc (_, exp, fc) as spc ->
       let l, r = if prec exp >= prec spc then "","" else "(", ")" in
-      fprintf ppf "@[<2>%s%a%s@ (* [%s] *)@]" l pp_exp exp r (string_of_fc fc)
+      fprintf ppf !"@[<2>%s%a%s@ (* [%{string_of_fc}] *)@]" l pp_exp exp r fc
 
-    | App (Lambda(f2, Bang(Fun(tx, res)), Bang_E(f3, Var f2', body)),
-           Fix (f1, x, tx', res', exp))
+    | App (_, Lambda (_, f2, Bang (Fun(tx, res)), Bang_E (_, f3, Var (_, f2'), body)),
+           Fix (_, f1, x, tx', res', exp))
       when phys_equal tx tx' &&
            phys_equal res res' &&
            phys_equal f2 f2' &&
            phys_equal f1 f2 &&
            phys_equal f1 f3 ->
-        fprintf ppf "@[@[<2>let rec %s (%s (* %s *)) (* %s *) =@ %a in@]@ %a@]"
-          f1 x (string_of_pp pp_lin tx) (string_of_pp pp_lin res) pp_exp exp pp_exp body
+      fprintf ppf !"@[@[<2>let rec %s (%s (* %{string_of_lin} *)) (* %{string_of_lin} *) =@ %a in@]@ %a@]"
+          f1 x tx res pp_exp exp pp_exp body
 
-    | App (Lambda(var, lin, body), exp) ->
-      fprintf ppf "@[@[<2>let %s (* %s *) =@ %a in@]@ %a@]"
-        var (string_of_pp pp_lin lin) pp_exp exp pp_exp body
+    | App (_, Lambda (_, var, lin, body), exp) ->
+      fprintf ppf !"@[@[<2>let %s (* %{string_of_lin} *) =@ %a in@]@ %a@]"
+        var lin pp_exp exp pp_exp body
 
-    | App (fun_, arg) as app ->
+    | App (_, fun_, arg) as app ->
       let fl, fr = if prec fun_ >= prec app then "","" else "(", ")"
       and al, ar = parens arg app in
       fprintf ppf "@[<2>%s%a%s@ %s%a%s@]" fl pp_exp fun_ fr al pp_exp arg ar
 
-    | Bang_E (var1, Var var2, Bang_E (var3, Bang_I (Bang_I (Var var4)), body))
+    | Bang_E (_, var1, Var (_, var2),
+              Bang_E (_, var3, Bang_I (_, Bang_I (_, Var (_, var4))), body))
       when var1 = var2 &&
            var3 = var4 &&
            var1 = var4 ->
       fprintf ppf "@[%a@]" pp_exp body
 
-    | Bang_E (var, exp, body) ->
+    | Bang_E (_, var, exp, body) ->
       fprintf ppf "@[@[<2>let Many %s =@ %a in@]@ %a@]" var pp_exp exp pp_exp body
 
-    | Pair_E (var1, var2, exp1, exp2) ->
+    | Pair_E (_, var1, var2, exp1, exp2) ->
       fprintf ppf "@[@[<2>let (%s, %s) =@ %a in@]@ %a@]"
         var1 var2 pp_exp exp1 pp_exp exp2
 
-    | Fix (f, x, tx, res, body) ->
-      fprintf ppf "@[@[<2>let rec %s (%s (* %s *)) (* %s *) =@ %a in@]@ Many %s@]"
-        f x (string_of_pp pp_lin tx) (string_of_pp pp_lin res) pp_exp body f
+    | Fix (_, f, x, tx, res, body) ->
+      fprintf ppf !"@[@[<2>let rec %s (%s (* %{string_of_lin} *)) (* %{string_of_lin} *) =@ %a in@]@ Many %s@]"
+        f x tx res pp_exp body f
 
-    | If (cond, True, False) ->
+    | If (_, cond, True _, False _) ->
       pp_exp ppf cond
 
-    | If (cond, true_, False) ->
+    | If (_, cond, true_, False _) ->
       fprintf ppf "@[<hv>(Many ( (Prim.extract %@%@ @[%a@]) && (Prim.extract %@%@@ @[%a@])))@]"
         pp_exp cond pp_exp true_
 
-    | If (cond, True, false_) ->
+    | If (_, cond, True _, false_) ->
       fprintf ppf "@[<hv>(Many ( (Prim.extract %@%@ @[%a@]) || (Prim.extract %@%@@ @[%a@])))@]"
         pp_exp cond pp_exp false_
 
-    | If (cond, true_, false_) ->
+    | If (_, cond, true_, false_) ->
       fprintf ppf "@[<hv>if Prim.extract %@%@@;<1 3> %a then@;<1 2>@[%a@]@;else@;<1 2>@[%a@]@]"
         pp_exp cond pp_exp true_ pp_exp false_
 
-    | Gen (var, (Gen _ | Lambda _ as exp)) ->
+    | Gen (_, var, (Gen _ | Lambda _ as exp)) ->
       fprintf ppf "@[(* ∀ %s *)@ %a@]" var pp_exp exp
 
-    | Gen (var, exp) ->
+    | Gen (_, var, exp) ->
       fprintf ppf "@[<2>(* ∀ %s *)@ %a@]" var pp_exp exp
 
-    | Lambda (var, lin, (Lambda _ | Gen _ as exp)) ->
-      fprintf ppf "@[fun %s (* %s *) ->@ %a@]"
-        var (string_of_pp pp_lin lin) pp_exp exp
+    | Lambda (_, var, lin, (Lambda _ | Gen _ as exp)) ->
+      fprintf ppf !"@[fun %s (* %{string_of_lin} *) ->@ %a@]"
+        var lin pp_exp exp
 
-    | Lambda (var, lin, exp) ->
-      fprintf ppf "@[<2>fun %s (* %s *) ->@ %a@]"
-        var (string_of_pp pp_lin lin) pp_exp exp in
+    | Lambda (_, var, lin, exp) ->
+      fprintf ppf !"@[<2>fun %s (* %{string_of_lin} *) ->@ %a@]"
+        var lin pp_exp exp in
 
   fprintf ppf "@[%a@]@?" pp_exp
 ;;

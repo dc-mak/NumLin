@@ -12,7 +12,6 @@ val comparator : (var, comparator_witness) Base.Comparator.t
 (** Fractional Capabilities *)
 type fc = Z | S of fc | V of var | U of var
 val sexp_of_fc : fc -> Base.Sexp.t
-val compare_fc : fc -> fc -> int
 val string_of_fc : fc -> string
 
 (** Linear types *)
@@ -28,7 +27,6 @@ type lin =
   | Fun of lin * lin
   | All of var * lin
 val sexp_of_lin : lin -> Base.Sexp.t
-val compare_lin : lin -> lin -> int
 val pp_lin : Caml.Format.formatter -> lin -> unit
 val substitute_in : lin -> var:var -> replace:fc -> lin
 val substitute_unify : lin -> var:var -> replace:fc -> lin
@@ -39,7 +37,6 @@ val same_lin : (var * var) list -> lin -> lin -> (var * fc) list Base.Or_error.t
 (** Arithmetic expressions *)
 type arith = Add | Sub | Mul | Div | Eq | Lt
 val sexp_of_arith : arith -> Base.Sexp.t
-val compare_arith : arith -> arith -> int
 
 (** Primitives *)
 type prim =
@@ -84,30 +81,41 @@ type prim =
   | Trmm
   | Trsm
 val sexp_of_prim : prim -> Base.Sexp.t
-val compare_prim : prim -> prim -> int
 val string_of_prim : prim -> string
 
 (** Expressions *)
+type loc =
+  Lexing.position = {
+  pos_fname : string;
+  pos_lnum : int;
+  pos_bol : int;
+  pos_cnum : int;
+}
+val sexp_of_loc : loc -> Base.Sexp.t
+val dummy : loc
+val line_col : loc -> string
+
 type exp =
-  | Prim of prim
-  | Var of var
-  | Unit_I
-  | True
-  | False
-  | Int_I of int
-  | Elt_I of float
-  | Pair_I of exp * exp
-  | Bang_I of exp
-  | Spc of exp * fc
-  | App of exp * exp
-  | Bang_E of var * exp * exp
-  | Pair_E of var * var * exp * exp
-  | Fix of var * var * lin * lin * exp
-  | If of exp * exp * exp
-  | Gen of var * exp
-  | Lambda of var * lin * exp
+  | Prim of loc * prim
+  | Var of loc * var
+  | Unit_I of loc
+  | True of loc
+  | False of loc
+  | Int_I of loc * int
+  | Elt_I of loc * float
+  | Pair_I of loc * exp * exp
+  | Bang_I of loc * exp
+  | Spc of loc * exp * fc
+  | App of loc * exp * exp
+  | Bang_E of loc * var * exp * exp
+  | Pair_E of loc * var * var * exp * exp
+  | Fix of loc * var * var * lin * lin * exp
+  | If of loc * exp * exp * exp
+  | Gen of loc * var * exp
+  | Lambda of loc * var * lin * exp
+
+val loc : exp -> loc
 val is_value : exp -> bool
 val sexp_of_exp : exp -> Base.Sexp.t
-val compare_exp : exp -> exp -> int
 val prec : exp -> int
 val pp_exp : Caml.Format.formatter -> exp -> unit

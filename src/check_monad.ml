@@ -65,14 +65,14 @@ type not_used =
 
 type tagged =
   | Not_used of not_used
-  | Used
+  | Used of Ast.loc
   | Intuition of wf_lin
 [@@deriving sexp_of]
 ;;
 
 type state =
   { env : (Ast.var, tagged) List.Assoc.t
-  ; used_vars : (Ast.var, Ast.comparator_witness) Set.t sexp_opaque
+  ; used_vars : (Ast.var, Ast.loc, Ast.comparator_witness) Map.t sexp_opaque
   ; fc_vars  : Ast.var list
   ; counter : int
   }
@@ -80,7 +80,7 @@ type state =
 ;;
 
 let empty_used =
-  Set.empty (module struct include Ast type t = var end)
+  Map.empty (module struct include Ast type t = var end)
 ;;
 
 include State_or_error.Make (struct type t = state end)
@@ -111,7 +111,7 @@ let lookup var  =
   return @@ find env var
 ;;
 
-let mark_used var env used_vars =
+let mark_used loc var env used_vars =
 
   let rec find var accum = function
     | [] -> (accum, None, [])
@@ -119,25 +119,25 @@ let mark_used var env used_vars =
       if [%compare.equal:Ast.var] var var' then
         (accum, Some t, env)
       else
-        find var (entry :: accum) env in 
+        find var (entry :: accum) env in
 
   match find var [] env with
-  | _, None, _ | _, Some Used, _ | _, Some Intuition _, _ ->
+  | _, None, _ | _, Some (Used _), _ | _, Some Intuition _, _ ->
     Result.fail "INTERNAL ERROR: use_var invariant broken."
 
   | rev_front, Some (Not_used {var;t}), rest ->
     let rec loop rest = function
       | [] -> rest
       | x :: xs -> loop (x :: rest) xs in
-    let env = loop ((var, Used) :: rest) rev_front in
-    let used_vars = Set.add used_vars var in
+    let env = loop ((var, Used loc) :: rest) rev_front in
+    let used_vars = Map.set used_vars ~key:var ~data:loc in
     Result.return (t, env, used_vars)
 ;;
 
-let use_var {var;t=_} =
+let use_var loc {var;t=_} =
   let open Let_syntax in
   let%bind {env; used_vars; _} as state = get in
-  match mark_used var env used_vars with
+  match mark_used loc var env used_vars with
   | Ok (var_t, env, used_vars) ->
     let%bind () = put { state with env; used_vars } in
     return var_t
@@ -176,9 +176,9 @@ let with_var var wf_lin result =
     match env with
     | (_, Intuition _) :: env ->
       put { state with env }
-    | (_, Used) :: env ->
+    | (_, Used _) :: env ->
       (* Variable names are not unique *)
-      let used_vars = if not @@ Set.mem prev var then Set.remove used_vars var else used_vars in
+      let used_vars = if not @@ Map.mem prev var then Map.remove used_vars var else used_vars in
       put { state with env; used_vars }
     | (_, Not_used _) :: _ -> failf !"Variable %s not used.\n" var
     | [] -> failf !"INTERNAL ERROR: %{sexp:Ast.var} NOT FOUND IN vars\n" var in
@@ -214,37 +214,50 @@ let with_fc var lin =
   return result
 ;;
 
+let string_of_used_vars used_vars =
+  used_vars
+  |> Map.to_alist
+  |> List.map ~f:(fun (var, (loc : Ast.loc)) ->
+    Printf.sprintf !"%s (%{Ast.line_col})" var loc)
+  |> String.concat ~sep:", "
+;;
+
 let in_empty wf_lin =
   let open Let_syntax in
   let%bind {used_vars=prev; _} as state = get in
   let%bind () = put { state with used_vars = empty_used } in
   let%bind res = wf_lin in
   let%bind {used_vars; _} as state = get in
-  if Set.is_empty used_vars then
+  if Map.is_empty used_vars then
     let%bind () = put { state with used_vars = prev } in
     return res
   else
-    failf !"Cannot use linearly-typed variables in Fix/Many\n    %s\n"
-      (String.concat ~sep:", " @@ Set.to_list used_vars)
+    failf !"Cannot use linearly-typed variables in Fix/Many\
+            \n    %{string_of_used_vars}\n"
+      used_vars
 ;;
 
-let report_diff used_a used_b =
-  let diff1 = Set.to_list @@ Set.diff used_a used_b
-  and diff2 = Set.to_list @@ Set.diff used_b used_a in
-  if List.is_empty diff1 then
-    failf !"Second term used these variables not used by the first:\n  %s\n"
-      (String.concat ~sep:", " diff2)
-  else if List.is_empty diff2 then
-    failf !"First term used these variables not used by the second:\n  %s\n"
-      (String.concat ~sep:", " diff1)
+let report_diff (used_a, loc_a) (used_b, loc_b) =
+  let diff1 = Map.filter_keys used_a ~f:(fun x -> not @@ Map.mem used_b x)
+  and diff2 = Map.filter_keys used_b ~f:(fun x -> not @@ Map.mem used_a x) in
+  if Map.is_empty diff1 then
+    failf !"Else-branch (%{Ast.line_col}) used these variables not used by then-branch:\
+            \n  %{string_of_used_vars}\n"
+      loc_b diff2
+  else if Map.is_empty diff2 then
+    failf !"Then-branch (%{Ast.line_col}) used these variables not used by else-branch:\
+            \n  %{string_of_used_vars}\n"
+      loc_a diff1
   else
-    failf !"First term used these variables not used by the second:\n  %s\n\
-            Second term used these variables not used by the first:\n  %s\n"
-      (String.concat ~sep:", " diff1)
-      (String.concat ~sep:", " diff2)
+    failf !"Then-branch (%{Ast.line_col}) used these variables not used by else-branch:\
+            \n  %{string_of_used_vars}\n\
+            Else-branch (%{Ast.line_col}) used these variables not used by then-branch:\
+            \n  %{string_of_used_vars}\n"
+      loc_a diff1
+      loc_b diff2
 ;;
 
-let same_resources wf_a wf_b =
+let same_resources (wf_a, loc_a) (wf_b, loc_b) =
   let open Let_syntax in
   (* Save state *)
   let%bind {used_vars=prev; env=old_env; _} as state = get in
@@ -257,11 +270,16 @@ let same_resources wf_a wf_b =
   let%bind res_b = wf_b in
   let%bind {used_vars=used_b; _} as state = get in
   (* Check if same resources *)
-  if Set.equal used_a used_b then
-    let%bind () = put { state with used_vars = Set.union used_a prev } in
+  let keys_a, keys_b =
+    let key_set x = Set.of_list (module struct include Ast type t = var end) @@ Map.keys x in
+    key_set used_a, key_set used_b in
+  if Set.equal keys_a keys_b then
+    let used_vars = Map.merge prev used_b ~f:(fun ~key:_ -> function
+      | `Left loc | `Right loc | `Both (_, loc) -> Some loc) in
+    let%bind () = put { state with used_vars } in
     return (res_a, res_b)
   else
-    report_diff used_a used_b
+    report_diff (used_a, loc_a) (used_b, loc_b)
 ;;
 
 let run wf_lin ~counter =
@@ -269,13 +287,13 @@ let run wf_lin ~counter =
   let init = {env=[]; fc_vars=[]; counter; used_vars=empty_used} in
   let%bind (WFL result, state) = run wf_lin init in
   begin match state with
-  | {env = []; fc_vars = []; used_vars; counter=_} when Set.is_empty used_vars ->
+  | {env = []; fc_vars = []; used_vars; counter=_} when Map.is_empty used_vars ->
     return result
   | state ->
     Or_error.errorf
       !"INTERNAL ERROR: After checking (%{sexp:Ast.lin}), environment is not empty\n\
-        %{sexp:state}\nused_vars:\n%{sexp:Ast.var list}\n"
-      result state (Set.to_list state.used_vars)
+        %{sexp:state}\nused_vars:\n%{sexp:(Ast.var * Ast.loc) list}\n"
+      result state (Map.to_alist state.used_vars)
   end
 ;;
 
@@ -293,7 +311,7 @@ let rec wf_wrt fc_vars =
 ;;
 
 (* Checking a linear type is well-formed. *)
-let wf_lin ~fmt ~arg lt =
+let wf_lin ~fmt ~arg ~loc:pos lt =
   let open Let_syntax in
   let open Ast in
   let rec wf bindings = function
@@ -306,7 +324,7 @@ let wf_lin ~fmt ~arg lt =
       else if%bind get >>= fun x -> return @@ wf_wrt x.fc_vars fc then
         return @@ Arr fc
       else
-        failf fmt arg
+        failf fmt arg pos
 
     | Mat fc ->
       if wf_wrt bindings fc then
@@ -314,7 +332,7 @@ let wf_lin ~fmt ~arg lt =
       else if%bind get >>= fun x -> return @@ wf_wrt x.fc_vars fc then
         return @@ Mat fc
       else
-        failf fmt arg
+        failf fmt arg pos
 
     | Pair (fst, snd) ->
       let%bind fst = wf bindings fst and snd = wf bindings snd in
@@ -377,23 +395,32 @@ and split_wf_Fun wfl ~if_fun ~not_fun =
 let%test_module "Test" =
   (module struct
 
-    let two, three, six = 
+    let two, three, six =
       ("two", "three", "six")
     ;;
 
     let env =
-      [ (six, Used)
+      [ (six, Used Ast.dummy)
       ; (two, Not_used {var=two;t=WFL(Fun (Unit, Unit))})
       ; (six, Not_used {var=six;t=WFL(Bang(Unit))})
       ; (three, Intuition (WFL (Bang Int)))
       ]
     ;;
 
+    (* ignore irrelevant location information for these tests *)
+    type nonrec tagged = tagged =
+      | Not_used of not_used
+      | Used of Ast.loc sexp_opaque
+      | Intuition of wf_lin
+    [@@deriving sexp_of]
+    ;;
+
     let%expect_test "mark_used" =
-      begin match mark_used six env empty_used with
+      begin match mark_used Ast.dummy six env empty_used with
       | Ok (WFL var_t, env, set) ->
-        Stdio.printf !"%{sexp:Ast.lin}\n%{sexp:(Ast.var * tagged) list}\n%{sexp:Ast.var list}\n"
-          var_t env (Set.to_list set)
+        Stdio.printf !"%{sexp:Ast.lin}\n%{sexp:(Ast.var * tagged) list}\n\
+                       %{sexp:(Ast.var * Ast.loc sexp_opaque) list}\n"
+          var_t env (Map.to_alist set)
       | Error str ->
         Stdio.printf "%s" str
       end;
@@ -401,20 +428,21 @@ let%test_module "Test" =
     ;;
 
     let%expect_test "mark_used" =
-      begin match mark_used two env empty_used with
+      begin match mark_used Ast.dummy two env empty_used with
       | Ok (WFL var_t, env, set) ->
         Stdio.printf !"Result: %{sexp:Ast.lin}\n\
                        Env: %{sexp:(Ast.var * tagged) list}\n\
-                       Used: %{sexp:Ast.var list}\n"
-          var_t env (Set.to_list set)
+                       Used: %{sexp:(Ast.var * Ast.loc sexp_opaque) list}\n"
+          var_t env (Map.to_alist set)
       | Error str ->
         Stdio.printf "%s" str
       end;
       [%expect {|
         Result: (Fun Unit Unit)
-        Env: ((six Used) (two Used) (six (Not_used ((var six) (t (WFL (Bang Unit))))))
+        Env: ((six (Used <opaque>)) (two (Used <opaque>))
+         (six (Not_used ((var six) (t (WFL (Bang Unit))))))
          (three (Intuition (WFL (Bang Int)))))
-        Used: (two) |}]
+        Used: ((two <opaque>)) |}]
     ;;
 
   end)

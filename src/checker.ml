@@ -53,8 +53,19 @@ let check_prim =
   | (Trmm | Trsm) -> Fun (elt, Fun(bool, Fun (Mat Z, All (x, Fun (Pair (Mat (V x), bool), Pair (Mat (V x), Mat Z))))))
 ;;
 
-let error ~expected inferred =
-  Check_monad.failf !"%s\nActual: %s\n" expected @@ Ast.(string_of_pp pp_lin) inferred
+let string_of_loc (loc : Ast.loc) =
+  Printf.sprintf "In %s, at line: %d and column: %d"
+    loc.pos_fname
+    loc.pos_lnum
+    (loc.pos_cnum - loc.pos_bol + 1)
+;;
+
+let error (loc : Ast.loc) ~expected inferred =
+  let lin_to_str = Ast.(string_of_pp pp_lin) in
+  Check_monad.failf !"%s\nActual: %{lin_to_str}\n%{string_of_loc}\n"
+    expected
+    inferred
+    loc
 ;;
 
 (* The actual checking algorithm *)
@@ -63,45 +74,46 @@ let rec check =
   let open Check_monad in
   let open Let_syntax in
   function
-  | Prim prim ->
+  | Prim (loc, prim) ->
     wf_lin (check_prim prim)
-      ~fmt:!"Internal Error: Primitive is not well-formed.\n%{sexp: Ast.prim}"
+      ~fmt:!"Internal Error: Primitive is not well-formed.\n%{sexp: Ast.prim}\n%{string_of_loc}\n"
       ~arg:prim
+      ~loc
 
-  | Unit_I -> return @@ (* wf_Bang ?? *) wf_Unit
-  | True -> return @@ wf_Bang wf_Bool
-  | False -> return @@ wf_Bang wf_Bool
-  | Var var ->
+  | Unit_I _ -> return @@ (* wf_Bang ?? *) wf_Unit
+  | True _ -> return @@ wf_Bang wf_Bool
+  | False _ -> return @@ wf_Bang wf_Bool
+  | Var (loc, var) ->
     let%bind typ = lookup var in
     begin match typ with
     | Some (Not_used var) ->
-      let%bind lin = use_var var in
+      let%bind lin = use_var loc var in
       return lin
     | Some (Intuition lin) ->
       return lin
-    | Some Used ->
-      failf !"Variable %s used twice (or more).\n" var
+    | Some (Used used) ->
+      failf !"Variable %s (first used %{Ast.line_col}) used again.\n%{string_of_loc}\n" var used loc
     | None ->
-      fail_string ("Unbound variable " ^ var ^ " (not found in environment)\n")
+      failf !"Unbound variable %s (not found in enviornment)\n%{string_of_loc}\n" var loc
     end
 
   | Int_I _ -> return @@ wf_Bang wf_Int
   | Elt_I _ -> return @@ wf_Bang wf_Elt
-  | Pair_I (fst, snd) ->
+  | Pair_I (_,fst, snd) ->
     let%bind fst = check fst in
     let%bind snd = check snd in
     return @@ wf_Pair fst snd
 
-  | Bang_I exp ->
+  | Bang_I (loc, exp) ->
     if Ast.is_value exp then
       let%bind res = in_empty @@ check exp in
       return @@ wf_Bang res
     else
-      failf "Can only call 'Many' on values.\n"
+      failf !"Can only call 'Many' on values.\n%{string_of_loc}\n" loc
 
-  | Fix (f, x, tx, res, body) ->
-    let fmt, arg = !"Type is not well-formed:\n%{sexp:lin}", Fun (tx, res) in
-    split_wf_Fun (wf_lin ~fmt ~arg arg)
+  | Fix (loc, f, x, tx, res, body) ->
+    let fmt, arg = !"Type is not well-formed:\n%{sexp:lin}\n%{string_of_loc}\n", Fun (tx, res) in
+    split_wf_Fun (wf_lin ~fmt ~arg ~loc arg)
       ~if_fun:
         (fun tx res ->
            let%bind actual =
@@ -110,22 +122,23 @@ let rec check =
            | Ok subs ->
              return @@ apply subs @@ wf_Bang @@ wf_Fun tx res
            | Error err ->
-             fail_string @@ Error.to_string_hum err)
+             failf !"%{Error.to_string_hum}%{string_of_loc}\n" err loc)
 
       ~not_fun:
         (failf !"Internal Error: passed in\n    %{sexp:lin}\nbut got out\n    %{sexp:lin}.\n" arg)
 
-  | Spc (exp, fc) ->
+  | Spc (loc, exp, fc) ->
     split_wf_All (check exp)
       ~if_all:
         (fun var lin ->
            if_wf fc
              ~then_:(fun fc -> return @@ wf_substitute_in lin var fc)
-             ~else_:(failf !"Spc: %{sexp:fc} not found in environment.\n"))
+             ~else_:(fun fc -> failf !"Spc: %{sexp:fc} not found in environment.\
+                                       \n%{string_of_loc}\n" fc loc))
       ~not_all:
-        (error ~expected:"Spc: expected All(_,_)")
+        (error  loc ~expected:"Spc: expected All(_,_)")
 
-  | App (func, arg) ->
+  | App (loc, func, arg) ->
     split_wf_Fun (check func)
       ~if_fun:
         (fun expected body_t ->
@@ -134,46 +147,48 @@ let rec check =
            | Ok subs ->
              return @@ apply subs body_t
            | Error err ->
-             fail_string @@ Error.to_string_hum err)
+             failf !"%{Error.to_string_hum}%{string_of_loc}\n" err loc)
       ~not_fun:
-        (error ~expected:"App: expected Fun(_,_)")
+        (error loc ~expected:"App: expected Fun(_,_)")
 
-  | Bang_E (x, exp, body) ->
+  | Bang_E (loc, x, exp, body) ->
     split_wf_Bang (check exp)
       ~if_bang:
         (fun exp ->
           check body |> with_int x exp)
       ~not_bang:
-        (error ~expected:"Bang_E: expect Bang _")
+        (error loc ~expected:"Bang_E: expect Bang _")
 
-  | Pair_E (a, b, pair, body) ->
+  | Pair_E (loc, a, b, pair, body) ->
     split_wf_Pair (check pair)
       ~if_pair:
         (fun ta tb ->
            check body |> with_lin a ta |> with_lin b tb)
       ~not_pair:
-        (error ~expected:"Pair_E: expected Pair (_, _)")
+        (error loc ~expected:"Pair_E: expected Pair (_, _)")
 
-  | If (cond, true_, false_) ->
+  | If (loc, cond, true_, false_) ->
     begin match%bind check cond with
     | WFL (Bang Bool) ->
-      let%bind (t, f) = same_resources (check true_) (check false_) in
+      let%bind (t, f) = same_resources (check true_, Ast.loc true_) (check false_, Ast.loc false_) in
       begin match%bind same_lin t f with
-      | Ok subs -> return @@ apply subs t
-      | Error err -> fail_string @@ Error.to_string_hum err
+      | Ok subs ->
+        return @@ apply subs t
+      | Error err ->
+        failf !"%{Error.to_string_hum}%{string_of_loc}\n" err loc
       end
 
     | WFL inferred ->
-      error ~expected:"If: expected Bool" inferred
+      error loc ~expected:"If: expected Bool" inferred
     end
 
-  | Gen (var, exp) ->
+  | Gen (_, var, exp) ->
     let%bind lin = check exp |> with_fc var in
     return @@ wf_All var lin
 
-  | Lambda (var, t, body) ->
-    let fmt, arg = !"Type is not well-formed:\n%{sexp:lin}", t in
-    let%bind t = wf_lin ~fmt ~arg t in
+  | Lambda (loc, var, t, body) ->
+    let fmt, arg = !"Type is not well-formed:\n%{sexp:lin}\n%{string_of_loc}\n", t in
+    let%bind t = wf_lin ~fmt ~arg ~loc t in
     let%bind body_t = check body |> with_lin var t in
     return @@ wf_Fun t body_t
 

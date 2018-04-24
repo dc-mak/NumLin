@@ -24,8 +24,9 @@ let accept chan value =
     Result.return ()
 
   | Error err ->
-    Printf.sprintf !"AST:\n%{sexp:Ast.exp}\nPretty-print:\n%s\nError:\n%s"
-      value Ast.(string_of_pp pp_exp value) (Error.to_string_hum err)
+    let string_of_exp = Ast.(string_of_pp pp_exp) in
+    Printf.sprintf !"Pretty-print:\n%{string_of_exp}\n\
+                     Error:\n%{Error.to_string_hum}" value err
     |> Result.fail
 ;;
 

@@ -7,19 +7,253 @@ describe the work you did in technical detail.
 \end{guidance}
 
 \prechapter{%
-    I implemented this project in OCaml, however I strongly believe the ideas
+    I implemented LT4LA in OCaml, however I strongly believe the ideas
     described in this chapter can be applied easily to other languages and also
     are modular enough to extend the OCaml implementation to output to different
     back-end languages. I will show how a small core language with a few features
     can be the target of heavy-desugaring of typical linear-algebra programs. This
     core language can then be elaborated and checked for linearity before
     performing some simple and predictable optimisations and emitting (in this
-    particular implementation) OCaml code that is not obviously safe, correct
-    and performant.
+    particular implementation) OCaml code that is not obviously safe and correct
+    (with respect to linearity).
 }%
+
+\section{Structure of LT4LA}
+
+LT4LA follows the structure of a typical compiler for a (E)DSL\@. From the
+start, I made a concerted effort to (1) write pure-functional code (typically
+using a monadic-style) which helped immensely with modularity and debugging
+when tests showed errors (2) produce readable, useful and precise
+error-messages in the hope that someone who did not understand linear types
+could still use the LT4LA (3) write tests and set-up
+continuous-integration for all non-trivial functions so that I could spot and
+correct errors that were not caught by OCaml's type-system whenever I
+implemented new features or or refactored my code.
+
+\begin{enumerate}
+
+    \item \textbf{Parsing \& Desugaring}. A generated, LR(1) parser parses a text
+        file into a syntax tree, which is then desugared into a smaller, more
+        concise abstract syntax tree. The former aims to mimic OCaml syntax
+        with a few extensions and keywords so that it is familiar and thus easy
+        to pick-up for OCaml users. The latter allows for the type-checker to
+        be simpler to implement and easier to specify. In general, this part
+        will vary for different languages or can be dealt with differently
+        using combinators (the EDSL approach) or a syntax-extension if the host
+        language offers such support.
+
+    \item \textbf{Type-checking}. The abstract syntax tree is explicitly-typed,
+        with some inference to make it less verbose and more convenient to
+        write typical programs.
+
+    \item \textbf{Matrix Expressions}. During type-checking, if a matrix-expression
+        is encountered, it is either successfully elaborated into an expression
+        in the abstract syntax tree which is then consequently type-checked, or
+        fails to find suitable routines to calculate the given expression.
+
+    \item \textbf{Code Generation}. The abstract syntax tree is translated into
+        standard OCaml and a few-particular `optimisations' are made to produce
+        more readable code. This process is type-preserving: the linear type
+        system is embedded into OCaml's type system, and so when the OCaml compiler
+        compiles the generated code, it acts as a sanity check on the code produced.
+
+    \item \textbf{Executable Artifacts}. A transpiler and a REPL are the main artifacts
+        produced for this thesis.
+
+    \item \textbf{Tests}. As mentioned before, almost all non-trivial functions
+        have tests to check their behaviour. The output of the transpiler
+        was also tested by having the build system generate code at OCaml code
+        which could then be compiled and tested as usual.
+
+\end{enumerate}
 
 \section{Core Language}
 
-\section{Elaboration and Inference}
+A full description of the core language can be found in
+Appendix~\ref{chap:ott_spec}. To make a linearly-typed language usable, we need
+some way of using values zero or more than once, as we would an intuitionistic
+value. For this, we have in the type-expressions the !-constructor and in the
+term-expressions the \textbf{many}-constructor. For soundness, I implemented
+\emph{value-restriction} for this type system, only \emph{values} (anything not
+an array, matrix or an expression that can be reduced) that use \emph{no linear
+values} can be marked with !. This means we can freely have integers, booleans
+and (appropriate) functions usable as normal. Recursive functions can only use
+linear values that are passed in as arguments to the function.
 
-\section{Compiling and Metaprogramming}
+% TODO Once I've implemented the <- syntax, this should just include
+% ../test/examples/weighted_avg_infer.lt directly
+\begin{figure}[tb]
+    \begin{minted}[linenos]{ocaml}
+let rec f (!i : !int)
+        (!n : !int)
+        (!x0 : !elt)
+        (write : z arr)
+        ('x)
+        (weights : 'x arr)
+        : z arr * 'x arr =
+  if n = i then (write, weights) else
+  let !w0 <- weights[0] in
+  let !w1 <- weights[1] in
+  let !w2 <- weights[2] in
+  let !x1 <- write[i] in
+  let !x2 <- write[i + 1] in
+  let !x : !elt = w0 *. x0 +. w1 *. x1 +. w2 *. x2 in
+  f (i + 1) n x1 (write[i] := x) _ weights
+    \end{minted}
+
+    \caption{A recursive function to perform a \emph{in-place} (simplified)
+        1D-convolution (sliding weighted-average) using a read-only array of
+        weights and a writeable array, originally containing the input
+        array.}\label{fig:oned_conv}
+
+\end{figure}
+
+So, how does a typical programmer write code that uses a matrix or an array
+more than once? Figure~\ref{fig:oned_conv} shows an example program that
+executes a (simplified) 1D-convolution (sliding weighted-average) using a
+read-only array of three weights. On line 1, \ltfla{let rec} introduces a
+recursive function `f', followed by explicitly annotated formal parameters.
+Intuitively, \ltfla{!id} allows \ltfla{id} to be used intuitionistically. The
+types \ltfla{!int} and \ltfla{!elt} correspond to integers and element types
+(for example, 64-bit floating-point).
+
+Array and matrix types are parameterised by \emph{fractional-capabilities}.  A
+fraction of 1 ($2^0$) represents complete ownership of a value; in
+particular, this allows a programmer to write or free it. Creating an array
+gives you ownership of it; the function \ltfla{array : !int --o z arr}
+(where \ltfla{z} represents `0'). Once you have ownership of an
+array/matrix, you can free it: \ltfla{free : z arr --o unit}.
+Importantly, because a linear-value may only be used once, the array just freed
+is \emph{out of scope} for following expressions, preventing use-after-free.
+Ownership also enables you to write to the array: \ltfla{set : z arr
+--o !int --o !elt --o z arr} (the syntax \ltfla{w[i] := j} is just
+sugar for \ltfla{set w i j}). Here, linearity prevents accessing values
+which represented the array \emph{before} the mutation.
+
+Any fraction less than 1 (for simplicity, limited to $2^{-k}$ in this system,
+for a positive integer $k$) represents read-only access. So, the \ltfla{'x}
+represents a natural number (either a zero \ltfla{z}, variable \ltfla{'x} or a
+successor (+1) of a natural number). Hence, you can read from (index) any array
+\ltfla{get : 'x .  'x arr --o !int --o !elt * 'x arr} (the syntax \ltfla{let !v
+<- w[i]} is just sugar for \ltfla{let (!v, w) = get _ w i}). Transparently
+rebinding \ltfla{w} with the returned value means a program can appear to use
+\ltfla{w} multiple times; the underscore is how a programmer tells the compiler
+to automatically \emph{infer} the correct fractional-capability based on the
+other arguments passed to the function. Fractions also permit aliasing:
+\ltfla{share : 'x . 'x arr --o 'x s arr * 'x s arr}. However, given the types
+of the primitives provided, these aliases can only be read from and not written
+to. If you want to write to this array, you must \ltfla{unshare: 'x . 'x s arr
+--o 'x s arr --o 'x arr} it until you are left with a value of type \ltfla{z
+arr}, guaranteeing no other aliases exists.
+
+Given this set-up, we now \emph{statically} have \emph{perfect} information
+about aliasing and ownership of values in the program. We can only write to an
+array when we own it; ownership guarantees no other aliases exist in scope at
+the point of usage. In the next section, I show how this perfect information
+can be used to write more natural-looking code using value-semantic expressions
+which behave in precisely the way we intend it to. Now the programmer need not
+resort to manually tracking and inserting \texttt{noalias} annotations; instead
+they can let the loyal and tireless compiler do the heavy lifting.
+
+\section{Matrix Expressions}
+
+We have now arrived at the titular \emph{applications} of linear types. I will
+show how, in addition to preventing the errors explained in the previous
+section, we can take linear types one step further and apply it to the domain
+of efficient compilation of matrix-expressions.
+
+\begin{figure}[tb]
+    \inputminted[linenos]{fortran}{kalman.f90}
+    \caption{Kalman filter in Fortran 90 (Credit: Matthew
+        Rocklin~\cite{rocklin_gist}).}\label{fig:fortran_kalman}
+\end{figure}
+
+In Figure~\ref{fig:fortran_kalman}, we see the difficulty of efficiently
+implementing a \emph{Kalman filter}, a powerful and set of equations applicable
+to a wide variety of problems. From the comments, we see that every variable is
+annotated with the step/matrix expression that it will hold at some point
+during the computation (an equivalent alternative, say in C++, could be to have
+a meaningful name for each step/matrix expression and manually annotate/keep
+track of which names alias the same location).
+
+In contrast, Figure~\ref{fig:ltfla_kalman}, offers the advantages of
+\begin{itemize}
+    \item aliasing: labelling each step with a different, more meaningful variable name,
+    \item easily spotting which resources are being passed in and which are
+        allocated for the function (new/copy),
+    \item unambiguously seeing \emph{when} and what values are freed;
+\end{itemize}
+and have the compiler automatically ensure the safety of each of the above by respectively
+\begin{itemize}
+    \item making it impossible to refer to steps/values which are no longer usable,
+    \item ensuring all values are declared and \emph{initialised} correctly before they are used,
+    \item checking no values are used after they are freed \emph{and} ensuring no values are leaked.
+\end{itemize}
+
+Indeed, an inexperienced programmer could take the  na\"ive approach of just
+copying sub-expressions by default and then letting the compiler tell it which
+copies are never used and removing them systematically until it type checks.
+While it is not quite a black-box, push-button compilation of an expression, I
+would argue that, it is just as easy (if not easier) to become familiar with as
+Rust and its borrow-checker.
+
+\begin{figure}[tb]
+
+    \begin{minted}[linenos]{ocaml}
+let !kalman
+        ('s) (sigma : 's mat) (* n, n *)
+        ('h) (h : 'h mat)     (* k, n *)
+        ('m) (mu : 'm arr)    (* n    *)
+        (r_1 : z mat)         (* k, k *)
+        (data_1 : z arr)      (* k    *)
+        : ('s mat * ('h mat * 'm arr)) * (z arr * z mat) =
+    let ((!k, !n), h) = dimM _ h in
+    let zeros = zeroM n n in
+    let sigma_h = new [| sym (up, sigma) * h |] in
+    let r_2 = [| h * sigma_h + r_1 |] in
+    let mu_1 <- copy mu in
+    let sigma_1 <- copyM sigma in
+    let data_2 = [| h * mu + -1. * data_1 |] in
+    let h_1 <- copyM h in
+    let h_sol = [| sym (up, r) ^ -1 * h_1 ] in
+    let data_sol = [| sym (up, r) ^ -1 * data_2 |] in
+    let h_h1 = new [| h * h_sol |] in
+    let h_data = new [| h * data |] in
+    let h_h1_sigma = new [| sym (up, h_h1) * sigma |] in
+    let mu_2 = [| sym (up, sigma) * h_data * mu_1 |] in
+    (* non-linear use of sigma_c..? *)
+    let sigma_c = [|  -1. * sym (up, sigma_c) * h_h1_sigma + sigma_c |] in
+    (* frees... *)
+    (mu_c , sigma_c)
+    \end{minted}
+
+    \caption{Kalman filter in LT4LA.}\label{fig:ltfla_kalman}
+
+\end{figure}
+
+\subsection{TO DO: Elaboration}
+
+So-called `matrix \emph{expressions}' are still `side-effecting'/consuming
+linear values, and do not produce \emph{values} but a \emph{sequence of
+(re-)bindings} which in turn dictate what values are still available/in-scope
+after the computation.  As such, compilation cannot be done purely
+compositionally via structural-induction on the expression language; it is most
+concisely expressed via CPS, where the result of elaborating a matrix
+expression is a function that takes as its argument the rest of the computation
+expecting to use the result it has just made available under that requested
+name.
+
+\subsection{TO DO: Inference}
+
+\section{TO DO: Code Generation}
+
+High-level overview: primitives, translations, optimisations, difficulty, build system.
+
+\subsection{TO DO: Compiling Constructs to OCaml}
+
+\subsection{TO DO: Metaprogramming}
+
+\section{TO DO: Theory}
+
+Fractional permissions, not proven soundness etc\. but compilation preserves
+types as checked by OCaml.

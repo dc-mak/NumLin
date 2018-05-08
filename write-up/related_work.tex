@@ -1,41 +1,235 @@
-\chapter{Related Work}
+\chapter{Related Work}\label{chap:related}
 
-\begin{guidance}
-
-    This chapter covers relevant (and typically, recent) research
-    which you build upon (or improve upon). There are two complementary
-    goals for this chapter:
-    \begin{enumerate}
-      \item to show that you know and understand the state of the art; and
-      \item to put your work in context
-    \end{enumerate}
-
-    Ideally you can tackle both together by providing a critique of
-    related work, and describing what is insufficient (and how you do
-    better!)
-
-    The related work chapter should usually come either near the front or
-    near the back of the dissertation. The advantage of the former is that
-    you get to build the argument for why your work is important before
-    presenting your solution(s) in later chapters; the advantage of the
-    latter is that don't have to forward reference to your solution too
-    much. The correct choice will depend on what you're writing up, and
-    your own personal preference.
-
-\end{guidance}
+% \begin{guidance}
+% 
+%     This chapter covers relevant (and typically, recent) research
+%     which you build upon (or improve upon). There are two complementary
+%     goals for this chapter:
+%     \begin{enumerate}
+%       \item to show that you know and understand the state of the art; and
+%       \item to put your work in context
+%     \end{enumerate}
+% 
+%     Ideally you can tackle both together by providing a critique of
+%     related work, and describing what is insufficient (and how you do
+%     better!)
+% 
+%     The related work chapter should usually come either near the front or
+%     near the back of the dissertation. The advantage of the former is that
+%     you get to build the argument for why your work is important before
+%     presenting your solution(s) in later chapters; the advantage of the
+%     latter is that don't have to forward reference to your solution too
+%     much. The correct choice will depend on what you're writing up, and
+%     your own personal preference.
+% 
+% \end{guidance}
 
 \prechapter{%
-    Now that I have described my project and thesis, I will explain how it
-    relates to existing work, with brief discussions on possible extensions in
-    each case.
+    Now that I have described my contributions, I will explain how it relates
+    to existing work, leaving brief discussions on future work to the next
+    chapter. I strongly believe matrix expression compilation research would
+    benefit greatly from a comprehensive literature review but unfortunately
+    that is beyond the scope of this chapter.
 }%
 
-\section{Rust: a Language with Substructural Features}
+\section{Matrix Expression Compilation}
 
-\section{Linnea: Smart Compilation}
+% For decades, small gains in efficiency of \emph{executing} numerically
+% intensive code have and continue to translate into massive savings in costs and
+% time. This has spurned mountains of research into an almost bewildering variety
+% of hardware, software and compilation techniques, typically entrusted with a
+% (team of) domain-specific expert programmer(s) to apply in real world
+% situations.
+% 
+% Given the rise of big data and machine learning, there is now a movement to
+% improve \emph{programmer} efficiency in this domain after focusing for so long
+% on \emph{computational} efficiency. Matrix expression compilers promise to
+% generate code that is reasonably close to `optimal'/what a domain-expert may
+% write but without the need to acquire years of experience and depth of
+% knowledge (a similar trade-off to garbage-collection for memory management or
+% software-transactional memory for concurrency).
 
-\section{Idris: Linear and Dependent Types, Metaprogramming and EDSLs}
+Most of the projects below try to be fully-automated black-boxes which model
+computing a matrix expression as some sort of graph with informal, ad-hoc rules
+about what can and should be copied or modified in-place. Allocations,
+temporaries and common sub-expressions are details invisible to the programmer,
+left to the compiler.
 
-\section{MetaOCaml and Multi-Stage Programming}
+The matrix expression `compiler' as implemented in LT4LA is intended to be a
+mere proof-of-concept of how linear types can and arguably should be used
+\emph{ergonomically}. I have taken the approach of attempting to help
+programmers precisely and explicitly capture, using types, the practices
+prevalent in code they already write.
 
-\section{Linear Haskell}
+I believe the advantages of my approach are two-fold (1) \emph{predictable}
+performance and (2) more accurate modelling of how low-level kernels handle
+their resources. My confidence in the latter claim comes from finding at least
+two errors in the Fortran code output by SymPy to compute a Kalman filter, one
+to do with aliasing (resulting in code that was not legal Fortran) that would
+not have type-checked had it been translated via LT4LA as an intermediate
+representation (the other error to be explained later
+in~\ref{subsec:lin_dep_types}).
+
+\subsection{SymPy}
+
+SymPy is a symbolic computer algebra system for Python; its matrix expression
+compiler~\cite{rocklin_thesis} uses a term-rewrite system, with rules supplied
+by a BLAS expert (which must be strongly-normalising, that is, never cause a
+loop) but need not be confluent (there can be more than one solution per
+expression). Rules include expressions to match on, the expression it can
+produce, information about the expressions (such as whether the matrix is
+symmetric or full-rank) and information about which variable is updated
+in-place.
+
+\subsection{Clak and Cl1ck}
+
+Clak and Cl1ck~\cite{fabregat_thesis} were developed independently around the
+same time as SymPy's matrix expression compilation. Clak attempts to produce
+\emph{multiple} algorithms for a single matrix expression, by considering a
+wider matrix expression grammar and more matrix properties and inference rules.
+These algorithms assume basic building blocks such as products and
+factorisations. Cl1ck attempts to take on the challenge of writing BLAS/LAPACK
+like libraries too, by generating lower-level loop-based blocked routines for
+the aforementioned basic building blocks, in the spirit of the
+FLAME~\cite{gunnels_flame} project.
+
+\subsection{Linnea and Taco}
+
+Linnea~\cite{linnea} and Taco~\cite{taco} are two newer contenders to Clak and
+Cl1ck respectively. Linnea continues the work of Clak to producing real
+executable code for \emph{existing} libraries and kernels, as well as
+incorporating work on a \emph{generalised} matrix chain algorithm~\cite{gmc}.
+Taco (\emph{Tensor Algebra COmpiler}) focuses on emitting efficient routines
+for expressions in tensor index notation, with many optimisations for
+\emph{sparse} tensors.
+
+\section{Metaprogramming}
+
+Most of the compilers in the aforementioned projects usually built, analysed,
+compiled, ran (and in some cases, dynamically loaded) expressions (including
+functions) at runtime, similar to how regular expressions are handled in most
+languages -- in particular, even when the regular expression is known at
+compile time.
+
+In LT4LA, I took the approach of having a concrete syntax and expression
+language which was then translated and made available as a \emph{typed
+expression} to other modules \emph{at compile time} via the build system. Apart
+from convenience in programming and testing, there was nothing inherent in the
+approach that prevented me from using OCaml's PPX syntax-extensions so that I
+could write normal OCaml expressions from within OCaml and have them checked
+for linearity before compilation.
+
+Having a statically compiled language and a build system as so affords the
+advantage of eliminating the runtime overheads mentioned at the start of this
+section. However, there is some useful information (such as matrix dimensions
+for the matrix chain algorithm) which is sometimes known only at runtime (but
+once known, usually fixed). In these cases, using \emph{multi-stage
+programming} would be a better approach to implementing a matrix expression
+compiler.
+
+\subsection{MetaOCaml and Scala LMS}
+
+MetaOCaml~\cite{metaocaml} and Scala with Lightweight Modular
+Staging~\cite{scala_lms} are systems which support multi-stage programming. A
+typical example of this is the generation of Fast Fourier-Transform kernels,
+specialised to a desired array length.
+
+\subsection{Expression Templates in C++ Libraries}
+
+Expression templates are a commonly used compile-time metaprogramming
+technique, used by Eigen, uBLAS and Armadillo to name a few. If known at
+compile-time, matrix dimensions can also be passed in as template arguments to
+ensure operations match (otherwise checking at runtime). In Eigen, such
+features are combined with heuristics to enable \emph{lazy evaluation} and
+automatically determine whether a sub-expression is evaluated into a temporary
+variable or not.
+
+They perform rudimentary pattern-matching and in some cases, loop-fusion, to
+avoid evaluating expressions in a purely binary manner (invoking the bane of a
+C++ programmer: temporaries and unnecessary copies) when possible (either by
+translating to a library kernel call or, as an example, inlining a $v := a + b
++ c$ vector expression into one loop).
+
+As is the case with LT4LA, this approach shares \emph{some} elimination of
+runtime overheads, but not all, thanks to the heuristics surrounding lazy
+evaluation and evaluating sub-expressions into temporaries. This comes at the
+cost of a user being able to easily inspect the generated C++ code, losing
+explicitness.
+
+\section{Types}
+
+Apart from lazy evaluation, the following projects show how instead of a (E)DSL
+library approach, we could have type-level resource management provided far
+more conveniently and naturally at the \emph{language} level. The difference is
+that a library can be designed, shipped and used now whereas language features
+take time and can have unintended interactions with other language features. My
+hope is that once people are convinced of the utility type-level resource
+management by using a library, the impetus for integrating such features into
+the language follows.
+
+\subsection{Lazy Evaluation}
+
+A particularly strong advantage LT4LA has over other libraries that use lazy
+evaluation is, funnily enough, linear types, more precisely and the static and
+perfect information they guarantee about aliasing: with Owl, every graph-node
+has only one node in or out; with Eigen, every ``assignment'' has a
+\texttt{noalias} annotation.
+
+This simplifies the rules and exceptions a programmer reasoning about memory
+usage needs to remember. Of course, now the programmer has to figure out how
+they are using their temporaries, but because matrices are linearly-typed,
+redundant copies/missed frees can be pointed out by the compiler, guiding them
+towards a satisfying solution.
+
+\subsection{Futhark}
+
+Futhark~\cite{futhark} is a second-order (meaning it supports functions such as
+map and fold/reduce) array combinator (meaning array operations can be fused
+into streams to reduce temporaries) language designed for efficient parallel
+compilation. It supports ML-style modules, loops, limited parametric
+polymorphism, size types and uniqueness types. Intuitively, where linearity
+provides a local guarantee of ``this value is not aliased in this scope'',
+uniqueness types provide a global guarantee of ``this value is not aliased
+anywhere''. Its combinators are more expressive than typical linear algebra
+library kernels so encourages shorter, more declarative linear algebra code.
+
+\subsection{Substructural Features in Rust}
+
+Rust~\cite{rust} is a (relatively) new systems programming language aiming to
+bring the last two decades of programming language research to the masses in a
+usable and friendly manner. Its \emph{borrow-checker} is the feature most
+relevant to this thesis because it statically attempts to prevent many
+resource-related bugs. Although there are a few linear algebra libraries for
+Rust under development, careful use of its macro system and borrow-checker
+could make it the safest and easiest to use language for linear algebra
+projects to come. Its struggle is more likely to be against the inertia of the
+large amounts of C++/Fortran code already out there rather than its usability
+or benefits.
+
+\subsection{Linear Types in Haskell}
+
+Linear types have been incorporated into a branch of the Glasgow Haskell
+Compiler~\cite{retrofitting} in an attempt to provide safe, functional
+streaming and IO (after people saw the potential from libraries providing
+linearity features). Practical benefits include zero-copy buffers and
+eliminating garbage collection in certain situations by allowing the user to
+safely manage memory. The fact that it can and has been done gives me hope that
+other languages will also see the value and adopt some form of
+resource-management in their type systems.
+
+\subsection{Linear and Dependent Types in Idris}\label{subsec:lin_dep_types}
+
+Dimension mismatches are seen as an irritating but small inconvenience when
+writing linear algebra code. However, the second error I found in the Fortran
+code output by SymPy to compute a Kalman filter was a dimension/transposition
+error. Although we would not need full dependent types to solve dimension
+mismatches (symbolic size types would be sufficient), managing properties about
+matrices could be done at the type-level in a dependently typed setting.
+
+We could then express the usual properties and results of operations at the
+type-level, ensuring, for example, that certain functions are called only when
+the matrix is symmetric and can be written to. Idris (a Haskell inspired
+language with dependent types) has had experimental support for uniqueness
+types since its early days and now a linear types extension~\cite{idris_linear}
+is also being worked on based on new research around integrating linear and
+dependent types~\cite{atkey}.

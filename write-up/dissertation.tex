@@ -13,11 +13,14 @@
 \def\wordcount{0}
 
 % From Ott
-\usepackage{amssymb}
+\usepackage{amstext}
 \usepackage{supertabular}
 \usepackage{ifthen}
 \usepackage{alltt}%hack
 \input{semantics_def}
+
+% Minted convenience
+\newcommand{\ltfla}[1]{\mintinline{ocaml}|#1|}
 
 %% START OF DOCUMENT
 \begin{document}
@@ -43,7 +46,7 @@
 \listoftables%
 
 % For Bold minitoc Section Headings, minitoc & tocloft conflict
-\renewcommand{\cftsecfont}{\normalfont\sffamily\bfseries}% Bold Sans mintoc Section font
+\renewcommand{\cftsecfont}{\normalfont\sffamily\bfseries}% Bold Sans minitoc Section font
 \renewcommand{\cftsecleader}{\normalfont\sffamily\bfseries\cftdotfill{\cftdotsep}}% Bold Sans dots for Sections
 \renewcommand{\cftsecpagefont}{\bfseries}% Bold (not sans for ToC & page consistency) page numbers
 \cleardoublepage{}
@@ -65,6 +68,7 @@
 \include{conclusion}
 
 \appendix%
+\include{ott_spec}
 \singlespacing%
 
 \bibliographystyle{unsrt}

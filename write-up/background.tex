@@ -34,7 +34,7 @@ stronger the rules you follow, the better the guarantees you can get about your
 program, \emph{before} you run it. At first, the rules seems restrictive, but
 similar to how the rules of grammar, spelling and more generally writing help a
 writer make it easier and clearer to communicate the ideas they wish to express,
-so to do rules about typing make it easier to communicate the intent and
+so too do typing rules make it easier to communicate the intent and
 assumptions under which a program is written. An added, but often overlooked
 benefit is automated-checking: a programmer can boldly refactor in certain
 ways and the compiler will \emph{assist} in ensuring the relevant invariants
@@ -44,20 +44,20 @@ where they are violated.
 Linear types are a way to help a programmer track and manage resources. In
 practical programming terms, they enforce the restriction that a value may be
 used exactly once.\footnote{This definition may differ from more colloquial
-uses in discussions surrounding \emph{substructural} type systems and/or Rust.
-A brief explanation can be found in Section~\ref{sec:further}.} While this
-restriction may seem limiting at first, precisely these constraints can be used
-to express common invariants of the programs written by working programmers
-every day. For example: a file or a socket, once opened \emph{must} closed; all
-memory that is manually allocated must be freed.  C++'s destructors and Rust's
-Drop-trait (and more generally, its borrow-checker) attempt to enforce these
-constraints by basically doing the same thing: any resource that has not been
-moved is deallocated at the end of the current lexical scope. Notably, these
-languages also permit aliasing, alongside rules enforcing when it is acceptable
-to do so.  On face value, the above one-line description of linear types
-prevents aliasing or functions such as $\lambda x.\;x \times x$, such features
-are still allowed (albeit in a more restricted fashion) in a \emph{usable}
-linear type system designed for working with linear-algebra libraries.
+uses in discussions surrounding \emph{substructural} type systems and/or
+Rust.} While this restriction may seem limiting at first, precisely these
+constraints can be used to express common invariants of the programs written by
+working programmers every day. For example: a file or a socket, once opened
+\emph{must} closed; all memory that is manually allocated \emph{must} be freed.
+C++'s destructors and Rust's Drop-trait (and more generally, its
+borrow-checker) attempt to enforce these constraints by basically doing the
+same thing: any resource that has not been moved is deallocated at the end of
+the current lexical scope. Notably, these languages also permit aliasing,
+alongside rules enforcing when it is acceptable to do so.  On face value, the
+above one-line description of linear types prevents aliasing or functions such
+as $\lambda x.\;x \times x$, such features are still allowed (albeit in a more
+restricted fashion) in a \emph{usable} linear type system designed for working
+with linear-algebra libraries.
 
 \section{Problem in Detail}
 Given this background, the most pertinent question at hand is: what problems do
@@ -66,37 +66,204 @@ question depends on which of two buckets a programmer falls (or is forced by
 domain) into. On one side, we have users of high-level linear-algebra libraries such
 as Owl (for OCaml), Julia and Numpy (for Python); other the other, we have
 users of more manual, lower-level libraries such as BLAS (Basic Linear Algebra
-Subroutines) and Eigen for languages like C++ and FORTRAN.\footnote{I am not including
+Subroutines) for languages like C++ and FORTRAN.\footnote{I am not including
 Rust in this comparison because its linear-algebra libraries are under active
 development and not as well-known/used. Later on, given that it is a language
 with in-built support of substructural features to track resources, Rust will
-be compared and constrasted with this project to evaluate the classic
+be compared and contrasted with this project to evaluate the classic
 (E)DSL-versus-language-feature debate as it applies to the domain of
-linear-algebra libraries.}
+linear-algebra libraries.} Most of what follows applies to \emph{dense}
+linear-algebra computations rather than \emph{sparse} because memory
+allocated for results typically depends on the sparsity of the inputs and
+so is not immediately amenable to the techniques proposed in this thesis.
+
+\subsection{One Too Many Copies and a Thousand Bytes Behind}
+\begin{figure}[tbp]
+    \centering
+    \begin{minted}{python}
+# Numpy (Python)
+import numpy.matlib 
+a = [[1,0],[0,1]] 
+b = [[4,1],[2,2]] 
+c = numpy.matmul(a,b)
+    \end{minted}
+    \begin{minted}{julia}
+# Julia
+c = [1 0; 0 1] * [4 1; 2 2]
+    \end{minted}
+    \begin{minted}{ocaml}
+
+(* Owl (OCaml) *)
+open Owl
+let a = Mat.of_arrays [| [| 1.; 0. |]; [| 0.; 1. |] |]
+let b = Mat.of_array [| [| 4.; 1. |]; [| 1.; 2. |] |]
+let c = Mat.(a *@ b)
+    \end{minted}
+    \caption{Matrix Multiplication in Numpy (Python), Julia and Owl (OCaml).}\label{fig:mat_mul_copies}
+\end{figure}
+
+In Figure~\ref{fig:mat_mul_copies}, we see that matrix-multiplication is fairly
+trivial to write and execute in Numpy, Julia and Owl. Let us call this approach
+\emph{value-semantic}, meaning that objects are \emph{values} just like
+integers and floating-point numbers. This approach confers two key advantages to the
+programmmer: it is easy to read (equational and algebraic declarations) and it
+is easy to reason about (as one would with a mathematical formula). Although this
+approach does permit \emph{aliasing}, the consequences are benign because the
+result of any computation is a \emph{new} value, distinct from any used during
+the calculation of that value.
+
+\begin{figure}[tbp]
+    \centering
+    \begin{minted}{ocaml}
+let mul x y =
+  if same_shape x y then
+    let y = copy y in
+    (_owl_mul (kind x) (numel x) x y y; y)
+  else
+    broadcast_op (_owl_broadcast_mul (kind x)) x y
+    \end{minted}
+    \caption{Implementation of Matrix Multiplication in Owl (OCaml).
+        Note the `copy' for the result and the unsafe `\_owl\_mul' operation
+    used to perform an in-place multiplication.}\label{fig:mat_mul_owl}
+\end{figure}
+
+However, these advantages come with some costs: constantly producing new values
+is wasteful on memory (although the example given in
+Figure~\ref{fig:mat_mul_copies} is only a $2 \times 2$ matrix, many real-world
+datasets can contain up to gigabytes of data). A complex expression may create
+many short-lived temporaries which would need to be reclaimed by a
+garbage-collector (see Figure~\ref{fig:mat_mul_owl}). Libraries taking a
+\emph{value-semantic} approach offer a dichotomy for a user wishing to
+implement a new algorithm: either use the existing and safe primitives to build
+an easy to reason about but slower, more memory-intensive algorithm, or use
+escape-hatches (typically provided by most libraries, which permit in-place
+modification of objects) to build faster, and more efficient algorithms which
+are harder to reason about.
+
+\subsection{IHNIWTLM}
+The title of this subsection\footnote{I Have No Idea What Those Letters Mean.}
+illustrates the problem with the C++/FORTRAN side: legibility (and ease of
+reasoning) is sacrificed at the altar of performance and efficiency.
+
+Although escape-hatches do exist in value-semantic libraries, their use is
+discouraged. Systematic consideration of performance requires lowering the
+level of abstraction a programmer is working on. At this level, several
+factors such as memory layout, allocation, re-use as well as cache behaviour
+and parallelism become apparent. Of these, memory allocation and re-use are
+of most relevance to linear-types and this thesis.
+
+\begin{figure}[tbp]
+    \begin{minted}{fortran}
+      program blasMatMul
+      implicit none
+      real*4 a(2,2), b(2,2), c(2,2)
+C     External from BLAS
+      external dgemm
+C     Initialize in column major storage of Fortran
+      data a/ 1,0,
+     *        0,1/
+      data b/ 4,1,
+     *        1,2/
+C                tfm  tfm  rowA colB K  alpha a lda  b  ldb beta c  ldc
+      call dgemm('N', 'N', 2,   2,   2, 1.0,  a,  2, b, 2,  0.0, c, 2)
+    \end{minted}
+    \caption{One of \emph{several} BLAS (Fortran) routines for Matrix
+    Multiplication.}\label{fig:fortran_blas}
+\end{figure}
+
+In Fortran (Figure~\ref{fig:fortran_blas}), data is typically allocated
+statically (at compile time) so temporary storage for all intermediate values
+must be managed by the programmer. While this approach leads to verbose and
+less readable code, the explicitness is good for understanding the memory
+concerns of the program, albeit at the expense of understanding what the
+program is actually calculating.
+
+On the other hand, C++ (with operator overloading) can end up looking fairly
+readable. For safety and correctness, expressions are typically handled with
+value-semantics. However, given \emph{extra} information about, aliasing
+(Eigen, Figure~\ref{fig:cpp_eigen}) or usage of intermediate expressions
+(uBLAS, Figure~\ref{fig:cpp_ublas}), the number of temporaries allocated can be
+reduced and increased \emph{implicitly} to improve performance (remove
+unnecessary allocations or re-calculations respectively). Further tricks to
+improve performance include expression templates (building up an
+expression-tree at compile time and then pattern-matching on it to produce
+code) and lazy evaluation (only calculating a result when it is needed). These
+will be discussed in more detail in Chapter~\ref{chap:related}.
+
+\begin{figure}[tbp]
+    \begin{minted}{c++}
+#include <iostream>
+#include <Eigen/Dense>
+using namespace std;
+int main()
+{
+    Eigen::Matrix2d a,b,c;
+    a << 1, 0,
+         0, 1;
+    b << 4, 1,
+         1, 2;
+    c << 0, 0,
+         0, 0;
+    a * b; // new matrix
+    c += a * b; // temporary for correctness in case of aliasing
+    c.noalias() += a * b; // no temporaries
+}
+    \end{minted}
+    \caption{Some examples of Matrix Multiplication in Eigen. Using expression
+        templates (to be discussed later) and \emph{explicitly provided} aliasing
+        information, Eigen can emit a single BLAS `dgemm'-like call for the last
+        line, mirroring the Fortran example of
+        Figure~\ref{fig:fortran_blas}.}\label{fig:cpp_eigen}
+\end{figure}
+
+\begin{figure}[tbp]
+    \begin{minted}{c++}
+noalias(C) = prod(A, B);
+// Preferable if T is preallocated
+temp_type T = prod(B,C); R = prod(A,T);
+prod(A, temp_type(prod(B,C));
+prod(A, prod<temp_type>(B,C));
+    \end{minted}
+    \caption{Boost uBLAS example of Matrix Multiplication. Temporaries need to
+        be marked as such to prevent unnecessary re-computation of
+        values.}\label{fig:cpp_ublas}
+\end{figure}
+
+\section{TO DO: Proposed Solution}
+A (E)DSL!
 % https://github.com/AtheMathmo/rulinalg/blob/e0d8b76ddf8bbb5547cb9c98172e594605ab5fef/src/matrix/impl_ops.rs
 % Which operand is overwritten determines scope. Would make sense to argue
 % pros-cons of implicitness vs explicitness, emulating Rust's Affine with
 % linear sugar.
 
-\subsection{One Too Many Copies and a Thousand Bytes Behind}
-% CODE EXAMPLES
-
-\subsection{IHNIWTNM}
-The title of this subsection\footnote{I Have No Idea What Those Names Mean.}
-illustrates the problem with the C++/FORTRAN side: legibility (and ease of
-reasoning) is sacrified at the alter of performance and efficiency.
-
-% CODE EXAMPLES
-
-\section{Proposed Solution}
-A (E)DSL!
-
 % CODE EXAMPLES
 
 \section{Further Reading and Theory}\label{sec:further}
-\begin{itemize}
-    \item History - Girard and so on
-    \item Congratulations, it's a co-monad
-    \item Co-effects
-    \item General direction of field - Haskell, Rust, RAML, Atkey/McBride \& Idris, Krishnaswami
-\end{itemize}
+
+% Just as no Scottish MP's initial speech in the House of Commons would be
+% complete without some claim or mention to Rabbie Burns,
+
+No exposition of linear types would be complete without a mention of Girard's
+Linear Logic~\cite{girard}. As mentioned in the Stanford Encyclopedia of
+Philosophy, it is ``a refinement of classical and intuitionistic logic. Instead
+of emphasizing truth, as in classical logic, or proof, as in intuitionistic
+logic, linear logic emphasizes the role of formulas as resources.'' A walk from
+logic to programming along the well-trodden Curry-Howard bridge brings us to
+linear types.
+
+For the category theory inclined reader, the !-operator (sometimes, for reasons
+elided here, called \emph{exponentiation}) forms a co-monad; for the rest of
+us, this entails two (rather simple) facts about a value you can use any number
+of times: you can (1) can use it once (co-unit), and (2) can pass it to many
+contexts that will use it many times (co-multiply).
+
+More generally, by annotating variables in the context with their usage (when
+implementing a type-checker for a linearly typed language), we can express the
+rules of \emph{substructural} (including affine, relevant and ordered type
+systems) under the more general framework of \emph{co-effects}~\cite{petricek}.
+
+Stepping further back, both the practice and theory behind resource-aware
+programming has made visible progress in the past few years.  On the
+programming side, we have Linear Haskell, Rust and Idris (experimental). On the
+research side, we have Resource Aware ML~\cite{hoffmann} and the tantalising
+promise of integrating linear and dependent types~\cite{atkey}.

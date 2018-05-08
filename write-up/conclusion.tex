@@ -1,4 +1,4 @@
-\chapter{Conclusion}
+\chapter{TO DO: Conclusion}
 
 \begin{guidance}
     As you might imagine: summarizes the dissertation, and draws
@@ -8,4 +8,55 @@
     You will generally want to draw some conclusions, and point
     to potential future work.
 \end{guidance}
+
+\textbf{What are the benefits of the type-based approach I have taken? Have I successfully 
+argued whatever I wrote in the introduction?}
+
+\section{Future Work}
+
+\textbf{Graph stuff... check with supervisors.}
+
+All of the matrix expression compilers mentioned in previous section construct
+some sort of dataflow graph to represent the computation being executed. While
+this seems intuitive, there is no formal argument for this  appr
+Some directions in which a type-based approach to efficient matrix expression compilation could
+be taken are:
+
+\begin{itemize}
+
+    \item \textbf{As a typed IR} for matrix expression compilers. This in turn
+        could enable
+        \begin{itemize}
+            \item existing matrix expression compilers to be less opaque about
+                what resources they are consuming.
+            \item open up opportunities for non-local sharing of temporary values
+                with some intra-procedural analysis.
+            \item allow the user to choose: use a matrix expression compiler when
+                desired and drop down to a usable typed-IR for finer control,
+                whilst still retaining safety guarantees.
+        \end{itemize}
+
+    \item \textbf{Formal verification of matrix expression compilers} by
+        precisely specifying source and target languages.
+
+    \item \textbf{Multi-stage programming} to use information only available
+        at runtime in many situations (such as sizes, matrix properties,
+        sparsity, control flow) can be effectively incorporated into code
+        generated.
+
+    \item \textbf{Dependent types} to have control over how resources can be
+        used and split. In addition to formal verification, dependent types
+        could be combined with linearity to express finer-grain conventions
+        surrounding blocking, slicing and writing to \emph{parts} of the matrix
+        instead of the whole. This is already prevalent with `dsymm' like BLAS
+        routines which only read and write to the lower or upper triangle of a
+        matrix.  This idea is inspired by Conor McBride's talk on writing to
+        terminals with ``Space Monads''~\cite{space_monads}.
+
+    \item \textbf{Compiling to hardware} is also an option - once we know
+        exactly when and where temporaries are required and what can be re-used
+        when, we come one (small, but useful) step closer to realising matrix
+        expressions directly on hardware.
+
+\end{itemize}
 

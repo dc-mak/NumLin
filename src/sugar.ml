@@ -80,15 +80,13 @@ type prim =
   | Free_mat
   | Matrix
   | Copy_mat
+  | Copy_mat_to
+  | Size_mat
   (* Level 2/3 BLAS *)
-  | Symv
-  | Gemv
-  | Trmv
-  | Trsv
-  | Ger
+  | Symm
   | Gemm
-  | Trmm
-  | Trsm
+  | Posv
+  | Potrs
 [@@deriving sexp_of]
 ;;
 
@@ -104,6 +102,7 @@ type loc =
 ;;
 
 type pat =
+  | Unit of loc
   | Base of loc * bang_var
   | Many of loc * pat
   | Pair of loc * pat * pat
@@ -112,6 +111,9 @@ type pat =
 
 let rec ds_pat pat (body : Ast.exp) : loc * Ast.var * Ast.exp =
   match pat with
+  | Unit loc ->
+    let var = "unit" in (loc, var, Unit_E (loc, Var (loc, var), body))
+
   | Base (loc, NotB var) ->
     (loc, var, body)
 
@@ -184,7 +186,7 @@ and exp =
   | Assign of loc * var * exp * exp option * exp
   | Infix of loc * exp * op * exp
   | LetAnnot of loc * bang_var * lin * exp * exp
-  | LetPat of loc * (pat, pat * pat) Either.t * exp * exp
+  | LetPat of loc * pat * exp * exp
   | LetFun of loc * bang_var * (annot_arg, loc * var) Either.t non_empty * lin * exp * exp
   | LetRecFun of loc * var * annot_arg * (annot_arg, loc * var) Either.t list * lin * exp * exp
 [@@deriving sexp_of]
@@ -250,15 +252,13 @@ let rec ds_exp : exp -> Ast.exp = function
       | Free_mat -> Free_mat
       | Matrix -> Matrix
       | Copy_mat -> Copy_mat
+      | Copy_mat_to -> Copy_mat_to
+      | Size_mat -> Size_mat
       (* Level 2/3 BLAS *)
-      | Symv -> Symv
-      | Gemv -> Gemv
-      | Trmv -> Trmv
-      | Trsv -> Trsv
-      | Ger -> Ger
+      | Symm -> Symm
       | Gemm -> Gemm
-      | Trmm -> Trmm
-      | Trsm -> Trsm
+      | Posv -> Posv
+      | Potrs -> Potrs
     end)
 
   | Var (loc, x) -> Var (loc, x)
@@ -332,11 +332,23 @@ let rec ds_exp : exp -> Ast.exp = function
 
   | LetPat (loc, pat, exp, body) ->
     let exp = ds_exp exp and body = ds_exp body in
+    (* Unroll ds_pat one level to prevent unnecessary 'Let's *)
     begin match pat with
-    | First pat ->
+    | Unit _ ->
+      Unit_E (loc, exp, body)
+
+    | Base (_, NotB var) ->
+      Let (loc, var, exp, body)
+
+    | Base (var_loc, Bang var) ->
+      Bang_E (loc, var, exp,
+              Bang_E (loc, var, Bang_I (loc, Bang_I (loc, Var (var_loc, var))), body))
+
+    | Many (_, pat) ->
       let (_, var, body) = ds_pat pat body in
       Bang_E (loc, var, exp, body)
-    | Second (a, b) ->
+
+    | Pair (_, a, b) ->
       let (_, var_b, body) = ds_pat b body in
       let (_, var_a, body) = ds_pat a body in
       Pair_E (loc, var_a, var_b, exp, body)

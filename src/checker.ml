@@ -19,38 +19,44 @@ let check_prim =
     | Eq | Lt -> Fun(x, Fun (x, bool)) in
 
   function
+  (* Boolean *)
   | Not_ -> Fun (bool, bool)
+  (* Arithmetic *)
   | IntOp op -> binary int op
   | EltOp op -> binary elt op
+  (* Arrays *)
   | Set -> Fun (Arr Z, Fun (int, Fun (elt, Arr Z)))
-  | Get -> All(x, Fun (Arr (V x), Fun (int, Pair (elt, Arr (V x)))))
+  | Get -> All(x, Fun (Arr (V x), Fun (int, Pair (Arr (V x), elt))))
   | Share -> All (x, Fun (Arr (V x), Pair (Arr (S (V x)), Arr (S (V x)))))
   | Unshare -> All (x, Fun (Arr (S (V x)), Fun (Arr (S (V x)), Arr (V x))))
   | Free -> Fun (Arr Z, Unit)
+  (* Owl *)
   | Array -> Fun (int, Arr Z)
   | Copy -> All (x, Fun (Arr (V x), Pair(Arr (V x), Arr Z)))
   | Sin -> Fun (Arr Z, Arr Z)
+  | Hypot -> Fun (Arr Z, All (x, Fun (Arr (V x), Pair (Arr (V x), Arr Z))))
+  (* Level 1 BLAS *)
+  | Asum -> All (x, Fun (Arr (V x), Pair (Arr (V x), elt)))
+  | Axpy -> Fun (Arr Z, Fun (elt, All (x, Fun (Arr (V x), Pair (Arr (V x), Arr Z)))))
+  | Dot -> All (x, Fun (Arr (V x), All (y, Fun (Arr (V y), Pair (Pair (Arr (V x), Arr (V y)), elt)))))
   | Rotmg -> Fun (Pair (elt, elt), Fun (Pair (elt, elt), Pair (Pair (elt, elt), Pair (elt, Arr Z))))
   | Scal -> Fun (elt, Fun (Arr Z, Arr Z))
-  | Amax -> All (x, Fun (Arr (V x), Pair (int, Arr (V x))))
-  | Asum -> All (x, Fun (Arr (V x), Pair (elt, Arr (V x))))
-  | Hypot -> Fun (Arr Z, All (x, Fun (Arr (V x), Pair (Arr Z, Arr (V x)))))
-  | Axpy -> Fun (Arr Z, Fun (elt, All (x, Fun (Arr (V x), Pair (Arr Z, Arr (V x))))))
-  | Dot -> All (x, Fun (Arr (V x), All (y, Fun (Arr (V y), Pair (elt, Pair (Arr (V x), Arr (V y)))))))
-  (* matrix *)
-  | Get_mat -> All(x, Fun (Arr (V x), Fun (int, Fun(int, Pair (elt, Mat (V x))))))
+  | Amax -> All (x, Fun (Arr (V x), Pair (Arr (V x), int)))
+  (* Matrix *)
+  | Get_mat -> All(x, Fun (Mat (V x), Fun (int, Fun(int, Pair (Mat (V x), elt)))))
   | Set_mat -> Fun (Mat Z, Fun (int, (Fun (int, Fun (elt, Mat Z)))))
   | Share_mat -> All (x, Fun (Mat (V x), Pair (Mat (S (V x)), Mat (S (V x)))))
   | Unshare_mat -> All (x, Fun (Mat (S (V x)), Fun (Mat (S (V x)), Mat (V x))))
   | Free_mat -> Fun(Mat Z, Unit)
   | Matrix -> Fun (int, Fun (int, Mat Z))
   | Copy_mat -> All (x, Fun (Mat (V x), Pair(Mat (V x), Mat Z)))
-  | Symv -> Fun (elt, All (x, Fun (Mat (V x), All (y, Fun (Arr (V y), Fun (elt, Fun (Arr Z, Pair (Pair (Mat (V x), Arr(V y)), Arr Z))))))))
-  | Gemv -> Fun (elt, All (x, Fun (Pair (Mat (V x), bool), All (y, Fun (Arr (V y), Fun (elt, Fun (Arr Z, Pair (Pair (Mat (V x), Arr(V y)), Arr Z))))))))
-  | (Trmv | Trsv) -> All (x, Fun (Pair (Mat (V x), bool), Fun (Arr Z, Pair (Mat (V x), Arr Z))))
-  | Ger -> Fun (elt, All (x, Fun (Arr (V x), All (y, Fun (Arr (V y), Fun (Mat Z, Pair (Pair (Arr (V x), Arr (V y)), Mat Z)))))))
-  | Gemm -> Fun (elt, All(x, Fun (Pair(Mat (V x), bool), All (y, Fun (Pair (Mat (V y), bool), Fun (elt, Fun (Mat Z, Pair (Pair (Mat (V x), Mat (V y)), Mat Z))))))))
-  | (Trmm | Trsm) -> Fun (elt, Fun(bool, Fun (Mat Z, All (x, Fun (Pair (Mat (V x), bool), Pair (Mat (V x), Mat Z))))))
+  | Copy_mat_to -> All (x, Fun (Mat (V x), Fun (Mat Z, Pair (Mat (V x), Mat Z))))
+  | Size_mat -> All (x, Fun (Mat (V x), Pair(Mat (V x), Pair (int, int))))
+  (** Level 3 BLAS/LAPACK *)
+  | Gemm -> Fun (elt, All(x, Fun (Pair (Mat (V x), bool), All (y, Fun (Pair (Mat (V y), bool), Fun (elt, Fun (Mat Z, Pair (Pair (Mat (V x), Mat (V y)), Mat Z))))))))
+  | Symm -> Fun (bool, Fun (elt, All(x, Fun (Mat (V x), All (y, Fun (Mat (V y), Fun (elt, Fun (Mat Z, Pair (Pair (Mat (V x), Mat (V y)), Mat Z)))))))))
+  | Posv -> Fun (Mat Z, Fun (Mat Z, Pair (Mat Z, Mat Z)))
+  | Potrs -> All (x, Fun (Mat (V x), Fun (Mat Z, Pair (Mat (V x), Mat Z))))
 ;;
 
 let string_of_loc (loc : Ast.loc) =
@@ -151,6 +157,12 @@ let rec check =
       ~not_fun:
         (error loc ~expected:"App: expected Fun(_,_)")
 
+  | Unit_E (loc, exp, body) ->
+    begin match%bind check exp with
+    | WFL Unit -> check body
+    | WFL inferred -> error loc ~expected:"Unit_E: expect Unit" inferred
+    end
+
   | Bang_E (loc, x, exp, body) ->
     split_wf_Bang (check exp)
       ~if_bang:
@@ -170,7 +182,10 @@ let rec check =
   | If (loc, cond, true_, false_) ->
     begin match%bind check cond with
     | WFL (Bang Bool) ->
-      let%bind (t, f) = same_resources (check true_, Ast.loc true_) (check false_, Ast.loc false_) in
+      let%bind (t, f) =
+        same_resources
+          (check true_, Ast.loc true_)
+          (check false_, Ast.loc false_) in
       begin match%bind same_lin t f with
       | Ok subs ->
         return @@ apply subs t
@@ -191,6 +206,10 @@ let rec check =
     let%bind t = wf_lin ~fmt ~arg ~loc t in
     let%bind body_t = check body |> with_lin var t in
     return @@ wf_Fun t body_t
+
+  | Let (_, var, exp, body) ->
+    let%bind lin = check exp in
+    check body |> with_lin var lin
 
 ;;
 

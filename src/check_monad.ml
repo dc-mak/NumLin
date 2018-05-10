@@ -392,6 +392,10 @@ and split_wf_Fun wfl ~if_fun ~not_fun =
   | WFL inferred -> not_fun inferred
 ;;
 
+(*###############################################################################################*)
+(*                         (4) Type-directed Matrix-expression Elaboration                       *)
+(*###############################################################################################*)
+
 let%test_module "Test" =
   (module struct
 
@@ -447,4 +451,3 @@ let%test_module "Test" =
 
   end)
 ;;
-

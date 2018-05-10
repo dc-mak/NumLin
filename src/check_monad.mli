@@ -2,7 +2,7 @@
 type wf_fc = private WFC of Ast.fc [@@ocaml.unboxed]
 type wf_var = private WFV of Ast.var [@@ocaml.unboxed]
 type wf_lin = private WFL of Ast.lin [@@ocaml.unboxed]
-val sexp_of_wf_lin : wf_lin -> Sexplib0.Sexp.t
+[@@deriving sexp_of]
 
 (** Well-formed constructors *)
 val wf_Unit : wf_lin
@@ -18,15 +18,15 @@ val wf_All : Ast.var -> wf_lin -> wf_lin
 
 (** Proof that a type is not used. *)
 type not_used
-val sexp_of_not_used : not_used -> Sexplib0.Sexp.t
+[@@deriving sexp_of]
 
 (** A type is either used, not used, or intuitionistic. *)
 type tagged = private Not_used of not_used | Used of Ast.loc | Intuition of wf_lin
-val sexp_of_tagged : tagged -> Sexplib0.Sexp.t
+[@@deriving sexp_of]
 
 (** Type checker state *)
 type state
-val sexp_of_state : state -> Sexplib0.Sexp.t
+[@@deriving sexp_of]
 
 (** State-or-error monad values. *)
 type 'a t

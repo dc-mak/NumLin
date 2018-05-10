@@ -1,0 +1,34 @@
+let !kalman
+        ('s) (sigma : 's mat) (* n, n *)
+        ('h) (h : 'h mat)     (* k, n *)
+        ('m) (mu : 'm mat)    (* n, 1 *)
+        (r_1 : z mat)         (* k, k *)
+        (data_1 : z mat)      (* k, 1 *)
+        : ('s mat * ('h mat * ('m mat * (z mat * z mat)))) * (z mat * z mat) =
+        let (h, (!k, !n)) = sizeM _ h in
+        let tmp = matrix k n in
+(*20*)  let ((sigma, h), sigma_h) = symm true 1. _ sigma _ h 0. tmp in
+(*21*)  let ((sigma_h, h), r_2) = gemm 1. _ (sigma_h, false) _ (h, true) 1. r_1 in
+(*22*)  let ((h, mu), data_2) = gemm 1. _ (h, false) _ (mu, false) (-1.) data_1 in
+(*23*)  let (h, new_h) = copyM_to _ h sigma_h in
+(*24*)  let (r_2, new_r) = copyM _ r_2 in
+(*25*)  let (chol_r, sol_h) = posv new_r new_h in
+(*27*)  let (chol_r, sol_data) = potrs _ chol_r data_2 in
+        let () = freeM chol_r in
+        let tmp = matrix n n in
+(*28*)  let ((h, sol_h), h_sol_h) = gemm 1. _ (h, true) _ (sol_h, false) 0. tmp in
+        let () = freeM sol_h in
+        let tmp = matrix n 1 in
+(*29*)  let ((h, sol_data), h_sol_data) = gemm 1. _ (h, true) _ (sol_data, false) 0. tmp in
+(*30*)  let (mu, mu_copy) = copyM _ mu in
+(*31*)  let ((sigma, h_sol_data), new_mu) = symm false 1. _ sigma _ h_sol_data 0. mu_copy in
+        let () = freeM h_sol_data in
+        let tmp = matrix n n in
+(*32*)  let ((sigma, h_sol_h), h_sol_h_sigma) = symm true 1. _ sigma _ h_sol_h 0. tmp in
+        let () = freeM h_sol_h in
+(*33*)  let (sigma, sigma_copy) = copyM _ sigma in
+(*34*)  let ((sigma, h_sol_h_sigma), new_sigma) = symm false (-1.) _ sigma _ h_sol_h_sigma 1. sigma_copy in
+        let () = freeM h_sol_h_sigma in
+        ((sigma, (h, (mu, (r_2, sol_data)))), (new_mu, new_sigma)) in
+kalman
+;;

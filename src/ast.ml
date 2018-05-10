@@ -323,7 +323,7 @@ type prim =
   | Rotmg
   | Scal
   | Amax
-  (* matrix *)
+  (* Matrix *)
   | Get_mat
   | Set_mat
   | Share_mat
@@ -331,15 +331,13 @@ type prim =
   | Free_mat
   | Matrix
   | Copy_mat
-  (* Level 2/3 BLAS *)
-  | Symv
-  | Gemv
-  | Trmv
-  | Trsv
-  | Ger
+  | Copy_mat_to
+  | Size_mat
+  (* Level 3 BLAS/LAPACK *)
+  | Symm
   | Gemm
-  | Trmm
-  | Trsm
+  | Posv
+  | Potrs
 [@@deriving sexp_of]
 ;;
 
@@ -390,12 +388,14 @@ type exp =
   | Bang_I of loc sexp_opaque * exp
   | Spc of loc sexp_opaque * exp * fc
   | App of loc sexp_opaque * exp * exp
+  | Unit_E of loc sexp_opaque * exp * exp
   | Bang_E of loc sexp_opaque * var * exp * exp
   | Pair_E of loc sexp_opaque * var * var * exp * exp
   | Fix of loc sexp_opaque * var * var * lin * lin * exp
   | If of loc sexp_opaque * exp * exp * exp
   | Gen of loc sexp_opaque * var * exp
   | Lambda of loc sexp_opaque * var * lin * exp
+  | Let of loc sexp_opaque * var * exp * exp
 [@@deriving sexp_of]
 ;;
 
@@ -411,23 +411,25 @@ let loc = function
   | Bang_I (loc, _)
   | Spc (loc, _, _)
   | App (loc, _, _)
+  | Unit_E (loc, _, _)
   | Bang_E (loc, _, _, _)
   | Pair_E (loc, _, _, _, _)
   | Fix (loc, _, _, _, _, _)
   | If (loc, _, _, _)
   | Gen (loc, _, _)
-  | Lambda (loc, _, _, _) -> loc
+  | Lambda (loc, _, _, _)
+  | Let (loc, _, _, _) -> loc
 ;;
 
 let prec = function
   | Prim _ | Var _ | Unit_I _ | Pair_I _ -> 0
   | True _ | False _ | Int_I _ | Elt_I _ | Spc _ | App _ | Bang_I _ -> -1
-  | Bang_E _ | Pair_E _ | Fix _ | Gen _ | Lambda _ | If _ -> -2
+  | Let _ | Unit_E _ | Bang_E _ | Pair_E _ | Fix _ | Gen _ | Lambda _ | If _ -> -2
 ;;
 
 let rec is_value = function
   | Prim _ | Unit_I _ | True _ | False _ | Int_I _ | Elt_I _ | Var _ | Fix _ | Lambda _ -> true
-  | App _ | Bang_E _ | Pair_E _ | If _ -> false
+  | App _ | Let _ | Unit_E _ | Bang_E _ | Pair_E _ | If _ -> false
   | Gen (_, _, exp) | Spc (_, exp, _) | Bang_I (_, exp) -> is_value exp
   | Pair_I (_, fst, snd) -> is_value fst && is_value snd
 ;;
@@ -454,10 +456,12 @@ let pp_exp ppf =
       fprintf ppf "Many false"
 
     | Int_I (_, i) ->
-      fprintf ppf "Many %d" i
+      let l,r = if i < 0 then "(", ")" else "", "" in
+      fprintf ppf "Many %s%d%s" l i r
 
     | Elt_I (_, e) ->
-      fprintf ppf "Many %f" e
+      let l,r = if Float.(e < 0.) then "(", ")" else "", "" in
+      fprintf ppf "Many %s%f%s" l e r
 
     | Pair_I (_, exp1, exp2) ->
       fprintf ppf "@[(%a@ @[, %a)@]@]" pp_exp exp1 pp_exp exp2
@@ -489,6 +493,13 @@ let pp_exp ppf =
       and al, ar = parens arg app in
       fprintf ppf "@[<2>%s%a%s@ %s%a%s@]" fl pp_exp fun_ fr al pp_exp arg ar
 
+    | Let (_, var, exp, body) ->
+      fprintf ppf !"@[@[<2>let %s =@ %a in@]@ %a@]"
+        var pp_exp exp pp_exp body
+
+    | Unit_E (_, exp, body) ->
+      fprintf ppf !"@[@[<2>let () =@ %a in@]@ %a@]" pp_exp exp pp_exp body
+
     | Bang_E (_, var1, Var (_, var2),
               Bang_E (_, var3, Bang_I (_, Bang_I (_, Var (_, var4))), body))
       when var1 = var2 &&
@@ -496,8 +507,19 @@ let pp_exp ppf =
            var1 = var4 ->
       fprintf ppf "@[%a@]" pp_exp body
 
+    | Bang_E (_, var1, exp,
+              Bang_E (_, var2, Bang_I (_, Bang_I (_, Var (_, var3))), body))
+      when var1 = var2 &&
+           var2 = var3 ->
+      fprintf ppf "@[@[<2>let %s =@ %a in@]@ %a@]" var1 pp_exp exp pp_exp body
+
     | Bang_E (_, var, exp, body) ->
       fprintf ppf "@[@[<2>let Many %s =@ %a in@]@ %a@]" var pp_exp exp pp_exp body
+
+    | Pair_E (_, var_a1, var_b, exp1, Pair_E (_, var_aa, var_ab, Var (_, var_a2), body))
+      when var_a1 = var_a2 ->
+      fprintf ppf "@[@[<2>let ((%s, %s), %s) =@ %a in@]@ %a@]"
+        var_aa var_ab var_b pp_exp exp1 pp_exp body
 
     | Pair_E (_, var1, var2, exp1, exp2) ->
       fprintf ppf "@[@[<2>let (%s, %s) =@ %a in@]@ %a@]"

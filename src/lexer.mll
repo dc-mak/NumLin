@@ -18,7 +18,7 @@ let next_line lexbuf =
   let pos = lexbuf.lex_curr_p in
   lexbuf.lex_curr_p <-
     { pos with
-      pos_bol = lexbuf.lex_curr_pos;
+      pos_bol = pos.pos_cnum;
       pos_lnum = pos.pos_lnum + 1;
     }
 ;;
@@ -56,14 +56,13 @@ let keywords =
     ; ("freeM", FREE_M)
     ; ("matrix", MATRIX)
     ; ("copyM", COPY_M)
-    ; ("symv", SYMV)
-    ; ("gemv", GEMV)
-    ; ("trmv", TRMV)
-    ; ("trsv", TRSV)
-    ; ("ger", GER)
+    ; ("copyM_to", COPY_M_TO)
+    ; ("sizeM", SIZE_M)
+    (* Level 2/3 BLAS *)
+    ; ("symm", SYMM)
     ; ("gemm", GEMM)
-    ; ("trmm", TRMM)
-    ; ("trsm", TRSM)
+    ; ("posv", POSV)
+    ; ("potrs", POTRS)
     (* expressions *)
     ; ("true", TRUE)
     ; ("false", FALSE)
@@ -75,7 +74,7 @@ let keywords =
     ; ("in", IN)
     ; ("fun", FUN)
     ; ("Many", MANY)
-    (* Inference *)
+    (* inference *)
     ; ("_", UNDERSCORE)
     ] in
   let table = Hashtbl.of_alist_exn (module String) keywords in
@@ -87,7 +86,7 @@ let keywords =
 }
 
 let digit = ['0'-'9']
-let int = '-'? digit+
+let int = digit+
 
 let frac = '.' digit*
 let exp = ['e' 'E'] ['-' '+']? digit+
@@ -97,7 +96,6 @@ let white = [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
 let id = ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_']*
 let fc_var = ''' id
-(* Make more like OCaml? let fcvar = ''' id *)
 
 rule read =
   parse
@@ -142,5 +140,14 @@ rule read =
   | "-."     { MINUS_DOT }
   | "*."     { STAR_DOT }
   | "/."     { FWD_SLASH_DOT }
+  (* comments *)
+  | "(*"    { comment 1 lexbuf }
   (* TODO: make more informative/friendly *)
   | _       { raise (SyntaxError (lexbuf.lex_curr_p, "unexpected char: " ^ Lexing.lexeme lexbuf)) }
+
+(* [n] handles nested comments *)
+and comment n = parse
+  | "(*"    { comment (n+1) lexbuf}
+  | "*)"    { if n=1 then read lexbuf else comment (n-1) lexbuf }
+  | newline { next_line lexbuf; comment n lexbuf }
+  | _       { comment n lexbuf }

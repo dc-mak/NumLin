@@ -16,9 +16,16 @@ let handler lexbuf ~msg =
 let accept chan value =
   match Checker.check_expr value ~counter:0 with
 
-  | Ok (_ : Ast.lin) ->
+  | Ok (_ : Ast.lin)  ->
     Out.output_lines chan ["open Lt4la.Template"; ";;"; ""];
     Caml.Format.(fprintf @@ formatter_of_out_channel chan)
+
+(*
+ | Automagically printing out correct OCaml type is a bit nuanced
+ | ( 'x. 'x arr --o !int * !!int --o 'x arr * !int )
+ | * ( !!int --o  'y. 'x. !int --o !int )
+ *)
+
       "@[<2>let it =@;@[%a@]@]" Ast.pp_exp value;
     Out.output_lines chan [""; ";;"; ""];
     Result.return ()
@@ -41,3 +48,4 @@ let files ~in_file ~out_file =
     Out_channel.with_file out_file ~f:(fun to_ ->
       chans ~in_file from to_)))
 ;;
+

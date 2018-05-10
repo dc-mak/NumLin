@@ -2,7 +2,7 @@ let rec f (!i : !int) (!n : !int) (!x0 : !elt) ('x) (row : 'x arr) : !elt * 'x a
     if i = n then
         (x0, row)
     else
-        let (x1, row) = row[i] in
+        let (row, x1) = row[i] in
         f (i + 1) n (x0 +. x1) 'x row in
     f
 ;;

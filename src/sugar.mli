@@ -2,7 +2,7 @@ type var = string
 val sexp_of_var : var -> Base.Sexp.t
 
 type fc = Z | S of fc | V of var | U of var
-val sexp_of_fc : fc -> Base.Sexp.t
+[@@deriving sexp_of]
 val ds_fc : fc -> Ast.fc
 
 type lin =
@@ -16,7 +16,7 @@ type lin =
   | Bang of lin
   | Fun of lin * lin
   | All of var * lin
-val sexp_of_lin : lin -> Base.Sexp.t
+[@@deriving sexp_of]
 val ds_lin : lin -> Ast.lin
 
 type prim =
@@ -39,24 +39,22 @@ type prim =
   | Free_mat
   | Matrix
   | Copy_mat
-  | Symv
-  | Gemv
-  | Trmv
-  | Trsv
-  | Ger
+  | Copy_mat_to
+  | Size_mat
+  | Symm
   | Gemm
-  | Trmm
-  | Trsm
-val sexp_of_prim : prim -> Base.Sexp.t
+  | Posv
+  | Potrs
+[@@deriving sexp_of]
 
 type bang_var = NotB of var | Bang of var
-val sexp_of_bang_var : bang_var -> Base.Sexp.t
+[@@deriving sexp_of]
 
 type loc = Lexing.position
-val sexp_of_loc : loc -> Base.Sexp.t
+[@@deriving sexp_of]
 
-type pat = Base of loc * bang_var | Many of loc * pat | Pair of loc * pat * pat
-val sexp_of_pat : pat -> Base.Sexp.t
+type pat = Unit of loc | Base of loc * bang_var | Many of loc * pat | Pair of loc * pat * pat
+[@@deriving sexp_of]
 val ds_pat : pat -> Ast.exp -> loc * Ast.var * Ast.exp
 
 type op =
@@ -74,14 +72,13 @@ type op =
   | DivDot
   | EqDot
   | LtDot
-val sexp_of_op : op -> Base.Sexp.t
+[@@deriving sexp_of]
 
 type 'a non_empty = { first : 'a; rest : 'a list; }
-val sexp_of_non_empty :
-  ('a -> Base.Sexp.t) -> 'a non_empty -> Base.Sexp.t
+[@@deriving sexp_of]
 
 type annot_arg = { pat : pat; lin : lin; }
-val sexp_of_annot_arg : annot_arg -> Base.Sexp.t
+[@@deriving sexp_of]
 
 type arg_like = Underscore of loc | Fc of loc * fc | Exp of exp
 and exp =
@@ -101,12 +98,11 @@ and exp =
   | Assign of loc * var * exp * exp option * exp
   | Infix of loc * exp * op * exp
   | LetAnnot of loc * bang_var * lin * exp * exp
-  | LetPat of loc * (pat, pat * pat) Base.Either.t * exp * exp
+  | LetPat of loc * pat * exp * exp
   | LetFun of loc * bang_var * (annot_arg, loc * var) Base.Either.t non_empty
               * lin * exp * exp
   | LetRecFun of loc * var * annot_arg * (annot_arg, loc * var) Base.Either.t list
                  * lin * exp * exp
-val sexp_of_arg_like : arg_like -> Base.Sexp.t
-val sexp_of_exp : exp -> Base.Sexp.t
+[@@deriving sexp_of]
 val loc : exp -> loc
 val ds_exp : exp -> Ast.exp

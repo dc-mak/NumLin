@@ -11,7 +11,7 @@ module Ast =
   Lt4la.Ast
 ;;
 
-let check_expr = 
+let check_expr =
   Lt4la.Checker.check_expr ~counter:1719
 ;;
 
@@ -90,7 +90,6 @@ let%expect_test "Gen" =
   [%expect {| (Ok "'one. 'one arr --o 'one arr") |}]
 ;;
 
-
 let spc : Ast.exp =
   Spc (Ast.dummy, gen, S Z)
 ;;
@@ -125,13 +124,13 @@ let pair_e : Ast.exp =
   Pair_E (Ast.dummy, one, two, pair, Pair_I (Ast.dummy, Var (Ast.dummy, two), Var (Ast.dummy, one)))
 ;;
 
-let%expect_test "Pair_E" = 
+let%expect_test "Pair_E" =
   check_expr pair_e
   |> pretty;
   [%expect {| (Ok "unit * z arr") |}]
 ;;
 
-let%expect_test "Pair_E" = 
+let%expect_test "Pair_E" =
   check_expr (Pair_E (Ast.dummy, one, two, pair, Var (Ast.dummy, one)))
   |> pretty;
   [%expect {| (Error "Variable two not used.\n") |}]
@@ -158,7 +157,7 @@ let%expect_test "App" =
 ;;
 
 let%expect_test "If" =
-  check_expr @@ 
+  check_expr @@
   Lambda (Ast.dummy, one, Bang Bool,
   Lambda (Ast.dummy, two, Bang Int,
     If (Ast.dummy, Var (Ast.dummy, one), Var (Ast.dummy, two), Unit_I Ast.dummy)))
@@ -171,12 +170,33 @@ let%expect_test "If" =
 ;;
 
 let%expect_test "If" =
-  check_expr @@ 
+  check_expr @@
   Lambda (Ast.dummy, one, Bang Bool,
   Lambda (Ast.dummy, two, Bang Int,
     If (Ast.dummy, Var (Ast.dummy, one), Var (Ast.dummy, two), Var (Ast.dummy, two))))
   |> pretty;
   [%expect {| (Ok "!bool --o !int --o !int") |}]
+;;
+
+let%expect_test "Unit_E" =
+  check_expr @@ Unit_E (Ast.dummy, app, unit_lambda)
+  |> pretty;
+  [%expect {| (Ok "unit --o unit") |}]
+;;
+
+let%expect_test "Let" =
+  check_expr @@
+  Let (Ast.dummy, "unit", app, unit_lambda)
+  |> pretty;
+  [%expect {| (Error "Variable unit not used.\n") |}]
+;;
+
+let%expect_test "Let" =
+  check_expr @@
+  Let (Ast.dummy, "unit", app,
+       App(Ast.dummy, unit_lambda, Var (Ast.dummy, "unit")))
+  |> pretty;
+  [%expect {| (Ok unit) |}]
 ;;
 
 let arith : Ast.arith list =
@@ -193,30 +213,31 @@ let ops =
   List.concat_map ~f:(fun x -> Ast.[IntOp x; EltOp x]) arith
 ;;
 
-let prims : Ast.prim list =
-  (* Arithmetic *)
-  ops @
-   (* Operators *)
-  [ Not_
-  (* Arrays *)
-  ; Set
+let prims =
+  (** Boolean *)
+  [ Ast.Not_ ] @
+  (** Arithmetic *)
+  List.map ~f:(fun x -> Ast.IntOp x) arith @
+  List.map ~f:(fun x -> Ast.EltOp x) arith @
+  (** Arrays *)
+  [ Set
   ; Get
   ; Share
   ; Unshare
   ; Free
-  (* Owl - no polymorphism so no Mapi :'( *)
+  (** Owl - no polymorphism so no Mapi :'( *)
   ; Array
   ; Copy
   ; Sin
   ; Hypot
-  (* Level 1 BLAS *)
+  (** Level 1 BLAS *)
   ; Asum
   ; Axpy
   ; Dot
   ; Rotmg
   ; Scal
   ; Amax
-  (* matrix *)
+  (** Matrix *)
   ; Get_mat
   ; Set_mat
   ; Share_mat
@@ -224,15 +245,13 @@ let prims : Ast.prim list =
   ; Free_mat
   ; Matrix
   ; Copy_mat
-  (* Level 2/3 BLAS *)
-  ; Symv
-  ; Gemv
-  ; Trmv
-  ; Trsv
-  ; Ger
+  ; Copy_mat_to
+  ; Size_mat
+  (** Level 3 BLAS/LAPACK *)
+  ; Symm
   ; Gemm
-  ; Trmm
-  ; Trsm
+  ; Posv
+  ; Potrs
   ]
 ;;
 
@@ -246,54 +265,49 @@ let%expect_test "check_array_elim" =
   List.map ~f:(fun x -> x, check_expr (Prim (Ast.dummy, x))) prims
   |> List.iter ~f:pretty;
   [%expect {|
-    addI: !int --o !int --o !int
-    addE: !float --o !float --o !float
-    subI: !int --o !int --o !int
-    subE: !float --o !float --o !float
-    mulI: !int --o !int --o !int
-    mulE: !float --o !float --o !float
-    divI: !int --o !int --o !int
-    divE: !float --o !float --o !float
-    eqI: !int --o !int --o !bool
-    eqE: !float --o !float --o !bool
-    ltI: !int --o !int --o !bool
-    ltE: !float --o !float --o !bool
     not_: !bool --o !bool
+    addI: !int --o !int --o !int
+    subI: !int --o !int --o !int
+    mulI: !int --o !int --o !int
+    divI: !int --o !int --o !int
+    eqI: !int --o !int --o !bool
+    ltI: !int --o !int --o !bool
+    addE: !float --o !float --o !float
+    subE: !float --o !float --o !float
+    mulE: !float --o !float --o !float
+    divE: !float --o !float --o !float
+    eqE: !float --o !float --o !bool
+    ltE: !float --o !float --o !bool
     set: z arr --o !int --o !float --o z arr
-    get: 'x. 'x arr --o !int --o !float * 'x arr
+    get: 'x. 'x arr --o !int --o 'x arr * !float
     share: 'x. 'x arr --o 'x s arr * 'x s arr
     unshare: 'x. 'x s arr --o 'x s arr --o 'x arr
     free: z arr --o unit
     array: !int --o z arr
     copy: 'x. 'x arr --o 'x arr * z arr
     sin: z arr --o z arr
-    hypot: z arr --o 'x. 'x arr --o z arr * 'x arr
-    asum: 'x. 'x arr --o !float * 'x arr
-    axpy: z arr --o !float --o 'x. 'x arr --o z arr * 'x arr
-    dot: 'x. 'x arr --o 'y. 'y arr --o !float * ( 'x arr * 'y arr )
+    hypot: z arr --o 'x. 'x arr --o 'x arr * z arr
+    asum: 'x. 'x arr --o 'x arr * !float
+    axpy: z arr --o !float --o 'x. 'x arr --o 'x arr * z arr
+    dot: 'x. 'x arr --o 'y. 'y arr --o ( 'x arr * 'y arr ) * !float
     rotmg: !float * !float --o !float * !float --o
     ( !float * !float ) * ( !float * z arr )
     scal: !float --o z arr --o z arr
-    amax: 'x. 'x arr --o !int * 'x arr
-    get_mat: 'x. 'x arr --o !int --o !int --o !float * 'x mat
+    amax: 'x. 'x arr --o 'x arr * !int
+    get_mat: 'x. 'x mat --o !int --o !int --o 'x mat * !float
     set_mat: z mat --o !int --o !int --o !float --o z mat
     share_mat: 'x. 'x mat --o 'x s mat * 'x s mat
     unshare_mat: 'x. 'x s mat --o 'x s mat --o 'x mat
     free_mat: z mat --o unit
     matrix: !int --o !int --o z mat
     copy_mat: 'x. 'x mat --o 'x mat * z mat
-    symv: !float --o 'x.
-      'x mat --o 'y. 'y arr --o !float --o z arr --o ( 'x mat * 'y arr ) * z arr
-    gemv: !float --o 'x.
-      'x mat * !bool --o 'y.
-        'y arr --o !float --o z arr --o ( 'x mat * 'y arr ) * z arr
-    trmv: 'x. 'x mat * !bool --o z arr --o 'x mat * z arr
-    trsv: 'x. 'x mat * !bool --o z arr --o 'x mat * z arr
-    ger: !float --o 'x.
-      'x arr --o 'y. 'y arr --o z mat --o ( 'x arr * 'y arr ) * z mat
+    copy_mat_to: 'x. 'x mat --o z mat --o 'x mat * z mat
+    size_mat: 'x. 'x mat --o 'x mat * ( !int * !int )
+    symm: !bool --o !float --o 'x.
+      'x mat --o 'y. 'y mat --o !float --o z mat --o ( 'x mat * 'y mat ) * z mat
     gemm: !float --o 'x.
       'x mat * !bool --o 'y.
         'y mat * !bool --o !float --o z mat --o ( 'x mat * 'y mat ) * z mat
-    trmm: !float --o !bool --o z mat --o 'x. 'x mat * !bool --o 'x mat * z mat
-    trsm: !float --o !bool --o z mat --o 'x. 'x mat * !bool --o 'x mat * z mat |}]
+    posv: z mat --o z mat --o z mat * z mat
+    potrs: 'x. 'x mat --o z mat --o 'x mat * z mat |}]
 ;;

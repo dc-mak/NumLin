@@ -54,7 +54,7 @@ let mk_op loc op fst snd =
 ;;
 
 type destruct =
-  (Sugar.bang_var * Sugar.lin, (Sugar.pat, Sugar.pat * Sugar.pat) either) either
+  (Sugar.bang_var * Sugar.lin, Sugar.pat) either
 ;;
 
 [@@@ ocaml.warning "-9" (* labels not found in record pattern *) ]
@@ -107,14 +107,12 @@ type destruct =
 %token FREE_M
 %token MATRIX
 %token COPY_M
-%token SYMV
-%token GEMV
-%token TRMV
-%token TRSV
-%token GER
+%token COPY_M_TO
+%token SIZE_M
+%token SYMM
 %token GEMM
-%token TRMM
-%token TRSM
+%token POSV
+%token POTRS
 
 (* Simple expressions *)
 %token TRUE
@@ -190,21 +188,19 @@ prog:
     | exp=exp EOP { exp         }
 
 exp:
-    | simple_exp                                      { $1                                          }
-    | MANY exp=simple_exp                             { Sugar.Bang_I ($symbolstartpos, exp)         }
-    | exp=simple_exp args=arg_like+                   { mk_app_like exp args                        }
-    | IF cond=exp THEN t=exp ELSE f=exp               { Sugar.If ($symbolstartpos, cond, t, f)      }
-    | FUN binds=binds ARROW body=exp                  { mk_lambda ($symbolstartpos) binds body      }
-    | LET fun_args=fun_args EQUAL exp=exp IN body=exp { fun_args ($symbolstartpos) exp body         }
-    | str=ID index=index                              { mk_index ($symbolstartpos) str index        }
-    | str=ID index=index  COLON_EQ exp=exp            { mk_assign ($symbolstartpos) str index exp   }
-    | fst=exp op=op snd=exp                           { op fst snd                                  }
+    | simple_exp                                      { $1                                        }
+    | MINUS i=INT                                     { Sugar.Int_I ($symbolstartpos, ~- i)       }
+    | MINUS f=FLOAT                                   { Sugar.Elt_I ($symbolstartpos, ~-. f)      }
+    | MANY exp=simple_exp                             { Sugar.Bang_I ($symbolstartpos, exp)       }
+    | exp=simple_exp args=arg_like+                   { mk_app_like exp args                      }
+    | IF cond=exp THEN t=exp ELSE f=exp               { Sugar.If ($symbolstartpos, cond, t, f)    }
+    | FUN binds=binds ARROW body=exp                  { mk_lambda ($symbolstartpos) binds body    }
+    | LET fun_args=fun_args EQUAL exp=exp IN body=exp { fun_args ($symbolstartpos) exp body       }
+    | str=ID index=index                              { mk_index ($symbolstartpos) str index      }
+    | str=ID index=index COLON_EQ exp=exp             { mk_assign ($symbolstartpos) str index exp }
+    | fst=exp op=op snd=exp                           { op fst snd                                }
 
-fun_args:
-    | destruct=destruct                                                  { mk_let destruct          }
-    | REC str=ID L_PAREN arg=annot_arg R_PAREN binds=bind* COLON lin=lin { mk_rec str arg binds lin }
-    | str=bang_var binds=bind+ COLON lin=lin                             { mk_fun str binds lin     }
-
+(* syntactic sugar *)
 %inline op:
     (* boolean *)
     | DOUBLE_BAR     { mk_op $symbolstartpos Or       }
@@ -228,6 +224,13 @@ index:
     | L_BRACKET index=exp               R_BRACKET { (index, None)     }
     | L_BRACKET index=exp COMMA snd=exp R_BRACKET { (index, Some snd) }
 
+(* formal parameters *)
+fun_args:
+    | destruct=destruct                                                  { mk_let destruct          }
+    | REC str=ID L_PAREN arg=annot_arg R_PAREN binds=bind* COLON lin=lin { mk_rec str arg binds lin }
+    | str=bang_var binds=bind+ COLON lin=lin                             { mk_fun str binds lin     }
+
+(* pattern-matching/destructing and binding *)
 binds:
     | res=annot_arg { [First res]           }
     | str=fc_var    { [Second ($symbolstartpos, str)] }
@@ -241,19 +244,20 @@ annot_arg:
     | pat=pat COLON lin=lin { Sugar.({pat;lin}) }
 
 destruct:
-    | str=bang_var COLON lin=lin        { First (str, lin)      }
-    | MANY pat=pat                      { Second (First pat)    }
-    | L_PAREN a=pat COMMA b=pat R_PAREN { Second (Second (a,b)) }
+    | str=bang_var COLON lin=lin { First (str, lin) }
+    | pat=pat                    { Second pat       }
 
 pat:
-    | bang_var                          { Sugar.Base ($symbolstartpos, $1 )  }
-    | MANY pat=pat                      { Sugar.Many ($symbolstartpos, pat)  }
-    | L_PAREN a=pat COMMA b=pat R_PAREN { Sugar.Pair ($symbolstartpos, a,b)  }
+    | bang_var                          { Sugar.Base ($symbolstartpos, $1 ) }
+    | L_PAREN R_PAREN                   { Sugar.Unit $symbolstartpos        }
+    | MANY pat=pat                      { Sugar.Many ($symbolstartpos, pat) }
+    | L_PAREN a=pat COMMA b=pat R_PAREN { Sugar.Pair ($symbolstartpos, a,b) }
 
 bang_var:
     | res=ID      { Sugar.NotB res }
     | BANG res=ID { Sugar.Bang res }
 
+(* simple expressions don't need parentheses around them *)
 arg_like:
     | fc=simple_fc   { Sugar.Fc ($symbolstartpos, fc)   }
     | UNDERSCORE     { Sugar.Underscore $symbolstartpos }
@@ -290,15 +294,14 @@ prim:
     | FREE_M    { Sugar.Free_mat    }
     | MATRIX    { Sugar.Matrix      }
     | COPY_M    { Sugar.Copy_mat    }
-    | SYMV      { Sugar.Symv        }
-    | GEMV      { Sugar.Gemv        }
-    | TRMV      { Sugar.Trmv        }
-    | TRSV      { Sugar.Trsv        }
-    | GER       { Sugar.Ger         }
+    | COPY_M_TO { Sugar.Copy_mat_to }
+    | SIZE_M    { Sugar.Size_mat    }
+    | SYMM      { Sugar.Symm        }
     | GEMM      { Sugar.Gemm        }
-    | TRMM      { Sugar.Trmm        }
-    | TRSM      { Sugar.Trsm        }
+    | POSV      { Sugar.Posv        }
+    | POTRS     { Sugar.Potrs       }
 
+(* types *)
 lin:
     | simple_lin                         { $1                    }
     | str=fc_var DOT lt=lin              { Sugar.All (str, lt)   } %prec NON_LOW
@@ -310,7 +313,7 @@ simple_lin:
     | INT_LT                 { Sugar.Int     }
     | ELT_LT                 { Sugar.Elt     }
     | fc=fc ARR_LT           { Sugar.Arr fc  }
-    | fc=fc MAT_LT           { Sugar.Arr fc  }
+    | fc=fc MAT_LT           { Sugar.Mat fc  }
     | BANG lt=simple_lin     { Sugar.Bang lt }
     | L_PAREN lt=lin R_PAREN { lt        }
 

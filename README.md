@@ -41,8 +41,7 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 ### Roadmap (in _rough_ order of priority)
 
 **In progress:**
- - Syntactic sugar/parsing grammar
- - Matrices (some Level 2/3 BLAS primitives)
+ - Matrix expression pattern matching
 
 **Future:**
  - ?Documentation with [MkDocs](http://www.mkdocs.org/)
@@ -62,6 +61,8 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
  - Scalars and arithmetic expressions
  - Recursion, conditionals and !-types
  - Elaboration/inference
+ - Matrices (some Level 3 BLAS/LAPACK primitives)
+ - Syntactic sugar/parsing grammar
 
 ## Development
 

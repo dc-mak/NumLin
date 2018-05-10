@@ -4,15 +4,15 @@ let rec f (i : !int) : !int --o !elt --o z arr --o 'x. 'x arr --o z arr * 'x arr
     fun x0 : !elt -> let Many x0 = x0 in let Many x0 = Many (Many x0) in
     fun write : z arr -> fun 'x -> fun weights : 'x arr ->
     if n = i then (write, weights) else
-    let (w0, weights) = weights[0] in
+    let (weights, w0) = weights[0] in
     let Many w0 = w0 in let Many w0 = Many (Many w0) in
-    let (w1, weights) = weights[1] in
+    let (weights, w1) = weights[1] in
     let Many w1 = w1 in let Many w1 = Many (Many w1) in
-    let (w2, weights) = weights[2] in
+    let (weights, w2) = weights[2] in
     let Many w2 = w2 in let Many w2 = Many (Many w2) in
-    let (x1, write) = write[i] in
+    let (write, x1) = write[i] in
     let Many x1 = x1 in let Many x1 = Many (Many x1) in
-    let (x2, write) = write[i + 1] in
+    let (write, x2) = write[i + 1] in
     let Many x2 = x2 in let Many x2 = Many (Many x2) in
     let newx : !elt = w0 *. x0 +. (w1 *. x1 +. w2 *. x2) in
     let Many newx = newx in let Many newx = Many (Many newx) in

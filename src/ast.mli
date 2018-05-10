@@ -4,15 +4,13 @@ val string_of_pp :
 
 (** Variables *)
 type var = string
-val sexp_of_var : var -> Base.Sexp.t
-val compare_var : var -> var -> int
+[@@deriving sexp_of, compare]
 type comparator_witness
 val comparator : (var, comparator_witness) Base.Comparator.t
 
 (** Fractional Capabilities *)
 type fc = Z | S of fc | V of var | U of var
-val sexp_of_fc : fc -> Base.Sexp.t
-val string_of_fc : fc -> string
+[@@deriving sexp_of]
 
 (** Linear types *)
 type lin =
@@ -26,7 +24,7 @@ type lin =
   | Bang of lin
   | Fun of lin * lin
   | All of var * lin
-val sexp_of_lin : lin -> Base.Sexp.t
+[@@deriving sexp_of]
 val pp_lin : Caml.Format.formatter -> lin -> unit
 val substitute_in : lin -> var:var -> replace:fc -> lin
 val substitute_unify : lin -> var:var -> replace:fc -> lin
@@ -36,7 +34,7 @@ val same_lin : (var * var) list -> lin -> lin -> (var * fc) list Base.Or_error.t
 
 (** Arithmetic expressions *)
 type arith = Add | Sub | Mul | Div | Eq | Lt
-val sexp_of_arith : arith -> Base.Sexp.t
+[@@deriving sexp_of]
 
 (** Primitives *)
 type prim =
@@ -51,7 +49,7 @@ type prim =
   | Share
   | Unshare
   | Free
-  (** Owl - no polymorphism so no Mapi :'( *)
+  (** Owl *)
   | Array
   | Copy
   | Sin
@@ -63,7 +61,7 @@ type prim =
   | Rotmg
   | Scal
   | Amax
-  (* matrix *)
+  (** Matrix *)
   | Get_mat
   | Set_mat
   | Share_mat
@@ -71,19 +69,17 @@ type prim =
   | Free_mat
   | Matrix
   | Copy_mat
-  (* Level 2/3 BLAS *)
-  | Symv
-  | Gemv
-  | Trmv
-  | Trsv
-  | Ger
+  | Copy_mat_to
+  | Size_mat
+  (** Level 3 BLAS/LAPACK *)
+  | Symm
   | Gemm
-  | Trmm
-  | Trsm
-val sexp_of_prim : prim -> Base.Sexp.t
+  | Posv
+  | Potrs
+[@@deriving sexp_of]
 val string_of_prim : prim -> string
 
-(** Expressions *)
+(** Locations *)
 type loc =
   Lexing.position = {
   pos_fname : string;
@@ -95,6 +91,7 @@ val sexp_of_loc : loc -> Base.Sexp.t
 val dummy : loc
 val line_col : loc -> string
 
+(** Expressions *)
 type exp =
   | Prim of loc * prim
   | Var of loc * var
@@ -107,12 +104,14 @@ type exp =
   | Bang_I of loc * exp
   | Spc of loc * exp * fc
   | App of loc * exp * exp
+  | Unit_E of loc * exp * exp
   | Bang_E of loc * var * exp * exp
   | Pair_E of loc * var * var * exp * exp
   | Fix of loc * var * var * lin * lin * exp
   | If of loc * exp * exp * exp
   | Gen of loc * var * exp
   | Lambda of loc * var * lin * exp
+  | Let of loc * var * exp * exp
 
 val loc : exp -> loc
 val is_value : exp -> bool

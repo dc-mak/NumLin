@@ -4,7 +4,8 @@
 (* This file is a header/wrapper around Owl's CBLAS bindings. *)
 
 (* begin template *)
-open Owl
+module Cblas =
+  Owl_cblas_basic
 ;;
 
 module Arr =

@@ -9,7 +9,7 @@ module Make :
     type 'a t
     val get : State.t t
     val put : State.t -> unit t
-    val fail : ?strict:unit -> string -> 'b -> ('b -> Sexplib.Sexp.t) -> 'a t
+    val fail : ?strict:unit -> string -> 'b -> ('b -> Base.Sexp.t) -> 'a t
     val fail_string : string -> 'a t
     val failf : ('a, unit, string, 'b t) format4 -> 'a
     val run : 'a t -> State.t -> ('a * State.t) Base.Or_error.t
@@ -26,7 +26,7 @@ module Make :
     val join : 'a t t -> 'a t
     val ignore_m : 'a t -> unit t
     val all : 'a t list -> 'a list t
-    val all_ignore : unit t list -> unit t
+    val all_unit : unit t list -> unit t
     module Let_syntax :
     sig
       val return : 'a -> 'a t

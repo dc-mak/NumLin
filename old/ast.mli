@@ -7,7 +7,7 @@ val string_of_pp : ?size:int -> (Caml.Format.formatter -> 'a -> unit) -> 'a -> s
 
 (** Variables have a [name] for pretty-printing and an [id] for uniqueness. *)
 type variable = { id : int; name : string; }
-val sexp_of_variable : variable -> Sexplib.Sexp.t
+val sexp_of_variable : variable -> Base.Sexp.t
 val compare_variable : variable -> variable -> int
 val string_of_variable : variable -> string
 
@@ -17,7 +17,7 @@ val string_of_variable : variable -> string
     2^(-[frac_cap]). Hence, a whole (unshared) array has a capability 1
     capability (2^-[Zero]). Either 1 or 1/2 or 1/4, etc... or a variable. *)
 type frac_cap = Zero | Succ of frac_cap | Var of variable
-val sexp_of_frac_cap : frac_cap -> Sexplib.Sexp.t
+val sexp_of_frac_cap : frac_cap -> Base.Sexp.t
 val compare_frac_cap : frac_cap -> frac_cap -> int
 val string_of_frac_cap : frac_cap -> string
 
@@ -34,7 +34,7 @@ type linear_t =
   | Fun of linear_t * linear_t
   | ForAll_frac_cap of variable * linear_t
   | Array_t of frac_cap
-val sexp_of_linear_t : linear_t -> Sexplib.Sexp.t
+val sexp_of_linear_t : linear_t -> Base.Sexp.t
 val compare_linear_t : linear_t -> linear_t -> int
 val pp_linear_t : Caml.Format.formatter -> linear_t -> unit
 val substitute_in : linear_t -> var:variable -> replacement:frac_cap -> linear_t Base.Or_error.t
@@ -67,7 +67,7 @@ type primitive =
   | Scalar_Mult (* xSCAL *)
   | Index_of_Max_Abs (* IxAMAX *)
 
-val sexp_of_primitive : primitive -> Sexplib.Sexp.t
+val sexp_of_primitive : primitive -> Base.Sexp.t
 
 val string_of_primitive : primitive -> string
 
@@ -92,7 +92,7 @@ type expression =
 (*| ForAll_Size of variable * expression *)
   | Primitive of primitive
 
-val sexp_of_expression : expression -> Sexplib.Sexp.t
+val sexp_of_expression : expression -> Base.Sexp.t
 
 val pp_expression : Caml.Format.formatter -> expression -> unit
 

@@ -76,6 +76,8 @@ let keywords =
     ; ("Many", MANY)
     (* inference *)
     ; ("_", UNDERSCORE)
+    (* matrix expressions *)
+    ; ("new", NEW)
     ] in
   let table = Hashtbl.of_alist_exn (module String) keywords in
   fun str -> match Hashtbl.find table str with
@@ -121,7 +123,7 @@ rule read =
   | ':'     { COLON }
   (* expressions *)
   | '='     { EQUAL }
-  | "->"    { ARROW }
+  | "->"    { R_ARROW }
   (* sugar, arrays *)
   | '['     { L_BRACKET }
   | ']'     { R_BRACKET }
@@ -134,14 +136,19 @@ rule read =
   | '-'     { MINUS }
   | '/'     { FWD_SLASH }
   (* element arithmetic *)
-  | "=."     { EQUAL_DOT }
-  | "<."     { LESS_THAN_DOT }
-  | "+."     { PLUS_DOT }
-  | "-."     { MINUS_DOT }
-  | "*."     { STAR_DOT }
-  | "/."     { FWD_SLASH_DOT }
+  | "=."    { EQUAL_DOT }
+  | "<."    { LESS_THAN_DOT }
+  | "+."    { PLUS_DOT }
+  | "-."    { MINUS_DOT }
+  | "*."    { STAR_DOT }
+  | "/."    { FWD_SLASH_DOT }
   (* comments *)
   | "(*"    { comment 1 lexbuf }
+  (* matrix expressions *)
+  | "<-"    { L_ARROW }
+  | "[|"    { L_SEMBRACK }
+  | "|]"    { R_SEMBRACK }
+  | '^'     { CARET }
   (* TODO: make more informative/friendly *)
   | _       { raise (SyntaxError (lexbuf.lex_curr_p, "unexpected char: " ^ Lexing.lexeme lexbuf)) }
 

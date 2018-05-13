@@ -481,12 +481,12 @@ let pp_exp ppf =
            phys_equal f2 f2' &&
            phys_equal f1 f2 &&
            phys_equal f1 f3 ->
-      fprintf ppf !"@[@[<2>let rec %s (%s (* %{string_of_lin} *)) (* %{string_of_lin} *) =@ %a in@]@ %a@]"
-          f1 x tx res pp_exp exp pp_exp body
+      fprintf ppf !"@[@[<2>let rec %s %s =@ %a in@]@ %a@]"
+          f1 x pp_exp exp pp_exp body
 
-    | App (_, Lambda (_, var, lin, body), exp) ->
-      fprintf ppf !"@[@[<2>let %s (* %{string_of_lin} *) =@ %a in@]@ %a@]"
-        var lin pp_exp exp pp_exp body
+    | App (_, Lambda (_, var, _, body), exp) ->
+      fprintf ppf !"@[@[<2>let %s =@ %a in@]@ %a@]"
+        var pp_exp exp pp_exp body
 
     | App (_, fun_, arg) as app ->
       let fl, fr = if prec fun_ >= prec app then "","" else "(", ")"
@@ -525,9 +525,9 @@ let pp_exp ppf =
       fprintf ppf "@[@[<2>let (%s, %s) =@ %a in@]@ %a@]"
         var1 var2 pp_exp exp1 pp_exp exp2
 
-    | Fix (_, f, x, tx, res, body) ->
-      fprintf ppf !"@[@[<2>let rec %s (%s (* %{string_of_lin} *)) (* %{string_of_lin} *) =@ %a in@]@ Many %s@]"
-        f x tx res pp_exp body f
+    | Fix (_, f, x, _, _, body) ->
+      fprintf ppf !"@[@[<2>let rec %s %s =@ %a in@]@ Many %s@]"
+        f x pp_exp body f
 
     | If (_, cond, True _, False _) ->
       pp_exp ppf cond

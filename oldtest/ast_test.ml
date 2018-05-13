@@ -56,25 +56,25 @@ let%expect_test "pp_linear_type" =
        Ast.pp_linear_t Caml.Format.std_formatter lt;
        Stdio.Out_channel.(newline stdout));
   [%expect {|
-        ∀ i_8. Arr[g_6+2]
-        ∀ i_8. ∀ h_7.
-          ( ( ( Arr[a_0+2] * I ) * ( I * Arr[a_0+2] ) --o
-              ( I --o Arr[a_0+2] ) --o Arr[a_0+2] --o Arr[a_0+2] )
-            * ( ( ( Arr[a_0+2] * Arr[a_0+2] ) * ( I * I ) )
-                * ( ( Arr[a_0+2] * Arr[a_0+2] ) * ( Arr[a_0+2] --o I ) ) ) )
-          * ( ( ( Arr[a_0+2] * Arr[a_0+2] ) * ( I * I ) --o
-              ( Arr[a_0+2] * Arr[a_0+2] ) * ( Arr[a_0+2] --o I ) )
-              * ( ( ( Arr[a_0+2] * I ) * ( I * Arr[a_0+2] ) )
-                  * ( ( I --o Arr[a_0+2] ) --o Arr[a_0+2] --o Arr[a_0+2] ) ) )
         ∀ i_8.
-          ( ( ∀ e_4. Arr[a_0+2] * Arr[a_0+2] --o Arr[a_0+2] --o I )
-            * ( ( Arr[a_0+2] * I --o ∀ c_2. Arr[a_0+2] )
-                * ( Arr[a_0+2] * I --o I * Arr[a_0+2] ) ) --o
-            ( ∀ e_4. Arr[b_1+2] * ( I * Arr[a_0+2] ) ) --o ∀ e_4. Arr[c_2+2] ) --o
-          ( ( Arr[a_0+2] * Arr[a_0+2] --o Arr[a_0+2] * I ) --o
-          ( Arr[a_0+2] * Arr[a_0+2] ) * ( Arr[a_0+2] --o I ) )
-          * ( ( ( I * Arr[a_0+2] ) * ( Arr[a_0+2] * I ) ) * ( ∀ d_3. I * I ) ) --o
-          ( ∀ e_4. Arr[b_1+2] * ( I * Arr[a_0+2] ) ) --o ∀ e_4. Arr[c_2+2] |}]
+          ( ∀ g_6.
+            ( ( Arr[a_0+2] * Arr[a_0+2] --o ∀ c_2. I )
+              * ( ∀ d_3. I --o Arr[a_0+2] ) )
+            * ( ( ∀ d_3. Arr[a_0+2] --o Arr[a_0+2] ) --o
+                ( Arr[a_0+2] --o Arr[a_0+2] ) --o Arr[a_0+2] --o Arr[a_0+2] ) )
+          --o ∀ g_6. ∀ f_5. ( ∀ d_3. I * I ) * ( ( I * I ) * Arr[b_1+2] )
+        ∀ i_8. Arr[g_6+2]
+        ∀ i_8.
+          ( ( ( ( ∀ c_2. Arr[a_0+2] ) --o I --o I ) --o
+            ( Arr[a_0+2] --o I ) * ( ∀ c_2. Arr[a_0+2] ) )
+            * ( ( Arr[a_0+2] * Arr[a_0+2] --o ∀ c_2. I ) --o ∀ d_3.
+              I --o Arr[a_0+2] ) )
+          * Arr[e_4+2] --o
+          ( ∀ e_4. I * Arr[a_0+2] --o ∀ c_2. I )
+          * ( ( ∀ d_3. I * I ) * ( ( I * I ) * Arr[b_1+2] ) ) --o
+          ( ( ( ∀ c_2. Arr[a_0+2] ) --o I --o I ) --o
+          ( Arr[a_0+2] --o I ) * ( ∀ c_2. Arr[a_0+2] ) ) --o
+          ( Arr[a_0+2] * Arr[a_0+2] --o ∀ c_2. I ) --o ∀ d_3. I --o Arr[a_0+2] |}]
 ;;
 
 (* substitute_in *)

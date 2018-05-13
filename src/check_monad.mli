@@ -32,7 +32,7 @@ type state
 type 'a t
 val get : state t
 val put : state -> unit t
-val fail : ?strict:unit -> string -> 'b -> ('b -> Sexplib0.Sexp.t) -> 'a t
+val fail : ?strict:unit -> string -> 'b -> ('b -> Base.Sexp.t) -> 'a t
 val fail_string : string -> 'a t
 val failf : ('a, unit, string, 'b t) format4 -> 'a
 val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
@@ -48,7 +48,7 @@ val map : 'a t -> f:('a -> 'b) -> 'b t
 val join : 'a t t -> 'a t
 val ignore_m : 'a t -> unit t
 val all : 'a t list -> 'a list t
-val all_ignore : unit t list -> unit t
+val all_unit : unit t list -> unit t
 module Let_syntax :
   sig
     val return : 'a -> 'a t

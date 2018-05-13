@@ -109,29 +109,6 @@ type pat =
 [@@deriving sexp_of]
 ;;
 
-let rec ds_pat pat (body : Ast.exp) : loc * Ast.var * Ast.exp =
-  match pat with
-  | Unit loc ->
-    let var = "unit" in (loc, var, Unit_E (loc, Var (loc, var), body))
-
-  | Base (loc, NotB var) ->
-    (loc, var, body)
-
-  | Base (loc, Bang var) ->
-    (loc, var, Bang_E (loc, var, Var (loc, var),
-                  Bang_E (loc, var, Bang_I (loc, Bang_I (loc, Var (loc, var))), body)))
-
-  | Many (loc, pat) ->
-    let (_, var, body) = ds_pat pat body in
-    (loc, var, Bang_E (loc, var, Var (loc, var), body))
-
-  | Pair (loc, a, b) ->
-    let (_, var_b, body) = ds_pat b body in
-    let (_, var_a, body) = ds_pat a body in
-    let var = "_p_" ^ var_a ^ "_" ^ var_b ^ "_p_" in
-    (loc, var, Pair_E (loc, var_a, var_b, Var (loc, var), body))
-;;
-
 type op =
   | Or
   | And
@@ -147,6 +124,13 @@ type op =
   | DivDot
   | EqDot
   | LtDot
+[@@deriving sexp_of]
+;;
+
+type mat_var =
+  | Just of loc * var
+  | Symm of loc * var
+  | Trsp of loc * var
 [@@deriving sexp_of]
 ;;
 
@@ -169,6 +153,12 @@ type arg_like =
   | Fc of loc * fc
   | Exp of exp
 
+and mat_exp =
+  | Copy_mat of loc * var
+  | Copy_mat_to of loc * var
+  | New_AB of exp * exp * loc * float * mat_var * mat_var
+  | AB_C of loc * float * mat_var * mat_var * loc * float * loc * var
+
 and exp =
   | Prim of loc * prim
   | Var of loc * var
@@ -179,39 +169,18 @@ and exp =
   | Elt_I of loc * float
   | Pair_I of loc * exp * exp
   | Bang_I of loc * exp
-  | AppLike of loc * exp * arg_like non_empty
+  | AppLike of exp * arg_like non_empty
   | If of loc * exp * exp * exp
-  | Lambda of loc * (annot_arg, loc * var) Either.t non_empty * exp
-  | Index of loc * var * exp * exp option
-  | Assign of loc * var * exp * exp option * exp
+  | Lambda of (annot_arg, loc * var) Either.t non_empty * exp
+  | Index of loc * var * loc * exp * exp option
+  | Assign of loc * var * loc * exp * exp option * exp
   | Infix of loc * exp * op * exp
   | LetAnnot of loc * bang_var * lin * exp * exp
   | LetPat of loc * pat * exp * exp
-  | LetFun of loc * bang_var * (annot_arg, loc * var) Either.t non_empty * lin * exp * exp
+  | LetFun of loc * bang_var * (annot_arg, loc * var) Either.t non_empty * exp * exp
   | LetRecFun of loc * var * annot_arg * (annot_arg, loc * var) Either.t list * lin * exp * exp
+  | LetMat of loc * var * loc * mat_exp * exp
 [@@deriving sexp_of]
-;;
-
-let loc : exp -> loc = function
-  | Prim (loc, _)
-  | Var (loc, _)
-  | Unit_I loc
-  | True loc
-  | False loc
-  | Int_I (loc, _)
-  | Elt_I (loc, _)
-  | Pair_I (loc, _, _)
-  | Bang_I (loc, _)
-  | AppLike (loc, _, _)
-  | If (loc, _, _, _)
-  | Lambda (loc, _, _)
-  | Index (loc, _, _, _)
-  | Assign (loc, _, _, _, _)
-  | Infix (loc, _, _, _)
-  | LetAnnot (loc, _, _, _, _)
-  | LetPat (loc, _, _, _)
-  | LetFun (loc, _, _, _, _, _)
-  | LetRecFun (loc, _, _, _, _, _, _) -> loc
 ;;
 
 let reset, inc =
@@ -221,8 +190,39 @@ let reset, inc =
   (fun () -> let y = !x in (x := y + 1; y))
 ;;
 
+let fresh name =
+  Printf.sprintf "__%s%d" name (inc())
+;;
+
 let unify_var () =
-  Printf.sprintf "__unify%d" (inc ())
+  fresh "unify"
+;;
+
+let rec ds_pat pat (body : Ast.exp) : loc * Ast.var * Ast.exp =
+  match pat with
+  | Unit loc ->
+    let var = fresh "unit" in (loc, var, Unit_E (loc, Var (loc, var), body))
+
+  | Base (loc, NotB var) ->
+    (loc, var, body)
+
+  | Base (loc, Bang var) ->
+    (loc, var, Bang_E (loc, var, Var (loc, var),
+                  Bang_E (loc, var, Bang_I (loc, Bang_I (loc, Var (loc, var))), body)))
+
+  | Many (loc, pat) ->
+    let (_, var, body) = ds_pat pat body in
+    (loc, var, Bang_E (loc, var, Var (loc, var), body))
+
+  | Pair (loc, a, b) ->
+    let (_, var_b, body) = ds_pat b body in
+    let (_, var_a, body) = ds_pat a body in
+    let var = "_p_" ^ var_a ^ "_" ^ var_b ^ "_p_" in
+    (loc, var, Pair_E (loc, var_a, var_b, Var (loc, var), body))
+;;
+
+
+exception MatrixPat of string
 ;;
 
 let rec ds_exp : exp -> Ast.exp = function
@@ -270,18 +270,18 @@ let rec ds_exp : exp -> Ast.exp = function
   | Pair_I (loc, a, b) -> Pair_I (loc, ds_exp a, ds_exp b)
   | Bang_I (loc, exp) -> Bang_I (loc, ds_exp exp)
 
-  | AppLike (_, func, {first=arg; rest=args}) ->
+  | AppLike (func, {first=arg; rest=args}) ->
 
     List.fold (arg :: args) ~init:(ds_exp func)
       ~f:(fun acc -> function
         | Underscore loc -> Spc(loc, acc, U (unify_var()))
         | Fc (loc, fc) -> Spc (loc, acc, ds_fc fc)
-        | Exp exp-> App (loc exp, acc, ds_exp exp))
+        | Exp exp-> let exp = ds_exp exp in App (Ast.loc exp, acc, exp))
 
   | If (loc, cond, true_, false_) ->
     If (loc, ds_exp cond, ds_exp true_, ds_exp false_)
 
-  | Lambda (_, {first=arg;rest=args}, body) ->
+  | Lambda ({first=arg;rest=args}, body) ->
 
     List.fold_right (arg :: args) ~init:(ds_exp body)
       ~f:(fun arg body -> match arg with
@@ -291,24 +291,35 @@ let rec ds_exp : exp -> Ast.exp = function
         | Second (loc, fc_var) ->
           Gen (loc, fc_var, body))
 
-  | Index (loc, var, fst, snd) ->
+  | Index (loc, var, prim_loc, fst, snd) ->
     let one get : Ast.exp =
-      App (loc, App (loc, Spc (loc, Prim (loc, get), U (unify_var ())), Var (loc, var)), ds_exp fst) in
+      let fst = ds_exp fst in
+      App (Ast.loc fst,
+           App (loc, Spc (loc,
+                          Prim (prim_loc, get), U (unify_var ())),
+                             Var (loc, var)), fst) in
     begin match snd with
     | None -> one Get
-    | Some snd -> App (loc, one Get_mat, ds_exp snd)
+    | Some snd -> let snd = ds_exp snd in App (Ast.loc snd, one Get_mat, snd)
     end
 
-  | Assign (loc, var, fst, snd, exp) ->
-    let one set : Ast.exp = App (loc, App (loc, Prim (loc, set), Var (loc, var)), ds_exp fst) in
+  | Assign (loc, var, prim_loc, fst, snd, exp) ->
+    let one set : Ast.exp =
+      let fst = ds_exp fst in
+      App (Ast.loc fst, App (loc, Prim (prim_loc, set), Var (loc, var)), fst) in
     begin match snd with
-    | None -> App (loc, one Set, ds_exp exp)
-    | Some snd -> App (loc, App (loc, one Set_mat, ds_exp snd), ds_exp exp)
+    | None ->
+      let exp = ds_exp exp in
+      App (Ast.loc exp, one Set, exp)
+    | Some snd ->
+      let snd = ds_exp snd and exp = ds_exp exp in
+      App (Ast.loc exp, App (Ast.loc snd, one Set_mat, snd), exp)
+
     end
 
   | Infix (op_loc, fst, op, snd) ->
-    let fst = ds_exp fst and snd = ds_exp snd
-    and fst_loc = loc fst and snd_loc = loc snd in
+    let fst = ds_exp fst and snd = ds_exp snd in
+    let fst_loc = Ast.loc fst and snd_loc = Ast.loc snd in
     begin match op with
     | Or       -> If (op_loc, fst, True op_loc, snd)
     | And      -> If (op_loc, fst, snd, False op_loc)
@@ -354,30 +365,26 @@ let rec ds_exp : exp -> Ast.exp = function
       Pair_E (loc, var_a, var_b, exp, body)
     end
 
-  | LetFun (loc, fun_var, {first=arg;rest=args}, fun_lin, fun_exp, in_body) ->
+  | LetFun (loc, fun_var, {first=arg;rest=args}, fun_exp, in_body) ->
 
     let in_body = ds_exp in_body
-    and (fun_lin, fun_exp) =
-      List.fold_right (arg :: args) ~init:(ds_lin fun_lin, ds_exp fun_exp)
-        ~f:(fun arg (fun_lin, fun_exp) -> match arg with
+    and fun_exp =
+      List.fold_right (arg :: args) ~init:(ds_exp fun_exp)
+        ~f:(fun arg fun_exp -> match arg with
 
           | First {pat;lin=arg_lin} ->
             let arg_lin = ds_lin arg_lin in
-            (Ast.Fun (arg_lin, fun_lin),
-             let (loc, arg_var, fun_exp) = ds_pat pat fun_exp in
-             Lambda (loc, arg_var, arg_lin, fun_exp))
+            let (loc, arg_var, fun_exp) = ds_pat pat fun_exp in
+            Lambda (loc, arg_var, arg_lin, fun_exp)
 
           | Second (loc, fc_var) ->
-            (All (fc_var, fun_lin), Gen (loc, fc_var, fun_exp))) in
+            Gen (loc, fc_var, fun_exp)) in
 
     begin match fun_var with
     | NotB fun_var ->
-      App (loc, Lambda (loc, fun_var, fun_lin, in_body), fun_exp)
+      Let (loc, fun_var, fun_exp, in_body)
     | Bang fun_var ->
-      App (loc,
-           Lambda (loc, fun_var, Bang fun_lin,
-                   Bang_E (loc, fun_var, Var (loc, fun_var), in_body)),
-           Bang_I (Ast.loc fun_exp, fun_exp))
+      Bang_E (loc, fun_var, Bang_I (Ast.loc fun_exp, fun_exp), in_body)
     end
 
   | LetRecFun (loc, fun_var, {pat;lin=arg_lin}, args, res_lin, res_exp, in_body) ->
@@ -397,11 +404,112 @@ let rec ds_exp : exp -> Ast.exp = function
 
     let (_, arg_var, res_exp) = ds_pat pat res_exp
     and arg_lin = ds_lin arg_lin in
-    App (loc, Lambda (loc, fun_var, Bang (Fun (arg_lin, res_lin)),
-                      Bang_E (loc, fun_var, Var (loc, fun_var), ds_exp in_body)),
-         Fix (loc, fun_var, arg_var, arg_lin, res_lin, res_exp))
+    Bang_E (loc, fun_var, Fix (loc, fun_var, arg_var, arg_lin, res_lin, res_exp), ds_exp in_body)
+
+  | LetMat (new_loc, new_var, prim_loc, mat_exp, body) ->
+
+    let match_on ~alpha_loc ~alpha ~a ~b ~beta_loc ~beta ~c_loc ~c : Ast.exp =
+      match a , b with
+
+      (* gemm *)
+      | (Just (a_loc, a) as a'), (Just (b_loc, b) as b')
+      | (Just (a_loc, a) as a'), (Trsp (b_loc, b) as b')
+      | (Trsp (a_loc, a) as a'), (Just (b_loc, b) as b')
+      | (Trsp (a_loc, a) as a'), (Trsp (b_loc, b) as b') ->
+
+        let trsp = function
+          | Trsp (loc,_) -> True loc
+          | Just (loc,_) -> False loc
+          | Symm _ -> assert false in
+
+        let first = Exp (Elt_I (alpha_loc, alpha))
+        and rest = [
+          Underscore a_loc;
+          Exp (Pair_I (a_loc, Var (a_loc, a), trsp a'));
+          Underscore b_loc;
+          Exp (Pair_I (b_loc, Var (b_loc, b), trsp b'));
+          Exp (Elt_I (beta_loc, beta));
+          Exp (Var (c_loc, c));
+        ]
+
+        and tmp_var = "_p_" ^ a ^ "_" ^ "_p_" in
+        let exp = ds_exp @@ AppLike (Prim (prim_loc, Gemm), {first; rest}) in
+        Pair_E (new_loc, tmp_var, new_var, exp,
+                (* using prim_loc is arbitrary here *)
+                Pair_E (prim_loc, a, b, Var (prim_loc, tmp_var), ds_exp body))
+
+      (* symm *)
+      | (Symm (a_loc, a) as a'), Just (b_loc, b)
+      | (Just (a_loc, a) as a'), Symm (b_loc, b) ->
+
+        let (first, a_loc, a, b_loc, b) =
+          match a' with
+          | Symm (loc, _) -> (Exp (False loc), a_loc, a, b_loc, b)
+          | Just (loc, _) -> (Exp (True loc), b_loc, b, a_loc, a)
+          | Trsp _ -> assert false
+        in
+        let rest = [
+          Exp (Elt_I (alpha_loc, alpha));
+          Underscore a_loc;
+          Exp (Var (a_loc, a));
+          Underscore b_loc;
+          Exp (Var (b_loc, b));
+          Exp (Elt_I (beta_loc, beta));
+          Exp (Var (c_loc, c));
+        ]
+
+        and tmp_var = "_p_" ^ a ^ "_" ^ "_p_" in
+        let exp = ds_exp @@ AppLike (Prim (prim_loc, Symm), {first; rest}) in
+        Pair_E (new_loc, tmp_var, new_var, exp,  
+                (* using prim_loc is arbitrary here *)
+                Pair_E (prim_loc, a, b, Var (prim_loc, tmp_var), ds_exp body))
+
+      (* illegal *)
+      | Symm (a_loc, _), Symm (b_loc, _) ->
+        raise @@
+        MatrixPat
+          (Printf.sprintf !"Need only one 'symm' annotation, \
+                            either %{Ast.line_col} or %{Ast.line_col}.\n" a_loc b_loc)
+
+      | Symm (a_loc, _), Trsp (b_loc, _)
+      | Trsp (a_loc, _), Symm (b_loc, _) ->
+        raise @@
+        MatrixPat
+          (Printf.sprintf !"Cannot use 'symm' annotation with transpose, at \
+                            %{Ast.line_col} and %{Ast.line_col}.\n" a_loc b_loc)
+
+    in
+
+    begin match mat_exp with
+    | Copy_mat (reb_loc, rebound) ->
+      let unify = unify_var () in
+      Pair_E (new_loc, rebound, new_var,
+              App (reb_loc, Spc (reb_loc, Prim (prim_loc, Copy_mat), U unify),
+                   Var (reb_loc, rebound)),
+              ds_exp body)
+
+    | Copy_mat_to (reb_loc, rebound) ->
+      let unify = unify_var () in
+      Pair_E (new_loc, rebound, new_var,
+              App (new_loc, App(reb_loc, Spc (reb_loc, Prim (prim_loc, Copy_mat_to), U unify),
+                    Var (reb_loc, rebound)), Var (new_loc, new_var)),
+              ds_exp body)
+
+    | New_AB (row, col, alpha_loc, alpha, a, b) ->
+      let row = ds_exp row and col = ds_exp col in
+      Let (new_loc, new_var,
+           App (Ast.loc col, App (Ast.loc row, Prim (prim_loc, Matrix), row), col),
+           match_on ~alpha_loc ~alpha ~a ~b ~beta_loc:prim_loc ~beta:0. ~c_loc:prim_loc ~c:new_var)
+
+    | AB_C (alpha_loc, alpha, a, b, beta_loc, beta, c_loc, c) ->
+      match_on ~alpha_loc ~alpha ~a ~b ~beta_loc ~beta ~c_loc ~c
+
+    end
 ;;
 
+(* Don't let impure implementation result in impure interface/behaviour *)
 let ds_exp exp =
-  (reset(); ds_exp exp)
+  let () = reset () in
+  try Ok (ds_exp exp)
+  with MatrixPat msg -> Error msg
 ;;

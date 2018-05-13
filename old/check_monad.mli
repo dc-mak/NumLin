@@ -13,7 +13,7 @@
     Private so you can pattern match and extract but not fake proof. *)
 type well_formed = private WF of Ast.linear_t
 
-val sexp_of_well_formed : well_formed -> Sexplib.Sexp.t
+val sexp_of_well_formed : well_formed -> Base.Sexp.t
 
 val wf_Array_t_Zero : well_formed
 val wf_Unit         : well_formed
@@ -26,12 +26,12 @@ val wf_ForAll       : Ast.variable -> well_formed -> well_formed
 (** Proof that a type is not used *)
 type not_used
 
-val sexp_of_not_used : not_used -> Sexplib.Sexp.t
+val sexp_of_not_used : not_used -> Base.Sexp.t
 
 (** Track usage of linear types *)
 type tagged_linear_t = Not_used of not_used | Used of well_formed
 
-val sexp_of_tagged_linear_t : tagged_linear_t -> Sexplib.Sexp.t
+val sexp_of_tagged_linear_t : tagged_linear_t -> Base.Sexp.t
 
 (** The theory has two (eventually three) sorts: variables can map to either
     - Linear Types, with an 'a (e.g. usage)
@@ -39,7 +39,7 @@ val sexp_of_tagged_linear_t : tagged_linear_t -> Sexplib.Sexp.t
     - Sizes/dimensions or arrays and matrices *)
 type state
 
-val sexp_of_state : state -> Sexplib.Sexp.t
+val sexp_of_state : state -> Base.Sexp.t
 
 (** Sequence computations based on a given state. *)
 type 'a t
@@ -68,7 +68,7 @@ val ignore_m : 'a t -> unit t
 
 val all : 'a t list -> 'a list t
 
-val all_ignore : unit t list -> unit t
+val all_unit : unit t list -> unit t
 
 module Let_syntax : sig
 
@@ -95,7 +95,7 @@ module Let_syntax : sig
 end
 
 (** Ignore the state and return error message with erroneous value. *)
-val fail : ?strict:unit -> string -> 'a -> ('a -> Sexplib.Sexp.t) -> 'a t
+val fail : ?strict:unit -> string -> 'a -> ('a -> Base.Sexp.t) -> 'a t
 
 (** Ignore the state and return error message *)
 val fail_string : string -> 'a t

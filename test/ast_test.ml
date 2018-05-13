@@ -40,14 +40,16 @@ let%expect_test "pp_lin" =
        Stdio.Out_channel.(newline stdout));
   [%expect {|
         'i.
-          ( ( ( 'e. !( 'c. unit ) ) --o !float ) --o unit )
-          * ( ( 'f. int ) --o float * ( 'c s s arr * int ) )
-        !( ( ( ( 'e. !( 'c. unit ) ) --o !float ) --o unit )
-           * ( ( 'f. int ) --o float * ( 'c s s arr * int ) ) )
+          'f s s arr --o 'g.
+            ( ( !( 'a s s arr ) --o !( 'a s s arr ) ) --o 'd. int * unit ) --o 'e.
+              'b s s arr * ( 'a s s arr * bool )
+        !( 'f s s arr --o 'g.
+          ( ( !( 'a s s arr ) --o !( 'a s s arr ) ) --o 'd. int * unit ) --o 'e.
+            'b s s arr * ( 'a s s arr * bool ) )
         'i.
-          ( ( ( 'e. ( 'c. float ) * ( int * unit ) ) * ( 'c s s arr * int ) )
-            * !float )
-          * !( ( float --o 'd. float --o int ) --o int ) |}]
+          int --o !( ( 'd. bool * int ) * ( 'd. int --o int ) ) --o
+          ( ( !( 'a s s arr ) --o !( 'a s s arr ) ) --o 'd. int * unit )
+          * ( 'e. 'b s s arr * ( 'a s s arr * bool ) ) |}]
 ;;
 
 (* substitute_in, substitute_unify *)

@@ -10,21 +10,21 @@
 (* - .messages error reporting                                   *)
 
 let mk_app_like exp (first :: rest) =
-  Sugar.(AppLike (loc exp, exp, {first; rest}))
+  Sugar.(AppLike (exp, {first; rest}))
   [@@ocaml.warning "-8"]
 ;;
 
-let mk_lambda loc (first :: rest) body =
-  Sugar.Lambda (loc, {first;rest}, body)
+let mk_lambda (first :: rest) body =
+  Sugar.Lambda ({first;rest}, body)
   [@@ocaml.warning "-8"]
 ;;
 
-let mk_index loc str (fst, snd) =
-  Sugar.Index (loc, str, fst, snd)
+let mk_index loc str prim_loc (fst, snd) =
+  Sugar.Index (loc, str, prim_loc, fst, snd)
 ;;
 
-let mk_assign loc str (fst, snd) exp =
-  Sugar.Assign (loc, str, fst, snd, exp)
+let mk_assign loc str prim_loc (fst, snd) exp =
+  Sugar.Assign (loc, str, prim_loc, fst, snd, exp)
 ;;
 
 type ('a, 'b) either = ('a, 'b) Base.Either.t =
@@ -44,13 +44,23 @@ let mk_rec str arg binds lin loc exp body =
   Sugar.LetRecFun (loc, str, arg, binds, lin, exp, body)
 ;;
 
-let mk_fun str (first :: rest) lin loc exp body =
-  Sugar.LetFun (loc, str, {first;rest}, lin, exp, body)
+let mk_fun str (first :: rest) loc exp body =
+  Sugar.LetFun (loc, str, {first;rest}, exp, body)
   [@@ocaml.warning "-8"]
 ;;
 
 let mk_op loc op fst snd =
   Sugar.Infix (loc, fst, op, snd)
+;;
+
+let mk_mat str_loc str mat_loc mat body =
+  Sugar.LetMat (str_loc, str, mat_loc, mat, body)
+;;
+
+(* Use sparingly because it results in uninformative parser errors *)
+(* that can't be improved using the error-message framework.       *)
+let ensure this str =
+    if Base.String.(this = str) then str else raise Error
 ;;
 
 type destruct =
@@ -129,7 +139,7 @@ type destruct =
 %token EQUAL
 %token IN
 %token MANY
-%token ARROW
+%token R_ARROW
 %token IF
 %token THEN
 %token ELSE
@@ -152,9 +162,15 @@ type destruct =
 %token STAR_DOT
 %token MINUS_DOT
 %token FWD_SLASH_DOT
+(* matrix expressions *)
+%token L_SEMBRACK
+%token R_SEMBRACK
+%token CARET
+%token NEW
+%token L_ARROW
 
 (* Associativity and precedence *)
-%nonassoc IN ELSE ARROW COLON_EQ NON_LOW
+%nonassoc IN ELSE R_ARROW COLON_EQ NON_LOW
 %left PLUS PLUS_DOT MINUS MINUS_DOT
 %left STAR STAR_DOT FWD_SLASH FWD_SLASH_DOT
 %right DOUBLE_BAR
@@ -167,6 +183,9 @@ type destruct =
 
 %type < Sugar.exp                                            > simple_exp exp
 %type < Sugar.loc -> Sugar.exp -> Sugar.exp -> Sugar.exp     > fun_args
+%type < Sugar.mat_exp                                        > delim_mat_exp mat_ab_c
+%type < Sugar.exp -> Sugar.exp -> Sugar.mat_exp              > mat_ab
+%type < Sugar.mat_var                                        > mat_var
 %type < Sugar.exp -> Sugar.exp -> Sugar.exp                  > op
 %type < Sugar.exp * Sugar.exp option                         > index
 %type < (Sugar.annot_arg, Sugar.loc * Sugar.var) either list > binds
@@ -179,7 +198,7 @@ type destruct =
 %type < Sugar.prim                                           > prim
 %type < Sugar.lin                                            > lin simple_lin
 %type < Sugar.fc                                             > fc unit_fc simple_fc
-%type < Sugar.var                                            > fc_var
+%type < Sugar.var                                            > sym tee fc_var
 
 %%
 
@@ -188,17 +207,57 @@ prog:
     | exp=exp EOP { exp         }
 
 exp:
-    | simple_exp                                      { $1                                        }
-    | MINUS i=INT                                     { Sugar.Int_I ($symbolstartpos, ~- i)       }
-    | MINUS f=FLOAT                                   { Sugar.Elt_I ($symbolstartpos, ~-. f)      }
-    | MANY exp=simple_exp                             { Sugar.Bang_I ($symbolstartpos, exp)       }
-    | exp=simple_exp args=arg_like+                   { mk_app_like exp args                      }
-    | IF cond=exp THEN t=exp ELSE f=exp               { Sugar.If ($symbolstartpos, cond, t, f)    }
-    | FUN binds=binds ARROW body=exp                  { mk_lambda ($symbolstartpos) binds body    }
-    | LET fun_args=fun_args EQUAL exp=exp IN body=exp { fun_args ($symbolstartpos) exp body       }
-    | str=ID index=index                              { mk_index ($symbolstartpos) str index      }
-    | str=ID index=index COLON_EQ exp=exp             { mk_assign ($symbolstartpos) str index exp }
-    | fst=exp op=op snd=exp                           { op fst snd                                }
+    | simple_exp                                        { $1                                                          }
+    | MINUS i=INT                                       { Sugar.Int_I ($symbolstartpos, ~- i)                         }
+    | MINUS f=FLOAT                                     { Sugar.Elt_I ($symbolstartpos, ~-. f)                        }
+    | MANY exp=simple_exp                               { Sugar.Bang_I ($symbolstartpos, exp)                         }
+    | exp=simple_exp args=arg_like+                     { mk_app_like exp args                                        }
+    | IF cond=exp THEN t=exp ELSE f=exp                 { Sugar.If ($symbolstartpos, cond, t, f)                      }
+    | FUN binds=binds R_ARROW body=exp                  { mk_lambda binds body                                        }
+    | LET fun_args=fun_args EQUAL exp=exp IN body=exp   { fun_args ($symbolstartpos) exp body                         }
+    | str=ID index=index                                { mk_index ($symbolstartpos) str ($startpos(index)) index     }
+    | str=ID index=index _set=COLON_EQ exp=exp          { mk_assign ($symbolstartpos) str ($startpos(_set)) index exp }
+    | fst=exp op=op snd=exp                             { op fst snd                                                  }
+    | LET str=ID L_ARROW mat=delim_mat_exp IN body=exp  { mk_mat ($startpos(str)) str ($startpos(mat)) mat body       }
+
+(* could support integer literals in future *)
+delim_mat_exp:
+    | L_SEMBRACK str=ID R_SEMBRACK
+    { Sugar.Copy_mat_to ($startpos(str), str) }
+    | NEW L_SEMBRACK str=ID R_SEMBRACK
+    { Sugar.Copy_mat ($startpos(str), str)    }
+    | NEW L_PAREN row=exp COMMA col=exp R_PAREN L_SEMBRACK mat=mat_ab R_SEMBRACK
+    { mat row col                             }
+    | L_SEMBRACK exp=mat_ab_c R_SEMBRACK
+    { exp                                     }
+
+mat_ab:
+    | alpha=float_star a=mat_var STAR b=mat_var
+    { fun row col -> Sugar.New_AB (row, col, $startpos(alpha), alpha, a, b) }
+mat_ab_c:
+    | alpha=float_star a=mat_var STAR b=mat_var op=pm beta=float_star c=ID
+    { Sugar.AB_C ($startpos(alpha), alpha, a, b, $startpos(beta), op beta, $startpos(c), c) }
+    | beta=float_star c=ID op=pm alpha=float_star a=mat_var STAR b=mat_var
+    { Sugar.AB_C ($startpos(alpha), op alpha, a, b, $startpos(beta), beta, $startpos(c), c) }
+%inline pm:
+    | PLUS  { fun x -> x }
+    | MINUS { (~-.)      }
+
+mat_var:
+    | str=ID                     { Sugar.Just ($startpos(str), str) }
+    | str=ID CARET tee           { Sugar.Trsp ($startpos(str), str) }
+    | sym L_PAREN str=ID R_PAREN { Sugar.Symm ($startpos(str), str) }
+sym:
+    | str=ID { ensure "sym" str }
+tee:
+    | str=ID { ensure "T" str }
+
+(* could support variables in the future *)
+%inline float_star:
+    | L_PAREN MINUS f=FLOAT R_PAREN STAR   { ~-. f  }
+    | MINUS f=FLOAT STAR                   { ~-. f  }
+    | f=FLOAT STAR                         { f      }
+    |                                      { 1.     }
 
 (* syntactic sugar *)
 %inline op:
@@ -228,7 +287,7 @@ index:
 fun_args:
     | destruct=destruct                                                  { mk_let destruct          }
     | REC str=ID L_PAREN arg=annot_arg R_PAREN binds=bind* COLON lin=lin { mk_rec str arg binds lin }
-    | str=bang_var binds=bind+ COLON lin=lin                             { mk_fun str binds lin     }
+    | str=bang_var binds=bind+                                           { mk_fun str binds         }
 
 (* pattern-matching/destructing and binding *)
 binds:

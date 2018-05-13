@@ -3,31 +3,26 @@ let !kalman
         ('h) (h : 'h mat)     (* k, n *)
         ('m) (mu : 'm mat)    (* n, 1 *)
         (r_1 : z mat)         (* k, k *)
-        (data_1 : z mat)      (* k, 1 *)
-        : ('s mat * ('h mat * ('m mat * (z mat * z mat)))) * (z mat * z mat) =
+        (data_1 : z mat)      (* k, 1 *) =
         let (h, (!k, !n)) = sizeM _ h in
-        let tmp = matrix k n in
-(*20*)  let ((sigma, h), sigma_h) = symm true 1. _ sigma _ h 0. tmp in
-(*21*)  let ((sigma_h, h), r_2) = gemm 1. _ (sigma_h, false) _ (h, true) 1. r_1 in
-(*22*)  let ((h, mu), data_2) = gemm 1. _ (h, false) _ (mu, false) (-1.) data_1 in
+(*20*)  let sigma_h <- new (k, n) [| h * sym (sigma) |] in
+(*21*)  let r_2 <- [| sigma_h * h^T + r_1 |] in
+(*22*)  let data_2 <- [| h * mu - data_1 |] in
 (*23*)  let (h, new_h) = copyM_to _ h sigma_h in
-(*24*)  let (r_2, new_r) = copyM _ r_2 in
+(*24*)  let new_r <- new [| r_2 |] in
 (*25*)  let (chol_r, sol_h) = posv new_r new_h in
 (*27*)  let (chol_r, sol_data) = potrs _ chol_r data_2 in
         let () = freeM chol_r in
-        let tmp = matrix n n in
-(*28*)  let ((h, sol_h), h_sol_h) = gemm 1. _ (h, true) _ (sol_h, false) 0. tmp in
+(*28*)  let h_sol_h <- new (n, n) [| h^T * sol_h |] in
         let () = freeM sol_h in
-        let tmp = matrix n 1 in
-(*29*)  let ((h, sol_data), h_sol_data) = gemm 1. _ (h, true) _ (sol_data, false) 0. tmp in
-(*30*)  let (mu, mu_copy) = copyM _ mu in
-(*31*)  let ((sigma, h_sol_data), new_mu) = symm false 1. _ sigma _ h_sol_data 0. mu_copy in
+(*29*)  let h_sol_data <- new (n, 1) [| h ^ T * sol_data |] in
+(*30*)  let mu_copy <- new [| mu |] in
+(*31*)  let new_mu <- [| sym (sigma) * h_sol_data + mu_copy |] in
         let () = freeM h_sol_data in
-        let tmp = matrix n n in
-(*32*)  let ((sigma, h_sol_h), h_sol_h_sigma) = symm true 1. _ sigma _ h_sol_h 0. tmp in
+(*32*)  let h_sol_h_sigma <- new (n,n) [| h_sol_h * sym(sigma) |] in
         let () = freeM h_sol_h in
-(*33*)  let (sigma, sigma_copy) = copyM _ sigma in
-(*34*)  let ((sigma, h_sol_h_sigma), new_sigma) = symm false (-1.) _ sigma _ h_sol_h_sigma 1. sigma_copy in
+(*33*)  let sigma_copy <- new [| sigma |] in
+(*34*)  let new_sigma <- [| sigma_copy - sym (sigma) * h_sol_h_sigma |] in
         let () = freeM h_sol_h_sigma in
         ((sigma, (h, (mu, (r_2, sol_data)))), (new_mu, new_sigma)) in
 kalman

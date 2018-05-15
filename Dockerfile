@@ -50,7 +50,9 @@ WORKDIR $HOME
 #    wrap-install-commands: []
 #    wrap-remove-commands: []
 #    EOF
-RUN opam init -y || head -n-3 ~/.opam/config > tmp && mv tmp ~/.opam/config && opam switch create 4.06.1
+RUN opam init -y || \
+    sed -i -- 's/wrap-\(.*\)-commands: \[.*\]$/wrap-\1-commands: []/g' ~/.opam/config \
+    && opam switch create 4.06.1
 # OCaml Packages Used
 RUN opam install -y           \
         oasis                 \

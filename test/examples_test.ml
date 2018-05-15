@@ -34,17 +34,18 @@ let%expect_test "sum_array" =
   [%expect {| 190.000000 |}]
 ;;
 
+let make_arr () =
+  let n = 7 in
+  A (Owl.Arr.of_array [| 10.; 50.; 60.; 10.; 20.; 30.; 40. |] [| n |])
+;;
+
 (* It's not quite but close enough... *)
 let%expect_test "one_d_conv" =
   let one_d_conv = Examples.Weighted_avg.it in
-  let n = 7 in
-  let f i _ = match i with
-    | 0 -> 10. | 1 -> 50. | 2 -> 60. | 3 -> 10.
-    | 4 -> 20. | 5 -> 30. | 6 -> 40. | _ -> assert false in
-  let row : z arr = A Owl.Arr.(mapi f (empty [| n |])) in
-  let f _ _ = 1. /. 3. in
-  let weights : z arr = A Owl.Arr.(mapi f @@ empty [| n |]) in
-  let (A row, _) = one_d_conv (Many 1) (Many (n-1)) (Many 10.) row weights in
+  let (A row) : z arr = make_arr () in
+  let n = Owl.Arr.numel row in
+  let weights : z arr = A (Owl.Arr.(init [| n |] (fun _ -> 1. /. 3.))) in
+  let (A row, _) = one_d_conv (Many 1) (Many (n-1)) (Many 10.) (A row) weights in
   Stdio.printf !"%{sexp: float array}" (Owl.Arr.to_array row);
   [%expect {| (10 40 40 30 19.999999999999996 30 40) |}]
 ;;
@@ -52,14 +53,10 @@ let%expect_test "one_d_conv" =
 (* With inferred fractional capabilities *)
 let%expect_test "one_d_conv" =
   let one_d_conv = Examples.Weighted_avg_infer.it in
-  let n = 7 in
-  let f i _ = match i with
-    | 0 -> 10. | 1 -> 50. | 2 -> 60. | 3 -> 10.
-    | 4 -> 20. | 5 -> 30. | 6 -> 40. | _ -> assert false in
-  let row : z arr = A Owl.Arr.(mapi f (empty [| n |])) in
-  let f _ _ = 1. /. 3. in
-  let weights : z arr = A Owl.Arr.(mapi f @@ empty [| n |]) in
-  let (A row, _) = one_d_conv (Many 1) (Many (n-1)) (Many 10.) row weights in
+  let (A row) : z arr = make_arr () in
+  let n = Owl.Arr.numel row in
+  let weights : z arr = A (Owl.Arr.(init [| n |] (fun _ -> 1. /. 3.))) in
+  let (A row, _) = one_d_conv (Many 1) (Many (n-1)) (Many 10.) (A row) weights in
   Stdio.printf !"%{sexp: float array}" (Owl.Arr.to_array row);
   [%expect {| (10 40 40 30 19.999999999999996 30 40) |}]
 ;;
@@ -71,4 +68,68 @@ let%expect_test "sugar" =
   let Many y = g (Many (Many 4)) (Many 1) in
   Stdio.printf !"%{sexp: float array} and %d and %d" (Owl.Arr.to_array row) x y;
   [%expect {| (1 1 1) and 3 and 9 |}]
+;;
+
+let%expect_test "kalman" =
+
+  (** [sigma] and [r] must be PD and Symmetric *)
+  let n, k = 5, 3 in
+
+  let sigma = Owl.Mat.of_array [|
+    1.682490; 0.621964; 0.959947; 1.228820; 1.029410;
+    0.621964; 0.631446; 0.551902; 0.723342; 0.756674;
+    0.959947; 0.551902; 1.100060; 0.908402; 1.032840;
+    1.228820; 0.723342; 0.908402; 1.212400; 1.011350;
+    1.029410; 0.756674; 1.032840; 1.011350; 1.302410;
+  |] n n in
+  let () = assert Owl.Linalg.D.(is_posdef sigma && is_symmetric sigma) in
+  let sigma2 = Owl.Mat.copy sigma in
+
+  let r = Owl.Mat.of_array [|
+    0.880164; 0.676823; 0.802738;
+    0.676823; 0.650806; 0.958725;
+    0.802738; 0.958725; 1.745970;
+  |] k k in
+  let () = assert Owl.Linalg.D.(is_posdef r && is_symmetric r) in
+
+  let h = Owl.Mat.of_array [|
+    0.4621110; 0.833041; 0.0395867; 0.529315; 0.241678;
+    0.0507828; 0.340120; 0.8726660; 0.836114; 0.571528;
+    0.7779080; 0.541655; 0.8691540; 0.286846; 0.265820;
+  |] k n in
+  let h2 = Owl.Mat.copy h in
+
+  let mu = Owl.Mat.of_array [|
+    0.8015420;
+    0.8585870;
+    0.0950306;
+    0.8101720;
+    0.3491810;
+  |] n 1 in
+  let mu2 = Owl.Mat.copy mu in
+
+  let data = Owl.Mat.of_array [| 0.551922; 0.673854; 0.259412 |] k 1 in
+
+  let ((M sigma, (M h, (M mu, (M _, M _)))), (M new_mu, M new_sigma)) =
+    Examples.Kalman.it (M sigma) (M h) (M mu) (M r) (M data) in
+
+  Stdio.printf !"Same: %{sexp:bool}\n" (Owl.Mat.(sigma =~ sigma2 && h =~ h2 && mu =~ mu2));
+  Owl.Mat.print ~header:false new_sigma;
+  Owl.Mat.print ~header:false new_mu;
+
+  [%expect {|
+    Same: true
+
+       0.541272 -0.00852694    0.133997   0.234808   0.0897324
+    -0.00852694     0.17944  -0.0357339  0.0665866    0.078525
+       0.133997  -0.0357339    0.100837  0.0120868 -0.00196882
+       0.234808   0.0665866   0.0120868   0.227933  0.00138223
+      0.0897324    0.078525 -0.00196882 0.00138223     0.18484
+
+
+       1.40304
+      0.983331
+    -0.0586492
+       1.06233
+      0.313462 |}]
 ;;

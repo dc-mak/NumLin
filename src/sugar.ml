@@ -468,14 +468,14 @@ let rec ds_exp : exp -> Ast.exp = function
       | Symm (a_loc, _), Symm (b_loc, _) ->
         raise @@
         MatrixPat
-          (Printf.sprintf !"Need only one 'symm' annotation, \
+          (Printf.sprintf !"Need only one 'sym' annotation, \
                             either %{Ast.line_col} or %{Ast.line_col}.\n" a_loc b_loc)
 
       | Symm (a_loc, _), Trsp (b_loc, _)
       | Trsp (a_loc, _), Symm (b_loc, _) ->
         raise @@
         MatrixPat
-          (Printf.sprintf !"Cannot use 'symm' annotation with transpose, at \
+          (Printf.sprintf !"Cannot use 'sym' annotation with transpose, at \
                             %{Ast.line_col} and %{Ast.line_col}.\n" a_loc b_loc)
 
     in

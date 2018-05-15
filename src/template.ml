@@ -190,16 +190,9 @@ struct
 
   (* Level 3 BLAS/LAPACK helpers *)
   let dim ?(transp=false) mat =
-    let (rows, cols) as result = Arr.(row_num mat, col_num mat) in
-    if transp then (cols, rows) else result
-  ;;
-
-  let mult_dims (a, transp_a) (b, transp_b) c =
-    let (m1, n1) = dim ~transp:transp_a a
-    and (n2, k1) = dim ~transp:transp_b b
-    and (m2, k2) = dim c in
-    let () = assert (m1 = m2 && n1 = n2 && k1 = k2) in
-    (m1, n1, k1)
+    match Arr.shape mat with
+    | [| rows; cols |] -> if transp then (cols, rows) else (rows, cols)
+    |  _ -> raise (Invalid_argument "Not a matrix!")
   ;;
 
   (* Matrix *)
@@ -247,6 +240,50 @@ struct
 
   (* Level 3 BLAS/LAPACK *)
 
+  (* let gemm (type a b)                                                          *)
+  (*       (Many alpha) ((M a : a mat), Many transa) ((M b : b mat), Many transb) *)
+  (*       (Many beta) (M c : z mat) =                                            *)
+  (*   let () = Owl_cblas.gemm ~transa ~transb ~alpha ~beta ~a ~b ~c in           *)
+  (*   ((M a, M b), M c)                                                          *)
+  (* ;;                                                                           *)
+  (*                                                                              *)
+  (* let symm (Many flip) (Many alpha) (M a) (M b) (Many beta) (M c) =            *)
+  (*   let side = if flip then Cblas.CblasRight else CblasLeft in                 *)
+  (*   let uplo = Cblas.CblasUpper in                                             *)
+  (*   let () = Owl_cblas.symm ~side ~uplo ~alpha ~beta ~a ~b ~c in               *)
+  (*   ((M a, M b), M c)                                                          *)
+  (* ;;                                                                           *)
+
+  let mult_dims (a, transp_a) (b, transp_b) c =
+    let (m1, n1) = dim ~transp:transp_a a
+    and (n2, k1) = dim ~transp:transp_b b
+    and (m2, k2) = dim c in
+    let () = assert (m1 = m2 && n1 = n2 && k1 = k2) in
+    (m1, n1, k1)
+  ;;
+
+  let conv x =
+    let (m, n) = dim x in
+    Bigarray.(array1_of_genarray @@ reshape x [| m * n |])
+  ;;
+
+  let symm (Many flip) (Many alpha) (M a) (M b) (Many beta) (M c) =
+    let side, m, n, lda, ldb, ldc=
+      if flip then
+        let m, k, n = mult_dims (b, false) (a, false) c in
+        let () = assert (k = n) (* snd/a is square *) in
+        Cblas.CblasRight, m, n, n, k, n
+      else
+        let m, k, n = mult_dims (a, false) (b, false) c in
+        let () = assert (m = k) (* fst/a is square *) in
+        Cblas.CblasLeft,  m, n, k, n, n in
+    let () = Cblas.(symm CblasRowMajor side CblasUpper
+                      m n
+                      alpha (conv a) lda (conv b) ldb
+                      beta (conv c) ldc) in
+    ((M a, M b), M c)
+  ;;
+
   let gemm (type a b)
         (Many alpha) ((M a : a mat), Many tr_a) ((M b : b mat), Many tr_b)
         (Many beta) (M c : z mat) =
@@ -255,19 +292,13 @@ struct
                      (if tr_a then CblasTrans else CblasNoTrans)
                      (if tr_b then CblasTrans else CblasNoTrans)
                      m n k
-                     alpha (conv a) (if tr_a then k else m) (conv b) (if tr_b then n else k)
-                     beta (conv c) m) in
+                     alpha
+                     (conv a) (if tr_a then m else k)
+                     (conv b) (if tr_b then k else n)
+                     beta (conv c) n) in
     ((M a, M b), M c)
   ;;
 
-  let symm (Many flip) (Many alpha) (M a) (M b) (Many beta) (M c) = 
-    let (m, k, n) = mult_dims (a, false) (b, false) c in
-    let () = Cblas.(symm CblasRowMajor (if flip then CblasRight else CblasLeft) CblasUpper
-                      m n
-                      alpha (conv a) m (conv b) k
-                      beta (conv c) m) in
-    ((M a, M b), M c)
-  ;;
 
   let posv (M a : z mat) (M b : z mat) =
     let (a',b') = Owl_lapacke.(posv ~uplo:'U' ~a ~b) in

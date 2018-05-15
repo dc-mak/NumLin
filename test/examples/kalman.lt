@@ -1,4 +1,4 @@
-let !kalman
+      let !kalman
         ('s) (sigma : 's mat) (* n, n *)
         ('h) (h : 'h mat)     (* k, n *)
         ('m) (mu : 'm mat)    (* n, 1 *)
@@ -25,5 +25,5 @@ let !kalman
 (*34*)  let new_sigma <- [| sigma_copy - sym (sigma) * h_sol_h_sigma |] in
         let () = freeM h_sol_h_sigma in
         ((sigma, (h, (mu, (r_2, sol_data)))), (new_mu, new_sigma)) in
-kalman
-;;
+      kalman
+      ;;

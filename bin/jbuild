@@ -2,7 +2,17 @@
 
 (executables (
     (names (repl transpile))
-    (libraries (lt4la lwt lambda-term))
+    (modules (eval repl transpile))
+    (libraries (lt4la core core_bench lwt lambda-term))
     (flags (:standard -short-paths))
     (preprocess (pps (ppx_jane lwt_ppx ppx_driver.runner)))
+))
+
+(executable (
+    (name benchmark)
+    (modules (benchmark))
+    (libraries (owl test core core_bench))
+    (flags (:standard -short-paths))
+    (ocamlopt_flags (-p -O3))
+    (preprocess (pps (ppx_jane)))
 ))

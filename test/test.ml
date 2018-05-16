@@ -22,3 +22,8 @@ let%test_module "Examples" =
   (module Examples_test)
 ;;
 
+include Examples
+;;
+
+include Examples_test
+;;

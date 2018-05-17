@@ -9,9 +9,17 @@ if Caml.Sys.big_endian || not Caml.Sys.unix then
   end
 ;;
 
+let dir =
+  "arrays"
+;;
+
+if not @@ Caml.Sys.(file_exists dir && is_directory dir) then
+  Unix.mkdir dir 0o773
+;;
+
 (* Step 0: Constants and Helpers. *)
 let start, limit =
-  1, 4
+  5, 4
 ;;
 
 let n', k' =
@@ -50,7 +58,7 @@ let input file ~n ~k =
 ;;
 
 let filename file ~n ~k =
-  Printf.sprintf "./arrays/%s_%d_%d.float64_c_layout_le" file n k
+  Printf.sprintf "./%s/%s_%d_%d.float64_c_layout_le" dir file n k
 ;;
 
 (* Step 1: Sanity check *)
@@ -151,6 +159,9 @@ done
 ;;
 
 (* Step 4, measure/run C. *)
+let measure_kalman = Bind.it
+;;
+let () = Stdio.printf "Called the C function: %f\n" @@ measure_kalman ();;
+
 
 (* Step 5, print out CSV for each *)
-

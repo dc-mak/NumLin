@@ -11,8 +11,16 @@
 (executable (
     (name benchmark)
     (modules (benchmark))
-    (libraries (owl test core core_bench))
+    (libraries (owl test bind core core_bench))
     (flags (:standard -short-paths))
     (ocamlopt_flags (-p -O3))
     (preprocess (pps (ppx_jane)))
+))
+
+(library (
+    (name bind)
+    (modules (bind))
+    (libraries (ctypes ctypes.foreign))
+    (c_names (kalman))
+    (c_library_flags (-lopenblas -llapacke))
 ))

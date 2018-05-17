@@ -281,6 +281,9 @@ struct
                       m n
                       alpha (conv a) lda (conv b) ldb
                       beta (conv c) ldc) in
+    (* let () = Stdio.printf "RowMajor %s Upper %d %d %f a %d b %d %f c %d\n"   *)
+    (*            (if flip then "Right" else "Left") m n alpha lda ldb beta ldc *)
+    (* in                                                                       *)
     ((M a, M b), M c)
   ;;
 
@@ -296,6 +299,15 @@ struct
                      (conv a) (if tr_a then m else k)
                      (conv b) (if tr_b then k else n)
                      beta (conv c) n) in
+    (* let () = Stdio.printf "RowMajor %s %s %d %d %d %f a %d b %d %f c %d\n" *)
+    (*            (if tr_a then "Trans" else "NoTrans")                       *)
+    (*            (if tr_b then "Trans" else "NoTrans")                       *)
+    (*            m n k                                                       *)
+    (*            alpha                                                       *)
+    (*            (if tr_a then m else k)                                     *)
+    (*            (if tr_b then k else n)                                     *)
+    (*            beta n                                                      *)
+    (* in                                                                     *)
     ((M a, M b), M c)
   ;;
 

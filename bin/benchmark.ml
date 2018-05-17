@@ -159,7 +159,8 @@ done
 ;;
 
 (* Step 4, measure/run C. *)
-let measure_kalman = Lt4la_ffi.M.measure_kalman;;
+let measure_kalman =
+  Measure_kalman_c_ffi.Bind.it
 ;;
 let () = Stdio.printf "Called the C function: %f\n" @@ measure_kalman ();;
 

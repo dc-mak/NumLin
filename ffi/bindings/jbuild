@@ -1,4 +1,4 @@
 (library (
-    (name lt4la_bindings)
+    (name measure_kalman_c_bindings)
     (libraries (ctypes.stubs ctypes))
 ))

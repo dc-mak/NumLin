@@ -11,7 +11,15 @@
 (executable (
     (name benchmark)
     (modules (benchmark))
-    (libraries (owl lt4la_ffi test core core_bench))
+    (libraries (owl measure_kalman_c_ffi test core core_bench))
     (flags (:standard -short-paths))
     (preprocess (pps (ppx_jane)))
+))
+
+(library (
+    (name measure_kalman_c)
+    (modules ())
+    (preprocess no_preprocessing)
+    (c_library_flags (:standard -lopenblas -llapacke))
+    (c_names (measure_kalman))
 ))

@@ -1,4 +1,4 @@
-module M(F : Cstubs.FOREIGN) =
+module Make(F : Cstubs.FOREIGN) =
 struct
   let foreign = F.foreign
 
@@ -8,6 +8,6 @@ struct
     let returning = F.returning
   end
 
-  let measure_kalman =
-    foreign "measure_kalman" C.(void @-> returning double)
+  let it = foreign "measure_kalman" C.(void @-> returning double)
+
 end

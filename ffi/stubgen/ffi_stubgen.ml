@@ -1,8 +1,6 @@
-let prefix = "lt4la_stub"
+let prefix = "measure_kalman_c_stub"
 
-let prologue = "
-  #include \"measure_kalman.h\"
-  "
+let prologue = "#include \"measure_kalman.h\""
 
 let () =
   let generate_ml, generate_c = ref false, ref false in
@@ -17,7 +15,7 @@ let () =
   | true, true ->
     failwith "Exactly one of -ml and -c must be specified"
   | true, false ->
-    Cstubs.write_ml Format.std_formatter ~prefix (module Lt4la_bindings.M)
+    Cstubs.write_ml Format.std_formatter ~prefix (module Measure_kalman_c_bindings.Make)
   | false, true ->
     print_endline prologue;
-    Cstubs.write_c Format.std_formatter ~prefix (module Lt4la_bindings.M)
+    Cstubs.write_c Format.std_formatter ~prefix (module Measure_kalman_c_bindings.Make)

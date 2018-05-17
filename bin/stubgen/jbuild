@@ -3,5 +3,5 @@
 (executable (
     (name ffi_stubgen)
     (modules (ffi_stubgen))
-    (libraries (measure_kalman_c_bindings ctypes.stubs ctypes))
+    (libraries (bindings ctypes.stubs ctypes))
 ))

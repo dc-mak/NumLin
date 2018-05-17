@@ -8,7 +8,7 @@
 
 (rule (
     (targets (measure_kalman_c_stubs.c))
-    (deps (../stubgen/ffi_stubgen.exe ../../bin/measure_kalman.h))
+    (deps (../stubgen/ffi_stubgen.exe ../measure_kalman.h))
     (action (with-stdout-to ${@} (run ${<} -c)))
 ))
 
@@ -16,6 +16,6 @@
     (name measure_kalman_c_ffi)
     (modules (stubs bind))
     (c_names (measure_kalman_c_stubs))
-    (c_flags (:standard -I../../bin))
-    (libraries (measure_kalman_c_bindings ctypes.stubs ctypes measure_kalman_c))
+    (c_flags (:standard -I..))
+    (libraries (bindings ctypes.stubs ctypes measure_kalman_c))
 ))

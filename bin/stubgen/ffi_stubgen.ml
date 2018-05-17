@@ -15,7 +15,7 @@ let () =
   | true, true ->
     failwith "Exactly one of -ml and -c must be specified"
   | true, false ->
-    Cstubs.write_ml Format.std_formatter ~prefix (module Measure_kalman_c_bindings.Make)
+    Cstubs.write_ml Format.std_formatter ~prefix (module Bindings.Make)
   | false, true ->
     print_endline prologue;
-    Cstubs.write_c Format.std_formatter ~prefix (module Measure_kalman_c_bindings.Make)
+    Cstubs.write_c Format.std_formatter ~prefix (module Bindings.Make)

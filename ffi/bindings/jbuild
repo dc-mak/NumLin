@@ -1,4 +1,0 @@
-(library (
-    (name measure_kalman_c_bindings)
-    (libraries (ctypes.stubs ctypes))
-))

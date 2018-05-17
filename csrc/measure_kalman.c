@@ -115,8 +115,3 @@ double measure_kalman() {
             + ((double) (end.tv_usec - start.tv_usec))) / 1000000.;
 
 }
-
-int main() {
-    printf("Not quite.\n");
-    return 0;
-}

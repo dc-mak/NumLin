@@ -1,0 +1,4 @@
+(library (
+    (name lt4la_bindings)
+    (libraries (ctypes.stubs ctypes))
+))

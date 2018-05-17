@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(executable (
+    (name ffi_stubgen)
+    (modules (ffi_stubgen))
+    (libraries (lt4la_bindings ctypes.stubs ctypes))
+))

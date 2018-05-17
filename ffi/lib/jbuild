@@ -1,0 +1,21 @@
+(jbuild_version 1)
+
+(rule (
+    (targets (g.ml))
+    (deps (../stubgen/ffi_stubgen.exe))
+    (action (with-stdout-to ${@} (run ${<} -ml)))
+))
+
+(rule (
+    (targets (lt4la_stubs.c))
+    (deps (../stubgen/ffi_stubgen.exe ../../csrc/measure_kalman.h))
+    (action (with-stdout-to ${@} (run ${<} -c)))
+))
+
+(library (
+    (name lt4la_ffi)
+    (modules (g m))
+    (c_names (lt4la_stubs))
+    (c_flags (:standard -I../../csrc))
+    (libraries (lt4la_bindings ctypes.stubs ctypes kalman_c))
+))

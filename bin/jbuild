@@ -17,14 +17,6 @@
 ))
 
 (library (
-    (name measure_kalman_c)
-    (modules ())
-    (preprocess no_preprocessing)
-    (c_library_flags (:standard -lopenblas -llapacke))
-    (c_names (measure_kalman))
-))
-
-(library (
     (name bindings)
     (modules (bindings))
     (libraries (ctypes.stubs ctypes))

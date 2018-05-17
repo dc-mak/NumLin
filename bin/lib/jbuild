@@ -16,6 +16,7 @@
     (name measure_kalman_c_ffi)
     (modules (stubs bind))
     (c_names (measure_kalman_c_stubs))
-    (c_flags (:standard -I..))
-    (libraries (bindings ctypes.stubs ctypes measure_kalman_c))
+    ; -llopenblas -llapacke are not needed?
+    (c_flags (:standard -I.. -Wall -Wextra -Werror))
+    (libraries (bindings ctypes.stubs ctypes))
 ))

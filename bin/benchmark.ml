@@ -162,7 +162,8 @@ done
 let measure_kalman =
   Measure_kalman_c_ffi.Bind.it
 ;;
-let () = Stdio.printf "Called the C function: %f\n" @@ measure_kalman ();;
+let () = Stdio.printf "Called the C function: %f\n" @@ measure_kalman 4
+;;
 
 
 (* Step 5, print out CSV for each *)

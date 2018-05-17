@@ -8,6 +8,6 @@ struct
     let returning = F.returning
   end
 
-  let it = foreign "measure_kalman" C.(void @-> returning double)
+  let it = foreign "measure_kalman" C.(int @-> returning double)
 
 end

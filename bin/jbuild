@@ -3,15 +3,15 @@
 (executables (
     (names (repl transpile))
     (modules (eval repl transpile))
-    (libraries (lt4la core core_bench lwt lambda-term))
+    (libraries (lt4la lwt lambda-term))
     (flags (:standard -short-paths))
-    (preprocess (pps (ppx_jane lwt_ppx ppx_driver.runner)))
+    (preprocess (pps (lwt_ppx)))
 ))
 
 (executable (
     (name benchmark)
     (modules (benchmark array_io))
-    (libraries (owl mtime kalman_c_ffi test core core_bench))
+    (libraries (owl kalman_c_ffi test base core core_bench))
     (flags (:standard -short-paths))
     (preprocess (pps (ppx_jane)))
 ))
@@ -20,4 +20,6 @@
     (name bindings)
     (modules (bindings))
     (libraries (ctypes.stubs ctypes))
+    ; HACK to generate .merlin file with PPX rewriters
+    (preprocess (pps (ppx_jane lwt_ppx ppx_driver.runner)))
 ))

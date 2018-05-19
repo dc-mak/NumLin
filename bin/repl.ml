@@ -26,7 +26,7 @@ let make_prompt state =
 (* Format the interpreter output for REPL display *)
 let make_output state out =
   let pre = Printf.sprintf "Out [%d]: " (state - 1) in
-  let out, col = match out with 
+  let out, col = match out with
     | Ok str -> str, green
     | Error str -> str, red in
   eval [B_fg col; S pre; E_fg; S out]
@@ -44,7 +44,7 @@ class read_line ~term ~history ~state =
 
 let get_line term history state =
 
-  try%lwt 
+  try%lwt
     let history = LTerm_history.contents history in
     let rl = new read_line ~term ~history ~state in
     rl#run >|= Base.Option.return
@@ -61,7 +61,7 @@ let rec loop term history ?cont state =
 
   | Some command ->
     step term history command @@
-    begin match cont with 
+    begin match cont with
     | Some cont -> cont (Lexing.from_string command)
     | None -> Eval.eval state command
     end

@@ -7,16 +7,16 @@
 ))
 
 (rule (
-    (targets (measure_kalman_c_stubs.c))
-    (deps (../stubgen/ffi_stubgen.exe ../measure_kalman.h))
+    (targets (kalman_c_stubs.c))
+    (deps (../stubgen/ffi_stubgen.exe ../kalman.h))
     (action (with-stdout-to ${@} (run ${<} -c)))
 ))
 
 (library (
-    (name measure_kalman_c_ffi)
+    (name kalman_c_ffi)
     (modules (stubs bind))
-    (c_names (measure_kalman_c_stubs))
+    (c_names (kalman_c_stubs))
     ; -llopenblas -llapacke are not needed?
-    (c_flags (:standard -I.. -Wall -Wextra -Werror))
+    (c_flags (:standard -I.. -Wall -Wextra))
     (libraries (bindings ctypes.stubs ctypes))
 ))

@@ -1,6 +1,6 @@
-let prefix = "measure_kalman_c_stub"
+let prefix = "kalman_c_stub"
 
-let prologue = "#include \"measure_kalman.h\""
+let prologue = "#include \"kalman.h\""
 
 let () =
   let generate_ml, generate_c = ref false, ref false in

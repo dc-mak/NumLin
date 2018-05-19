@@ -10,8 +10,8 @@
 
 (executable (
     (name benchmark)
-    (modules (benchmark))
-    (libraries (owl measure_kalman_c_ffi test core core_bench))
+    (modules (benchmark array_io))
+    (libraries (owl mtime kalman_c_ffi test core core_bench))
     (flags (:standard -short-paths))
     (preprocess (pps (ppx_jane)))
 ))

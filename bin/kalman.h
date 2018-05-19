@@ -1,5 +1,5 @@
-#ifndef LT4LA_MEASURE_KALMAN
-#define LT4LA_MEASURE_KALMAN
+#ifndef LT4LA_KALMAN
+#define LT4LA_KALMAN
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -51,15 +51,15 @@ double data[K][1] = {
 };
 
 static void kalman(
-    int n,
-    int k,
-    double *sigma,     /* n,n */
-    double *h,         /* k,n */
-    double *mu,        /* n,1 */
-    double *r,         /* k,k */
-    double *data,      /* k,1 */
-    double **ret_mu,   /* k,1 */
-    double **ret_sigma /* n,n */
+    const int n,
+    const int k,
+    const double *sigma, /* n,n */
+    const double *h,     /* k,n */
+    const double *mu,    /* n,1 */
+    double *r,           /* k,k */
+    double *data,        /* k,1 */
+    double **ret_mu,     /* k,1 */
+    double **ret_sigma   /* n,n */
 ) {
         double* k_by_n = (double *) malloc(k * n * sizeof(double));
 /*20*/  cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, k, n, 1., sigma, n, h, n, 0., k_by_n, n);
@@ -89,34 +89,87 @@ static void kalman(
         *ret_mu = new_mu;
 }
 
-double measure_kalman(int arg) {
+static double measure_kalman_no_free(
+    const int n,
+    const int k,
+    const double *sigma, /* n,n */
+    const double *h,     /* k,n */
+    const double *mu,    /* n,1 */
+    double *r,           /* k,k */
+    double *data         /* k,1 */
+) {
     struct rusage usage;
 
     getrusage(RUSAGE_SELF, &usage);
     struct timeval start = usage.ru_utime;
 
-    kalman(N, K, &sigma[0][0], &h[0][0], &mu[0][0], &r[0][0], &data[0][0], &new_mu, &new_sigma);
+    kalman(n, k, sigma, h, mu, r, data, &new_mu, &new_sigma);
 
     getrusage(RUSAGE_SELF, &usage);
     struct timeval end = usage.ru_utime;
 
+    // Execution time would have to reach about 300 years before (* 1000000) will cause problems
+    return (double) ((end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec));
+}
+
+double measure_kalman(
+    const int n,
+    const int k,
+    const double *sigma, /* n,n */
+    const double *h,     /* k,n */
+    const double *mu,    /* n,1 */
+    double *r,           /* k,k */
+    double *data         /* k,1 */
+) {
+    const double result = measure_kalman_no_free(n, k, sigma, h, mu, r, data);
+    free(new_sigma);
+    free(new_mu);
+    return result;
+}
+
+struct result {
+    double *new_sigma;
+    double *new_mu;
+};
+
+struct result results(
+    const int n,
+    const int k,
+    const double *sigma, /* n,n */
+    const double *h,     /* k,n */
+    const double *mu,    /* n,1 */
+    double *r,           /* k,k */
+    double *data         /* k,1 */
+) {
+    measure_kalman_no_free(n, k, sigma, h, mu, r, data);
+    struct result result = { .new_sigma=new_sigma, .new_mu=new_mu};
+    return result;
+}
+
+double test(int arg) {
+
+    const double result =
+        measure_kalman_no_free(N, K, &sigma[0][0], &h[0][0], &mu[0][0], &r[0][0], &data[0][0]);
+    printf("Arg: %d, Result: %f\n\n", arg, result);
+
+    // Print Matrices
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             printf("\t%f", new_sigma[i*N + j]);
         }
         printf("\n");
     }
+    printf("\n");
     free(new_sigma);
 
     for (int i = 0; i < N; i++) {
         printf("\t%f\n", new_mu[i]);
     }
+    printf("\n");
     free(new_mu);
 
-    printf("Time: %lu.%06lu\nArg: %d\n", (end.tv_sec - start.tv_sec), (end.tv_usec - start.tv_usec), 0.);
-    return (((double) ((end.tv_sec - start.tv_sec) * 1000000))
-            + ((double) (end.tv_usec - start.tv_usec))) / 1000000.;
+    return result;
 
 }
 
-#endif // LT4LA_MEASURE_KALMAN
+#endif // LT4LA_KALMAN

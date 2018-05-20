@@ -4,6 +4,14 @@ open Owl
 open Base
 ;;
 
+module Time =
+  Core_kernel.Time
+;;
+
+module Command =
+  Core.Command
+;;
+
 (* Lots of types *)
 type mat_info = {
   name : string;
@@ -23,32 +31,18 @@ type kalman_input = {
 ;;
 
 type 'a data = {
-  name_or_size: 'a;
-  mean_us: float;
-  plus_err: float;
-  minus_err: float;
-  r_sq: float;
+  ind_var: 'a;
+  mean: Time.Span.t;
+  plus_err: Time.Span.t;
+  minus_err: Time.Span.t;
+  r_sq: float option;
   sample: int;
 }
 [@@deriving sexp_of]
 ;;
 
-type _ functions =
-  | Chol
-  | Owl
-  | LT4LA
-  | CBLAS
-;;
-
-(* Functions to benchmark *)
-let lt4la = Test.lt4la_kalman
-and owl = Test.owl_kalman
-and chol = Test.chol_kalman
-and cblas ~n ~k ~sigma ~h ~mu ~r ~data =
-  let open Kalman_c_ffi in
-  let f x = Bind.C.(bigarray_start Ctypes_static.Genarray x) in
-  Bind.measure n k (f sigma) (f h) (f mu)
-    (f @@ Mat.copy r) (f @@ Mat.copy data)
+module F =
+  Functions
 ;;
 
 (* Step 0: Platform and sanity checks. *)
@@ -73,58 +67,63 @@ let generate_exn files ~base ~start ~limit =
 ;;
 
 (* Step 2: Small matrices *)
-let micro_exn ~sec ~n ~k {sigma; h; mu; r; data} =
-  assert (n >= 1 && k >= 1 && sec >= 1);
-  let open Core_bench.Std.Bench in
-  (* Trying to emulate options: -ci-absolute -quota 10 -clear-columns +time samples speedup *)
-  let tests = [
+let get_micro ~n ~k { sigma; h; mu; r; data } (F.W fun_) =
+  let f = F.get fun_ in
+  let open Core_bench.Bench in
+  match fun_ with
+  | F.Chol ->
+    Test.create ~name:("Chol") (fun () -> f ~sigma ~h ~mu ~r ~data)
 
-    Test.create ~name:("Chol") (fun () -> chol ~sigma ~h ~mu ~r ~data);
-    Test.create ~name:("Owl") (fun () -> owl ~sigma ~h ~mu ~r ~data);
+  | F.Owl ->
+    Test.create ~name:("Owl") (fun () -> f ~sigma ~h ~mu ~r ~data)
 
+  | F.LT4LA ->
     (* [r] and [data] are overrwritten *)
-    Test.create ~name:("LT4LA") (
-      let r = Mat.copy r and data = Mat.copy data in fun () ->
-      lt4la ~sigma ~h ~mu ~r ~data);
+    let r, data = Mat.copy r, Mat.copy data in
+    Test.create ~name:("LT4LA") (fun () -> f.f ~sigma ~h ~mu ~r ~data)
 
+  | F.CBLAS ->
     (* Not super valid because of marshalling overhead *)
     (* [r] and [data] are overrwritten *)
-    Test.create ~name:("CBLAS") (
-      let r = Mat.copy r and data = Mat.copy data in fun () ->
-      cblas ~n ~k ~sigma ~h ~mu ~r ~data)
+    let r, data = Mat.copy r, Mat.copy data in
+    Test.create ~name:("CBLAS") (fun () -> f ~n ~k ~sigma ~h ~mu ~r ~data)
+;;
 
-  ]
-  in
-  let module C = Core_bench.Verbosity in
+let micro_exn ~sec ~n ~k input tests =
+  assert (n >= 1 && k >= 1 && sec >= 1);
+  let open Core_bench.Bench in
+  (* Trying to emulate options: -ci-absolute -quota 10 -clear-columns +time samples speedup *)
   let run_config =
-    Run_config.create ~time_quota:(Core.Time.Span.create ~sec ()) () in
+    Run_config.create
+      ~verbosity:(Core_bench.Verbosity.Quiet)
+      ~time_quota:(Core_kernel.Time.Span.create ~sec ()) () in
   (* Ensures we have one (and only one) regression (Array.get _ 0) *)
   (* Ensures we have r_square AND a 95% CI (Option.value_exn)      *)
   let analysis_configs =
     Analysis_config.(List.map [nanos_vs_runs] ~f:(with_error_estimation)) in
-  let analysis =
-    measure ~run_config tests
+  let data =
+    tests
+    |> List.map ~f:(get_micro ~n ~k input)
+    |> measure ~run_config
     |> List.map ~f:(analyze ~analysis_configs)
     |> Or_error.combine_errors
     |> Or_error.ok_exn
-  in
-  let data =
-    let f result =
+    |> List.map ~f:(fun result ->
       let open Core_bench.Analysis_result in
-      let regr = Array.get (regressions result) 0 in
-      let coeff = Array.get (Regression.coefficients regr) 0 in
+      let regr = (regressions result).(0) in
+      let coeff = (Regression.coefficients regr).(0) in
       let ci95 = Option.value_exn (Coefficient.ci95 coeff) in
       let mean_ns = Coefficient.estimate coeff in
       let (minus_err, plus_err) = Ci95.ci95_abs_err ci95 ~estimate:mean_ns in
-      { name_or_size = name result;
-        mean_us = mean_ns /. 1000.;
-        plus_err = plus_err /. 1000.;
-        minus_err = minus_err /. 1000.;
-        r_sq = Option.value_exn (Regression.r_square regr);
+      {
+        ind_var = name result;
+        mean = Time.Span.of_ns mean_ns;
+        plus_err = Time.Span.of_ns plus_err;
+        minus_err = Time.Span.of_ns minus_err;
+        r_sq = Regression.r_square regr;
         sample = sample_count result;
       }
-    in
-    List.map analysis ~f
+    )
   in
   (n, data)
 ;;
@@ -137,44 +136,53 @@ let macro ~f ~runs { sigma; h; mu; r; data } =
     let {Unix.tms_utime=start;_} = Unix.times () in
     let _  = f ~sigma ~h ~mu ~r ~data in
     let {Unix.tms_utime=end_;_} = Unix.times () in
-    end_ *. 1e6 -. start *. 1e6
+    Time.Span.(of_sec end_ - of_sec start)
   )
 ;;
 
-let macro ~runs ~n ~k ({r; data; sigma=_; mu=_; h=_} as input) =
-  assert (runs >= 1 && n >= 1 && k >= 1);
-  let stats times =
-    let mean = Stats.mean times in
-    let std = Stats.std ~mean times in
-    mean, std
-  in
-  let chol = macro ~f:chol ~runs input in
-  let owl = macro ~f:owl ~runs input in
-  let input1 = { input with r = Mat.copy r; data = Mat.copy data } in
-  let input2 = { input with r = Mat.copy r; data = Mat.copy data } in
-  (* [r] and [data] are overrwritten *)
-  let lt4la = macro ~f:lt4la ~runs input1 in
-  let { sigma; h; mu; r; data } = input2 in
-  (* [r] and [data] are overrwritten *)
-  (* Remember cblas times itself in C *)
-  let cblas = Array.init runs ~f:(fun _ ->
-    cblas ~n ~k ~sigma ~h ~mu ~r ~data) in
+let get_macro ~n ~k ~runs input (F.W fun_) =
+  let f = F.get fun_ in
+  match fun_ with
+  | F.Chol ->
+    macro ~f ~runs input
 
-  let f (name, (mean_us, std)) = {
-    name_or_size = name;
-    mean_us;
-    plus_err = std;
-    minus_err = ~-. std;
-    r_sq = 1.;
-    sample = runs;
-  }
+  | F.Owl ->
+    macro ~f ~runs input
+
+  | F.LT4LA ->
+    (* [r] and [data] are overrwritten *)
+    macro ~f:f.f ~runs
+      { input with r = Mat.copy input.r; data = Mat.copy input.data }
+
+  | F.CBLAS ->
+    (* Not super valid because of marshalling overhead *)
+    (* [r] and [data] are overrwritten *)
+    let { sigma; h; mu; r; data } =
+      { input with r = Mat.copy input.r; data = Mat.copy input.data } in
+    Array.init runs ~f:(fun _ ->
+      Time.Span.of_us @@ f ~n ~k ~sigma ~h ~mu ~r ~data)
+;;
+
+let macro ~runs ~n ~k input tests =
+  assert (runs >= 1 && n >= 1 && k >= 1);
+  let f fun_ =
+    let times = get_macro ~n ~k ~runs input fun_ in
+    let mean, std =
+      let times = Array.map times ~f:(Time.Span.to_us) in
+      let mean = Stats.mean times in
+      let std = Stats.std ~mean times in
+      Time.Span.(of_us mean, of_us std)
+    in
+    {
+      ind_var = F.name fun_;
+      mean = mean;
+      plus_err = std;
+      minus_err = Time.Span.neg std;
+      r_sq = None;
+      sample = runs;
+    }
   in
-  (n, List.map ~f [
-    ("Chol", stats chol);
-    ("Owl", stats owl);
-    ("LT4LA", stats lt4la);
-    ("CBLAS", stats cblas);
-  ])
+  (n, List.map ~f tests)
 ;;
 
 let check_dims ~n ~k {sigma; h; mu; r; data} =
@@ -188,8 +196,8 @@ let check_dims ~n ~k {sigma; h; mu; r; data} =
 ;;
 
 (* Step 4: Select appropriate test and gather data. *)
-let runtest_exn files ~macro_runs:runs ~micro_quota:sec  ~base:n' ~cols:k' ~exp:i =
-  assert (runs >= 1 && sec >=1 && n' >= 1 && k' >= 1 && i >= 1);
+let runtest_exn files ~macro_runs:runs ~micro_quota:sec ~base:n' ~cols:k' ~exp:i tests =
+  assert (runs >= 1 && (Option.(is_none sec || value_exn sec >= 1)) && n' >= 1 && k' >= 1 && i >= 1);
   let scale = Int.pow n' (i-1) in
   match List.fold_right files ~init:[] ~f:(fun { name; dim; make=_; valid } args ->
     let n, k = dim scale in
@@ -204,10 +212,15 @@ let runtest_exn files ~macro_runs:runs ~micro_quota:sec  ~base:n' ~cols:k' ~exp:
     let input = { sigma; h; mu; r; data } in
     let n, k = scale * n', scale * k' in
     let () = check_dims ~n ~k input in
-    if i <= 3 (* micro-benchmark for small values only *) then
-      micro_exn ~sec ~n ~k input
-    else
-      macro ~runs ~n ~k input
+    begin match sec with
+    | Some sec ->
+      if i <= 3 (* micro-benchmark for small values only *) then
+        micro_exn ~sec ~n ~k input tests
+      else
+        macro ~runs ~n ~k input tests
+    | None ->
+      macro ~runs ~n ~k input tests
+    end
   | _ -> assert false
 ;;
 
@@ -215,30 +228,30 @@ let runtest_exn files ~macro_runs:runs ~micro_quota:sec  ~base:n' ~cols:k' ~exp:
 let transpose data =
   data
   |> List.concat_map ~f:(fun (n, data) ->
-    List.map data ~f:(fun ({name_or_size; _} as data) ->
-      (name_or_size, {data with name_or_size = n;})))
+    List.map data ~f:(fun ({ind_var; _} as data) ->
+      (ind_var, {data with ind_var = n;})))
   |> Hashtbl.of_alist_multi (module String)
   |> Hashtbl.to_alist
   |> List.map ~f:(fun (x,y) -> (x, List.rev y))
 ;;
 
 let pretty_print ~title ~ind_var (index, data) =
-  let headers = [ind_var; "Mean (us)"; "Sample"; "Err+"; "Err-"; "R^2"] in
+  let headers = [ind_var; "Mean (us)"; "Sample"; "Err+"; "Err-"; " R^2"] in
   let init = List.map headers ~f:String.length in
   let maxf x y = max x (String.length @@ Printf.sprintf "%.0f" y) in
   match
     List.fold data ~init
-      ~f:(fun [ns; m_u; s; p; m; _]
-           {name_or_size; mean_us; sample; plus_err; minus_err; r_sq=_} -> [
-      max ns (String.length name_or_size);
-      maxf m_u mean_us;
-      max s (String.length @@ Int.to_string sample);
-      maxf p plus_err;
-      maxf m minus_err;
-      4; (* d.dd *)
-    ]
-  ) [@ocaml.warning "-8"] with
-  | [ns; m_u; s; p; m; 4] as widths ->
+      ~f:(fun [iv; m; s; pe; me; 4]
+           {ind_var; mean; sample; plus_err; minus_err; r_sq=_} -> [
+          max iv (String.length ind_var);
+          maxf m (Time.Span.to_us mean);
+          max s (String.length @@ Int.to_string sample);
+          maxf pe (Time.Span.to_us plus_err);
+          maxf me (Time.Span.to_us minus_err);
+          4; (* d.dd *)
+        ]
+         ) [@ocaml.warning "-8"] with
+  | [iv; m; s; pe; me; 4] as widths ->
 
     (* Table and Column Names *)
     Stdio.printf "%s = %s\n\n" title index;
@@ -252,14 +265,14 @@ let pretty_print ~title ~ind_var (index, data) =
     Stdio.print_endline "";
 
     (* Data *)
-    List.iter data ~f:(fun {name_or_size; mean_us; sample; plus_err; minus_err; r_sq} ->
-      Stdio.printf !"%*s %*.0f %*d %*.0f %*.0f %0.2f\n"
-        ns name_or_size
-        m_u mean_us
+    List.iter data ~f:(fun {ind_var; mean; sample; plus_err; minus_err; r_sq} ->
+      Stdio.printf !"%*s %*.0f %*d %*.0f %*.0f %4s\n"
+        iv ind_var
+        m (Time.Span.to_us mean)
         s sample
-        p plus_err
-        m minus_err
-        r_sq;
+        pe (Time.Span.to_us plus_err)
+        me (Time.Span.to_us minus_err)
+        Option.(value (map ~f:(Printf.sprintf "%0.2f") r_sq) ~default:"N/A");
     );
 
     (* End with # *)
@@ -278,7 +291,7 @@ let by_size (n, data) =
 
 let by_alg (n, data) =
   pretty_print ~title:"Alg" ~ind_var:"Size N"
-    (n, List.map data ~f:(fun x -> { x with name_or_size = Int.to_string x.name_or_size}))
+    (n, List.map data ~f:(fun x -> { x with ind_var = Int.to_string x.ind_var}))
 ;;
 
 let files ~base:n' ~cols:k' =
@@ -326,21 +339,88 @@ let files ~base:n' ~cols:k' =
   ]
 ;;
 
-let () =
+let run_with_params ?(analyse=true) ~start ~limit ~tests ~micro_quota ~macro_runs =
   let base, cols = 5, 3 in
-  let micro_quota, macro_runs = 10, 5 in
-  let start, limit = 1, 3 in
-  if
-    base >= 1 && cols >= 1 &&
-    micro_quota >= 1 && macro_runs >= 1 &&
-    start >= 1 && limit >= 1 &&
-    start <= limit
-  then
-  let n = limit - start + 1 in
-  let files = files ~base ~cols in
-  let () = generate_exn files ~base ~start ~limit in
-  let collected = List.init n ~f:(fun exp ->
-    runtest_exn files ~micro_quota ~macro_runs ~base ~cols ~exp:(start+exp)) in
-  List.iter collected ~f:by_size;
-  List.iter (transpose collected) ~f:by_alg;
+  if base >= 1 && cols >= 1 && macro_runs >= 1 then
+    let n = limit - start + 1 in
+    let files = files ~base ~cols in
+    let () = generate_exn files ~base ~start ~limit in
+    let collected = List.init n ~f:(fun exp ->
+      runtest_exn files ~micro_quota ~macro_runs ~base ~cols ~exp:(start+exp) tests)
+    in
+    if analyse then (
+      List.iter collected ~f:by_size;
+      List.iter (transpose collected) ~f:by_alg;
+    )
+;;
+
+let run_with_params ~analyse ~start ~limit ~tests ~micro_quota ~macro_runs =
+  let ok_if bool error = Result.ok_if_true bool ~error in
+  match Result.combine_errors_unit @@ [
+    ok_if (start >= 1) "Start must be at least 1";
+    ok_if (limit >= 1) "Limit must be at least 1";
+    ok_if (start <= limit) "Start must be less than or equal to limit";
+    ok_if Option.(is_none micro_quota || value_exn micro_quota >= 1)
+      "Micro-benchmark quota must be at least 1";
+    ok_if (macro_runs >= 1) "Macro runs must be at least 1";
+  ] with
+  | Ok () ->
+    run_with_params ~analyse ~start ~limit ~tests ~micro_quota ~macro_runs
+  | Error err ->
+    List.iter err ~f:(Stdio.eprintf "%s\n");
+    Caml.exit 1
+;;
+
+let alg =
+  Core.Command.Arg_type.create
+    (function
+      | "chol" -> [F.W Chol]
+      | "owl" ->  [F.W Owl]
+      | "lt4la" -> [F.W LT4LA]
+      | "cblas" -> [F.W CBLAS]
+      | "all" -> F.all
+      | "none" -> []
+      | x ->
+        Stdio.eprintf "'%s' not a supported implementation" x;
+        Caml.exit 1)
+;;
+
+let command =
+  let open Core in
+  Command.basic
+    ~summary:"Benchmark different implementations of a Kalman Filter"
+    Command.Let_syntax.(
+      let%map_open
+
+        start =
+        flag "--start" (required int)
+          ~doc:"int Begin testing at this exponent"
+
+      and limit =
+        flag "--limit" (required int)
+          ~doc:"int End testing at this exponent"
+
+      and tests =
+        flag "--alg" (required alg)
+          ~doc:"alg Implementation to test\n(chol, owl, lt4la, cblas, all, none)"
+
+      and no_analyse =
+        flag "--no-analyse" no_arg
+          ~doc:" Don't analyse or print out data (for profiling)"
+
+      and micro_quota =
+        flag "--micro-quota" (optional int)
+          ~doc:"int How many seconds to run micro-benchmarks (exp <= 3) for"
+
+      and macro_runs =
+        flag "--macro-runs" (required int)
+          ~doc:"int How many seconds to run macro-benchmarks (exp >= 3) for"
+
+      in
+      fun () -> run_with_params ~analyse:(not no_analyse) ~start ~limit ~tests ~micro_quota ~macro_runs
+    )
+;;
+
+let () =
+  Core.Command.run command
 ;;

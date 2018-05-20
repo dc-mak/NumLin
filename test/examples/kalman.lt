@@ -15,7 +15,7 @@
         let () = freeM (* k,k *) chol_r in
 (*28*)  let h_sol_h <- new (n, n) [| h^T * sol_h |] in
         let () = freeM (* k,n *) sol_h in
-(*29*)  let h_sol_data <- new (n, 1) [| h ^ T * sol_data |] in
+(*29*)  let h_sol_data <- new (n, 1) [| h^T * sol_data |] in
 (*30*)  let mu_copy <- new [| mu |] in
 (*31*)  let new_mu <- [| sym (sigma) * h_sol_data + mu_copy |] in
         let () = freeM (* n,1 *) h_sol_data in

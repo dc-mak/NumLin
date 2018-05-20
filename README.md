@@ -40,12 +40,9 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 
 ### Roadmap (in _rough_ order of priority)
 
-**In progress:**
- - Matrix expression pattern matching
-
 **Future:**
  - ?Documentation with [MkDocs](http://www.mkdocs.org/)
- - ?Performance: benchmark, less pure-functional implementations behind `State_or_error` or `Check_monad`.
+ - ?Performance: less pure-functional implementations behind `State_or_error` or `Check_monad`.
  - Combinators interface
  - PPX extension
  - Staging, preferably using [ppx_stage](https://github.com/stedolan/ppx_stage?files=1)
@@ -63,6 +60,8 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
  - Elaboration/inference
  - Matrices (some Level 3 BLAS/LAPACK primitives)
  - Syntactic sugar/parsing grammar
+ - Matrix expression pattern matching
+ - Benchmarking
 
 ## Development
 

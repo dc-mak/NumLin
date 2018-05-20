@@ -160,8 +160,7 @@ let%expect_test "same_lin" =
          \nwith\
          \n    'two. 'two arr\
          \n\
-         \nOccurs check failed: 'two found in 'one s s, under alpha-equivalences:\
-         \n((one two))\
+         \nVar 'two is universally quantified\
          \n") |}]
 ;;
 
@@ -178,8 +177,7 @@ let%expect_test "same_lin" =
          \nwith\
          \n    ( 'one. 'one arr ) * unit\
          \n\
-         \nOccurs check failed: 'one found in 'one s, under alpha-equivalences:\
-         \n((one one))\
+         \nVar 'one is universally quantified\
          \n") |}]
 ;;
 
@@ -197,8 +195,7 @@ let%expect_test "same_lin" =
          \nwith\
          \n    ( 'two. 'two arr ) * unit\
          \n\
-         \nOccurs check failed: 'two found in 'one s, under alpha-equivalences:\
-         \n((one two))\
+         \nVar 'two is universally quantified\
          \n") |}]
 ;;
 

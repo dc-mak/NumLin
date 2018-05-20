@@ -29,7 +29,7 @@ let%expect_test "sum_array" =
   let sum_array = Examples.Sum_array.it in
   let n = 20 in
   let row : z arr = A Owl.Arr.(mapi (fun x _ -> Int.to_float x) (empty [| n |])) in
-  let (Many sum, _) = sum_array (Many 0) (Many n) (Many 0.) row in
+  let (_, Many sum) = sum_array (Many 0) (Many n) (Many 0.) row in
   Stdio.printf "%f\n" sum;
   [%expect {| 190.000000 |}]
 ;;

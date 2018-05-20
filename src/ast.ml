@@ -55,48 +55,56 @@ let rec occurs_unify var = function
   | U var' -> String.(var = var')
 ;;
 
-let rec occurs_var (=)  var = function
-  | Z -> false
-  | S fc -> occurs_var (=) var fc
-  | U _ -> false
-  | V var' -> var = var'
-;;
-
 (* [equiv] is the minimal description of alpha-equivalent variables, that is if
    x ~ y then either (x,y) in [equiv] or (y,x) in [equiv] (but not both) *)
 let rec same_fc equiv fc1 fc2 =
   let open Result.Let_syntax in
   match fc1, fc2 with
-  | U var, fc | fc, U var ->
+
+  | Z, Z ->
+    return []
+
+  | S fc1, S fc2 ->
+    same_fc equiv fc1 fc2
+
+  | Z, S _
+  | S _, Z ->
+    let pp () = string_of_fc in
+    Result.failf "Could not show %a and %a are equal.\n" pp fc1 pp fc2
+
+  (* unification *)
+  | (Z | V _ as fc), U var
+  | U var, (Z | V _ as fc) ->
+    return [(var, fc)]
+
+  | S _ as fc, U var
+  | U var, (S _ as fc) ->
     if occurs_unify var fc then
       Result.failf "Occurs check failed: ?%s found in %a.\n" var (Fn.const string_of_fc) fc
     else
       return [(var, fc)]
 
-  | Z, Z ->
-    return []
-  | S fc1, S fc2 ->
-    same_fc equiv fc1 fc2
+  | U var, U var' ->
+    if String.(var = var') then
+      Result.failf "Occurs check failed: ?%s found in ?%s.\n" var var'
+    else
+      return [(var, U var')]
+
+  (* Variables *)
+  | Z, V var
+  | V var, Z
+  | S _ , V var
+  | V var, S _ ->
+    if not (List.exists equiv ~f:(fun (x,y) -> x = var || y = var)) then
+      return []
+    else
+      Result.failf "Var '%s is universally quantified\n" var
+
   | V var1, V var2 ->
     if List.exists ~f:(fun (x,y) -> x = var1 && y = var2 || y = var1 && x = var2) equiv then
       return []
     else
       Result.failf "Could not show '%s and '%s and alpha-equivalent.\n" var1 var2
-
-  | V var, fc | fc, V var ->
-    let (=) var1 var2 =
-      List.exists equiv
-        ~f:(fun (x,y) -> x = var1 && y = var2 || y = var1 && x = var2) in
-    if occurs_var (=) var fc then
-      Result.failf !"Occurs check failed: '%s found in %a, under alpha-equivalences:\
-                     \n%{sexp: (var*var) list}\n"
-        var (Fn.const string_of_fc) fc  equiv
-    else
-      return []
-
-  | _, _ ->
-    let pp () = string_of_fc in
-    Result.failf "Could not show %a and %a are equal.\n" pp fc1 pp fc2
 ;;
 
 (* Linear types *)
@@ -586,12 +594,8 @@ let%test_module "Test" =
       same_fc [(one,one)] (S (S (V one))) (V one)
       |> Stdio.printf !"%{sexp:((var * fc) list,string)Result.t}";
       [%expect {|
-        (Error
-          "Occurs check failed: 'one found in 'one s s, under alpha-equivalences:\
-         \n((one one))\
-         \n") |}]
+        (Error "Var 'one is universally quantified\n") |}]
     ;;
-
 
     let%expect_test "same_fc" =
       same_fc [] (V one) (S (S (V three)))

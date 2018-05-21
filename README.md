@@ -28,15 +28,15 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 
 ## Quickstart
 
-| Command                                   | Meaning                                       |
-| ---                                       | ----                                          |
-| `jbuilder build src/lt4la.a`              | Build the library (everything inside `src`).  |
-| `pushd src && jbuilder utop && popd`      | As above + launches UTop with library loaded. |
-| `jbuilder build test/test.exe`            | Build library & tests.                        |
-| `jbuilder runtest`                        | Build library & tests _and_ run all tests.    |
-| `jbuilder build bin/{repl,transpile}.exe` | Build library, REPL and transpiler.           |
-| `jbuilder clean`                          | Delete `_build` directory of build artifacts. |
-| `_build/default/bin/*.exe`                | Launch {repl,transpile}.exe                   |
+| Command                                             | Meaning                                       |
+| ---                                                 | ----                                          |
+| `jbuilder build src/lt4la.a`                        | Build the library (everything inside `src`).  |
+| `pushd src && jbuilder utop && popd`                | As above + launches UTop with library loaded. |
+| `jbuilder build test/test.exe`                      | Build library & tests.                        |
+| `jbuilder runtest`                                  | Build library & tests _and_ run all tests.    |
+| `jbuilder build bin/{repl,benchmark,transpile}.exe` | Build library, REPL and transpiler.           |
+| `jbuilder clean`                                    | Delete `_build` directory of build artifacts. |
+| `_build/default/bin/*.exe`                          | Launch {repl,transpile,benchmark}.exe         |
 
 ### Roadmap (in _rough_ order of priority)
 
@@ -180,11 +180,64 @@ let%expect_test "addition" =
   printf "%d" (1 + 2);
   [%expect {| 3 |}]
 ```
-
 Almost all types can be printed with `printf !"%{sexp: <type>}" <value>"`. You
 can simply write `[%expect {||}]` when first writing the test, run `jbuilder
 runtest` then `jbuilder promote` to update the test file with the _if_ it is
 correct/what you expect.
+
+### Benchmarking
+
+Run `jbuilder build bin/benchmark.exe --dev`.
+
+Something `_build/default/bin/benchmark.exe --start 1 --limit 4 --alg all
+--micro-quota 10 --macro-runs 10` maybe a good place to get started. It will
+take at least 150s for just the micro-benchmarks, and more for the
+macro-benchmarks. If you have time `--micro-quota 20` I've found to be more
+than enough; you should increase `--macro-runs` carefully. Please do check that
+R^2, when given, is usally 1 or very close (0.95 or above), otherwise it means
+something not quite right with this set of measurements/regressions performed
+by Core_bench.
+
+For profiling, I advise `--no-analyse` to skip data analysis/printing and just
+run the algorithm.  Something like `--alg none --micro-quota 1 --macro-runs 1`
+for equal `--start` and `--limit` will help in getting a baseline without
+running any of the tests themselves.
+
+Full usage is given by `-help`.  The benchmarks loads (or generates if they
+don't exist) matrices for a size depending on `--start` and `--limit`. For n=5,
+k=3, matrix sizes grow exponentially from n^start to n^limit (inclusive) with k
+= 3n^(i-1).
+
+For small exponents (i <= 3), Jane Street's Core_bench runs the benchmark for
+`--micro-quota` seconds each (so for `--alg all` and `--micro-quota 10` it will
+take 10 * 5 algorithms = 50 s + data processing time) to run.
+
+For bigger exponents, it's just a bunch of repeated iterations, the number of
+which is specified by `--macro-runs`. Be aware that for limits more than 4,
+this can be pretty slow.
+
+There are (currently) 5 implementations of a Kalman filter:
+| Name   | Location                          | Explanation                                                                                                                                                                                  |
+| ---    | ---                               | ---                                                                                                                                                                                          |
+| owl    | `test/examples_test.ml`           | standard maths to code translation                                                                                                                                                           |
+| chol   | `test/examples_test.ml`           | like Owl, but uses the the fact that the matrix to be inverted is PSD to perform a Cholesky decomposition, and then uses `potrs` to perform the 'multiplication' on the right of the inverse |
+| lt4la  | `_build/default/test/examples.ml` | minimises number of temporaries, uses a Cholesky decomposition and symmetric matrix multiplication routines where possible                                                                   |
+| transp | `_build/default/test/examples.ml` | like LT4LA, but with an explicitly calculated transpose                                                                                                                                      |
+| cblas  | `bin/kalman.h`                    | same algorithm as LT4LA, but directly in C                                                                                                                                                   |
+
+I would expect Owl to be slowest (most copies, not taking advantage of the fact
+that the matrix to be inverted is PSD), then Chol, then LT4LA, then CBLAS (like
+LT4LA but without the marshalling overhead between OCaml/C).  There's a trace
+in `write-up/trace.txt` to show what calls to CBLAS/LAPACKE are being made by
+the OCaml implementations.
+
+If you look at `write-up/timings.txt`, you can see the predicted performance
+order is not quite what I expected. I thought that maybe the transpose flags
+was messing up cache locality, so I added that implementation but I think
+there's more to it than just that.  Cachegrind showed about a 1% difference in
+cache miss rates (Owl/Chol had fewer cache misses than LT4LA/CBLAS). I couldn't
+get `-p/gprof` to work, and tried to install
+[gpertools](https://github.com/gperftools/gperftools) to no luck either.
 
 ### Continuous Integration
 

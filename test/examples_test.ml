@@ -232,10 +232,15 @@ let%expect_test "Kalman" =
 
   [%expect {|
     LT4LA - sigma? same | h? same | mu? same
+    TRANSP - sigma? same | h? same | mu? same
     CBLAS - sigma? same | h? same | mu? same
+    CBLAS and TRANSP: Mu (same) Sigma (same)
     CBLAS and LT4LA: Mu (same) Sigma (same)
     CBLAS and   Owl: Mu (same) Sigma (same)
     CBLAS and  Chol: Mu (same) Sigma (same)
+    TRANSP and LT4LA: Mu (same) Sigma (same)
+    TRANSP and   Owl: Mu (same) Sigma (same)
+    TRANSP and  Chol: Mu (same) Sigma (same)
     LT4LA and   Owl: Mu (same) Sigma (same)
     LT4LA and  Chol: Mu (same) Sigma (same)
       Owl and  Chol: Mu (same) Sigma (same)

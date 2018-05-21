@@ -13,6 +13,7 @@
     (modules (benchmark array_io functions))
     (libraries (owl kalman_c_ffi test base core core_bench))
     (flags (:standard -short-paths))
+    (ocamlopt_flags (:standard -p))
     (preprocess (pps (ppx_jane)))
 ))
 

@@ -20,7 +20,9 @@ SRC :=	myclass.cls \
 	evaluation.tex \
 	related_work.tex \
 	conclusion.tex \
-	ott_spec.tex
+	ott_spec.tex \
+	timings.tex \
+	template.tex
 
 all: $(TARGETS)
 

@@ -95,8 +95,8 @@ c = [1 0; 0 1] * [4 1; 2 2]
 
 (* Owl (OCaml) *)
 open Owl
-let a = Mat.of_arrays [| [| 1.; 0. |]; [| 0.; 1. |] |]
-let b = Mat.of_array [| [| 4.; 1. |]; [| 1.; 2. |] |]
+let a = Mat.of_arrays [|[|1.;0.|];[|0.;1.|]|]
+let b = Mat.of_array [|[|4.;1.|];[|1.;2.|]|]
 let c = Mat.(a *@ b)
     \end{minted}
     \caption{Matrix Multiplication in Numpy (Python), Julia and Owl (OCaml).}\label{fig:mat_mul_copies}
@@ -153,19 +153,17 @@ and parallelism become apparent. Of these, memory allocation and re-use are
 of most relevance to linear-types and this thesis.
 
 \begin{figure}[tbp]
-    \begin{minted}{fortran}
-      program blasMatMul
-      implicit none
-      real*4 a(2,2), b(2,2), c(2,2)
-C     External from BLAS
-      external dgemm
-C     Initialize in column major storage of Fortran
-      data a/ 1,0,
-     *        0,1/
-      data b/ 4,1,
-     *        1,2/
-C                tfm  tfm  rowA colB K  alpha a lda  b  ldb beta c  ldc
-      call dgemm('N', 'N', 2,   2,   2, 1.0,  a,  2, b, 2,  0.0, c, 2)
+    \begin{minted}[fontsize=\small]{fortran}
+  program blasMatMul
+  implicit none
+  real*4 a(2,2), b(2,2), c(2,2)
+C External from BLAS
+  external dgemm
+C Initialize in column major storage of Fortran
+  data a/ 1,0,0,1/
+  data b/ 4,1,1,2/
+C            tfm  tfm  rowA colB K  alpha a lda  b  ldb beta c  ldc
+  call dgemm('N', 'N', 2,   2,   2, 1.0,  a,  2, b, 2,  0.0, c, 2)
     \end{minted}
     \caption{One of \emph{several} BLAS (Fortran) routines for Matrix
     Multiplication.}\label{fig:fortran_blas}
@@ -190,7 +188,16 @@ expression-tree at compile time and then pattern-matching on it to produce
 code) and lazy evaluation (only calculating a result when it is needed). These
 will be discussed in more detail in Chapter~\ref{chap:related}.
 
-\begin{figure}[tbp]
+It is important to note that should these annotations (in
+Figures~\ref{fig:cpp_eigen} and~\ref{fig:cpp_ublas}) be wrong, the program's
+behaviour is very likely to end up being undefined (like how \texttt{memcpy()}
+for overlapping regions of memory is explicitly undefined in the POSIX and C
+standards). Indeed, one of Fortran's strengths lies in assuming that references
+cannot be aliased (with certain caveats) in more cases than C permits (this
+informal, general statement comes with many nuances left for the interested
+reader to pursue).
+
+\begin{figure}[tp]
     \begin{minted}{c++}
 #include <iostream>
 #include <Eigen/Dense>
@@ -198,12 +205,7 @@ using namespace std;
 int main()
 {
     Eigen::Matrix2d a,b,c;
-    a << 1, 0,
-         0, 1;
-    b << 4, 1,
-         1, 2;
-    c << 0, 0,
-         0, 0;
+    a << 1, 0, 0, 1; b << 4, 1, 1, 2; c << 0, 0, 0, 0;
     a * b; // new matrix
     c += a * b; // temporary for correctness in case of aliasing
     c.noalias() += a * b; // no temporaries
@@ -212,8 +214,8 @@ int main()
     \caption{Some examples of Matrix Multiplication in Eigen. Using expression
         templates (to be discussed later) and \emph{explicitly provided} aliasing
         information, Eigen can emit a single BLAS `dgemm'-like call for the last
-        line, mirroring the Fortran example of
-        Figure~\ref{fig:fortran_blas}.}\label{fig:cpp_eigen}
+	line, mirroring the Fortran example of
+	Figure~\ref{fig:fortran_blas}.}\label{fig:cpp_eigen}
 \end{figure}
 
 \begin{figure}[tbp]
@@ -229,14 +231,110 @@ prod(A, prod<temp_type>(B,C));
         values.}\label{fig:cpp_ublas}
 \end{figure}
 
-\section{TO DO: Proposed Solution}
-A (E)DSL!
-% https://github.com/AtheMathmo/rulinalg/blob/e0d8b76ddf8bbb5547cb9c98172e594605ab5fef/src/matrix/impl_ops.rs
-% Which operand is overwritten determines scope. Would make sense to argue
-% pros-cons of implicitness vs explicitness, emulating Rust's Affine with
-% linear sugar.
+\section{Proposed Solution}
 
-% CODE EXAMPLES
+My proposed solution to this dichotomy is a \emph{domain-specific language}
+(DSL), called LT4LA (Linear Types for Linear Algebra). Although for expository
+and testing purposes I have defined a concrete-syntax, a full implementation
+would make use of a language's syntax-extension features (such as PPX for
+OCaml) to \emph{embed} the DSL into the host language. Such an embedding is
+straightforward but fairly tedious to implement. As a half-way point, I used
+compile-time code generation to make the DSL's output available to OCaml for
+testing and evaluation.
+
+Let us have a look at a few examples of functions we can write with linear
+types.  We can define the canonical factorial function
+(Figure~\ref{fig:ltfla_factorial}) and sum over an array
+(Figure~\ref{fig:ltfla_sumarray}).
+
+\begin{figure}[tp]
+    \inputminted[linenos, fontsize=\small]{ocaml}{../test/examples/factorial.lt}
+    \caption{Factorial function in LT4LA.}\label{fig:ltfla_factorial}
+\end{figure}
+
+\begin{figure}[tp]
+    \inputminted[linenos, fontsize=\small]{ocaml}{../test/examples/sum_array.lt}
+    \caption{Summing over an array in LT4LA.}\label{fig:ltfla_sumarray}
+\end{figure}
+
+The syntax is intended to resemble OCaml's, apart from the spurious
+\ltfla{`!'}s found here and there (they are annotations to show that we can
+use a value more than once). In Figure~\ref{fig:ltfla_sumarray}, we see
+\ltfla{row} has type (\ltfla{'x arr}). More detailed explanations of
+\emph{what and why} will be given in Chapter~\ref{chap:impl}, but for now, it
+is enough to know it means we can only \emph{read} from \ltfla{row}, and not
+write to it. If we did try to write to or free \ltfla{row}, say by adding
+another line as shown in Figure~\ref{fig:ltfla_univ}, would get a helpful error
+message, as shown.
+
+\begin{figure}[tp]
+    \begin{minted}[linenos, firstnumber=7, fontsize=\small]{ocaml}
+let row = row[i] := x1 in (* or *) let () = free row in
+(* Could not show equality:                                        *)
+(*     z arr                                                       *)
+(* with                                                            *)
+(*     'x arr                                                      *)
+(*                                                                 *)
+(* Var 'x is universally quantified                                *)
+(* Are you trying to write to/free/unshare an array you don't own? *)
+(* In test/examples/sum_array.lt, at line: 7 and column: 19        *)
+    \end{minted}
+    \caption{Attempting to write to or free a read only array in
+    LT4LA.}\label{fig:ltfla_univ}
+\end{figure}
+
+Now suppose we were trying to square a matrix, using a `dgemm' like BLAS
+routine which takes two read-only matrices and a third matrix it can write to
+and performs $C := AB + C$. How would we use such a routine to square a matrix?
+Surely this would break linearity, since $A$ would be have to be given to the
+function twice, and we can only do so once?
+
+We can use a special primitive called \ltfla{share} to produce read-only
+\emph{aliases} of any matrix (including ones we cannot write to). We then pass
+this into the function, and it works as expected. Once the squared matrix has
+been obtained, we may not want the original any more, and thus decide to free
+it. Before we do so, we must first \ltfla{unshare} any read-only aliases that
+exist -- in this context, \ltfla{unshare} swallows them (the only primitive
+which can return fewer read-only values than it receives) and gives back a
+single, read-write handle.
+
+\begin{figure}[tp]
+    \begin{minted}[linenos, fontsize=\small]{ocaml}
+let (a1, a2) = share _ a in
+let ((a1, a2), c) = simple_dgemm _ a1 _ a2 c in
+let a = unshare _ a1 a2 in
+let () = free a in c
+    \end{minted}
+    \caption{Squaring a matrix in LT4LA.}\label{fig:ltfla_square}
+\end{figure}
+
+If we tried to free one of the read-only aliases instead of
+\ltfla{unshare}-ing, then we would get the error show in
+Figure~\ref{fig:ltfla_free}. Briefly, a \ltfla{z arr} is a read-write array,
+everything else (\ltfla{'x arr} or \ltfla{_ s arr}) is read-only. The types of
+\ltfla{free : z arr --o unit}, \ltfla{share : 'x arr --o 'x s arr * 'x s arr}
+and \ltfla{unshare : 'x . 'x s arr --o 'x s arr --o 'x arr} are set up so that
+you can only free something when you have read-write access to it, guaranteed
+by linearity to be the only name in scope with this capability (aliases can
+only be read-only).
+
+\begin{figure}[tp]
+    \begin{minted}[linenos, fontsize=\small]{ocaml}
+let (a1, a2) = share _ a in
+let ((a1, a2), c) = simple_dgemm _ a1 _ a2 c in
+let () = free a1 in c
+(* Error:                                                        *)
+(* Could not show equality:                                      *)
+(*     z arr                                                     *)
+(* with                                                          *)
+(*     z s arr                                                   *)
+(*                                                               *)
+(* Could not show z and z s are equal.                           *)
+(* Are you trying to write to/free an array before unsharing it? *)
+(* In test.lt, at line: 3 and column: 17                         *)
+    \end{minted}
+    \caption{Attempting to free a read-only alias of matrix.}\label{fig:ltfla_free}
+\end{figure}
 
 \section{Further Reading and Theory}\label{sec:further}
 
@@ -267,3 +365,17 @@ programming has made visible progress in the past few years.  On the
 programming side, we have Linear Haskell, Rust and Idris (experimental). On the
 research side, we have Resource Aware ML~\cite{hoffmann} and the tantalising
 promise of integrating linear and dependent types~\cite{atkey}.
+
+\section{Summary}
+
+I have given an \emph{intuitive} exposition of linear types with
+\emph{fractional-capabilities}, emphasising small, but illustrative and
+practical code examples, leaving \emph{what} is going on and \emph{why} it
+works as details for the next chapter. I have shown that it is possible to
+control aliasing and reading/writing capabilities \emph{statically} with a
+\emph{type system} -- a programmer can be prevented from writing over and
+freeing arrays they do not own whilst being able to safely create read-only
+aliases when it makes sense to do so. Unlike Rust's more full-featured
+borrow-checker, the next chapter will show that these features can be expressed
+and implemented in a concise, \emph{high-level} and language-independent manner
+to be packaged up, provided and used \emph{as a library}.

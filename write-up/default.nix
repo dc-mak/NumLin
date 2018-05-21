@@ -30,8 +30,11 @@ stdenv.mkDerivation {
             ifplatform # minted
             latexmk
             lineno # minted
+            ms # pgfplots
             minted
             parskip
+            pgf
+            pgfplots
             setspace
             supertabular
             texcount

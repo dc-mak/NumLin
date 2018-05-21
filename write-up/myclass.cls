@@ -117,9 +117,10 @@
   \def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
   \makeatother
 
-% % Graphs
-% \RequirePackage{pgfplots}
-% 
+% Graphs
+\RequirePackage{pgfplots}
+\RequirePackage{rotating}
+
 % % Evaluation table
 % \RequirePackage{adjustbox}
 % \RequirePackage{array}

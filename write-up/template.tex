@@ -1,0 +1,58 @@
+\chapter{Primitives}\label{chap:primitives}
+
+The following signature gives an indication of how I embedded a linear type
+system into the OCaml one and typed LT4LA's primitives accordingly. This helped
+catch bugs and increase confidence in the correctness of the code produced.
+
+\begin{minted}[fontsize=\small, linenos]{ocaml}
+module Arr = Owl.Dense.Ndarray.D
+type z = Z
+type 'a s = Succ
+type 'a arr = A of Arr.arr [@@unboxed]
+type 'a mat = M of Arr.arr [@@unboxed]
+type 'a bang = Many of 'a [@@unboxed]
+module Prim :
+sig
+  val extract : 'a bang -> 'a
+  (** Boolean *)
+  val not_ : bool bang -> bool bang
+  (** Arithmetic, some omitted for brevity *)
+  val addI : int bang -> int bang -> int bang
+  val ltI : int bang -> int bang -> bool bang
+  (** Arrays *)
+  val set : z arr -> int bang -> float bang -> z arr
+  val get : 'a arr -> int bang -> 'a arr * float bang
+  val share : 'a arr -> 'a s arr * 'a s arr
+  val unshare : 'a s arr -> 'a s arr -> 'a arr
+  val free : z arr -> unit
+  (** Owl *)
+  val array : int bang -> z arr
+  val copy : 'a arr -> 'a arr * z arr
+  val sin : z arr -> z arr
+  val hypot : z arr -> 'a arr -> 'a arr * z arr
+  (** Level 1 BLAS *)
+  val asum : 'a arr -> 'a arr * float bang
+  val axpy : float bang -> 'a arr -> z arr -> 'a arr * z arr
+  val dot : 'a arr -> 'b arr -> ('a arr * 'b arr) * float bang
+  val rotmg : float bang * float bang -> float bang * float bang ->
+              (float bang * float bang) * (float bang * z arr)
+  val scal : float bang -> z arr -> z arr
+  val amax : 'a arr -> 'a arr * int bang
+  (* Matrix, some omitted for brevity *)
+  val matrix : int bang -> int bang -> z mat
+  val copy_mat : 'a mat -> 'a mat * z mat
+  val copy_mat_to : 'a mat -> z mat -> 'a mat * z mat
+  val size_mat : 'a mat -> 'a mat * (int bang * int bang)
+  val transpose : 'a mat -> 'a mat * z mat
+  (* Level 3 BLAS/LAPACK *)
+  val gemm : float bang -> ('a mat * bool bang) -> ('b mat * bool bang) ->
+             float bang -> z mat -> ('a mat * 'b mat) * z mat
+  val symm : bool bang -> float bang -> 'a mat -> 'b mat ->
+             float bang -> z mat -> ('a mat * 'b mat) * z mat
+  val posv : z mat -> z mat -> z mat * z mat
+  val potrs : 'a mat -> z mat -> 'a mat * z mat
+end
+\end{minted}
+
+\clearpage%
+\ottall%

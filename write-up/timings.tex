@@ -1,0 +1,102 @@
+\begin{tikzpicture}[trim axis left]
+\begin{axis}[
+    % width of chart
+    width=\textwidth,
+    % no box, below chart, horizontal
+    legend style={%
+      draw=none,
+      at={(0.5,-0.15)},
+      anchor=north,
+      legend columns=4,
+      column sep = 1em,
+      cells={align=center},
+    },
+    % log ticks with fixed point,
+    % yticklabel={\pgfmathparse{pow(10,\tick-3)}\pgfmathprintnumber[fixed]{\pgfmathresult}}\,ms, % N ms along y-axis
+    % xticklabel={\pgfmathparse{pow(5,\tick)}\pgfmathprintnumber[fixed]{\pgfmathresult}},
+    xlabel near ticks,
+    xlabel={Matrix size $n$ (for a Kalman filter, with $k=3n/5$)},
+    ylabel near ticks,
+    ylabel={Execution time of one call to Kalman filter ($\mu$s)},
+    xmode = log,
+    log basis x = {5},
+    axis line style={opacity=0}, % hide y axis
+    major tick style={draw=none}, % no ticks
+    ymode=log, % log scale for y
+    log basis y = {10}, % log base 10
+    ymajorgrids, % rows of lines
+    major grid style={gray, line width=1pt},
+]
+
+  % Owl
+    \addplot+ [
+        Blue,
+        mark options={fill=Blue},
+        error bars/.cd, y dir=both, y explicit,
+    ] table [
+        y error plus=ey+,
+        y error minus=ey-,
+    ] {
+         x         y     ey+      ey-
+         5        53       1        1
+        25        95       0        0
+       125      1488      27       24
+       625    146150   32346    32346
+      3125  24052050 5635353  5635353
+  };
+
+  % Chol
+    \addplot+ [
+        red,
+        mark options={fill=red},
+        error bars/.cd, y dir=both, y explicit,
+    ] table [
+        y error plus=ey+,
+        y error minus=ey-,
+    ] {
+         x         y     ey+     ey-
+         5        52       1       1
+        25       128       1       1
+       125      1583      95      75
+       625    125526   25502   25502
+      3125  11372123 2654524 2654524
+  };
+
+  % LT4LA
+    \addplot+ [
+        ForestGreen,
+        mark options={fill=ForestGreen},
+        error bars/.cd, y dir=both, y explicit,
+    ] table [
+        y error plus=ey+,
+        y error minus=ey-,
+    ] {
+         x         y     ey+     ey-
+         5        41       1       1
+        25       133       2       2
+       125      1678      36      33
+       625    180575   38386   38386
+      3125  22858551 1263852 1263852
+  };
+
+  % CBLAS
+    \addplot+ [
+        violet,
+        mark options={fill=violet},
+        error bars/.cd, y dir=both, y explicit,
+    ] table [
+        y error plus=ey+,
+        y error minus=ey-,
+    ] {
+         x         y     ey+     ey-
+         5        24       0       0
+        25       104       1       1
+       125      1803      64      57
+       625    187667   36281   36281
+      3125  22786457 2241650 2241650
+  };
+
+  \legend{Owl,Chol,LT4LA,CBLAS}
+
+\end{axis}
+\end{tikzpicture}

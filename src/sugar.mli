@@ -41,6 +41,7 @@ type prim =
   | Copy_mat
   | Copy_mat_to
   | Size_mat
+  | Transpose
   | Symm
   | Gemm
   | Posv

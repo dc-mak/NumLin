@@ -1,4 +1,5 @@
-let rec f (!i : !int) (!n : !int) (!x0 : !elt) ('x) (row : 'x arr) : 'x arr * !elt =
+let rec f (!i : !int) (!n : !int) (!x0 : !elt)
+          ('x) (row : 'x arr) : 'x arr * !elt =
     if i = n then
         (row, x0)
     else

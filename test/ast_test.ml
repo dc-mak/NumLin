@@ -160,7 +160,8 @@ let%expect_test "same_lin" =
          \nwith\
          \n    'two. 'two arr\
          \n\
-         \nVar 'two is universally quantified\
+         \nVar 'two is universally quantified.\
+         \nAre you trying to write to/free/unshare an array or matrix you don't own?\
          \n") |}]
 ;;
 
@@ -177,7 +178,8 @@ let%expect_test "same_lin" =
          \nwith\
          \n    ( 'one. 'one arr ) * unit\
          \n\
-         \nVar 'one is universally quantified\
+         \nVar 'one is universally quantified.\
+         \nAre you trying to write to/free/unshare an array or matrix you don't own?\
          \n") |}]
 ;;
 
@@ -195,7 +197,8 @@ let%expect_test "same_lin" =
          \nwith\
          \n    ( 'two. 'two arr ) * unit\
          \n\
-         \nVar 'two is universally quantified\
+         \nVar 'two is universally quantified.\
+         \nAre you trying to write to/free/unshare an array or matrix you don't own?\
          \n") |}]
 ;;
 

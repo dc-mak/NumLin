@@ -52,6 +52,7 @@ let check_prim =
   | Copy_mat -> All (x, Fun (Mat (V x), Pair(Mat (V x), Mat Z)))
   | Copy_mat_to -> All (x, Fun (Mat (V x), Fun (Mat Z, Pair (Mat (V x), Mat Z))))
   | Size_mat -> All (x, Fun (Mat (V x), Pair(Mat (V x), Pair (int, int))))
+  | Transpose -> All (x, Fun (Mat (V x), Pair(Mat (V x), Mat Z)))
   (** Level 3 BLAS/LAPACK *)
   | Gemm -> Fun (elt, All(x, Fun (Pair (Mat (V x), bool), All (y, Fun (Pair (Mat (V y), bool), Fun (elt, Fun (Mat Z, Pair (Pair (Mat (V x), Mat (V y)), Mat Z))))))))
   | Symm -> Fun (bool, Fun (elt, All(x, Fun (Mat (V x), All (y, Fun (Mat (V y), Fun (elt, Fun (Mat Z, Pair (Pair (Mat (V x), Mat (V y)), Mat Z)))))))))

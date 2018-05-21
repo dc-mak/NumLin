@@ -58,6 +58,7 @@ let keywords =
     ; ("copyM", COPY_M)
     ; ("copyM_to", COPY_M_TO)
     ; ("sizeM", SIZE_M)
+    ; ("transpose", TRANSPOSE)
     (* Level 2/3 BLAS *)
     ; ("symm", SYMM)
     ; ("gemm", GEMM)

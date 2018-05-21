@@ -1,0 +1,30 @@
+      let !kalman
+        ('s) (sigma : 's mat) (* n,n *)
+        ('h) (h : 'h mat)     (* k,n *)
+        ('m) (mu : 'm mat)    (* n,1 *)
+        (r_1 : z mat)         (* k,k *)
+        (data_1 : z mat)      (* k,1 *) =
+        let (h, (!k, !n)) = sizeM _ h in
+        let (h, h_T) = transpose _ h in
+(*20*)  let sigma_h <- new (k, n) [| h * sym (sigma) |] in
+(*21*)  let r_2 <- [| sigma_h * h_T + r_1 |] in
+(*22*)  let data_2 <- [| h * mu - data_1 |] in
+(*23*)  let (h, new_h) = copyM_to _ h sigma_h in
+(*24*)  let new_r <- new [| r_2 |] in
+(*25*)  let (chol_r, sol_h) = posv new_r new_h in
+(*27*)  let (chol_r, sol_data) = potrs _ chol_r data_2 in
+        let () = freeM (* k,k *) chol_r in
+(*28*)  let h_sol_h <- new (n, n) [| h_T * sol_h |] in
+        let () = freeM (* k,n *) sol_h in
+(*29*)  let h_sol_data <- new (n, 1) [| h_T * sol_data |] in
+        let () = freeM (* n,k *) h_T in
+(*30*)  let mu_copy <- new [| mu |] in
+(*31*)  let new_mu <- [| sym (sigma) * h_sol_data + mu_copy |] in
+        let () = freeM (* n,1 *) h_sol_data in
+(*32*)  let h_sol_h_sigma <- new (n,n) [| h_sol_h * sym(sigma) |] in
+(*33*)  let (sigma, sigma_copy) = copyM_to _ sigma h_sol_h in
+(*34*)  let new_sigma <- [| sigma_copy - sym (sigma) * h_sol_h_sigma |] in
+        let () = freeM (* n,n *) h_sol_h_sigma in
+        ((sigma, (h, (mu, (r_2, sol_data)))), (new_mu, new_sigma)) in
+      kalman
+      ;;

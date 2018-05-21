@@ -50,6 +50,7 @@ sig
   val copy_mat : 'a mat -> 'a mat * z mat
   val copy_mat_to : 'a mat -> z mat -> 'a mat * z mat
   val size_mat : 'a mat -> 'a mat * (int bang * int bang)
+  val transpose : 'a mat -> 'a mat * z mat
   (* Level 3 BLAS/LAPACK *)
   val gemm : float bang -> ('a mat * bool bang) -> ('b mat * bool bang) -> float bang -> z mat -> ('a mat * 'b mat) * z mat
   val symm : bool bang -> float bang -> 'a mat -> 'b mat -> float bang -> z mat -> ('a mat * 'b mat) * z mat

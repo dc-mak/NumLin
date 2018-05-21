@@ -234,6 +234,10 @@ struct
     (M mat, (Many rows, Many cols))
   ;;
 
+  let transpose (type a) (M mat : a mat) =
+    (M mat, M (Owl.Mat.transpose mat))
+  ;;
+
   let matrix (Many rows) (Many cols) : z mat =
     M (Arr.empty [| rows; cols |])
   ;;

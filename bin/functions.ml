@@ -32,6 +32,7 @@ type _ t =
        sigma:o_mat -> h:o_mat -> mu:o_mat ->
        r:o_mat -> data:o_mat -> float) t
   | LT4LA : lt4la t
+  | TRANSP : lt4la t
 ;;
 
 type wrap =
@@ -44,6 +45,7 @@ let get : type a . a t -> a = function
   | Chol -> Test.chol_kalman
   | Owl -> Test.owl_kalman
   | LT4LA -> { f = Test.lt4la_kalman }
+  | TRANSP -> { f = Test.transp_kalman }
   | CBLAS ->
     fun ~n ~k ~sigma ~h ~mu ~r ~data ->
       let open Kalman_c_ffi in
@@ -56,10 +58,11 @@ let name : wrap -> string = function
   | W Chol -> "Chol"
   | W Owl -> "Owl"
   | W LT4LA -> "LT4LA"
+  | W TRANSP -> "TRANSP"
   | W CBLAS -> "CBLAS"
 ;;
 
 
 let all =
-  [W Owl; W Chol; W LT4LA; W CBLAS]
+  [W Owl; W Chol; W LT4LA; W TRANSP; W CBLAS]
 ;;

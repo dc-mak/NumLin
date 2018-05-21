@@ -71,6 +71,7 @@ type prim =
   | Copy_mat
   | Copy_mat_to
   | Size_mat
+  | Transpose
   (** Level 3 BLAS/LAPACK *)
   | Symm
   | Gemm

@@ -70,7 +70,8 @@ let rec same_fc equiv fc1 fc2 =
   | Z, S _
   | S _, Z ->
     let pp () = string_of_fc in
-    Result.failf "Could not show %a and %a are equal.\n" pp fc1 pp fc2
+    Result.failf "Could not show %a and %a are equal.\n\
+                 Are you trying to write to/free an array or matrix before unsharing it?" pp fc1 pp fc2
 
   (* unification *)
   | (Z | V _ as fc), U var
@@ -98,7 +99,9 @@ let rec same_fc equiv fc1 fc2 =
     if not (List.exists equiv ~f:(fun (x,y) -> x = var || y = var)) then
       return []
     else
-      Result.failf "Var '%s is universally quantified\n" var
+      Result.failf
+        "Var '%s is universally quantified.\n\
+         Are you trying to write to/free/unshare an array or matrix you don't own?\n" var
 
   | V var1, V var2 ->
     if List.exists ~f:(fun (x,y) -> x = var1 && y = var2 || y = var1 && x = var2) equiv then
@@ -341,6 +344,7 @@ type prim =
   | Copy_mat
   | Copy_mat_to
   | Size_mat
+  | Transpose
   (* Level 3 BLAS/LAPACK *)
   | Symm
   | Gemm
@@ -581,7 +585,10 @@ let%test_module "Test" =
     let%expect_test "same_fc" =
       same_fc [] Z (S Z)
       |> Stdio.printf !"%{sexp:((var * fc) list,string)Result.t}";
-      [%expect {| (Error "Could not show z and z s are equal.\n") |}]
+      [%expect {|
+        (Error
+          "Could not show z and z s are equal.\
+         \nAre you trying to write to/free an array or matrix before unsharing it?") |}]
     ;;
 
     let%expect_test "same_fc" =
@@ -594,7 +601,10 @@ let%test_module "Test" =
       same_fc [(one,one)] (S (S (V one))) (V one)
       |> Stdio.printf !"%{sexp:((var * fc) list,string)Result.t}";
       [%expect {|
-        (Error "Var 'one is universally quantified\n") |}]
+        (Error
+          "Var 'one is universally quantified.\
+         \nAre you trying to write to/free/unshare an array or matrix you don't own?\
+         \n") |}]
     ;;
 
     let%expect_test "same_fc" =

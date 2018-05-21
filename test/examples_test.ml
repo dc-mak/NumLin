@@ -173,6 +173,10 @@ let lt4la_kalman ~sigma ~h ~mu ~r ~data =
     Examples.Kalman.it (M sigma) (M h) (M mu) (M r) (M data)
 ;;
 
+let transp_kalman ~sigma ~h ~mu ~r ~data =
+    Examples.Kalman_t.it (M sigma) (M h) (M mu) (M r) (M data)
+;;
+
 let cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data =
   let open Kalman_c_ffi.Bind.C in
   let module Bind = Kalman_c_ffi.Bind in
@@ -198,6 +202,10 @@ let%expect_test "Kalman" =
   let () = Owl.Mat.(Stdio.printf !"LT4LA - sigma? %{same} | h? %{same} | mu? %{same}\n"
                       (sigma = sigma_copy) (h = h_copy) (mu = mu_copy)) in
 
+  let (_, (M transp_mu, M transp_sigma)) = reset (); transp_kalman ~sigma ~h ~mu ~r ~data in
+  let () = Owl.Mat.(Stdio.printf !"TRANSP - sigma? %{same} | h? %{same} | mu? %{same}\n"
+                      (sigma = sigma_copy) (h = h_copy) (mu = mu_copy)) in
+
   let cblas_mu, cblas_sigma = reset (); cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data in
   let () = Owl.Mat.(Stdio.printf !"CBLAS - sigma? %{same} | h? %{same} | mu? %{same}\n"
                       (sigma = sigma_copy) (h = h_copy) (mu = mu_copy)) in
@@ -206,6 +214,7 @@ let%expect_test "Kalman" =
     ("Chol", chol_mu, chol_sigma);
     ("Owl", owl_mu, owl_sigma);
     ("LT4LA", lt4la_mu, lt4la_sigma);
+    ("TRANSP", transp_mu, transp_sigma);
     ("CBLAS", cblas_mu, cblas_sigma);
   ] in
 

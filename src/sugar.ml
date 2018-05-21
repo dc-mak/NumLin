@@ -82,6 +82,7 @@ type prim =
   | Copy_mat
   | Copy_mat_to
   | Size_mat
+  | Transpose
   (* Level 2/3 BLAS *)
   | Symm
   | Gemm
@@ -254,6 +255,7 @@ let rec ds_exp : exp -> Ast.exp = function
       | Copy_mat -> Copy_mat
       | Copy_mat_to -> Copy_mat_to
       | Size_mat -> Size_mat
+      | Transpose -> Transpose
       (* Level 2/3 BLAS *)
       | Symm -> Symm
       | Gemm -> Gemm

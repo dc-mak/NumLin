@@ -69,24 +69,30 @@ let generate_exn files ~base ~start ~limit =
 (* Step 2: Small matrices *)
 let get_micro ~n ~k { sigma; h; mu; r; data } (F.W fun_) =
   let f = F.get fun_ in
+  let name = F.(name @@ W fun_) in
   let open Core_bench.Bench in
   match fun_ with
   | F.Chol ->
-    Test.create ~name:("Chol") (fun () -> f ~sigma ~h ~mu ~r ~data)
+    Test.create ~name (fun () -> f ~sigma ~h ~mu ~r ~data)
 
   | F.Owl ->
-    Test.create ~name:("Owl") (fun () -> f ~sigma ~h ~mu ~r ~data)
+    Test.create ~name (fun () -> f ~sigma ~h ~mu ~r ~data)
 
   | F.LT4LA ->
     (* [r] and [data] are overrwritten *)
     let r, data = Mat.copy r, Mat.copy data in
-    Test.create ~name:("LT4LA") (fun () -> f.f ~sigma ~h ~mu ~r ~data)
+    Test.create ~name (fun () -> f.f ~sigma ~h ~mu ~r ~data)
+
+  | F.TRANSP ->
+    (* [r] and [data] are overrwritten *)
+    let r, data = Mat.copy r, Mat.copy data in
+    Test.create ~name (fun () -> f.f ~sigma ~h ~mu ~r ~data)
 
   | F.CBLAS ->
     (* Not super valid because of marshalling overhead *)
     (* [r] and [data] are overrwritten *)
     let r, data = Mat.copy r, Mat.copy data in
-    Test.create ~name:("CBLAS") (fun () -> f ~n ~k ~sigma ~h ~mu ~r ~data)
+    Test.create ~name (fun () -> f ~n ~k ~sigma ~h ~mu ~r ~data)
 ;;
 
 let micro_exn ~sec ~n ~k input tests =
@@ -150,6 +156,11 @@ let get_macro ~n ~k ~runs input (F.W fun_) =
     macro ~f ~runs input
 
   | F.LT4LA ->
+    (* [r] and [data] are overrwritten *)
+    macro ~f:f.f ~runs
+      { input with r = Mat.copy input.r; data = Mat.copy input.data }
+
+  | F.TRANSP ->
     (* [r] and [data] are overrwritten *)
     macro ~f:f.f ~runs
       { input with r = Mat.copy input.r; data = Mat.copy input.data }
@@ -377,6 +388,7 @@ let alg =
       | "chol" -> [F.W Chol]
       | "owl" ->  [F.W Owl]
       | "lt4la" -> [F.W LT4LA]
+      | "transp" -> [F.W TRANSP]
       | "cblas" -> [F.W CBLAS]
       | "all" -> F.all
       | "none" -> []

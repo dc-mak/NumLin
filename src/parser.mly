@@ -119,6 +119,7 @@ type destruct =
 %token COPY_M
 %token COPY_M_TO
 %token SIZE_M
+%token TRANSPOSE
 %token SYMM
 %token GEMM
 %token POSV
@@ -355,6 +356,7 @@ prim:
     | COPY_M    { Sugar.Copy_mat    }
     | COPY_M_TO { Sugar.Copy_mat_to }
     | SIZE_M    { Sugar.Size_mat    }
+    | TRANSPOSE { Sugar.Transpose   }
     | SYMM      { Sugar.Symm        }
     | GEMM      { Sugar.Gemm        }
     | POSV      { Sugar.Posv        }

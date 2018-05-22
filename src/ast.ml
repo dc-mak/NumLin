@@ -446,7 +446,7 @@ let rec is_value = function
   | Pair_I (_, fst, snd) -> is_value fst && is_value snd
 ;;
 
-let pp_exp ppf =
+let pp_exp ?(comments=false) ppf =
   let open Caml.Format in
   let parens exp ref = if prec exp > prec ref then "","" else "(", ")" in
   let string_of_lin = string_of_pp pp_lin in
@@ -473,7 +473,7 @@ let pp_exp ppf =
 
     | Elt_I (_, e) ->
       let l,r = if Float.(e < 0.) then "(", ")" else "", "" in
-      fprintf ppf "Many %s%f%s" l e r
+      fprintf ppf "Many %s%F%s" l e r
 
     | Pair_I (_, exp1, exp2) ->
       fprintf ppf "@[(%a@ @[, %a)@]@]" pp_exp exp1 pp_exp exp2
@@ -483,19 +483,13 @@ let pp_exp ppf =
       fprintf ppf "Many %s%a%s" l pp_exp exp r
 
     | Spc (_, exp, fc) as spc ->
-      let l, r = if prec exp >= prec spc then "","" else "(", ")" in
-      fprintf ppf !"@[<2>%s%a%s@ (* [%{string_of_fc}] *)@]" l pp_exp exp r fc
+      if comments then
+        let l, r = if prec exp >= prec spc then "","" else "(", ")" in
+        fprintf ppf !"@[<2>%s%a%s@ (* [%{string_of_fc}] *)@]" l pp_exp exp r fc
+      else
+        fprintf ppf !"@[%a@]" pp_exp exp
 
-    | App (_, Lambda (_, f2, Bang (Fun(tx, res)), Bang_E (_, f3, Var (_, f2'), body)),
-           Fix (_, f1, x, tx', res', exp))
-      when phys_equal tx tx' &&
-           phys_equal res res' &&
-           phys_equal f2 f2' &&
-           phys_equal f1 f2 &&
-           phys_equal f1 f3 ->
-      fprintf ppf !"@[@[<2>let rec %s %s =@ %a in@]@ %a@]"
-          f1 x pp_exp exp pp_exp body
-
+    (* readability *)
     | App (_, Lambda (_, var, _, body), exp) ->
       fprintf ppf !"@[@[<2>let %s =@ %a in@]@ %a@]"
         var pp_exp exp pp_exp body
@@ -512,6 +506,7 @@ let pp_exp ppf =
     | Unit_E (_, exp, body) ->
       fprintf ppf !"@[@[<2>let () =@ %a in@]@ %a@]" pp_exp exp pp_exp body
 
+    (* readability *)
     | Bang_E (_, var1, Var (_, var2),
               Bang_E (_, var3, Bang_I (_, Bang_I (_, Var (_, var4))), body))
       when var1 = var2 &&
@@ -519,15 +514,28 @@ let pp_exp ppf =
            var1 = var4 ->
       fprintf ppf "@[%a@]" pp_exp body
 
+    (* readability *)
     | Bang_E (_, var1, exp,
               Bang_E (_, var2, Bang_I (_, Bang_I (_, Var (_, var3))), body))
       when var1 = var2 &&
            var2 = var3 ->
       fprintf ppf "@[@[<2>let %s =@ %a in@]@ %a@]" var1 pp_exp exp pp_exp body
 
+    (* readability *)
+    | Bang_E (_, var, Bang_I(_, exp), body) ->
+      fprintf ppf !"@[@[<2>let %s =@ %a in@]@ %a@]"
+        var pp_exp exp pp_exp body
+
+    (* readability *)
+    | Bang_E (_, fun_var, Fix (_, fun_var', arg_var, _, _, res), body)
+      when fun_var = fun_var' ->
+      fprintf ppf !"@[@[<2>let rec %s %s =@ %a in@]@ %a@]"
+        fun_var arg_var pp_exp res pp_exp body
+
     | Bang_E (_, var, exp, body) ->
       fprintf ppf "@[@[<2>let Many %s =@ %a in@]@ %a@]" var pp_exp exp pp_exp body
 
+    (* readability *)
     | Pair_E (_, var_a1, var_b, exp1, Pair_E (_, var_aa, var_ab, Var (_, var_a2), body))
       when var_a1 = var_a2 ->
       fprintf ppf "@[@[<2>let ((%s, %s), %s) =@ %a in@]@ %a@]"
@@ -544,31 +552,44 @@ let pp_exp ppf =
     | If (_, cond, True _, False _) ->
       pp_exp ppf cond
 
+    (* TODO revisit *)
     | If (_, cond, true_, False _) ->
-      fprintf ppf "@[<hv>(Many ( (Prim.extract %@%@ @[%a@]) && (Prim.extract %@%@@ @[%a@])))@]"
-        pp_exp cond pp_exp true_
+      fprintf ppf "@[<hv>(@[%a@]@) && lazy (@[%a@])@]" pp_exp cond pp_exp true_
 
+    (* TODO revisit *)
     | If (_, cond, True _, false_) ->
-      fprintf ppf "@[<hv>(Many ( (Prim.extract %@%@ @[%a@]) || (Prim.extract %@%@@ @[%a@])))@]"
-        pp_exp cond pp_exp false_
+      fprintf ppf "@[<hv>(@[%a@]) || lazy (@[%a@])@]" pp_exp cond pp_exp false_
 
+    (* TODO revisit *)
     | If (_, cond, true_, false_) ->
-      fprintf ppf "@[<hv>if Prim.extract %@%@@;<1 3> %a then@;<1 2>@[%a@]@;else@;<1 2>@[%a@]@]"
+      fprintf ppf "@[<hv>if Prim.extract @;<1 3> (%a) then@;<1 2>@[%a@]@;else@;<1 2>@[%a@]@]"
         pp_exp cond pp_exp true_ pp_exp false_
 
     | Gen (_, var, (Gen _ | Lambda _ as exp)) ->
-      fprintf ppf "@[(* ∀ %s *)@ %a@]" var pp_exp exp
+      if comments then
+        fprintf ppf "@[(* ∀ %s *)@ %a@]" var pp_exp exp
+      else
+        fprintf ppf "@[%a@]" pp_exp exp
 
     | Gen (_, var, exp) ->
-      fprintf ppf "@[<2>(* ∀ %s *)@ %a@]" var pp_exp exp
+      if comments then
+        fprintf ppf "@[<2>(* ∀ %s *)@ %a@]" var pp_exp exp
+      else
+        fprintf ppf "@[%a@]" pp_exp exp
 
     | Lambda (_, var, lin, (Lambda _ | Gen _ as exp)) ->
-      fprintf ppf !"@[fun %s (* %{string_of_lin} *) ->@ %a@]"
-        var lin pp_exp exp
+      if comments then
+        fprintf ppf !"@[fun %s (* %{string_of_lin} *) ->@ %a@]" var lin pp_exp exp
+      else
+        fprintf ppf !"@[fun %s ->@ %a@]" var pp_exp exp
 
     | Lambda (_, var, lin, exp) ->
-      fprintf ppf !"@[<2>fun %s (* %{string_of_lin} *) ->@ %a@]"
-        var lin pp_exp exp in
+      if comments then
+        fprintf ppf !"@[<2>fun %s (* %{string_of_lin} *) ->@ %a@]" var lin pp_exp exp
+      else
+        fprintf ppf !"@[<2>fun %s ->@ %a@]" var pp_exp exp
+
+  in
 
   fprintf ppf "@[%a@]@?" pp_exp
 ;;

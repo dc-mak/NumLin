@@ -118,4 +118,4 @@ val loc : exp -> loc
 val is_value : exp -> bool
 val sexp_of_exp : exp -> Base.Sexp.t
 val prec : exp -> int
-val pp_exp : Caml.Format.formatter -> exp -> unit
+val pp_exp : ?comments:bool -> Caml.Format.formatter -> exp -> unit

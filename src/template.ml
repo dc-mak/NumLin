@@ -331,4 +331,10 @@ struct
 end
 ;;
 
+module Ops =
+struct
+  let (||) (Many x) y = if x then Many true else Lazy.force y
+  let (&&) (Many x) y = if x then Lazy.force y else Many false
+end
+
 (* end template *)

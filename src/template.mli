@@ -4,6 +4,11 @@ type 'a s = Succ
 type 'a arr = A of Arr.arr [@@unboxed]
 type 'a mat = M of Arr.arr [@@unboxed]
 type 'a bang = Many of 'a [@@unboxed]
+module Ops :
+  sig
+    val (||) : bool bang -> bool bang lazy_t -> bool bang
+    val (&&) : bool bang -> bool bang lazy_t -> bool bang
+  end
 module Prim :
 sig
   val extract : 'a bang -> 'a

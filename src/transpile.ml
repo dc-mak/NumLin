@@ -17,7 +17,10 @@ let accept chan value =
   match Checker.check_expr value ~counter:0 with
 
   | Ok (_ : Ast.lin)  ->
-    Out.output_lines chan ["open Lt4la.Template"; ";;"; ""];
+    Out.output_lines chan [
+      "open Lt4la.Template"; ";;"; "";
+      "open Ops"; "[@@ocaml.warning \"-33\"]"; ";;"; ""
+    ];
     Caml.Format.(fprintf @@ formatter_of_out_channel chan)
 
 (*
@@ -26,7 +29,7 @@ let accept chan value =
  | * ( !!int --o  'y. 'x. !int --o !int )
  *)
 
-      "@[<2>let it =@;@[%a@]@]" Ast.pp_exp value;
+      "@[<2>let it =@;@[%a@]@]" (Ast.pp_exp ~comments:false) value;
     Out.output_lines chan [""; ";;"; ""];
     Result.return ()
 

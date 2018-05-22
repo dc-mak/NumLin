@@ -123,7 +123,7 @@
 
 % % Evaluation table
 % \RequirePackage{adjustbox}
-% \RequirePackage{array}
+\RequirePackage{array}
 % 
 %   % Rotated table headers
 %   % http://tex.stackexchange.com/questions/32683/rotated-column-titles-in-tabular#32690

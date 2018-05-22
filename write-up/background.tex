@@ -80,18 +80,18 @@ so is not immediately amenable to the techniques proposed in this thesis.
 \subsection{One Too Many Copies and a Thousand Bytes Behind}
 \begin{figure}[tbp]
     \centering
-    \begin{minted}{python}
+    \begin{minted}[fontsize=\small]{python}
 # Numpy (Python)
-import numpy.matlib 
-a = [[1,0],[0,1]] 
-b = [[4,1],[2,2]] 
+import numpy.matlib
+a = [[1,0],[0,1]]
+b = [[4,1],[2,2]]
 c = numpy.matmul(a,b)
     \end{minted}
-    \begin{minted}{julia}
+    \begin{minted}[fontsize=\small]{julia}
 # Julia
 c = [1 0; 0 1] * [4 1; 2 2]
     \end{minted}
-    \begin{minted}{ocaml}
+    \begin{minted}[fontsize=\small]{ocaml}
 
 (* Owl (OCaml) *)
 open Owl
@@ -114,7 +114,7 @@ the calculation of that value.
 
 \begin{figure}[tbp]
     \centering
-    \begin{minted}{ocaml}
+    \begin{minted}[fontsize=\small]{ocaml}
 let mul x y =
   if same_shape x y then
     let y = copy y in
@@ -198,7 +198,7 @@ informal, general statement comes with many nuances left for the interested
 reader to pursue).
 
 \begin{figure}[tp]
-    \begin{minted}{c++}
+    \begin{minted}[fontsize=\small]{c++}
 #include <iostream>
 #include <Eigen/Dense>
 using namespace std;
@@ -219,7 +219,7 @@ int main()
 \end{figure}
 
 \begin{figure}[tbp]
-    \begin{minted}{c++}
+    \begin{minted}[fontsize=\small]{c++}
 noalias(C) = prod(A, B);
 // Preferable if T is preallocated
 temp_type T = prod(B,C); R = prod(A,T);
@@ -234,13 +234,16 @@ prod(A, prod<temp_type>(B,C));
 \section{Proposed Solution}
 
 My proposed solution to this dichotomy is a \emph{domain-specific language}
-(DSL), called LT4LA (Linear Types for Linear Algebra). Although for expository
-and testing purposes I have defined a concrete-syntax, a full implementation
-would make use of a language's syntax-extension features (such as PPX for
-OCaml) to \emph{embed} the DSL into the host language. Such an embedding is
-straightforward but fairly tedious to implement. As a half-way point, I used
-compile-time code generation to make the DSL's output available to OCaml for
-testing and evaluation.
+(DSL), called LT4LA (Linear Types for Linear Algebra). It offers readable,
+explicit management of aliasing, read/write permissions, memory allocation,
+re-use and deallocation all with automated checking: offering a safety net to
+catch the baby whilst swiftly disposing of the bath water.  Although for
+expository and testing purposes I have defined a concrete-syntax, a full
+implementation would make use of a language's syntax-extension features (such
+as PPX for OCaml) to \emph{embed} the DSL into the host language. Such an
+embedding is straightforward but fairly tedious to implement. As a half-way
+point, I used compile-time code generation to make the DSL's output available
+to OCaml for testing and evaluation.
 
 Let us have a look at a few examples of functions we can write with linear
 types.  We can define the canonical factorial function
@@ -312,11 +315,12 @@ If we tried to free one of the read-only aliases instead of
 \ltfla{unshare}-ing, then we would get the error show in
 Figure~\ref{fig:ltfla_free}. Briefly, a \ltfla{z arr} is a read-write array,
 everything else (\ltfla{'x arr} or \ltfla{_ s arr}) is read-only. The types of
-\ltfla{free : z arr --o unit}, \ltfla{share : 'x arr --o 'x s arr * 'x s arr}
-and \ltfla{unshare : 'x . 'x s arr --o 'x s arr --o 'x arr} are set up so that
-you can only free something when you have read-write access to it, guaranteed
-by linearity to be the only name in scope with this capability (aliases can
-only be read-only).
+\ltfla{free}, \ltfla{share} and \ltfla{unshare} (see
+Appendix~\ref{chap:primitives}) are set up so that you can only free something
+when you have read-write access to it, guaranteed by linearity to be the only
+name in scope with this capability (aliases can only be read-only). Conversely,
+if we \emph{forgot} to \ltfla{free a}, we would also get \texttt{Variable a not
+used} error.
 
 \begin{figure}[tp]
     \begin{minted}[linenos, fontsize=\small]{ocaml}
@@ -347,7 +351,7 @@ Philosophy, it is ``a refinement of classical and intuitionistic logic. Instead
 of emphasizing truth, as in classical logic, or proof, as in intuitionistic
 logic, linear logic emphasizes the role of formulas as resources.'' A walk from
 logic to programming along the well-trodden Curry-Howard bridge brings us to
-linear types.
+linear types~\cite{wadler}.
 
 For the category theory inclined reader, the !-operator (sometimes, for reasons
 elided here, called \emph{exponentiation}) forms a co-monad; for the rest of
@@ -371,11 +375,11 @@ promise of integrating linear and dependent types~\cite{atkey}.
 I have given an \emph{intuitive} exposition of linear types with
 \emph{fractional-capabilities}, emphasising small, but illustrative and
 practical code examples, leaving \emph{what} is going on and \emph{why} it
-works as details for the next chapter. I have shown that it is possible to
-control aliasing and reading/writing capabilities \emph{statically} with a
-\emph{type system} -- a programmer can be prevented from writing over and
-freeing arrays they do not own whilst being able to safely create read-only
-aliases when it makes sense to do so. Unlike Rust's more full-featured
-borrow-checker, the next chapter will show that these features can be expressed
-and implemented in a concise, \emph{high-level} and language-independent manner
-to be packaged up, provided and used \emph{as a library}.
+works as details for the next chapter. I have shown that it is possible to have
+high-level, explicit and automatically checked management of aliasing,
+read/write permissions, memory allocation, re-use and deallocation with a
+\emph{type system} -- preventing a whole class of errors that can occur with
+lower-level languages \emph{at compile time}, using the of context linear
+algebra libraries as as a specific example. In the next chapter, I will show
+that these features can be expressed and implemented in a language-independent
+manner to be provided and used \emph{as a library}.

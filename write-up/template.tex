@@ -16,9 +16,9 @@ sig
   val extract : 'a bang -> 'a
   (** Boolean *)
   val not_ : bool bang -> bool bang
-  (** Arithmetic, some omitted for brevity *)
+  (** Arithmetic, many omitted for brevity *)
   val addI : int bang -> int bang -> int bang
-  val ltI : int bang -> int bang -> bool bang
+  val ltE : float bang -> float bang -> bool bang
   (** Arrays *)
   val set : z arr -> int bang -> float bang -> z arr
   val get : 'a arr -> int bang -> 'a arr * float bang

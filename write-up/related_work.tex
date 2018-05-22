@@ -27,7 +27,7 @@
 \prechapter{%
     Now that I have described my contributions, I will explain how it relates
     to existing work, leaving brief discussions on future work to the next
-    chapter. I strongly believe matrix expression compilation research would
+    chapter. I strongly believe the field of matrix expression compilation would
     benefit greatly from a comprehensive literature review but unfortunately
     that is beyond the scope of this chapter.
 }%
@@ -132,7 +132,10 @@ compiler.
 MetaOCaml~\cite{metaocaml} and Scala with Lightweight Modular
 Staging~\cite{scala_lms} are systems which support multi-stage programming. A
 typical example of this is the generation of Fast Fourier-Transform kernels,
-specialised to a desired array length.
+specialised to a desired array length. Combining this with recent work on
+generalising and automatically deriving \emph{partially static} representations
+of data~\cite{yallop}, it may be possible to apply such techniques to
+\emph{tensor algebra} expressions.
 
 \subsection{Expression Templates in C++ Libraries}
 

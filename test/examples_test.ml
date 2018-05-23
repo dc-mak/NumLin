@@ -132,6 +132,7 @@ let r, r_copy =
 ;;
 
 let reset () =
+  (* Stdio.printf "\nreset\n---\n"; *)
   List.iter ~f:(fun (orig, copy) -> Owl.Mat.copy_to copy orig) [
     (sigma, sigma_copy);
     (h, h_copy);
@@ -181,11 +182,10 @@ let cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data =
   let open Kalman_c_ffi.Bind.C in
   let module Bind = Kalman_c_ffi.Bind in
   let gen, f64 = Ctypes_static.Genarray, Bigarray.float64 in
-  let f x = bigarray_start gen x in
-  let returned =
-    Bind.results n k (f sigma) (f h) (f mu)
-      (f @@ Owl.Mat.copy r) (f @@ Owl.Mat.copy data) in
-  let new_sigma, new_mu =  getf returned Bind.new_sigma, getf returned Bind.new_mu in
+  let f x = bigarray_start gen x [@@ocaml.inline] in
+  let returned = Bind.results n k (f sigma) (f h) (f mu) (f r) (f data) in
+  let new_sigma =  getf returned Bind.new_sigma
+  and new_mu = getf returned Bind.new_mu in
   let new_sigma = bigarray_of_ptr gen [| n; n |]  f64 new_sigma
   and new_mu = bigarray_of_ptr gen [| n; 1 |]  f64 new_mu in
   new_mu, new_sigma
@@ -193,20 +193,38 @@ let cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data =
 
 let%expect_test "Kalman" =
 
-  let (_, (chol_mu, chol_sigma)) = reset (); chol_kalman ~sigma ~h ~mu ~r ~data in
-  let (_, (owl_mu, owl_sigma)) = reset (); owl_kalman ~sigma ~h ~mu ~r ~data in
+  let (_, (chol_mu, chol_sigma)) =
+    reset ();
+    (* Stdio.printf "\nChol\n---\n"; *)
+    chol_kalman ~sigma ~h ~mu ~r ~data in
+  
+  let (_, (owl_mu, owl_sigma)) =
+    reset ();
+    (* Stdio.printf "\nOwl\n---\n"; *)
+    owl_kalman ~sigma ~h ~mu ~r ~data in
 
   let same x = if x then "same" else " NOT" in
 
-  let (_, (M lt4la_mu, M lt4la_sigma)) = reset (); lt4la_kalman ~sigma ~h ~mu ~r ~data in
+  let (_, (M lt4la_mu, M lt4la_sigma)) =
+    reset ();
+    (* Stdio.printf "\nLT4LA\n---\n"; *)
+    lt4la_kalman ~sigma ~h ~mu ~r ~data in
   let () = Owl.Mat.(Stdio.printf !"LT4LA - sigma? %{same} | h? %{same} | mu? %{same}\n"
                       (sigma = sigma_copy) (h = h_copy) (mu = mu_copy)) in
 
-  let (_, (M transp_mu, M transp_sigma)) = reset (); transp_kalman ~sigma ~h ~mu ~r ~data in
+
+  let (_, (M transp_mu, M transp_sigma)) =
+    reset ();
+    (* Stdio.printf "\nTRANSP\n---\n"; *)
+    transp_kalman ~sigma ~h ~mu ~r ~data in
   let () = Owl.Mat.(Stdio.printf !"TRANSP - sigma? %{same} | h? %{same} | mu? %{same}\n"
                       (sigma = sigma_copy) (h = h_copy) (mu = mu_copy)) in
 
-  let cblas_mu, cblas_sigma = reset (); cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data in
+  
+  let cblas_mu, cblas_sigma =
+    reset ();
+    (* Stdio.printf "\nCBLAS\n---\n"; *)
+    cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data in
   let () = Owl.Mat.(Stdio.printf !"CBLAS - sigma? %{same} | h? %{same} | mu? %{same}\n"
                       (sigma = sigma_copy) (h = h_copy) (mu = mu_copy)) in
 

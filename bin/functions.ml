@@ -49,9 +49,8 @@ let get : type a . a t -> a = function
   | CBLAS ->
     fun ~n ~k ~sigma ~h ~mu ~r ~data ->
       let open Kalman_c_ffi in
-      let f x = Bind.C.(bigarray_start Ctypes_static.Genarray x) in
-      Bind.measure n k (f sigma) (f h) (f mu)
-        (f @@ Owl.Mat.copy r) (f @@ Owl.Mat.copy data)
+      let f x = Bind.C.(bigarray_start Ctypes_static.Genarray x) [@@ocaml.inline] in
+      Bind.measure n k (f sigma) (f h) (f mu) (f r) (f data)
 ;;
 
 let name : wrap -> string = function

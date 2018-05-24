@@ -342,15 +342,17 @@ representing the variable was elaborated and adds to the complexity of the
 pattern-matching.
 
 Copying leads us into dealing with temporaries: do you first allocate all
-temporaries in new matrices and then analyse lifetimes and dimensions to figure
-out which slots of memory can be re-used? Or do you try and infer the available
-resources from the environment as you go?  Can, and should, you type arrays and
-matrices (or $n$-dimensional tensors) as the same?
+temporaries in new matrices (SSA-style) and then analyse dimensions to figure
+out which slots of memory can be re-used via copy coalescing? Or do you try and
+infer the live ranges of available resources from the environment as you go?
+Can, and should, you type arrays and matrices (or $n$-dimensional tensors) as
+the same?
 
 Adding in more and more considerations, the problem starts to resemble register
-allocation: there are registers of different types and sizes, many instructions
-to choose from, a cost model to take into account all whilst trying to balance
-the number of registers in use and the number of instructions emitted.
+allocation: there are registers of different types and sizes, many
+(non-orthogonal) instructions to choose from, a cost model to take into account
+all whilst trying to balance the number of registers in use and the number of
+instructions emitted.
 
 \section{Code Generation}
 
@@ -467,7 +469,7 @@ kalman
 So once you have written your memory-optimised program with all the features
 and support provided by LT4LA and made it produce well-typed, compilable OCaml
 code, the question then becomes, how to use this code. This process will vary
-across ecosystems, but within OCaml, the new build-system on the block
+across ecosystems, but within OCaml, the new build system on the block
 \emph{Dune} has support for generating, compiling and linking OCaml modules at
 \emph{compile time} (Figure~\ref{fig:build}). Indeed, this is how I have written
 tests and benchmarks for programs produced by LT4LA from within OCaml. In
@@ -478,7 +480,7 @@ and with any other OCaml function.
     \centering
     \includegraphics[width=\textwidth]{impl_build}
     \caption{Using LT4LA functions from OCaml with the Dune
-        build-system.}\label{fig:build}
+        build system.}\label{fig:build}
 \end{figure}
 
 Advantages of generating code at compile time include avoiding runtime overhead

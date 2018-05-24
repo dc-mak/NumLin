@@ -28,38 +28,21 @@
     major grid style={gray, line width=1pt},
 ]
 
-  % Owl
+  % CBLAS
     \addplot+ [
-        Blue,
-        mark options={fill=Blue},
-        error bars/.cd, y dir=both, y explicit,
-    ] table [
-        y error plus=ey+,
-        y error minus=ey-,
-    ] {
-         x         y     ey+      ey-
-         5        53       1        1
-        25        95       0        0
-       125      1488      27       24
-       625    146150   32346    32346
-      3125  24052050 5635353  5635353
-  };
-
-  % Chol
-    \addplot+ [
-        red,
-        mark options={fill=red},
+        violet,
+        mark options={fill=violet},
         error bars/.cd, y dir=both, y explicit,
     ] table [
         y error plus=ey+,
         y error minus=ey-,
     ] {
          x         y     ey+     ey-
-         5        52       1       1
-        25       128       1       1
-       125      1583      95      75
-       625    125526   25502   25502
-      3125  11372123 2654524 2654524
+         5        24       0       0
+        25       104       1       1
+       125      1803      64      57
+       625    187667   36281   36281
+      3125  15651064  530675  530675
   };
 
   % LT4LA
@@ -76,27 +59,46 @@
         25       133       2       2
        125      1678      36      33
        625    180575   38386   38386
-      3125  22858551 1263852 1263852
+      3125  16061291  193746  193746
   };
 
-  % CBLAS
+  % Chol
     \addplot+ [
-        violet,
-        mark options={fill=violet},
+        red,
+        mark options={fill=red},
         error bars/.cd, y dir=both, y explicit,
     ] table [
         y error plus=ey+,
         y error minus=ey-,
     ] {
          x         y     ey+     ey-
-         5        24       0       0
-        25       104       1       1
-       125      1803      64      57
-       625    187667   36281   36281
-      3125  22786457 2241650 2241650
+         5        52       1       1
+        25       128       1       1
+       125      1583      95      75
+       625    125526   25502   25502
+      3125  11210982 852463   852463
   };
 
-  \legend{Owl,Chol,LT4LA,CBLAS}
+  % Owl
+    \addplot+ [
+        Blue,
+        mark options={fill=Blue},
+        error bars/.cd, y dir=both, y explicit,
+    ] table [
+        y error plus=ey+,
+        y error minus=ey-,
+    ] {
+         x         y     ey+      ey-
+         5        53       1        1
+        25        95       0        0
+       125      1488      27       24
+       625    146150   32346    32346
+      3125  12108640  466381   466381
+  };
+
+
+
+  \legend{CBLAS,LT4LA,Chol,Owl}
 
 \end{axis}
 \end{tikzpicture}

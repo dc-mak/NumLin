@@ -14,16 +14,16 @@
     practical and usable tool to help working programmers write readable, safe
     (with respect to aliasing, read/write permissions, memory re-use and
     deallocation) and explicit (with respect to memory allocation) code that
-    (1) is more memory-efficient than code written using purely high-level
+    (1) is more memory-efficient than code written using high-level
     linear algebra libraries and (2) performs just as predictably as code
     written using low-level linear-algebra libraries. I will also elaborate on
-    the qualitative benefits of using linearly types to write linear-algebra
+    the qualitative benefits of using linear types to write linear-algebra
     programs.
 }%
 
 \section{Set-up}
 
-I analysed four implmentations of a Kalman filter, increasing
+I analysed four implementations of a Kalman filter, increasing
 the abstraction level at each step:
 
 \begin{enumerate}
@@ -42,13 +42,13 @@ the abstraction level at each step:
     \item an Owl/OCaml implementation using a Cholesky decomposition
         (Figure~\ref{fig:chol_owl_kalman}) but not taking advantage of matrices
         known to be symmetric ahead of time, and producing a new temporary
-        matrix for every operation (including inverse and tranpose)
+        matrix for every operation (including inverse and transpose)
 
-    \item an idiomatic Owl/OCaml implmentation
+    \item an idiomatic Owl/OCaml implementation
         (Figure~\ref{fig:chol_owl_kalman}) with an explicit inverse (LU
         decomposition), not taking advantage of matrices known to be symmetric
         ahead of time, and producing a new temporary matrix for every operation
-        (including inverse and tranpose).
+        (including inverse and transpose).
 
 \end{enumerate}
 
@@ -91,7 +91,7 @@ static void kalman(
     \caption{CBLAS/LAPACKE implementation of a Kalman filter. I used C instead
         of Fortran because it is what Owl uses under the hood and OCaml FFI
         support for C is better and easier to use than that for Fortran. A distinct
-        `measure\_kalman' function that sandwiches a call to this funtion with
+        `measure\_kalman' function that sandwiches a call to this function with
         \texttt{getrusage} is omitted for brevity.}\label{fig:cblas_kalman}
 
 \end{sidewaysfigure}
@@ -133,7 +133,7 @@ let owl_kalman ~sigma ~h ~mu ~r ~data =
 
 \end{figure}
 
-I evaluated the implmentations on two metrics: memory usage (via number and
+I evaluated the implementations on two metrics: memory usage (via number and
 size of temporaries allocated) and execution time. For the former, I compiled
 Owl with print-statements on the relevant primitives to see exactly the number
 of temporaries allocated for a single call of each function. While I did also
@@ -145,16 +145,17 @@ I measured execution time, in micro-seconds, against an exponentially (powers
 of 5) increasing scaling factor for matrix size parameters $n=5$ and $k=3$.
 For small scaling factors (1, 5, 25), I used the Core\_bench micro-benchmarking
 library, for larger factors (125 and greater), I used the \texttt{getrusage}
-system call (called \ltfla{Unix.times} in OCaml).  Core\_bench performs a
-linear-regression (here, time against batch-size) so includes 95\%
-confidence-interval with $R^2$. Larger scales have errors reported to $\pm
-\sigma$ (one standard-deviation) 
+system call (called \ltfla{Unix.times} in OCaml), sandwiched between calls to
+\ltfla{Gc.full_major} to ensure no garbage collection took place during the
+measurements.  Core\_bench performs a linear-regression (here, time against
+batch-size) so includes 95\% confidence-interval with $R^2$. Larger scales have
+errors reported to $\pm \sigma$ (one standard-deviation) 
 
 \section{Results}
 
-Raw output of implementation traces and the benchmarking program (including
-sample sizes) for each of the implementations are in
-Appendix~\ref{chap:eval_data}.
+All implementations produce the same answers (within at most $2^{-52}$). Raw
+output of implementation traces and the benchmarking program (including sample
+sizes) for each of the implementations are in Appendix~\ref{chap:eval_data}.
 
 \subsection{Memory Usage}
 
@@ -176,7 +177,9 @@ small) is show in Figure~\ref{fig:timings}.
     \input{timings.tex}
     \caption{Comparison of execution times. Small matrices and timings $n \le
         5^3$ were micro-benchmarked with the Core\_bench library. Larger ones used
-    Unix's \texttt{getrusage} functionality.}\label{fig:timings}
+        Unix's \texttt{getrusage} functionality, sandwiched between calls to
+        \ltfla{Gc.full_major} for the OCaml implementations.}\label{fig:timings}
+
 \end{figure}
 
 For $n=5$, and a per implementation sample size of around 450, the CBLAS
@@ -184,11 +187,11 @@ implementation is the fastest ($24\mu s$), followed by LT4LA ($41 \mu s$), then
 Cholesky and Owl (around $52 \mu s$).  However, for $n=25$, and around 350
 measurements per implementation, the idiomatic Owl implementation is the fastest
 ($95 \mu s$), \emph{then} CBLAS ($104 \mu s$), with LT4LA and Chol last (around
-$130 \mu s$). The 95\% confidence-intervals around these measurements have been
+$130 \mu s$). The 95\% confidence-intervals around these measurements are
 between 0 and 2.
 
 For $n=125$, and a per implementation sample size of around 110, the trends change:
-CBLAS implmentation is now the \emph{slowest} ($1803 \mu s\, [1746,\, 1867]$).
+CBLAS implementation is now the \emph{slowest} ($1803 \mu s\, [1746,\, 1867]$).
 This is followed by LT4LA ($1678 \mu s\, [1646,\, 1714]$) and Owl ($1488 \mu
 s\, [1464,\, 1515]$). Chol had a low $R^2$ value ($0.74$) and so its execution
 time is inconclusive here.
@@ -196,22 +199,117 @@ time is inconclusive here.
 For $n=625$ and a sample size of 1000, Chol was now the fastest ($125.5 \pm
 25\,ms$), then Owl ($146 \pm 32 \,ms$), followed by LT4LA ($180.5 \pm 38 \,ms$)
 and CBLAS ($188 \pm 36 \, ms$). Despite the large sample size, the
-standard-deviation is still quite high; however, calculating the pair-wise
-$p$-values (Welch's t-test) suggests that the difference in the means is meaningful.
+standard-deviation is still quite high; however, \emph{because} of the large
+sample size, the pair-wise $p$-values (Welch's t-test) are very small ($p <
+.05$), suggesting that the difference in the means is statistically
+significant.
 
-For $n=3125$, Chol takes approximately half the execution time ($11.4 \pm 2.7
-\,s$) of the rest (differences between LT4LA, Owl and CBLAS were not
-statistically significant, $p>.05$, using Welch's t-test) around $22s$.
+For $n=3125$ and a sample size of 15, Chol and Owl had similar mean execution
+times ($11.2 \pm 0.85 \,s$ and $12.1 \pm 0.47 \,s$ respectively) while LT4LA
+and CBLAS had similar, but \emph{slower} mean execution times ($16.1 \pm 0.19
+\,s$ and $15.7 \pm 0.53 \,s$ respectively). Pair-wise $p$-values (Welch's
+t-test) are all less than $.05$, so the differences in means are statistically
+significant.
 
-\section{TO DO: Analysis}
+\section{Analysis}
 
 Having access to primitives which allow a programmer to re-use memory means
-that memory usage for temporaries in LT4LA is on par with that of C. One caveat
-is that the `free\_mat' primitive is a no-op in LT4LA, which still relies on
-OCaml's garbage-collector. The difference between these two implementations
-and the idiomatic Owl implementation is $k(3n+2k+2)$ words, and 
+that memory usage for temporaries in LT4LA is on par with that of CBLAS. One
+caveat is that the \ltfla{freeM} primitive is a no-op in LT4LA, so deallocation
+still relies on OCaml's garbage-collector. The difference between these two
+implementations and the idiomatic Owl implementation is $k(3n+2k+2)$ words.
 
-\section{TO DO: Limitations}
+For small matrix sizes, LT4LA and CBLAS execution times differ. I suspect this
+is due to large sample sizes causing more allocations and thus more
+garbage-collector unpredictability (which the linear-regression \emph{did not}
+take into account; multi-variate regressions are not fully supported
+Core\_bench yet).
 
-\section{TO DO: Qualitative Benefits}
+As matrix size increases, execution times of LT4LA become very similar to those
+of CBLAS. However, that does not necessarily mean faster.  Especially for
+$n=625$ and $n=3125$ (sizes for which \ltfla{Gc.full_major} was called before
+each measurement), mean execution times start to split clearly into two groups:
+Chol and Owl as one group (similar, faster times) and LT4LA and CBLAS as
+another (similar, slower times).
 
+Overall, as far as memory usage is concerned, it is possible to write linear
+algebra programs with the safety (with respect to aliasing and read/write
+permissions) of using high-level libraries whilst gaining the explicit control
+over memory allocation and re-use associated with low-level libraries.
+As far as execution times are concerned, even though the idiomatic OCaml
+implementations seem to be faster for this particular
+benchmark,\footnote{Attempting to understand \emph{why} the
+    Chol/Owl implementations tended to be faster for anything except the
+    smallest of matrices, despite allocating almost twice the number of
+    temporaries was difficult. Running the different implementations through
+    the Cachegrind cache simulator (part of Valgrind) showed that LT4LA/CBLAS
+    had a roughly 1\% higher cache miss rate than Chol/Owl (rising from around
+    11\% to around 12\%). This seemed insufficient to account for the
+    differences, so I investigated further. I added an extra, modified
+    implementation of LT4LA, which transposed the `h' parameter into a new
+    matrix rather than using the transpose flag to `gemm', to see if
+    row-vs-column access patterns could account for the differences (they did
+    not). Had I been able to use gprof or gperftools, I would have profiled the
+    remaining key difference: the `symm' routine (which performs \emph{half} as
+    many multiplications as `gemm' because it knows one of its
+    arguments is symmetric).}
+we can conclude that LT4LA performs similarly to using lower-level libraries
+when garbage-collection is controlled for and especially as matrix sizes increase.
+
+\section{Limitations}
+
+I chose the example of a Kalman filter because it is used in the real world,
+consists purely of a sequence of matrix expressions and produces many
+unnecessary temporary matrices when implemented idiomatically in a high-level
+linear-algebra library. It is good for isolating the key differences between
+not having and having linear types to help a programmer safely manage memory
+and aliasing, whilst excluding other aspects also important to real world
+linear-algebra programs such as control flow or blocking.
+
+\section{Qualitative Benefits}
+
+Prior to this project, I had no experience with linear-algebra libraries or the
+problem of matrix expression compilation. As such, I based my initial LT4LA
+implementation of a Kalman filter using BLAS and LAPACK, on a popular GitHub
+gist of a Fortran implementation, one that was automatically generated from
+SymPy's matrix expression compiler~\cite{rocklin_thesis}.
+
+Once I translated the implementation, I attempted to compile it and found that
+(to my surprise) it did not type-check. This was because the original
+implementation contained incorrect aliasing, did not adhere to Fortran's
+read/write permissions (with respect to \texttt{intent} annotations
+\texttt{in}, \texttt{out} and \texttt{inout}) and unused and unnecessary
+temporaries, all of which were now highlighted by LT4LA's type system.
+
+The original implementation used 6 temporaries, one of which was immediately
+spotted as not being used due to linearity. It also contained two variables
+which were marked as \texttt{intent(in)} but would have been written over by
+calls to `gemm', spotted by the fractional-capabilities feature. Furthermore,
+it used a matrix \emph{twice} in a call to `symm', once with a read permission
+but once with a \emph{write} permission.  Fortran assumes that any parameter
+being written to is not aliased and so this call was not only incorrect, but
+illegal according to the standard, both aspects of which were captured by
+linearity and fractional-capabilities. Lastly, it contained another unnecessary
+temporary, however one that was not obvious without linear types. To spot it, I
+first performed live-range splitting (checked by linearity) by hoisting calls
+to \ltfla{freeM} and then annotated the freed matrices with their dimensions.
+After doing so and spotting two disjoint live-ranges of the same size, I
+replaced a call to \ltfla{freeM} followed by allocating call to \ltfla{copy}
+with one, in-place call to \ltfla{copyM_to}.
+
+
+\section{Summary}
+
+Writing a linear-algebra program using LT4LA gives a programmer both
+\emph{explicit control} (over read/write permissions, aliasing and memory
+allocation, re-use and deallocation) and \emph{signals intent} to the compiler
+and reader clearly without sacrificing either of readability or
+value-semantics. The resulting programs perform similarly to equivalent
+programs written directly using lower-level linear-algebra libraries. In turn,
+the programs written can be \emph{checked automatically} against their intent,
+especially when \emph{refactoring} or \emph{rewriting} code. Although any
+expert \emph{could} have followed the same line of reasoning laid out above,
+and arrived at the same program, LT4LA's type system enables a non-expert
+(yours truly) to do the same and increase confidence in the result\footnote{As
+always, this does not preclude testing code by actually executing it, but
+definitely \emph{complements} it.} by checking said line of reasoning.

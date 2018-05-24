@@ -7,15 +7,16 @@
 % \end{guidance}
 
 \prechapter{%
-    I implemented LT4LA in OCaml, however I strongly believe the ideas
-    described in this chapter can be applied easily to other languages and also
-    are modular enough to extend the OCaml implementation to output to different
-    back-end languages. I will show how a small core language with a few features
-    can be the target of heavy-desugaring of typical linear-algebra programs. This
-    core language can then be elaborated and checked for linearity before
-    performing some simple and predictable optimisations and emitting (in this
-    particular implementation) OCaml code that is not obviously safe and correct
-    (with respect to linearity).
+    I will describe the structure of LT4LA and explain the features of its core
+    language. I will then show how typical linear-algebra programs can be
+    elaborated into the core language and checked for linearity. Finally,
+    I will explain how such programs can be translated (in this particular
+    implementation) to OCaml code that is not obviously safe (with
+    respect to aliasing, read/write permissions and memory management).
+    Although I implemented LT4LA in OCaml, I believe the ideas described in
+    this chapter can be applied easily to other languages and also are modular
+    enough to extend the OCaml implementation to output to different back-end
+    languages.
 }%
 
 \section{Structure of LT4LA}
@@ -353,9 +354,9 @@ the number of registers in use and the number of instructions emitted.
 
 \section{Code Generation}
 
-Code generation is a thankfully straightforward mapping from core LT4LA
-constructs to OCaml constructs, with the appropriate sprinkling of \ltfla{Many}
-constructors for integer, element and boolean literals.
+Code generation is a straightforward mapping from core LT4LA constructs to
+OCaml constructs, with the addition of \ltfla{Many} constructors to wrap
+integer, element and boolean literals.
 
 To make the code produced readable, I added a few `optimisations', to the
 compiler, to `re-sugar' some of the constructs translated where appropriate.
@@ -401,10 +402,7 @@ f
 
 \end{figure}
 
-Even though Figure~\ref{fig:ocaml_kalman} is in OCaml, I see little reason that
-it cannot be C or Fortran. Translating LT4LA's core language constructs to
-those languages would not be as easy as translating to OCaml. However, it is
-easy to see that both Figures~\ref{fig:fortran_kalman}
+It is clear that both Figures~\ref{fig:fortran_kalman}
 and~\ref{fig:ocaml_kalman} are realisations of a concise, linearly-typed Kalman
 filter~\ref{fig:ltfla_kalman} \emph{specification} that describes the whole
 behaviour and intent (with respect to read/writes permissions, memory
@@ -471,10 +469,17 @@ and support provided by LT4LA and made it produce well-typed, compilable OCaml
 code, the question then becomes, how to use this code. This process will vary
 across ecosystems, but within OCaml, the new build-system on the block
 \emph{Dune} has support for generating, compiling and linking OCaml modules at
-\emph{compile time}. Indeed, this is how I have written tests and benchmarks
-for programs produced by LT4LA from within OCaml. In particular, I can use my
-linearly-typed Kalman filter implementation just like and with any other OCaml
-function.
+\emph{compile time} (Figure~\ref{fig:build}). Indeed, this is how I have written
+tests and benchmarks for programs produced by LT4LA from within OCaml. In
+particular, I can use my linearly-typed Kalman filter implementation just like
+and with any other OCaml function.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{impl_build}
+    \caption{Using LT4LA functions from OCaml with the Dune
+        build-system.}\label{fig:build}
+\end{figure}
 
 Advantages of generating code at compile time include avoiding runtime overhead
 as well as catching any interface changes between the generated code and the
@@ -489,16 +494,17 @@ safety-net and automatic checking for their implementations.
 
 \section{Summary}
 
+
 I have explained how a few core features -- linearity, the \ltfla{Many}
 constructor, value-restriction, fractional-capabilities with inference,
 if-expressions and recursive functions -- are enough to \emph{statically
 capture and automatically check} aliasing, read/write permissions, memory
-allocation, re-use and deallocation of real world linear algebra library
-routines. I have also demonstrated that simple pattern-matching and desugaring
-provides the potential for a new, \emph{type-directed} approach to matrix
-expression compilation. Lastly I have shown that it is possible to use these
-features with \emph{existing} languages and frameworks.\footnote{As mentioned
-in the previous chapter, if the host language supports
-\emph{syntax-extensions}, like PPX for OCaml, it would be possible to use LT4LA
-features \emph{from within} OCaml instead of just alongside it.}
+allocation, re-use and deallocation of non-trivial linear algebra programs. I
+have also demonstrated that simple pattern-matching and desugaring provides the
+potential for a new, \emph{type-directed} approach to matrix expression
+compilation. Lastly I have shown that it is possible to use these features with
+\emph{existing} languages and frameworks.\footnote{As mentioned in the previous
+    chapter, if the host language supports \emph{syntax-extensions}, like PPX
+for OCaml, it is possible to construct LT4LA expressions \emph{from within} the
+host language.}
 

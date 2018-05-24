@@ -2,24 +2,26 @@
 {\normalfont\Huge\sffamily\bfseries TO DO: Abstract}
 \vspace{24pt}
 
-In this thesis, I will argue that linear types are an appropriate,
-\emph{type-based formalism} for expressing aliasing, read/write permissions,
-memory allocation, re-use and deallocation, first, in the context of the APIs
-of linear algebra libraries, consequently extending these principles to the
-problem of \emph{efficient} matrix-expression compilation.
+In this thesis, I argue that linear types are an appropriate, \emph{type-based
+formalism} for expressing aliasing, read/write permissions, memory allocation,
+re-use and deallocation, first, in the context of the APIs of linear algebra
+libraries and then in the context of matrix-expression compilation.
 
-I will show that framing the problem using linear types can help \emph{reduce
-bugs} by making precise and explicit the informal, ad-hoc practices typically
+I show that framing the problem using linear types can help \emph{reduce bugs}
+by making precise and explicit the informal, ad-hoc practices typically
 employed by human experts and linear algebra \emph{compilers} and automate
 checking them.
 
-As evidence for this argument, I will show programs written with this safety,
-precision and explicitness (1) can be just as pleasant and convenient for a
-programmer as less efficient, but higher-level linear algebra libraries and (2)
-perform just as \emph{efficiently and predictably} as lower-level, less
-readable and more error-prone interfaces linear algebra libraries. I will
-further show that support for such programs can be implemented \emph{as
-libraries} on top of existing programming languages and libraries.
+As evidence for this argument, I show non-trivial, yet readable, linear algebra
+programs, that are safe (with respect to aliasing, read/write permissions,
+memory re-use and deallocation) and explicit (with respect to memory
+allocation) which (1) are more memory-efficient than equivalent programs
+written using purely high-level linear algebra libraries and (2) perform just
+as predictably as equivalent programs written using low-level linear-algebra
+libraries. I also argue \emph{the experience} of writing such programs with
+linear types is ``better'' in key-respects. In addition to all of this, I show
+that it is possible to provide such features \emph{as a library} on top of
+existing programming languages and linear algebra libraries.
 
 \textbf{Summarise evaluation.}
 

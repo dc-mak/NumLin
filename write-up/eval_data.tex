@@ -1,0 +1,12 @@
+\chapter{Evaluation Raw Data}\label{chap:eval_data}
+
+Below is formatted output from a trace I obtained by recompiling Owl with print
+statements inserted on the relevant primitives. I made two modifications: I
+shortened `\_matrix\_transpose' to `\_mtrsp' for formatting and I split `posv'
+into `potrf/potrs' for a fairer comparison.
+
+\inputminted[linenos, fontsize=\small]{text}{trace.txt}
+
+Below is the raw output from the benchmarking script I wrote.
+\inputminted[linenos, fontsize=\small]{text}{timings.txt}
+

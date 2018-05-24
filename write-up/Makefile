@@ -22,7 +22,8 @@ SRC :=	myclass.cls \
 	conclusion.tex \
 	ott_spec.tex \
 	timings.tex \
-	template.tex
+	primitives.tex \
+	eval_data.tex
 
 all: $(TARGETS)
 

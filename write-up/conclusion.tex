@@ -1,33 +1,95 @@
-\chapter{TO DO: Conclusion}
+\chapter{Conclusion}
 
-\begin{guidance}
-    As you might imagine: summarizes the dissertation, and draws
-    any conclusions. Depending on the length of your work, and
-    how well you write, you may not need a summary here.
+% \begin{guidance}
+%     As you might imagine: summarizes the dissertation, and draws
+%     any conclusions. Depending on the length of your work, and
+%     how well you write, you may not need a summary here.
+%
+%     You will generally want to draw some conclusions, and point
+%     to potential future work.
+% \end{guidance}
 
-    You will generally want to draw some conclusions, and point
-    to potential future work.
-\end{guidance}
+In this thesis, I presented \textbf{linear types with fractional-capabilities}
+as a type-based formalism for expressing \textbf{aliasing, read/write
+permissions, memory allocation, re-use and deallocation}; I provided a detailed
+description of each feature of the type-system, its intent and implementation
+in Section~\ref{sec:core_lang}.
 
-\textbf{What are the benefits of the type-based approach I have taken? Have I successfully 
-argued whatever I wrote in the introduction?}
+I used that formalism to make \textbf{precise and explicit the intensional
+behaviour and assumptions} (about aliasing, read/write permissions and memory
+re-use) of linear-algebra library APIs, first with the simplified example of
+the fictional `simple\_dgemm' primitive in Section~\ref{sec:prop_sol} -- where
+I showed how \textbf{the types made it impossible to use `simple\_dgemm'
+incorrectly} -- and then, more realistically with the types of LT4LA primitives
+(including actual CBLAS/LAPACKE routines) listed in
+Appendix~\ref{chap:primitives}.
+
+I also used that formalism to implement a simple, yet effective matrix
+expression `compiler' based on pattern-matching. I was able to use to that
+compiler to write, a \textbf{non-trivial, yet readable} (equational and
+algebraic) linear-algebra program (Kalman filter, as described in
+Section~\ref{sec:matrix_exps}). I shared how, in doing so, I could use the
+type-checking as a tool to \textbf{automatically highlight bugs} regarding
+aliasing, read/write permissions and memory re-use of a reference
+implementation (Section~\ref{sec:qual_benefits}) and the matrix expression
+compiler that generated it (Section~\ref{sec:mat_exp_comp}).
+
+% This suggests that although it is tempting to think of matrix expression
+% compilation as a data-flow problem in terms of graphs, such an approach may
+% struggle to accurately capture the intensional behaviour and assumptions of
+% linear-algebra kernels which seem to be expressed nicely with linear types and
+% fractional-capabilities.
+
+I showed that this implementation was \textbf{more memory-efficient} than one
+written using a high-level linear-algebra libraries and performed just as
+\textbf{predictably} as one written using a low-level linear-algebra library
+(Chapter~\ref{chap:eval}). The type system ensured that the implementation was
+safe and explicit with respect to aliasing, read/write permissions, memory
+allocation, re-use and deallocation.
+
+Lastly, I was able to provide all of this functionality as a \textbf{usable
+OCaml library}, by generating \textbf{readable and not obviously safe} OCaml
+code (1) which looks like it is written by a human/expert and (2) whose types
+reflect its intensional behaviour and assumptions (interpreting types into
+OCaml, Figure~\ref{fig:type_grammar}). This library, LT4LA, produces
+\textbf{helpful type-errors} (Section~\ref{sec:prop_sol}), comes with an
+interactive REPL and is documented and well-tested
+(Section~\ref{sec:structure_lt4la}).
 
 \section{Future Work}
 
-% Find that list of limitations
-% It should be possible to translate LT4LA's core language constructs to Fortran/C.
+LT4LA is a proof-of-concept design for linearly-typed DSL for writing
+linear-algebra programs in a way that can work with existing languages and
+libraries. It is made of up of the core language and its matrix expression
+`compiler'; both could be extended in many ways.
 
 \subsection{Core Language}
 
+Although I use well-established type system features, it may be worthwhile to
+formally state and verify my claimed safety properties.  The logical conclusion
+of LT4LA's core language would be a language expressive enough to provide a
+usable, linearly-typed interface to the unsafe parts of the Owl library for
+OCaml, perhaps as a functor like its current, `Lazy' interface.  To do that,
+the language implementation would need to support more than just 64-bit
+floating-point numbers for elements (for example, 16-bit, 32-bit or complex),
+polymorphism, a unified way of dealing with arrays and matrices (perhaps
+through sub-typing). It may also be useful to explore localised linearity
+\emph{inference}, to automate the reasoning I did manually when implementing a
+memory-efficient Kalman filter.
+
+Another, equally valid but opposing direction may be to decrease the amount of
+expressivity, to bring it closer to Fortran and C so that it would be easier to
+emit code in those languages. A full set of linearly-typed BLAS/LAPACK bindings
+(to encode information in documentation at the type level) would be a good
+first step, perhaps leading into more research on formal semantics for Fortran.
+
 \subsection{Matrix Expression Compilation}
 
-\textbf{Graph stuff... check with supervisors.}
-
-All of the matrix expression compilers mentioned in previous section construct
-some sort of dataflow graph to represent the computation being executed. While
-this seems intuitive, there is no formal argument for this  appr
-Some directions in which a type-based approach to efficient matrix expression compilation could
-be taken are:
+All of the matrix expression compilers mentioned in the previous chapter
+construct some sort of data-flow graph to represent the computation being
+executed. While this seems intuitive, there is no formal argument for this
+approach.  Some directions in which a type-based approach to efficient matrix
+expression compilation could be taken are:
 
 \begin{itemize}
 

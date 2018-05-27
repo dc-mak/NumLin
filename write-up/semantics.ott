@@ -55,14 +55,17 @@ grammar
   e :: 'e_' ::=                                   {{ com expression                            }}
     | p                       ::   :: Prim        {{ com primitives (arithmetic, L1 BLAS, Owl) }}
     | x                       ::   :: Var         {{ com variable                              }}
+    | let x = e in e'         ::   :: Let         (+ bind x in e'                              +)
+                                                  {{ com let binding                           }}
     | ( )                     ::   :: Unit_Intro  {{ com unit introduction                     }}
+    | let ( ) = e in e'       ::   :: Unit_Elim   {{ com unit elimination                      }}
     | true                    ::   :: Bool_True   {{ com true (boolean introduction)           }}
     | false                   ::   :: Bool_False  {{ com false (boolean introduction)          }}
     | if e then e1 else e2    ::   :: Bool_Elim   {{ com if (boolean elimination)              }}
     | k                       ::   :: Int_Intro   {{ com integer                               }}
     | el                      ::   :: Elt_Intro   {{ com array element                         }}
-    | many e                  ::   :: Bang_Intro  {{ com packing-up a non-linear value         }}
-    | let many x = e in e'    ::   :: Bang_Elim   {{ com using a non-linear value              }}
+    | Many e                  ::   :: Bang_Intro  {{ com packing-up a non-linear value         }}
+    | let Many x = e in e'    ::   :: Bang_Elim   {{ com using a non-linear value              }}
     | fun fc -> e             ::   :: Gen         {{ com frac. cap. abstraction                }}
     | e [ f ]                 ::   :: Spc         {{ com frac. cap. specialisation             }}
     | ( e , e' )              ::   :: Pair_Intro  {{ com pair introduction                     }}
@@ -91,8 +94,6 @@ grammar
      | ( /. )   ::  :: Elt_Div  {{ com element division                                      }}
      | ( =. )   ::  :: Elt_Eq   {{ com element equality                                      }}
      | ( <. )   ::  :: Elt_Lt   {{ com element comparsion (less-than)                        }}
-     | ( && )   ::  :: And      {{ com boolean conjuction                                    }}
-     | ( || )   ::  :: Or       {{ com boolean disjunction                                   }}
      | not      ::  :: Not      {{ com boolean negation                                      }}
      | share    ::  :: Share    {{ com share array                                           }}
      | unshare  ::  :: Unshare  {{ com unshare array                                         }}
@@ -114,14 +115,11 @@ grammar
      | freeM    ::  :: FreeM    {{ com free matrix                                           }}
      | matrix   ::  :: Matrix   {{ com Owl:  make matrix                                     }}
      | copyM    ::  :: CopyM    {{ com Owl:  copy matrix                                     }}
-     | gemv     ::  :: Gemv     {{ com BLAS: $y := \alpha A^{T?} x + \beta y$                }}
-     | symv     ::  :: Symv     {{ com BLAS: $y := \alpha A_\textrm{sym} x + \beta y$        }}
-     | trmv     ::  :: Trmv     {{ com BLAS: $x := A^{T?} * x$                               }}
-     | trsv     ::  :: Trsv     {{ com BLAS: $x := A^{-1 \cdot T?} * x$                      }}
-     | ger      ::  :: Ger      {{ com BLAS: $A := \alpha * x * y^T + A$                     }}
-     | gemm     ::  :: Gemm     {{ com BLAS: $C := \alpha * A^{T?}* B^{T?} + \beta C$        }}
-     | trmm     ::  :: Trmm     {{ com BLAS: $B := \alpha * A^{T?} * B$ and swapped          }}
-     | trsm     ::  :: Trsm     {{ com BLAS: $B := \alpha * A^{-1 \cdot T?} * B$ and swapped }}
+     | copyM_to ::  :: CopyM_to {{ com Owl:  copy matrix onto another matrix                 }}
+     | gemm     ::  :: Gemm     {{ com BLAS: $C := \alpha A^{T?} B^{T?} + \beta C$           }}
+     | symm     ::  :: Symm     {{ com BLAS: $C := \alpha A B + \beta C$ A or B symmetric    }}
+     | posv     ::  :: Posv     {{ com BLAS: Cholesky decomposition and solve                }}
+     | potrs    ::  :: Potrs    {{ com BLAS: solve with given Cholesky factorisation         }}
 
 
   T {{ tex \Theta }} :: 'T_' ::= {{ com fractional capability environment }}
@@ -217,7 +215,7 @@ defns
   value ( e ) :: ::Value_:: '' {{ com Value restriction for !-introduction }} by
 
   ----------- :: Prim
-  value ( p ) 
+  value ( p )
 
   ------------ :: Unit_Intro
   value ( () )
@@ -253,7 +251,7 @@ defns
 
   value ( e )
   ---------------- :: Bang_Intro
-  value ( many e )
+  value ( Many e )
 
   value ( e1 )
   value ( e2 )
@@ -265,7 +263,7 @@ defns
 
 
   defn
-  T ; D ; G |- e : t :: ::Type_:: '' {{ com Typing rules for expressions (no primitives yet) }} by
+  T ; D ; G |- e : t :: ::Type_:: '' {{ com Typing rules for expressions (primitives omitted) }} by
 
 
     ---------------------- :: Var_Lin
@@ -277,8 +275,20 @@ defns
     T ; D ; nil |- x : t
 
 
+    T ; D ; G          |- e  : t
+    T ; D ; G' , x : t |- e' : t'
+    -------------------------------------- :: Let
+    T ; D ; G , G' |- let x = e in e' : t'
+
+
     --------------------------- :: Unit_Intro
-    T ; D ; nil |- ( ) : ! unit
+    T ; D ; nil |- ( ) : unit
+
+
+    T ; D ; nil |- e  : unit
+    T ; D ; G   |- e' : t
+    ---------------------------------- :: Unit_Elim
+    T ; D ; G |- let ( ) = e in e' : t
 
 
     ---------------------------- :: Bool_True
@@ -307,13 +317,13 @@ defns
     value ( e )
     T ; D ; nil |- e : t
     --------------------------- :: Bang_Intro
-    T ; D ; nil |- many e : ! t
+    T ; D ; nil |- Many e : ! t
 
 
     T ; D ; G          |- e : ! t
     T ; D , x : t ; G' |- e' : t'
     ------------------------------------------ :: Bang_Elim
-    T ; D ; G, G' |- let many x = e in e' : t'
+    T ; D ; G, G' |- let Many x = e in e' : t'
 
 
     T ; D ; G  |- e  : t

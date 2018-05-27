@@ -19,6 +19,7 @@ stdenv.mkDerivation {
             cm-super
             scheme-basic
             booktabs
+            bussproofs
             charter
             epstopdf
             etoolbox # minted
@@ -32,6 +33,7 @@ stdenv.mkDerivation {
             lineno # minted
             ms # pgfplots
             minted
+            mdwtools # syntax
             parskip
             pgf
             pgfplots

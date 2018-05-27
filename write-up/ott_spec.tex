@@ -1,7 +1,7 @@
 \chapter{Ott Specification}\label{chap:ott_spec}
 
 The following pages present a specification of the grammar and type-system used
-by my project, produced using the Ott\cite{sewell_ott} tool. It is important to note
+by my project, produced using the Ott~\cite{sewell_ott} tool. It is important to note
 that the type-system described here is not how it is implemented: it is easier
 and clearer to describe the system as below for explaining. However, for implementing,
 I found it much more and user- and debugging-friendly to:
@@ -9,19 +9,30 @@ I found it much more and user- and debugging-friendly to:
 \begin{itemize}
 
     \item Implement it so that the type-environment \emph{changes} as a result
-        of type-checking an expression; with this, the below semantics describe
+        of type-checking an expression, similar to the rules shown in
+        Figure~\ref{fig:example_rules}; with this, the below semantics describe
         the \emph{difference} between the environment after and before checking
-        an expression.
+        an expression. For example, in the pair-introduction rule, $\Gamma =
+        \Gamma_2 - \Gamma_1$ and $\Gamma' = \Gamma_3 - \Gamma_2$, for an
+        appropriate definition of $(-)$.
 
     \item \emph{Mark} variables as used instead of \emph{removing} them from the
         environment for better error messages.
 
     \item Have \emph{one} environment where variables were \emph{tagged} as
-        linear and un-used, linear and used, and intuitionistic. This was
+        linear and unused, linear and used, and intuitionistic. This was
         definitely an implementation convenience so that variable binding could
         be handled uniformly for linear and intuitionistic variables and
         scoping/variable look-up could be handled implicitly thanks to the
-        associative-list structure of the environment.
+        associative-list structure of the environment. So, the variable
+        rule would most accurately look like:
+        \begin{prooftree}
+            \AxiomC{}
+            \RightLabel{\textsc{Ty\_Var}}
+            \UnaryInfC{$\Theta; \Gamma, x \overset{n}{:} t \vdash x : t ; \Gamma, x \overset{n-1}{:} t$}
+        \end{prooftree}
+        for $n \in \{0\,\textrm{(used)}, 1\,\textrm{(unused)},
+        \omega\,\textrm{(intuitionistic)}\}$, $\omega - 1 = \omega$ and  $1 - 1 = 0$.
 
 \end{itemize}
 

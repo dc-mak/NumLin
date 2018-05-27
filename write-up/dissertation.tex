@@ -4,6 +4,7 @@
 \usepackage{graphicx,parskip,setspace,tabularx,xspace}
 \usepackage{epstopdf}
 \epstopdfsetup{outdir=./build/}
+\usepackage{pdflscape}
 
 % Titles
 \def\authorname{Dhruv C.~Makwana\xspace}
@@ -19,8 +20,17 @@
 \usepackage{alltt}%hack
 \input{semantics_def}
 
+% PL Stuff
+\usepackage[nounderscore]{syntax}
+\renewcommand{\syntleft}{\normalfont\itshape}
+\renewcommand{\syntright}{}
+\renewcommand{\ulitleft}{\normalfont\bf}%\syn@ttspace\frenchspacing}
+\renewcommand{\ulitright}{}
+\renewcommand{\litleft}{\bgroup\ulitleft}
+\renewcommand{\litright}{\ulitright\egroup}
+\usepackage{bussproofs}
+
 % Minted convenience
-%\newcommand{\ltfla}[1]{\mintinline{ocaml}?#1?}
 \newmintinline[ltfla]{ocaml}{fontsize=\small}
 
 %% START OF DOCUMENT

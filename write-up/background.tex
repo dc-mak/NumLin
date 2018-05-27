@@ -18,20 +18,20 @@
     I will outline the concept of linear types and show how they can be used to
     solve the problems faced by programmers writing code using linear-algebra
     libraries. I will emphasise \emph{practical} and intuitive explanations of
-    linear types to keep this thesis accessible to working programmers as well
-    as academics not familiar with type-theory and will give only a terse
-    overview of the history and theory behind linear types for the interested
-    reader to pursue further.
+    linear types to keep this thesis accessible to programmers as well as
+    academics not familiar with type-theory and will give only a terse overview
+    of the history and theory behind linear types for the interested reader to
+    pursue further.
 }%
 
 \section{Tracking Resources with Linearity}
-Familiar examples of using a type-system to express program-invariants are
+Familiar examples of using a type-system to express program invariants are
 existential-types for abstraction and encapsulation, polymorphic types for
 parametricity and composition (a.k.a generics). Less-known examples include
 dependent-types (contracts or pre- and post-conditions). The advantages of
 using a type-system to express program invariants are summarised by saying the
 stronger the rules you follow, the better the guarantees you can get about your
-program, \emph{before} you run it. At first, the rules seems restrictive, but
+program, \emph{before} you run it. At first, the rules seem restrictive, but
 similar to how the rules of grammar, spelling and more generally writing help a
 writer make it easier and clearer to communicate the ideas they wish to express,
 so too do typing rules make it easier to communicate the intent and
@@ -43,23 +43,50 @@ where they are violated.
 
 Linear types are a way to help a programmer track and manage resources. In
 practical programming terms, they enforce the restriction that a value may be
-used exactly once.\footnote{This definition may differ from more colloquial
-uses in discussions surrounding \emph{substructural} type systems and/or
-Rust.} While this restriction may seem limiting at first, precisely these
-constraints can be used to express common invariants of the programs written by
-working programmers every day. For example: a file or a socket, once opened
-\emph{must} closed; all memory that is manually allocated \emph{must} be freed.
-C++'s destructors and Rust's Drop-trait (and more generally, its
-borrow-checker) attempt to enforce these constraints by basically doing the
-same thing: any resource that has not been moved is deallocated at the end of
-the current lexical scope. Notably, these languages also permit aliasing,
-alongside rules enforcing when it is acceptable to do so.  On face value, the
-above one-line description of linear types prevents aliasing or functions such
-as $\lambda x.\;x \times x$, such features are still allowed (albeit in a more
-restricted fashion) in a \emph{usable} linear type system designed for working
-with linear-algebra libraries.
+used exactly once\footnote{This definition may differ from more colloquial uses
+in discussions surrounding \emph{substructural} type systems and/or Rust.}
+(Figure~\ref{fig:example_rules} shows two example typing rules for a typical,
+linearly typed language). While this restriction may seem limiting at first,
+precisely these constraints can be used to express common invariants of the
+programs written by programmers every day. For example: a file or a
+socket, once opened \emph{must} closed; all memory that is manually allocated
+\emph{must} be freed.  C++'s destructors and Rust's Drop-trait (and more
+generally, its borrow-checker) attempt to enforce these constraints by
+basically doing the same thing: any resource that has not been moved is
+deallocated at the end of the current lexical scope. Notably, these languages
+also permit aliasing, alongside rules enforcing when it is acceptable to do so.
+On face value, the above one-line description of linear types prevents aliasing
+or functions such as $\lambda x.\; (x, x)$; such features are still allowed
+(albeit in a more restricted fashion) in a \emph{usable} linear type system
+designed for working with linear-algebra libraries.
+
+\begin{figure}
+    \centering
+    \begin{minipage}{0.3\textwidth}
+        \centering
+    \begin{prooftree}
+        \AxiomC{}
+        \RightLabel{\textsc{Var}}
+        \UnaryInfC{$\Gamma, x : t \vdash x : t ; \Gamma$}
+    \end{prooftree}
+    \end{minipage}%
+    \begin{minipage}{0.6\textwidth}
+        \centering
+    \begin{prooftree}
+        \AxiomC{$\Gamma_1 \vdash e_1 : t_1 ; \Gamma_2$}
+        \AxiomC{$\Gamma_2 \vdash e_2 : t_2 ; \Gamma_3$}
+        \RightLabel{\textsc{Pair}}
+        \BinaryInfC{$\Gamma_1 \vdash (e_1, e_2) : t_1 \otimes t_2 ; \Gamma_3$}
+    \end{prooftree}
+    \end{minipage}
+    \caption{A typing rule has the general form $\Gamma_{\textrm{in}} \vdash e ; \Gamma_{\textrm{out}}$.
+    Typing a variable \emph{removes} it from the environment. Typing a pair
+    requires that each component of the pair uses \emph{different} resources
+    from the environment.}\label{fig:example_rules}
+\end{figure}
 
 \section{Problem in Detail}
+
 Given this background, the most pertinent question at hand is: what problems do
 linear-algebra library users (and writers) typically face? The answer to this
 question depends on which of two buckets a programmer falls (or is forced by
@@ -80,6 +107,8 @@ so is not immediately amenable to the techniques proposed in this thesis.
 \subsection{One Too Many Copies and a Thousand Bytes Behind}
 \begin{figure}[tbp]
     \centering
+    \begin{minipage}{0.45\textwidth}
+    \centering
     \begin{minted}[fontsize=\small]{python}
 # Numpy (Python)
 import numpy.matlib
@@ -91,14 +120,19 @@ c = numpy.matmul(a,b)
 # Julia
 c = [1 0; 0 1] * [4 1; 2 2]
     \end{minted}
+    \end{minipage}%
+    \begin{minipage}{0.45\textwidth}
+    \centering
     \begin{minted}[fontsize=\small]{ocaml}
-
 (* Owl (OCaml) *)
 open Owl
-let a = Mat.of_arrays [|[|1.;0.|];[|0.;1.|]|]
-let b = Mat.of_array [|[|4.;1.|];[|1.;2.|]|]
+let a = Mat.of_arrays
+  [|[|1.;0.|];[|0.;1.|]|]
+let b = Mat.of_arrays
+  [|[|4.;1.|];[|1.;2.|]|]
 let c = Mat.(a *@ b)
     \end{minted}
+    \end{minipage}
     \caption{Matrix Multiplication in Numpy (Python), Julia and Owl (OCaml).}\label{fig:mat_mul_copies}
 \end{figure}
 
@@ -106,7 +140,7 @@ In Figure~\ref{fig:mat_mul_copies}, we see that matrix-multiplication is fairly
 trivial to write and execute in Numpy, Julia and Owl. Let us call this approach
 \emph{value-semantic}, meaning that objects are \emph{values} just like
 integers and floating-point numbers. This approach confers two key advantages to the
-programmmer: it is easy to read (equational and algebraic declarations) and it
+programmmer: it is easy to read (equational and algebraic expressions) and it
 is easy to reason about (as one would with a mathematical formula). Although this
 approach does permit \emph{aliasing}, the consequences are benign because the
 result of any computation is a \emph{new} value, distinct from any used during
@@ -137,20 +171,21 @@ garbage-collector (see Figure~\ref{fig:mat_mul_owl}). Libraries taking a
 implement a new algorithm: either use the existing and safe primitives to build
 an easy to reason about but slower, more memory-intensive algorithm, or use
 escape-hatches (typically provided by most libraries, which permit in-place
-modification of objects) to build faster, and more efficient algorithms which
-are harder to reason about.
+modification of objects) to build faster, and more memory-efficient algorithms
+which are harder to reason about.
 
 \subsection{IHNIWTLM}
 The title of this subsection\footnote{I Have No Idea What Those Letters Mean.}
-illustrates the problem with the C++/FORTRAN side: legibility (and ease of
-reasoning) is sacrificed at the altar of performance and efficiency.
+illustrates the problem with the C++/FORTRAN side: readability (equational
+and algebraic expressions) and ease of reasoning is sacrificed at
+the altar of performance and efficiency.
 
 Although escape-hatches do exist in value-semantic libraries, their use is
 discouraged. Systematic consideration of performance requires lowering the
 level of abstraction a programmer is working on. At this level, several
 factors such as memory layout, allocation, re-use as well as cache behaviour
-and parallelism become apparent. Of these, memory allocation and re-use are
-of most relevance to linear-types and this thesis.
+and parallelism become apparent. Of these, \textbf{memory allocation and
+re-use} are relevant to linear-types and this thesis.
 
 \begin{figure}[tbp]
     \begin{minted}[fontsize=\small]{fortran}
@@ -231,19 +266,20 @@ prod(A, prod<temp_type>(B,C));
         values.}\label{fig:cpp_ublas}
 \end{figure}
 
-\section{Proposed Solution}
+\section{Proposed Solution}\label{sec:prop_sol}
 
-My proposed solution to this dichotomy is a \emph{domain-specific language}
-(DSL), called LT4LA (Linear Types for Linear Algebra). It offers readable,
-explicit management of aliasing, read/write permissions, memory allocation,
-re-use and deallocation all with automated checking: offering a safety net to
-catch the baby whilst swiftly disposing of the bath water.  Although for
-expository and testing purposes I have defined a concrete-syntax, a full
-implementation would make use of a language's syntax-extension features (such
-as PPX for OCaml) to \emph{embed} the DSL into the host language. Such an
-embedding is straightforward but fairly tedious to implement. As a half-way
-point, I used compile-time code generation to make the DSL's output available
-to OCaml for testing and evaluation.
+My proposed solution to this dichotomy (readability, ease of reasoning and
+safety versus memory-efficiency) is a \emph{domain-specific language} (DSL),
+called LT4LA (Linear Types for Linear Algebra). It is written in OCaml and
+transpiles to OCaml. It offers readable, explicit management of aliasing,
+read/write permissions, memory allocation, re-use and deallocation all with
+automated checking: offering a safety net to catch the baby whilst swiftly
+disposing of the bath water.  Although for expository and testing purposes I
+have defined a concrete-syntax, a full implementation would make use of a
+language's syntax-extension features (such as PPX for OCaml) to \emph{embed}
+the DSL into the host language. Such an embedding is straightforward but fairly
+tedious to implement. As a half-way point, I used compile-time code generation
+to make the DSL's output available to OCaml for testing and evaluation.
 
 Let us have a look at a few examples of functions we can write with linear
 types.  We can define the canonical factorial function
@@ -270,7 +306,7 @@ write to it. If we did try to write to or free \ltfla{row}, say by adding
 another line as shown in Figure~\ref{fig:ltfla_univ}, would get a helpful error
 message, as shown.
 
-\begin{figure}[tp]
+\begin{figure}[p]
     \begin{minted}[linenos, firstnumber=7, fontsize=\small]{ocaml}
 let row = row[i] := x1 in (* or *) let () = free row in
 (* Could not show equality:                                        *)
@@ -287,32 +323,35 @@ let row = row[i] := x1 in (* or *) let () = free row in
 \end{figure}
 
 Now suppose we were trying to square a matrix, using a `dgemm' like BLAS
-routine which takes two read-only matrices and a third matrix it can write to
-and performs $C := AB + C$. How would we use such a routine to square a matrix?
-Surely this would break linearity, since $A$ would be have to be given to the
-function twice, and we can only do so once?
+routine (called `simple\_dgemm'\footnote{For the purposes of this example, I
+assume `simple\_dgemm' has type \ltfla{'x . 'x mat --o 'y .  'y mat --o z mat
+--o ('x mat * 'y mat) * z mat}.} in Figures~\ref{fig:ltfla_square}
+and~\ref{fig:ltfla_free}) which takes two read-only matrices and a third matrix
+it can write to and performs $C := AB + C$. How would we use such a routine to
+square a matrix, assuming $C=0$ initially?  Surely this would break linearity,
+since $A$ would be have to be given to the function twice, and we can only do
+so once?
 
-We can use a special primitive called \ltfla{share} to produce read-only
-\emph{aliases} of any matrix (including ones we cannot write to). We then pass
-this into the function, and it works as expected. Once the squared matrix has
-been obtained, we may not want the original any more, and thus decide to free
-it. Before we do so, we must first \ltfla{unshare} any read-only aliases that
-exist -- in this context, \ltfla{unshare} swallows them (the only primitive
-which can return fewer read-only values than it receives) and gives back a
-single, read-write handle.
+We can use a special primitive called \ltfla{share} to produce (more) read-only
+\emph{aliases} of any matrix. We then pass these into the function, and it
+works as expected. Once the squared matrix has been obtained, we may not want
+the original any more, and thus decide to free it. Before we do so, we must
+first \ltfla{unshare} any read-only aliases that exist -- in this context,
+\ltfla{unshare} swallows them and gives back a single, read-write handle.
 
-\begin{figure}[tp]
+\begin{figure}[p]
     \begin{minted}[linenos, fontsize=\small]{ocaml}
 let (a1, a2) = share _ a in
 let ((a1, a2), c) = simple_dgemm _ a1 _ a2 c in
 let a = unshare _ a1 a2 in
 let () = free a in c
     \end{minted}
-    \caption{Squaring a matrix in LT4LA.}\label{fig:ltfla_square}
+    \caption{Squaring a matrix in LT4LA (assuming \ltfla{c} is initially
+        0).}\label{fig:ltfla_square}
 \end{figure}
 
 If we tried to free one of the read-only aliases instead of
-\ltfla{unshare}-ing, then we would get the error show in
+\ltfla{unshare}-ing, then we would get the error shown in
 Figure~\ref{fig:ltfla_free}. Briefly, a \ltfla{z arr} is a read-write array,
 everything else (\ltfla{'x arr} or \ltfla{_ s arr}) is read-only. The types of
 \ltfla{free}, \ltfla{share} and \ltfla{unshare} (see
@@ -322,7 +361,14 @@ name in scope with this capability (aliases can only be read-only). Conversely,
 if we \emph{forgot} to \ltfla{free a}, we would also get \texttt{Variable a not
 used} error.
 
-\begin{figure}[tp]
+Another way in which `simple\_dgemm' may be misused is by instantiating its
+informal description of $C := AB + C$ with $B = C = A$ and so mistakenly
+concluding that it computes $A := A^2 + A$ in-place. However, the type of
+\ltfla{share} prevents this as well -- \ltfla{let (a11, a12) = share _ a1 in
+simple_dgemm _ a11 _ a12 a2} would result in an error similar to the one shown
+in Figure~\ref{fig:ltfla_free}.
+
+\begin{figure}[p]
     \begin{minted}[linenos, fontsize=\small]{ocaml}
 let (a1, a2) = share _ a in
 let ((a1, a2), c) = simple_dgemm _ a1 _ a2 c in
@@ -339,6 +385,7 @@ let () = free a1 in c
     \end{minted}
     \caption{Attempting to free a read-only alias of matrix.}\label{fig:ltfla_free}
 \end{figure}
+
 
 \section{Further Reading and Theory}\label{sec:further}
 
@@ -373,13 +420,16 @@ promise of integrating linear and dependent types~\cite{atkey}.
 \section{Summary}
 
 I have given an \emph{intuitive} exposition of linear types with
-\emph{fractional-capabilities}, emphasising small, but illustrative and
-practical code examples, leaving \emph{what} is going on and \emph{why} it
-works as details for the next chapter. I have shown that it is possible to have
-high-level, explicit and automatically checked management of aliasing,
-read/write permissions, memory allocation, re-use and deallocation with a
-\emph{type system} -- preventing a whole class of errors that can occur with
-lower-level languages \emph{at compile time}, using the of context linear
-algebra libraries as as a specific example. In the next chapter, I will show
-that these features can be expressed and implemented in a language-independent
-manner to be provided and used \emph{as a library}.
+\emph{fractional-capabilities}~\cite{boyland}, emphasising small, but
+illustrative and practical code examples, leaving \emph{what} is going on and
+\emph{why} it works as details for the next chapter. I have shown that it is
+possible to solve the dichotomy of readability, ease of reasoning and safety
+versus memory-efficiency by providing explicit and automatically checked
+management of aliasing, read/write permissions, memory allocation, re-use and
+deallocation with a \emph{type system}. This prevents a whole class of errors
+that can occur with lower-level languages \emph{at compile time}. I
+demonstrated these features using the context of linear-algebra libraries as as
+a specific example. In the next chapter, I will show that these features can be
+further applied to the problem of \emph{matrix expression compilation}. I will
+also explain how to express and implement them so that they can be provided and
+used \emph{as a library}.

@@ -32,22 +32,7 @@
     that is beyond the scope of this chapter.
 }%
 
-\section{Matrix Expression Compilation}
-
-% For decades, small gains in efficiency of \emph{executing} numerically
-% intensive code have and continue to translate into massive savings in costs and
-% time. This has spurned mountains of research into an almost bewildering variety
-% of hardware, software and compilation techniques, typically entrusted with a
-% (team of) domain-specific expert programmer(s) to apply in real world
-% situations.
-% 
-% Given the rise of big data and machine learning, there is now a movement to
-% improve \emph{programmer} efficiency in this domain after focusing for so long
-% on \emph{computational} efficiency. Matrix expression compilers promise to
-% generate code that is reasonably close to `optimal'/what a domain-expert may
-% write but without the need to acquire years of experience and depth of
-% knowledge (a similar trade-off to garbage-collection for memory management or
-% software-transactional memory for concurrency).
+\section{Matrix Expression Compilation}\label{sec:mat_exp_comp}
 
 Most of the projects below try to be fully-automated black-boxes which model
 computing a matrix expression as some sort of graph with informal, ad-hoc rules
@@ -62,13 +47,12 @@ programmers precisely and explicitly capture, using types, the practices
 prevalent in code they already write.
 
 I believe the advantages of my approach are two-fold (1) \emph{predictable}
-performance and (2) more accurate modelling of how low-level kernels handle
-their resources. My confidence in the latter claim comes from finding at least
-two errors in the Fortran code output by SymPy to compute a Kalman filter, one
-to do with aliasing (resulting in code that was not legal Fortran) that would
-not have type-checked had it been translated via LT4LA as an intermediate
-representation (the other error to be explained later
-in~\ref{subsec:lin_dep_types}).
+performance (as defined in Chapter~\ref{chap:eval}) and (2) more accurate
+modelling of how low-level kernels handle their resources. My confidence in the
+latter claim comes from finding errors in Fortran code output by SymPy to
+compute a Kalman filter (as described in Section~\ref{sec:qual_benefits});
+errors that would not have passed type-checking had it been translated via
+LT4LA as an intermediate representation.
 
 \subsection{SymPy}
 
@@ -173,10 +157,11 @@ the language follows.
 \subsection{Lazy Evaluation}
 
 A particularly strong advantage LT4LA has over other libraries that use lazy
-evaluation is, funnily enough, linear types, more precisely and the static and
-perfect information they guarantee about aliasing: with Owl, every graph-node
-has only one node in or out; with Eigen, every ``assignment'' has a
-\texttt{noalias} annotation.
+evaluation is, funnily enough, linear types; more precisely, it is the static
+and perfect information they guarantee about aliasing: with Owl, every
+graph-node has only one node in or out; with Eigen, every ``assignment'' has a
+\texttt{noalias} annotation, without the danger of getting it wrong and
+invoking undefined behaviour.
 
 This simplifies the rules and exceptions a programmer reasoning about memory
 usage needs to remember. Of course, now the programmer has to figure out how
@@ -190,11 +175,9 @@ Futhark~\cite{futhark} is a second-order (meaning it supports functions such as
 map and fold/reduce) array combinator (meaning array operations can be fused
 into streams to reduce temporaries) language designed for efficient parallel
 compilation. It supports ML-style modules, loops, limited parametric
-polymorphism, size types and uniqueness types. Intuitively, where linearity
-provides a local guarantee of ``this value is not aliased in this scope'',
-uniqueness types provide a global guarantee of ``this value is not aliased
-anywhere''. Its combinators are more expressive than typical linear algebra
-library kernels so encourages shorter, more declarative linear algebra code.
+polymorphism, size types and uniqueness types (an idea closely related to
+linear types). Its combinators are more expressive than typical linear-algebra
+library kernels so encourage shorter, more declarative linear-algebra code.
 
 \subsection{Substructural Features in Rust}
 
@@ -202,12 +185,13 @@ Rust~\cite{rust} is a (relatively) new systems programming language aiming to
 bring the last two decades of programming language research to the masses in a
 usable and friendly manner. Its \emph{borrow-checker} is the feature most
 relevant to this thesis because it statically attempts to prevent many
-resource-related bugs. Although there are a few linear algebra libraries for
+resource-related bugs. Although there are a few linear-algebra libraries for
 Rust under development, careful use of its macro system and borrow-checker
-could make it the safest and easiest to use language for linear algebra
+could make it the safest and easiest to use language for linear-algebra
 projects to come. Its struggle is more likely to be against the inertia of the
 large amounts of C++/Fortran code already out there rather than its usability
-or benefits.
+or benefits. Given this inertia, I believe there is value in taking the DSL
+library approach of LT4LA which will work with existing systems.
 
 \subsection{Linear Types in Haskell}
 
@@ -223,11 +207,11 @@ resource-management in their type systems.
 \subsection{Linear and Dependent Types in Idris}\label{subsec:lin_dep_types}
 
 Dimension mismatches are seen as an irritating but small inconvenience when
-writing linear algebra code. However, the second error I found in the Fortran
-code output by SymPy to compute a Kalman filter was a dimension/transposition
-error. Although we would not need full dependent types to solve dimension
-mismatches (symbolic size types would be sufficient), managing properties about
-matrices could be done at the type-level in a dependently typed setting.
+writing linear-algebra code. However, another error I found in the Fortran code
+output by SymPy to compute a Kalman filter was a dimension/transposition error.
+Although we would not need full dependent types to solve dimension mismatches
+(symbolic size types would be sufficient), managing properties about matrices
+could be done at the type-level in a dependently typed setting.
 
 We could then express the usual properties and results of operations at the
 type-level, ensuring, for example, that certain functions are called only when

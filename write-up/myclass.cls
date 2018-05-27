@@ -103,9 +103,10 @@
 % ---
 
 % Maths symbols (explaining triangle for defs, square for proofs in Eval)
+\RequirePackage{amsmath}
 \RequirePackage{amssymb}
 
-% Including stand-alone LaTeX documents as is (proposal ???)
+% Including stand-alone LaTeX documents as is
 % \RequirePackage{docmute}
 
 % Source code highlighting

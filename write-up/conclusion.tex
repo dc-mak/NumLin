@@ -42,10 +42,11 @@ compiler that generated it (Section~\ref{sec:mat_exp_comp}).
 
 I showed that this implementation was \textbf{more memory-efficient} than one
 written using a high-level linear-algebra libraries and performed just as
-\textbf{predictably} as one written using a low-level linear-algebra library
+\textbf{predictably} as one written using a low-level linear-algebra library,
+enabling a programmer to have the best of both worlds
 (Chapter~\ref{chap:eval}). The type system ensured that the implementation was
-safe and explicit with respect to aliasing, read/write permissions, memory
-allocation, re-use and deallocation.
+\textbf{safe and explicit} with respect to aliasing, read/write permissions,
+memory allocation, re-use and deallocation.
 
 Lastly, I was able to provide all of this functionality as a \textbf{usable
 OCaml library}, by generating \textbf{readable and not obviously safe} OCaml

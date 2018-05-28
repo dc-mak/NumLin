@@ -1,7 +1,7 @@
 % Boilerplate
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{myclass}[05/02/2018 Dhruv Makwana Part III Project Class]
-\LoadClass[12pt,a4paper,twoside,openright]{report}
+\LoadClass[12pt,a4paper,twoside,openright,notitlepage]{report}
 
 % Standard
 \RequirePackage[utf8x]{inputenc}

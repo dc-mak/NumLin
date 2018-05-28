@@ -306,7 +306,7 @@ write to it. If we did try to write to or free \ltfla{row}, say by adding
 another line as shown in Figure~\ref{fig:ltfla_univ}, would get a helpful error
 message, as shown.
 
-\begin{figure}[p]
+\begin{figure}[tp]
     \begin{minted}[linenos, firstnumber=7, fontsize=\small]{ocaml}
 let row = row[i] := x1 in (* or *) let () = free row in
 (* Could not show equality:                                        *)
@@ -339,7 +339,7 @@ the original any more, and thus decide to free it. Before we do so, we must
 first \ltfla{unshare} any read-only aliases that exist -- in this context,
 \ltfla{unshare} swallows them and gives back a single, read-write handle.
 
-\begin{figure}[p]
+\begin{figure}[tp]
     \begin{minted}[linenos, fontsize=\small]{ocaml}
 let (a1, a2) = share _ a in
 let ((a1, a2), c) = simple_dgemm _ a1 _ a2 c in
@@ -368,7 +368,7 @@ concluding that it computes $A := A^2 + A$ in-place. However, the type of
 simple_dgemm _ a11 _ a12 a2} would result in an error similar to the one shown
 in Figure~\ref{fig:ltfla_free}.
 
-\begin{figure}[p]
+\begin{figure}[tp]
     \begin{minted}[linenos, fontsize=\small]{ocaml}
 let (a1, a2) = share _ a in
 let ((a1, a2), c) = simple_dgemm _ a1 _ a2 c in
@@ -417,6 +417,7 @@ programming side, we have Linear Haskell, Rust and Idris (experimental). On the
 research side, we have Resource Aware ML~\cite{hoffmann} and the tantalising
 promise of integrating linear and dependent types~\cite{atkey}.
 
+\clearpage%
 \section{Summary}
 
 I have given an \emph{intuitive} exposition of linear types with

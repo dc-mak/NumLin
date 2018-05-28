@@ -16,15 +16,15 @@
     memory re-use and deallocation) and explicit (with respect to memory
     allocation) code that (1) is more memory-efficient than code written using
     high-level linear algebra libraries and (2) performs just as predictably as
-    code written using low-level linear-algebra libraries. I will also
+    code written using low-level linear algebra libraries. I will also
     elaborate on the qualitative benefits of using linear types to write
-    linear-algebra programs.
+    linear algebra programs.
 }%
 
 \section{Compared to C}
 
 To test whether code written using LT4LA performs just as predictably as code
-written using low-level linear-algebra libraries, I wrote two implementations
+written using low-level linear algebra libraries, I wrote two implementations
 of a Kalman filter:
 
 \begin{enumerate}
@@ -59,9 +59,9 @@ of 5) increasing scaling factor for matrix size parameters $n=5$ and $k=3$.
 For small scaling factors (1, 5, 25), I used the Core\_bench micro-benchmarking
 library, for larger factors (125 and greater), I used the \texttt{getrusage}
 system call (called \ltfla{Unix.times} in OCaml), sandwiched between calls to
-\ltfla{Gc.full_major} to ensure no garbage collection took place during the
-measurements.  Core\_bench performs a linear-regression (here, time against
-batch-size) so includes 95\% confidence-interval with $R^2$. Larger scales have
+\ltfla{Gc.full_major} to minimise the effects of garbage-collection.
+Core\_bench performs a linear regression (here, time against batch-size) so
+includes a 95\% confidence-interval with $R^2$. Larger scales have
 errors reported to $\pm \sigma$ (one standard-deviation).
 
 \subsection{Memory Usage}
@@ -69,7 +69,7 @@ errors reported to $\pm \sigma$ (one standard-deviation).
 Inspecting the trace for LT4LA shows 6 calls to `empty' (function for
 allocating new matrices): 4 temporaries plus 2 for storing the results. From
 the CBLAS implementation (Figure~\ref{fig:cblas_kalman}), we can see that it
-too has 6 calls to malloc: 4 temporaries plus 2 to storing the results.
+too has 6 calls to malloc: 4 temporaries plus 2 for storing the results.
 
 \begin{landscape}
 \begin{figure}[p]
@@ -135,7 +135,7 @@ For $n=5$, CBLAS was faster ($24\mu s$, 526 samples) than LT4LA ($41 \mu s$,
 466 samples).  For $n=25$, and around 350 samples each, CBLAS was again faster
 ($104 \mu s$) than LT4LA ($133 \mu s$). The 95\% confidence-intervals for these
 measurements differ from the means by at most $2 \mu s$. For $n=125$, and
-around 110 samples, CBLAS was \emph{slower} ($1803 \mu s\, [1746,\, 1867]$)
+around 110 samples each, CBLAS was \emph{slower} ($1803 \mu s\, [1746,\, 1867]$)
 than LT4LA ($1678 \mu s\, [1646,\, 1714]$). For $n=625$ and 1000 samples each,
 they took a \emph{very similar} amount of time: LT4LA took $180.5 \pm 38 \,ms$
 and CBLAS took $188 \pm 36 \, ms$. Despite the large sample size, the
@@ -155,24 +155,23 @@ still relies on OCaml's garbage-collector.
 
 For small matrix sizes, LT4LA and CBLAS execution times differ. I suspect this
 is due to large sample sizes causing more allocations and thus more
-garbage-collector unpredictability (which the linear-regression \emph{did not}
+garbage-collector unpredictability (which the linear regression \emph{did not}
 take into account; multi-variate regressions are not fully supported by
 Core\_bench yet). As matrix size increases, execution times of LT4LA become
 very similar to those of CBLAS.
 
-Therefore, by using LT4LA, it is possible to write linear-algebra programs that
+Therefore, by using LT4LA, it is possible to write linear algebra programs that
 perform just as predictably (with regards to memory usage and execution time)
-as code written using low-level linear algebra libraries, but gain readability
-(equational and algebraic expressions) and safety (with respect to aliasing
+as code written using low-level libraries, but gain readability (equational and
+algebraic expressions) and safety (with respect to aliasing
 and read/write permissions).
 
 \section{Compared to OCaml}
 
-To test whether code written using LT4LA is more memory efficient than code
-written using high-level linear-algebra libraries, I wrote two\footnote{I
-attempted a third implementation using Owl's \emph{Lazy} module but it did
-not support matrix inversion at the time of writing.} more implementations
-of a Kalman filter:
+To test whether code written using LT4LA is more memory-efficient than code
+written using high-level libraries, I wrote two\footnote{I attempted a third
+implementation using Owl's \emph{Lazy} module but it did not support matrix
+inversion at the time of writing.} more implementations of a Kalman filter:
 
 \begin{enumerate}
     \item An Owl/OCaml implementation using a Cholesky decomposition
@@ -220,7 +219,8 @@ let owl_kalman ~sigma ~h ~mu ~r ~data =
     \caption{Implementations of a Kalman filter using Owl, top one using a
         Cholesky decomposition, bottom one using idiomatic Owl. Owl does not
         yet provide a non-mutating `potrs' function, so I wrote my own which
-        returns a mutated copy of its argument instead.}\label{fig:chol_owl_kalman}
+        returns a mutated \emph{copy} of its argument
+        instead.}\label{fig:chol_owl_kalman}
 
 \end{figure}
 
@@ -243,23 +243,23 @@ For LT4LA and CBLAS the total amount of memory allocated for temporaries is $n
 + n^2 + nk + k^2$. The difference between these two implementations and the
 idiomatic Owl implementation is $k(3n+2k+2)$ words. Hence, by using LT4LA, it
 is possible to have the readability (equational and algebraic expressions) and
-safety of high-level linear algebra libraries, whilst gaining precise and
-explicit control over memory allocation and re-use.
+safety of high-level libraries, and gain precise and explicit control over
+memory allocation and re-use.
 
 \section{Limitations}
 
 I chose the example of a Kalman filter because it is used in the real world,
 consists purely of a sequence of matrix expressions and produces many
 unnecessary temporary matrices when implemented idiomatically in a high-level
-linear-algebra library. It is good for isolating the key differences between
-not having and having linear types to help a programmer safely manage memory
-and aliasing, whilst excluding other aspects also important to real world
-linear-algebra programs such as control flow or blocking.
+library. It is good for isolating the key differences between not having and
+having linear types to help a programmer safely manage memory, aliasing, and
+read/write permissions, whilst excluding other aspects also important to real
+world linear algebra programs such as control flow or blocking.
 
 \subsection{Curious Behaviour}
 
 A graph of the execution times (with error bars which are present but quite
-small) \emph{all four} implementations is show in Figure~\ref{fig:timings_all}.
+small) of \emph{all four} implementations is show in Figure~\ref{fig:timings_all}.
 
 \begin{figure}[tp]
     \centering
@@ -304,6 +304,10 @@ Here are several reasons why this behaviour is surprising:
         performs \emph{half} as many multiplications as `gemm' under the
         assumption that one of its arguments is a symmetric matrix.
 
+    \item CBLAS/LT4LA use Cholesky decomposition: it performs \emph{half} as
+        many operations as LU decomposition (as used by Owl) under the
+        assumption that its argument is a symmetric matrix.
+
     \item All of the implementations either directly or indirectly (via Owl's
         bindings) call the same set of CBLAS/LAPACKE bindings.
 
@@ -334,11 +338,11 @@ suspect.
 A \textbf{positive take-away} from all of this is that LT4LA at least gives a
 programmer \emph{choice} and \emph{control} about how to optimise their program
 to their needs because (1) it met its goal of enabling a programmer to write
-code that performs just as predictably as code written using lower-level
-linear-algebra libraries (2) it does so \emph{without} the associated dangers
-of unenforced and uncheckable rules around aliasing, read/write permissions,
-memory allocation, re-use and deallocation that would come with using C,
-Fortran, or the unsafe primitives of Owl.
+code that performs just as predictably as code written using low-level
+libraries (2) it does so \emph{without} the associated dangers of unenforced
+and uncheckable rules regarding aliasing, read/write permissions, memory
+allocation, re-use and deallocation that would come with using C, Fortran, or
+the unsafe primitives of Owl.
 
 \section{Qualitative Benefits}\label{sec:qual_benefits}
 
@@ -346,24 +350,24 @@ We have already seen (last chapter and this chapter) that linear types help
 programmers write readable, safe (with respect to aliasing, read/write
 permissions, memory re-use and deallocation) and explicit (with respect to
 memory allocation) code. To justify their why I think they are a
-\emph{practical} and \emph{usable} way to do so, I will elaborate on some of
+\emph{practical} and \emph{usable} way to do so, I will elaborate on
 the qualitative benefits I experienced whilst using LT4LA.
 
-Prior to this project, I had no experience with linear-algebra libraries or the
+Prior to this project, I had no experience with linear algebra libraries or the
 problem of matrix expression compilation. As such, I based my initial LT4LA
 implementation of a Kalman filter using BLAS and LAPACK, on a popular GitHub
 gist of a Fortran implementation, one that was automatically generated from
 SymPy's matrix expression compiler~\cite{rocklin_thesis}.
 
-Once I translated the implementation, I attempted to compile it and found that
-(to my surprise) it did not type-check. This was because the original
-implementation contained incorrect aliasing, did not adhere to Fortran's
-read/write permissions (with respect to \texttt{intent} annotations
-\texttt{in}, \texttt{out} and \texttt{inout}) and unused and unnecessary
-temporaries, all of which were now highlighted by LT4LA's type system.
+Once I translated the implementation from Fortran to LT4LA, I attempted to
+compile it and found that (to my surprise) it did not type-check. This was
+because the original implementation contained incorrect aliasing, unused and
+unnecessary temporaries, and did not adhere to Fortran's read/write permissions
+(with respect to \texttt{intent} annotations \texttt{in}, \texttt{out} and
+\texttt{inout}) all of which were now highlighted by LT4LA's type system.
 
 The original implementation used 6 temporaries, one of which was immediately
-spotted as not being used due to linearity. It also contained two variables
+spotted as never being used due to linearity. It also contained two variables
 which were marked as \texttt{intent(in)} but would have been written over by
 calls to `gemm', spotted by the fractional-capabilities feature. Furthermore,
 it used a matrix \emph{twice} in a call to `symm', once with a read permission
@@ -382,13 +386,13 @@ linearity as a tool for programming.
 
 \section{Summary}
 
-Writing a linear-algebra program using LT4LA combines the best of low- and
-high-level linear-algebra libraries: it gives a programmer \emph{explicit
+Writing a linear algebra program using LT4LA combines the best of low- and
+high-level libraries: it gives a programmer \emph{explicit
 control} (over read/write permissions, aliasing and memory allocation, re-use
 and deallocation), readability (equational and algebraic expressions)
 \emph{and} safety (automatic checking). Programs written using it \emph{signal
 precise intent} to the reader and compiler and perform similarly to equivalent
-programs written directly using lower-level linear-algebra libraries. In turn,
+programs written directly using low-level libraries. In turn,
 such programs can be \emph{checked automatically} against their intent,
 especially when \emph{refactoring} or \emph{rewriting} code. Although any
 expert \emph{could} have followed the same line of reasoning laid out above,

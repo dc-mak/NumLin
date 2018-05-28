@@ -72,9 +72,9 @@ same time as SymPy's matrix expression compilation. Clak attempts to produce
 \emph{multiple} algorithms for a single matrix expression, by considering a
 wider matrix expression grammar and more matrix properties and inference rules.
 These algorithms assume basic building blocks such as products and
-factorisations. Cl1ck attempts to take on the challenge of writing BLAS/LAPACK
-like libraries too, by generating lower-level loop-based blocked routines for
-the aforementioned basic building blocks, in the spirit of the
+factorisations. Cl1ck attempts to take on the challenge of writing
+BLAS/LAPACK-like libraries too, by generating low-level loop-based blocked
+routines for the aforementioned basic building blocks, in the spirit of the
 FLAME~\cite{gunnels_flame} project.
 
 \subsection{Linnea and Taco}
@@ -96,9 +96,8 @@ languages -- in particular, even when the regular expression is known at
 compile time.
 
 In LT4LA, I took the approach of having a concrete syntax and expression
-language which was then translated and made available as a \emph{typed
-expression} to other modules \emph{at compile time} via the build system. Apart
-from convenience in programming and testing, there was nothing inherent in the
+language which was then translated to OCaml and made available to other modules
+\emph{at compile time} via the build system. There was nothing inherent in the
 approach that prevented me from using OCaml's PPX syntax-extensions so that I
 could write normal OCaml expressions from within OCaml and have them checked
 for linearity before compilation.
@@ -131,17 +130,16 @@ features are combined with heuristics to enable \emph{lazy evaluation} and
 automatically determine whether a sub-expression is evaluated into a temporary
 variable or not.
 
-They perform rudimentary pattern-matching and in some cases, loop-fusion, to
-avoid evaluating expressions in a purely binary manner (invoking the bane of a
+Libraries that use expression templates usually perform rudimentary pattern-matching and in some cases, loop-fusion, to
+avoid evaluating expressions in a purely binary manner (preventing the bane of a
 C++ programmer: temporaries and unnecessary copies) when possible (either by
 translating to a library kernel call or, as an example, inlining a $v := a + b
 + c$ vector expression into one loop).
 
-As is the case with LT4LA, this approach shares \emph{some} elimination of
-runtime overheads, but not all, thanks to the heuristics surrounding lazy
-evaluation and evaluating sub-expressions into temporaries. This comes at the
-cost of a user being able to easily inspect the generated C++ code, losing
-explicitness.
+Therefore, expression templates eliminate some runtime overheads, but not all
+(unlike LT4LA), because the heuristics they use rely on statically imperfect
+information. They also do not allow a user to easily inspect the generated code
+(also unlike LT4LA), thus losing explicitness.
 
 \section{Types}
 
@@ -152,22 +150,23 @@ that a library can be designed, shipped and used now whereas language features
 take time and can have unintended interactions with other language features. My
 hope is that once people are convinced of the utility type-level resource
 management by using a library, the impetus for integrating such features into
-the language follows.
+a language follows.
 
 \subsection{Lazy Evaluation}
 
 A particularly strong advantage LT4LA has over other libraries that use lazy
 evaluation is, funnily enough, linear types; more precisely, it is the static
-and perfect information they guarantee about aliasing: with Owl, every
-graph-node has only one node in or out; with Eigen, every ``assignment'' has a
-\texttt{noalias} annotation, without the danger of getting it wrong and
-invoking undefined behaviour.
+and perfect information they guarantee about aliasing: with Owl, this would be
+comparable to assuming every vertex of its computation graph has only one edge
+in and out; with Eigen, this would be comparable to having a \texttt{noalias}
+annotation on every ``assignment'', \textbf{without the danger of getting it
+wrong} and invoking undefined behaviour.
 
 This simplifies the rules and exceptions a programmer reasoning about memory
 usage needs to remember. Of course, now the programmer has to figure out how
-they are using their temporaries, but because matrices are linearly-typed,
-redundant copies/missed frees can be pointed out by the compiler, guiding them
-towards a satisfying solution.
+they are using their temporaries, but because matrices are linearly typed,
+redundant copies and missed frees can be pointed out by the compiler, thus
+guiding the programmer towards a satisfying solution.
 
 \subsection{Futhark}
 
@@ -176,22 +175,22 @@ map and fold/reduce) array combinator (meaning array operations can be fused
 into streams to reduce temporaries) language designed for efficient parallel
 compilation. It supports ML-style modules, loops, limited parametric
 polymorphism, size types and uniqueness types (an idea closely related to
-linear types). Its combinators are more expressive than typical linear-algebra
-library kernels so encourage shorter, more declarative linear-algebra code.
+linear types). Its combinators are more expressive than typical linear algebra
+library kernels; hence it encourages shorter, more declarative code.
 
 \subsection{Substructural Features in Rust}
 
 Rust~\cite{rust} is a (relatively) new systems programming language aiming to
 bring the last two decades of programming language research to the masses in a
-usable and friendly manner. Its \emph{borrow-checker} is the feature most
-relevant to this thesis because it statically attempts to prevent many
-resource-related bugs. Although there are a few linear-algebra libraries for
-Rust under development, careful use of its macro system and borrow-checker
-could make it the safest and easiest to use language for linear-algebra
+usable and friendly manner. Its \emph{borrow checker} is the feature most
+relevant to this thesis because it also statically attempts to prevent many
+resource-related bugs. There are a few linear algebra libraries for
+Rust under development; careful use of its macro system and borrow checker
+could make it the safest and easiest to use language for linear algebra
 projects to come. Its struggle is more likely to be against the inertia of the
-large amounts of C++/Fortran code already out there rather than its usability
-or benefits. Given this inertia, I believe there is value in taking the DSL
-library approach of LT4LA which will work with existing systems.
+large amounts of C, C++ and Fortran code already out there rather than its
+usability or benefits. Given this inertia, I believe there is value in taking
+the DSL library approach of LT4LA, which will work with existing systems.
 
 \subsection{Linear Types in Haskell}
 
@@ -207,7 +206,7 @@ resource-management in their type systems.
 \subsection{Linear and Dependent Types in Idris}\label{subsec:lin_dep_types}
 
 Dimension mismatches are seen as an irritating but small inconvenience when
-writing linear-algebra code. However, another error I found in the Fortran code
+writing linear algebra code. However, another error I found in the Fortran code
 output by SymPy to compute a Kalman filter was a dimension/transposition error.
 Although we would not need full dependent types to solve dimension mismatches
 (symbolic size types would be sufficient), managing properties about matrices

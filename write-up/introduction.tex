@@ -21,11 +21,13 @@
 % \end{guidance}
 
 Linear types allow the compiler and programmer to statically keep track of the
-resources that an implementation uses, thus offering a promising solution to
-resource management. However, they have not made their way into mainstream
-programming languages. To demonstrate their usefulness, I implemented an OCaml
-library that allows users to learn about, use and become familiar with linear
-types, specifically in the context of linear-algebra programs.
+resources that a program uses, thus offering a promising solution to the
+problems associated with complex resource management. However, they have not
+made their way into many mainstream programming languages, in the same way
+parametrically polymorphic types have. To illustrate their simplicity and
+power, I implemented an OCaml library that allows users to learn about and
+become familiar with linear types, specifically in the context of linear
+algebra programs.
 
 The main contributions of this thesis are:
 
@@ -38,25 +40,25 @@ The main contributions of this thesis are:
         \textbf{applied to the APIs} of linear algebra libraries and the
         \textbf{benefits} of doing so.
 
-    \item Many \textbf{new} examples of how the type system can \textbf{automatically
-        check} for common aliasing, read/write permissions, memory allocation,
+    \item Many \textbf{new} examples of how that type system can \textbf{automatically
+        check} for common aliasing, read/write permission, memory allocation,
         re-use and deallocation \textbf{errors} in the context of
-        linear-algebra programs.
+        linear algebra programs.
 
     \item An \textbf{original} demonstration of how that type system can be
-        \textbf{useful} for \textbf{matrix expression compilation}.
+        \textbf{used} for \textbf{matrix expression compilation}.
 
     \item \textbf{New and readable implementations} of \textbf{non-trivial}
-        linear-algebra programs that \textbf{take advantage} of said type
+        linear algebra programs that \textbf{take advantage} of said type
         system.
 
     \item A \textbf{new solution} to the \textbf{dichotomy} of
         \textbf{readability}, \textbf{ease of reasoning and safety} of
-        high-level linear-algebra libraries versus the
-        \textbf{memory-efficiency} of low-level linear-algebra libraries.
+        high-level linear algebra libraries versus the
+        \textbf{memory-efficiency} of low-level linear algebra libraries.
 
     \item A \textbf{new library design} to provide said solution in a way that
-        \textbf{integrates well} with existing OCaml code and linear-algebra
+        \textbf{integrates well} with existing OCaml code and linear algebra
         libraries.
 
 \end{itemize}

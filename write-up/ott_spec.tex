@@ -1,16 +1,17 @@
 \chapter{Ott Specification}\label{chap:ott_spec}
 
-The following pages present a specification of the grammar and type-system used
-by my project, produced using the Ott~\cite{sewell_ott} tool. It is important to note
-that the type-system described here is not how it is implemented: it is easier
-and clearer to describe the system as below for explaining. However, for implementing,
-I found it much more and user- and debugging-friendly to:
+The following pages present a specification of the grammar and type system used
+in LT4LA, produced using the Ott~\cite{sewell_ott} tool. It is important to
+note that the type system is not implemented how it is described in the coming
+pages.  For explaining (and using Ott) it was easier to set it out as below.
+However, for implementing, I found it much more and user- and
+debugging-friendly to:
 
 \begin{itemize}
 
-    \item Implement it so that the type-environment \emph{changes} as a result
+    \item Have the type environment \emph{change} as a result
         of type-checking an expression, similar to the rules shown in
-        Figure~\ref{fig:example_rules}; with this, the below semantics describe
+        Figure~\ref{fig:example_rules}; with this, the below rules describe
         the \emph{difference} between the environment after and before checking
         an expression. For example, in the pair-introduction rule, $\Gamma =
         \Gamma_2 - \Gamma_1$ and $\Gamma' = \Gamma_3 - \Gamma_2$, for an
@@ -23,9 +24,9 @@ I found it much more and user- and debugging-friendly to:
         linear and unused, linear and used, and intuitionistic. This was
         definitely an implementation convenience so that variable binding could
         be handled uniformly for linear and intuitionistic variables and
-        scoping/variable look-up could be handled implicitly thanks to the
-        associative-list structure of the environment. So, the variable
-        rule would most accurately look like:
+        scoping/variable look-up could be handled implicitly with the
+        associative-list structure of the environment. So, it would be more
+        (but still not completely) accurate to define the variable rule as:
         \begin{prooftree}
             \AxiomC{}
             \RightLabel{\textsc{Ty\_Var}}

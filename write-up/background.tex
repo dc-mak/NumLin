@@ -16,30 +16,28 @@
 
 \prechapter{%
     I will outline the concept of linear types and show how they can be used to
-    solve the problems faced by programmers writing code using linear-algebra
+    solve the problems faced by programmers writing code that uses linear algebra
     libraries. I will emphasise \emph{practical} and intuitive explanations of
     linear types to keep this thesis accessible to programmers as well as
-    academics not familiar with type-theory and will give only a terse overview
+    academics not familiar with type theory and will give only a terse overview
     of the history and theory behind linear types for the interested reader to
     pursue further.
 }%
 
-\section{Tracking Resources with Linearity}
-Familiar examples of using a type-system to express program invariants are
-existential-types for abstraction and encapsulation, polymorphic types for
-parametricity and composition (a.k.a generics). Less-known examples include
-dependent-types (contracts or pre- and post-conditions). The advantages of
-using a type-system to express program invariants are summarised by saying the
-stronger the rules you follow, the better the guarantees you can get about your
-program, \emph{before} you run it. At first, the rules seem restrictive, but
-similar to how the rules of grammar, spelling and more generally writing help a
-writer make it easier and clearer to communicate the ideas they wish to express,
-so too do typing rules make it easier to communicate the intent and
-assumptions under which a program is written. An added, but often overlooked
-benefit is automated-checking: a programmer can boldly refactor in certain
-ways and the compiler will \emph{assist} in ensuring the relevant invariants
-the type-system enforces are updated and kept consistent by pointing-out
-where they are violated.
+\section{Tracking Resources with Linearity} Familiar examples of using a type
+system to express program invariants are existential types for abstraction and
+encapsulation, and polymorphic types for parametricity and composition (a.k.a
+generics). Less-known examples include dependent types for contracts or pre-
+and post-conditions. The advantages of using a type system to express program
+invariants are summarised by saying: the stronger the rules you follow, the
+better the guarantees you get about your program \emph{before} you run it. At
+first, the rules may seem restrictive, but similar to how the rules of grammar,
+spelling and more generally writing help a writer communicate their ideas more
+clearly, so too do typing rules make it easier for the programmer to
+communicate the intent and assumptions of their programs. An added, but often
+overlooked benefit is automated-checking: a programmer can boldly refactor
+their programs and the type checker will \emph{assist} in enforcing the
+invariants it was given by highlighting where they were violated.
 
 Linear types are a way to help a programmer track and manage resources. In
 practical programming terms, they enforce the restriction that a value may be
@@ -47,18 +45,18 @@ used exactly once\footnote{This definition may differ from more colloquial uses
 in discussions surrounding \emph{substructural} type systems and/or Rust.}
 (Figure~\ref{fig:example_rules} shows two example typing rules for a typical,
 linearly typed language). While this restriction may seem limiting at first,
-precisely these constraints can be used to express common invariants of the
-programs written by programmers every day. For example: a file or a
-socket, once opened \emph{must} closed; all memory that is manually allocated
-\emph{must} be freed.  C++'s destructors and Rust's Drop-trait (and more
-generally, its borrow-checker) attempt to enforce these constraints by
-basically doing the same thing: any resource that has not been moved is
-deallocated at the end of the current lexical scope. Notably, these languages
-also permit aliasing, alongside rules enforcing when it is acceptable to do so.
-On face value, the above one-line description of linear types prevents aliasing
-or functions such as $\lambda x.\; (x, x)$; such features are still allowed
-(albeit in a more restricted fashion) in a \emph{usable} linear type system
-designed for working with linear-algebra libraries.
+precisely this constraint can be used to express common invariants of typical
+programs. For example: a file or a socket, once opened \emph{must} closed; all
+memory that is manually allocated \emph{must} be freed.  C++'s destructors and
+Rust's Drop-trait (and more generally, its borrow-checker) attempt to enforce
+these constraints by basically doing the same thing: any resource that has not
+been moved is deallocated at the end of the current lexical scope. Notably,
+these languages also permit aliasing, alongside rules enforcing when it is
+acceptable to do so.  On face value, the above one-line description of linear
+types prevents aliasing or functions such as $\lambda x.\; (x, x)$; such
+features are still allowed (albeit in a more restricted fashion) in a
+\emph{usable} linear type system designed for working with linear algebra
+libraries.
 
 \begin{figure}
     \centering
@@ -88,21 +86,21 @@ designed for working with linear-algebra libraries.
 \section{Problem in Detail}
 
 Given this background, the most pertinent question at hand is: what problems do
-linear-algebra library users (and writers) typically face? The answer to this
-question depends on which of two buckets a programmer falls (or is forced by
-domain) into. On one side, we have users of high-level linear-algebra libraries such
-as Owl (for OCaml), Julia and Numpy (for Python); other the other, we have
-users of more manual, lower-level libraries such as BLAS (Basic Linear Algebra
-Subroutines) for languages like C++ and FORTRAN.\footnote{I am not including
-Rust in this comparison because its linear-algebra libraries are under active
-development and not as well-known/used. Later on, given that it is a language
-with in-built support of substructural features to track resources, Rust will
-be compared and contrasted with this project to evaluate the classic
-(E)DSL-versus-language-feature debate as it applies to the domain of
-linear-algebra libraries.} Most of what follows applies to \emph{dense}
-linear-algebra computations rather than \emph{sparse} because memory
-allocated for results typically depends on the sparsity of the inputs and
-so is not immediately amenable to the techniques proposed in this thesis.
+linear algebra library users (and implementors) typically face? The answer to
+this question depends on which of two buckets a programmer falls (or is forced
+by domain) into. On one side, we have users of high-level frameworks such as
+Owl (for OCaml), Julia and Numpy (for Python); on the other, we have users
+of more manual, low-level libraries such as BLAS (Basic Linear Algebra
+Subroutines) for languages like C, C++ and Fortran.\footnote{I am not including
+Rust in this comparison because its linear algebra libraries are under
+active development and not as well-known/used. Later on, I will compare and
+contrast Rust (a language with in-built support of substructural features
+to track resources) with this project to evaluate the classic
+(E)DSL-versus-language-feature debate as it applies to linear types.} Most of
+what follows applies to \emph{dense} linear algebra computations rather than
+\emph{sparse} ones because for the latter, memory allocated for results depends
+on the sparsity of the inputs and so is not immediately amenable to the
+techniques proposed in this thesis.
 
 \subsection{One Too Many Copies and a Thousand Bytes Behind}
 \begin{figure}[tbp]
@@ -136,7 +134,7 @@ let c = Mat.(a *@ b)
     \caption{Matrix Multiplication in Numpy (Python), Julia and Owl (OCaml).}\label{fig:mat_mul_copies}
 \end{figure}
 
-In Figure~\ref{fig:mat_mul_copies}, we see that matrix-multiplication is fairly
+In Figure~\ref{fig:mat_mul_copies}, we see that matrix multiplication is fairly
 trivial to write and execute in Numpy, Julia and Owl. Let us call this approach
 \emph{value-semantic}, meaning that objects are \emph{values} just like
 integers and floating-point numbers. This approach confers two key advantages to the
@@ -171,21 +169,22 @@ garbage-collector (see Figure~\ref{fig:mat_mul_owl}). Libraries taking a
 implement a new algorithm: either use the existing and safe primitives to build
 an easy to reason about but slower, more memory-intensive algorithm, or use
 escape-hatches (typically provided by most libraries, which permit in-place
-modification of objects) to build faster, and more memory-efficient algorithms
-which are harder to reason about.
+modification of objects) to build faster, less readable and more
+memory-efficient algorithms which are harder to reason about.
 
 \subsection{IHNIWTLM}
-The title of this subsection\footnote{I Have No Idea What Those Letters Mean.}
-illustrates the problem with the C++/FORTRAN side: readability (equational
-and algebraic expressions) and ease of reasoning is sacrificed at
-the altar of performance and efficiency.
 
-Although escape-hatches do exist in value-semantic libraries, their use is
+The title of this subsection\footnote{I Have No Idea What Those Letters Mean.}
+illustrates the problem with low-level libraries: readability (equational and
+algebraic expressions) and ease of reasoning is sacrificed at the altar of
+performance and (memory) efficiency.
+
+Although escape-hatches do exist in high-level libraries, their use is
 discouraged. Systematic consideration of performance requires lowering the
-level of abstraction a programmer is working on. At this level, several
+level of abstraction a programmer is working on. At this level, \textbf{several}
 factors such as memory layout, allocation, re-use as well as cache behaviour
-and parallelism become apparent. Of these, \textbf{memory allocation and
-re-use} are relevant to linear-types and this thesis.
+and parallelism are important. Of these, \textbf{only memory allocation and
+re-use} are relevant to linear types and this thesis.
 
 \begin{figure}[tbp]
     \begin{minted}[fontsize=\small]{fortran}
@@ -204,33 +203,32 @@ C            tfm  tfm  rowA colB K  alpha a lda  b  ldb beta c  ldc
     Multiplication.}\label{fig:fortran_blas}
 \end{figure}
 
-In Fortran (Figure~\ref{fig:fortran_blas}), data is typically allocated
-statically (at compile time) so temporary storage for all intermediate values
-must be managed by the programmer. While this approach leads to verbose and
-less readable code, the explicitness is good for understanding the memory
-concerns of the program, albeit at the expense of understanding what the
-program is actually calculating.
+In Fortran (Figure~\ref{fig:fortran_blas}) and C, temporary storage for all
+intermediate values must be managed by the programmer. While this approach
+leads to verbose, less readable and harder to reason about code, the
+explicitness is good for understanding the memory concerns of the program.
 
 On the other hand, C++ (with operator overloading) can end up looking fairly
 readable. For safety and correctness, expressions are typically handled with
-value-semantics. However, given \emph{extra} information about, aliasing
-(Eigen, Figure~\ref{fig:cpp_eigen}) or usage of intermediate expressions
-(uBLAS, Figure~\ref{fig:cpp_ublas}), the number of temporaries allocated can be
-reduced and increased \emph{implicitly} to improve performance (remove
-unnecessary allocations or re-calculations respectively). Further tricks to
-improve performance include expression templates (building up an
-expression-tree at compile time and then pattern-matching on it to produce
-code) and lazy evaluation (only calculating a result when it is needed). These
-will be discussed in more detail in Chapter~\ref{chap:related}.
+value-semantics (the result of any computation is a \emph{new} value, distinct
+from any used during the calculation of that value). However, given
+\emph{extra} information about aliasing (Eigen, Figure~\ref{fig:cpp_eigen}) or
+usage of intermediate expressions (uBLAS, Figure~\ref{fig:cpp_ublas}), the
+number of temporaries allocated can be reduced and increased \emph{implicitly}
+to improve performance (remove unnecessary allocations or re-calculations
+respectively). Further tricks to improve performance include expression
+templates (building up an expression-tree at compile time and then
+pattern-matching on it to produce code) and lazy evaluation (only calculating a
+result when it is needed). These will be discussed in more detail in
+Chapter~\ref{chap:related}.
 
-It is important to note that should these annotations (in
-Figures~\ref{fig:cpp_eigen} and~\ref{fig:cpp_ublas}) be wrong, the program's
-behaviour is very likely to end up being undefined (like how \texttt{memcpy()}
-for overlapping regions of memory is explicitly undefined in the POSIX and C
-standards). Indeed, one of Fortran's strengths lies in assuming that references
-cannot be aliased (with certain caveats) in more cases than C permits (this
-informal, general statement comes with many nuances left for the interested
-reader to pursue).
+It is important to note that should a \texttt{noalias} annotation be wrong, the
+program's behaviour is very likely to end up being undefined (like how
+\texttt{memcpy()} for overlapping regions of memory is explicitly undefined in
+the POSIX and C standards). Indeed, one of Fortran's strengths lies in assuming
+that references cannot be aliased (with certain caveats) in more cases than C
+permits (this informal, general statement comes with many nuances left for the
+interested reader to pursue).
 
 \begin{figure}[tp]
     \begin{minted}[fontsize=\small]{c++}
@@ -282,7 +280,7 @@ tedious to implement. As a half-way point, I used compile-time code generation
 to make the DSL's output available to OCaml for testing and evaluation.
 
 Let us have a look at a few examples of functions we can write with linear
-types.  We can define the canonical factorial function
+types.  We can define the factorial function
 (Figure~\ref{fig:ltfla_factorial}) and sum over an array
 (Figure~\ref{fig:ltfla_sumarray}).
 
@@ -302,9 +300,8 @@ use a value more than once). In Figure~\ref{fig:ltfla_sumarray}, we see
 \ltfla{row} has type (\ltfla{'x arr}). More detailed explanations of
 \emph{what and why} will be given in Chapter~\ref{chap:impl}, but for now, it
 is enough to know it means we can only \emph{read} from \ltfla{row}, and not
-write to it. If we did try to write to or free \ltfla{row}, say by adding
-another line as shown in Figure~\ref{fig:ltfla_univ}, would get a helpful error
-message, as shown.
+write to it. If we did try to write to or free \ltfla{row}, we would get a
+helpful error message, as shown in Figure~\ref{fig:ltfla_univ}.
 
 \begin{figure}[tp]
     \begin{minted}[linenos, firstnumber=7, fontsize=\small]{ocaml}
@@ -322,22 +319,22 @@ let row = row[i] := x1 in (* or *) let () = free row in
     LT4LA.}\label{fig:ltfla_univ}
 \end{figure}
 
-Now suppose we were trying to square a matrix, using a `dgemm' like BLAS
+Now suppose we are trying to square a matrix, using a `dgemm' like BLAS
 routine (called `simple\_dgemm'\footnote{For the purposes of this example, I
 assume `simple\_dgemm' has type \ltfla{'x . 'x mat --o 'y .  'y mat --o z mat
 --o ('x mat * 'y mat) * z mat}.} in Figures~\ref{fig:ltfla_square}
 and~\ref{fig:ltfla_free}) which takes two read-only matrices and a third matrix
 it can write to and performs $C := AB + C$. How would we use such a routine to
 square a matrix, assuming $C=0$ initially?  Surely this would break linearity,
-since $A$ would be have to be given to the function twice, and we can only do
-so once?
+since $A$ would have to be passed in to the function twice, and we can only 
+use non-!-annotated variables once?
 
-We can use a special primitive called \ltfla{share} to produce (more) read-only
-\emph{aliases} of any matrix. We then pass these into the function, and it
-works as expected. Once the squared matrix has been obtained, we may not want
-the original any more, and thus decide to free it. Before we do so, we must
-first \ltfla{unshare} any read-only aliases that exist -- in this context,
-\ltfla{unshare} swallows them and gives back a single, read-write handle.
+To solve this, we use a special primitive called \ltfla{share} to produce
+(more) read-only \emph{aliases} of any matrix. We then pass these into the
+function, and it works as expected. Once the squared matrix has been obtained,
+we may not want the original anymore, and thus decide to free it. Before we do
+so, we must first \ltfla{unshare} any read-only aliases that exist, to get back
+a single, read-write handle.
 
 \begin{figure}[tp]
     \begin{minted}[linenos, fontsize=\small]{ocaml}
@@ -350,8 +347,8 @@ let () = free a in c
         0).}\label{fig:ltfla_square}
 \end{figure}
 
-If we tried to free one of the read-only aliases instead of
-\ltfla{unshare}-ing, then we would get the error shown in
+If we tried to free one of the read-only aliases before or instead of
+\ltfla{unshare}-ing them, then we would get the error shown in
 Figure~\ref{fig:ltfla_free}. Briefly, a \ltfla{z arr} is a read-write array,
 everything else (\ltfla{'x arr} or \ltfla{_ s arr}) is read-only. The types of
 \ltfla{free}, \ltfla{share} and \ltfla{unshare} (see
@@ -407,7 +404,7 @@ of times: you can (1) can use it once (co-unit), and (2) can pass it to many
 contexts that will use it many times (co-multiply).
 
 More generally, by annotating variables in the context with their usage (when
-implementing a type-checker for a linearly typed language), we can express the
+implementing a type checker for a linearly typed language), we can express the
 rules of \emph{substructural} (including affine, relevant and ordered type
 systems) under the more general framework of \emph{co-effects}~\cite{petricek}.
 
@@ -417,7 +414,6 @@ programming side, we have Linear Haskell, Rust and Idris (experimental). On the
 research side, we have Resource Aware ML~\cite{hoffmann} and the tantalising
 promise of integrating linear and dependent types~\cite{atkey}.
 
-\clearpage%
 \section{Summary}
 
 I have given an \emph{intuitive} exposition of linear types with
@@ -427,10 +423,11 @@ illustrative and practical code examples, leaving \emph{what} is going on and
 possible to solve the dichotomy of readability, ease of reasoning and safety
 versus memory-efficiency by providing explicit and automatically checked
 management of aliasing, read/write permissions, memory allocation, re-use and
-deallocation with a \emph{type system}. This prevents a whole class of errors
-that can occur with lower-level languages \emph{at compile time}. I
-demonstrated these features using the context of linear-algebra libraries as as
-a specific example. In the next chapter, I will show that these features can be
-further applied to the problem of \emph{matrix expression compilation}. I will
-also explain how to express and implement them so that they can be provided and
-used \emph{as a library}.
+deallocation with a \emph{type system}. This prevents a \textbf{whole class} of
+errors that can occur with low-level languages \emph{at compile time}. For
+example, \textbf{the types make it impossible to use `simple\_dgemm'
+incorrectly}. I demonstrated these features using the context of linear algebra
+libraries as as a specific example. In the next chapter, I will show that these
+features can be further applied to the problem of \emph{matrix expression
+compilation}. I will also explain how to express and implement them so that
+they can be provided and used \emph{as a library}.

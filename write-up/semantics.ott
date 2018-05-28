@@ -115,7 +115,7 @@ grammar
      | freeM    ::  :: FreeM    {{ com free matrix                                 }}
      | matrix   ::  :: Matrix   {{ com Owl:  make matrix                           }}
      | copyM    ::  :: CopyM    {{ com Owl:  copy matrix                           }}
-     | copyM_to ::  :: CopyM_to {{ com Owl:  copy matrix onto another matrix       }}
+     | copyM_to ::  :: CopyM_to {{ com Owl:  copy matrix onto another              }}
                                 {{ tex \textbf{copyM\_to}                          }}
      | gemm     ::  :: Gemm     {{ com BLAS: $C := \alpha A^{T?} B^{T?} + \beta C$ }}
      | symm     ::  :: Symm     {{ com BLAS: $C := \alpha A B + \beta C$           }}

@@ -10,15 +10,15 @@
     I will describe the structure of LT4LA: a DSL (domain specific language)
     \textbf{library} written in OCaml that transpiles to OCaml. I will explain
     the features of its core language and show how readable (equational and
-    algebraic expressions) and easy to reason about linear-algebra programs
+    algebraic expressions) and easy to reason about linear algebra programs
     can be elaborated into memory-efficient ones in the core language that are
     then checked for safety (with respect to aliasing, read/write permissions,
     memory allocation, re-use and de-allocation). Finally, I will explain how
     such programs can be transpiled to OCaml code that is not obviously safe.
-    Although I refer to OCaml-specific features of the type-checker and
+    Although I refer to OCaml-specific features of the type checker and
     transpiler, I believe the ideas described in this chapter can easily be
     implemented in other languages and are also general enough to transpile to
-    different back-end languages, such as C or Fortran.
+    other back-end languages, such as C or Fortran.
 }%
 
 \section{Structure of LT4LA}\label{sec:structure_lt4la}
@@ -28,37 +28,35 @@ start, I made a concerted effort to (1) write pure-functional code (typically
 using a monadic-style) which helped immensely with modularity and debugging
 when tests showed errors (2) produce readable, useful and precise
 error-messages in the hope that someone who did not understand linear types
-could still use the LT4LA (3) write tests and set-up
-continuous-integration for all non-trivial functions so that I could spot and
-correct errors that were not caught by OCaml's type system whenever I
-implemented new features or refactored my code.
+could still use LT4LA (3) write tests and set-up continuous-integration for all
+non-trivial functions so that I could spot and correct errors that were not
+caught by OCaml's type system whenever I implemented new features or refactored
+my code.
 
 \begin{enumerate}
 
-    \item \textbf{Parsing \& Desugaring}. A generated, LR(1) parser parses a text
-        file into a syntax tree, which is then desugared into a smaller, more
-        concise abstract syntax tree. The former aims to mimic OCaml syntax
-        with a few extensions and keywords so that it is familiar and thus easy
-        to pick-up for OCaml users. The latter allows for the type-checker to
-        be simpler to implement and easier to specify. In general, this part
-        will vary for different languages or can be dealt with differently
-        using combinators (the EDSL approach) or a syntax-extension if the host
-        language offers such support.
+    \item \textbf{Parsing}. A generated, LR(1) parser parses a text file into a
+        syntax tree. I tried to mimic OCaml syntax modulo a few extensions and
+        keywords so that it is familiar and thus easy to pick-up for OCaml
+        users. In general, this part will vary for different languages and can
+        also be dealt with using combinators or syntax-extensions (the EDSL
+        approach) if the host language offers such support .
 
-    \item \textbf{Type-checking}. The abstract syntax tree is explicitly-typed,
-        with some inference to make it less verbose and more convenient to
-        write typical programs.
+    \item \textbf{Desugaring}. The syntax tree is then desugared into a
+        smaller, more concise, abstract syntax tree. This allows for the type
+        checker to be simpler to specify and easier to implement. 
 
-    \item \textbf{Matrix Expressions}. During type-checking, if a matrix-expression
-        is encountered, it is either successfully elaborated into an expression
-        in the abstract syntax tree which is then consequently type-checked, or
-        fails to find suitable routines to calculate the given expression.
+    \item \textbf{Matrix Expressions} are also desugared into the abstract
+        syntax tree through simple, yet effective pattern-matching.
+
+    \item \textbf{Type checking}. The abstract syntax tree is explicitly typed,
+        with some inference to make writing typical programs more convenient.
 
     \item \textbf{Code Generation}. The abstract syntax tree is translated into
-        standard OCaml and a few-particular `optimisations' are made to produce
-        more readable code. This process is type-preserving: the linear type
-        system is embedded into OCaml's type system, and so when the OCaml compiler
-        compiles the generated code, it acts as a sanity check on the code produced.
+        OCaml, with a few `optimisations' to produce more readable code. This
+        process is type-preserving: LT4LA's type system is embedded into
+        OCaml's (Figure~\ref{fig:type_grammar}), and so the OCaml type checker
+        acts as a sanity check on the generated code.
 
     \item \textbf{Executable Artifacts}. A transpiler and a REPL are the main
         artifacts produced for this thesis. For evaluation, I implemented
@@ -77,12 +75,11 @@ implemented new features or refactored my code.
 
 A full description of the core language can be found in
 Appendix~\ref{chap:ott_spec}. For convenience, I have reproduced its type
-grammar and defined how I interpret those types in OCaml's type system in
-Figure~\ref{fig:type_grammar}.  The point of LT4LA is to keep the same values
-and types we are familiar with, but \emph{restrict their usage} in certain
-ways. LT4LA's core language's main features are: intuitionistic values,
-value-restriction, fractional-capabilities (inferrable at call sites),
-if-expressions and recursion.
+grammar and its translation into OCaml in Figure~\ref{fig:type_grammar}.  The
+point of LT4LA is to keep the same values and types we are familiar with from
+OCaml, but \emph{restrict their usage}. LT4LA's core language's main features
+are: intuitionistic values, value-restriction, fractional-capabilities
+(inferrable at call sites), if-expressions and recursion.
 
 \begin{figure}[tp]
     \centering
@@ -146,34 +143,34 @@ type 'a bang =
             [\![ t \multimap t' ]\!] &= [\![ t ]\!] \rightarrow [\![ t' ]\!]
         \end{align*}
     \end{minipage}
-    \caption{Type grammar of LT4LA (left) and an informal interpretation of it
-        into OCaml types (right).}\label{fig:type_grammar}
+    \caption{Type grammar of LT4LA (left) and my translation of it
+        into OCaml (right).}\label{fig:type_grammar}
 \end{figure}
 
 \subsection{Intuitionistic Values}
 
-To make LT4LA a usable DSL, I needed some way of using values zero or more than
-once, as a programmer would an intuitionistic value. For this, I added the
-!-constructor at the type-level of the DSL and the \ltfla{Many}-constructor and
-the \ltfla{let Many <id> = .. in .. } eliminator at the term-level of the DSL.
-The idea behind the !-type is that the value uses no `resources'
+To make LT4LA a usable DSL, I needed a way of allowing values to either never
+be used or be used more than once. For this, I added the \mbox{!-constructor}
+at the type-level of the DSL and its corresponding introduction (the
+\ltfla{Many}-constructor) and elimination (the \ltfla{let Many <id> = .. in ..
+} destructor) forms at the term-level of the DSL.  The idea behind the
+\mbox{!-constructor} is that a value of that type uses no `resources'
 (linearly-typed expressions). To start off with, it is enough to say that
-anything which can be passed around by copying, will have a !-type. This
+anything which can be passed around by copying, will have a \mbox{!-type}. This
 includes integers, elements and booleans. So \ltfla{3 : !int} and \ltfla{3. +.
-4. : !elt}. However, all bindings are still linear by default, so to
-emulate intuitionism, I desugar \ltfla{let !x = <exp> in <body>} to
-\ltfla{let Many x = <exp> in let Many x = Many (Many x) in <body>}
-(similarly for function argument bindings). The reader can check (using the
-rules in Appendix~\ref{chap:ott_spec}) that this has the effect of moving
-\ltfla{x : !t} from the linear to the intuitionistic environments, only if
-\ltfla{<exp> : !t}.
+4. : !elt}. However, all bindings are still linear by default, so to emulate
+intuitionism, I desugar \ltfla{let !x = <exp> in <body>} to \ltfla{let Many x =
+<exp> in let Many x = Many (Many x) in <body>} (similarly for function argument
+bindings). The reader can check (using the rules in
+Appendix~\ref{chap:ott_spec}) that this has the effect of moving \ltfla{x : !t}
+from the linear to the intuitionistic environments, only if \ltfla{<exp> : !t}.
 
 However, just that desugaring alone is not enough to prevent a user from taking
 an array or matrix and moving it into the intuitionistic environments. Why?
 There are certain situations in which we \emph{should not} use the \ltfla{Many}
 constructor.  Consider the following code: \ltfla{let Many x = Many (array 5)
 in <body>}; the expression \ltfla{array 5} uses no linearly-typed variables
-from the linear environment. Although we could just reject types of the form
+from the environment. Although we could just reject types of the form
 \ltfla{!(_ arr)} to fix this simple example, what about pairs \ltfla{let Many
 xy = Many (3, array 5) in <body>}?  Ad-hoc pattern matching on the type cannot
 account for all possible situations. With the last case, we can use \ltfla{xy}
@@ -188,56 +185,55 @@ Not quite, but to understand how we can fix this problem, we need to question
 an assumption left implicit up until this point: what does \ltfla{Many} even
 mean in the DSL? How is it translated to OCaml? What is the OCaml runtime
 behaviour of the DSL's \ltfla{Many}-constructor? One option is to go down the
-C++ route and make \ltfla{Many} act like a \ltfla{shared_ptr} and act as a
+C++ route and make \ltfla{Many} behave like a \ltfla{shared_ptr} and act as a
 runtime reference-count for arrays. I chose to not go for this option because
 it went against the \emph{explicitness} and \emph{predictability} that C and
 Fortran have. It would make analysing when and what is allocated and freed more
 like the higher-level languages I was trying to move away from.
 
-My aim is to show linear types are simple to understand and apply to
-linear-algebra libraries, enough so that it can be grafted (in a limited way)
-on to existing languages as a \emph{library}. In that spirit, the simplest
-thing that the DSL's \ltfla{Many}-constructor can mean in the OCaml runtime is
-\emph{nothing}.  This language construct is translated into a standard OCaml
-type-and-constructor of the form \ltfla{type 'a bang = Many of 'a [@@unboxed]}.
-The \emph{unboxed} annotation means that the type and its constructor only
-exist for the purpose of type-checking in OCaml; \emph{the OCaml runtime
-representation of values of type \ltfla{'a} and \ltfla{'a bang} is exactly the
-same}.
+My aim is to show linear types are simple to understand and apply, enough so
+that they can be grafted (in a limited way) on to existing languages as a
+\emph{library}. In that spirit, the simplest thing that the DSL's
+\ltfla{Many}-constructor can mean in the OCaml runtime is \emph{nothing}.
+LT4LA's !/\ltfla{Many} constructors are translated into OCaml
+\ltfla{bang}/\ltfla{Many} constructors declared as \ltfla{type 'a bang = Many
+of 'a [@@unboxed]}.  The \emph{unboxed} annotation means that the type and its
+constructor only exist for the purpose of type checking in OCaml; \emph{the
+OCaml runtime representation of values of type \ltfla{'a} and \ltfla{'a bang}
+is exactly the same}.
 
 With this understanding, our problem is that arrays and matrices are unlike
 other values such as integers and elements because (under the OCaml hood)
 calling a function with an array argument copies a \emph{pointer} to the array
-rather than the array itself, instead of the \emph{value} itself. So, we can
-start making a distinction, \emph{defining} elements, integers, booleans,
-intuitionistic variables, units and lambda-expressions that capture no linear
-variables as \emph{values} (since they cannot break referential-transparency)
-and anything else (arrays, matrices, expressions which can be reduced, such as
-function application and if-expressions) as not being `values'. If this sounds
-familiar, it is because this is the same \emph{value-restriction} `trick' from
-the world of polymorphic types applied to linearity instead. We then have the
-rule that in LT4LA, we can only use \ltfla{Many} on expressions that are
-defined to be \emph{values} and \emph{use no linear variables}.
+rather than the array itself. So, we can start making a distinction,
+\emph{defining} elements, integers, booleans, intuitionistic variables, units
+and lambda-expressions that capture no linear variables as \emph{values} (since
+they cannot break referential-transparency) and anything else (arrays,
+matrices, expressions which can be reduced, such as function application and
+if-expressions) as not being `values'. If this sounds familiar, it is because
+this is the same \emph{value-restriction} `trick' from the world of polymorphic
+types applied to linearity instead. We then have the rule that in LT4LA, we can
+only use \ltfla{Many} on expressions that are defined to be \emph{values} and
+\emph{use no linear variables}.
 
 \subsection{Fractional-Capabilities and Inference}
 
-I started off with linearity and showing how it helps a programmer keep track
-of of memory allocation and deallocation, and then demonstrated how to add
+I started off with linearity and showed how it helps a programmer keep track
+of memory allocation and deallocation, and then demonstrated how to add
 intuitionism for the only values we wish to be intuitionistic. I will now
 explain how I enforce safe aliasing and read/write permissions.
 
 Array and matrix types are parameterised by
 \emph{fractional-capabilities}~\cite{boyland}.  A fraction of 1 ($2^0$)
-represents complete ownership of a value; in particular, this allows a
-programmer to write or free it. Creating an array gives you ownership of it;
-the function \ltfla{array : !int --o z arr} (where \ltfla{z} represents `0').
-Once you have ownership of an array, you can free it: \ltfla{free : z arr --o
-unit}.  Importantly, because a linear-value may only be used once, the array
-just freed is \emph{out of scope} for following expressions, preventing
-use-after-free.  Ownership also enables you to write to the array: \ltfla{set :
-z arr --o !int --o !elt --o z arr} (the syntax \ltfla{w[i] := j} is just sugar
-for \ltfla{set w i j}). Here, linearity prevents accessing aliases which
-represented the array \emph{before} the mutation.
+represents complete ownership of a value. Creating an array gives you ownership
+of it; the function \ltfla{array : !int --o z arr} (where \ltfla{z} represents
+`0').  Once you have ownership of an array, you can free it: \ltfla{free : z
+arr --o unit}.  Importantly, because a linear value may only be used once, the
+array just freed is \emph{out of scope} for following expressions,
+\textbf{preventing use-after-free}.  Ownership also enables you to write to the
+array: \ltfla{set : z arr --o !int --o !elt --o z arr} (the syntax \ltfla{w[i]
+:= j} is just sugar for \ltfla{set w i j}). Here, linearity prevents accessing
+aliases which represented the array \emph{before} the mutation.
 
 Any fraction less than 1 (for simplicity, limited to $2^{-k}$ in this system,
 for a positive integer $k$) represents read-only access. So, the \ltfla{'x}
@@ -251,16 +247,16 @@ for keeping LT4LA usable and readable. The underscore is how a programmer tells
 the compiler to automatically \emph{infer} the correct fractional-capability
 based on the other arguments passed to the function. In conjunction with the
 requirement that function declarations need type-annotations for their
-arguments, \textbf{this allows a fractional-capability to be \emph{correctly
+arguments, \textbf{this allows fractional-capabilities to be \emph{correctly
 inferred} in \emph{any} LT4LA expression}.
 
 Fractions exist to provide both safe aliasing and read/write permissions, via
 the primitives \ltfla{share : 'x . 'x arr --o ('x s) arr * ('x s) arr} and
-\ltfla{unshare: 'x .  ('x s) arr --o ('x s) arr --o 'x arr}.  For the former, two
-arrays returned (which happen to just be the given array) can now only be read
-from and not written to. If you want to write to this array, you must use the
-latter to combine other read-only aliases until you are left with a value of
-type \ltfla{z arr}, guaranteeing no other aliases exists.
+\ltfla{unshare: 'x .  ('x s) arr --o ('x s) arr --o 'x arr}.  For the former,
+the two arrays returned (which are just aliases of the given array) can now
+only be read from and not written to. If you want to write to this array, you
+must use the latter to combine other read-only aliases until you are left with
+only one value of type \ltfla{z arr}, guaranteeing no other aliases exists.
 
 Given this set-up, a programmer now \emph{statically} has \emph{perfect}
 information about aliasing and ownership of values in the program. They can
@@ -268,20 +264,20 @@ only write to or free an array only when they own it; ownership guarantees no
 other aliases exist. In Figure~\ref{fig:ltfla_kalman}, I show how this perfect
 information can be used to write more readable (equational and algebraic) code
 using easy to reason about, value-semantic expressions whose \emph{intensional}
-behaviour (regarding aliasing, read/write permissions and memory allocation,
-re-use and de-allocation)  is also explicitly and precisely described and
-\emph{automatically checkable}. Now the programmer need not resort to manually
-figuring out and inserting \texttt{noalias} annotations and worrying about what
-variables can and cannot be written to, re-used or freed; instead they can let
-the loyal and tireless compiler do the heavy lifting.
+behaviour and assumptions (regarding aliasing, read/write permissions and
+memory allocation, re-use and de-allocation) are also explicitly and precisely
+described and \emph{automatically checkable}. Now the programmer need not
+resort to manually figuring out and inserting \texttt{noalias} annotations and
+worrying about what variables can and cannot be written to, re-used or freed;
+instead they can let the loyal and tireless compiler do the heavy lifting.
 
 \subsection{If-Expressions}
 
-An if-expression's condition may evaluate either way at run time, so a
+An if-expression's condition may evaluate either way during execution, so a
 programmer must guarantee that both branches use the same set of linear
-variables. Writing the type-checker in a pure-functional monadic style paid off
-here because I could now sandwich monadic values with state-adjustments either
-side of it. Given two monadic values that represented type-checking two
+variables. Writing the type checker in a pure-functional monadic style paid off
+here because I could now sandwich monadic values with state adjustments either
+side of it. Given two monadic values that represented type checking two
 branches of an if-expression, I could use the code in
 Figure~\ref{fig:same_resources} to easily save, reset and compare the state
 either side of running those monadic values.
@@ -308,9 +304,9 @@ let same_resources (wf_a, loc_a) (wf_b, loc_b) =
     (* report differences *)
     \end{minted}
 
-    \caption{Implementation of same\_resources helper method for type-checking
+    \caption{Implementation of same\_resources helper method for type checking
         if-expressions. Note the monadic style helped compose computations that
-        affected the type-checker's state in a simple manner.}\label{fig:same_resources}
+        affected the type checker's state in a simple manner.}\label{fig:same_resources}
 
 \end{figure}
 
@@ -323,7 +319,7 @@ let Many f =  Many (fun y : !int -> x + y) in  <body>}.  Recursion is slightly
 more complicated: we can desugar the factorial function
 (Figure~\ref{fig:ltfla_factorial}) to \ltfla{let Many f = fix (f, x : !int, if
 (*..*) : !int) in <body> }. However, \ltfla{fix}, like \ltfla{Many}, must also
-not use any linear variables from its surrounding scope, because calling a
+not use any linear variables from its surrounding scope, because a
 recursive function may evaluate its body multiple times.
 
 \begin{landscape}
@@ -348,7 +344,7 @@ Figure~\ref{fig:maths_kalman}).
 In Figure~\ref{fig:fortran_kalman}, we see the difficulty of efficiently
 implementing a \emph{Kalman filter}~\cite{kalman}, a powerful set of equations
 (Figure~\ref{fig:maths_kalman}) applicable to a wide variety of problems. From
-the comments, we see that every variable is annotated with the step/matrix
+the comments, we see that every variable is annotated with the matrix
 expression that it will hold at some point during the computation (an
 equivalent alternative, say in C++, could be to have a meaningful name for each
 step and manually keep track of which names alias the same location).
@@ -371,17 +367,17 @@ In contrast, Figure~\ref{fig:ltfla_kalman}, offers the advantages of
 \end{itemize}
 and have the compiler automatically ensure the safety of each of the above by respectively
 \begin{itemize}
-    \item making it impossible to refer to steps/values which are no longer usable,
+    \item making it impossible to refer to values which are no longer usable,
     \item ensuring all values are declared and \emph{initialised} correctly before they are used,
     \item checking values are neither used after they are freed/written-over \emph{nor} leaked.
 \end{itemize}
 
 Indeed, an inexperienced programmer could take the  na\"ive approach of just
-copying sub-expressions by default and then letting the compiler tell it which
-copies are never used and removing them systematically until it type-checks.
-While it is not quite a black-box, push-button compilation of an expression, I
-would argue that, it is just as easy (if not easier) to become familiar with as
-Rust and its borrow-checker.
+copying sub-expressions by default and then letting the compiler tell them
+which copies are never used and removing them systematically until their
+program type checks.  While it is not quite a black-box, push-button
+compilation of an expression, I would argue it is just as easy (if not easier)
+to learn how to work with as Rust's borrow checker.
 
 \begin{figure}[tp]
     \inputminted[linenos, fontsize=\small]{ocaml}{../test/examples/kalman.lt}
@@ -389,16 +385,16 @@ Rust and its borrow-checker.
         (Figure~\ref{fig:fortran_kalman}) or C (Figure~\ref{fig:cblas_kalman})
         implementations, this one is readable (equational and algebraic),
         using easy to reason about, value-semantic expressions. In addition to
-        that, its \emph{intensional} behaviour(regarding aliasing, read/write
-        permissions and memory allocation, re-use and de-allocation) is also
-        explicitly and precisely described and (unlike with Fortran or C)
+        that, its \emph{intensional} behaviour and assumptions (regarding
+        aliasing, read/write permissions and memory allocation, re-use and
+        de-allocation) are also explicitly and precisely described and
         \emph{automatically checkable}.}\label{fig:ltfla_kalman}
 \end{figure}
 
 \subsection{Elaboration}
 
 All of the syntax in Figure~\ref{fig:ltfla_kalman} can be unambiguously
-desugared \emph{before} type-checking, through fairly simple pattern matching.
+desugared \emph{before} type checking, through fairly simple pattern matching.
 Matrix expression compilation is well-trodden territory in
 academia~\cite{rocklin_thesis, fabregat_thesis, gunnels_flame, linnea, taco}
 but this is, to my knowledge, the \textbf{first type-based approach} to it.
@@ -426,16 +422,16 @@ let x <- new (m, n) [| a*b |] in .. ==> let c = matrix m n in
 \end{figure}
 
 One of the first hurdles I encountered was compositionality: to compile $AB +
-C$ it is typically better to use a BLAS routine directly rather than but first
+C$ it is typically better to use a BLAS routine directly rather than first
 compiling $A$, then $B$, then adding a call to multiply them, then compiling
 $C$ and finishing with a call to add the results.
 
 Another compositionality problem is that a call to a linear function does not
-just return a result, but a sequence of re-bindings that dictate which
-variables are still in scope/usable.  As such, to compile an expression, you
+just return a result, but a sequence of re-bindings which dictate which
+variables are still usable (in scope).  As such, to compile an expression, you
 need to provide a CPS-style function of type $var \rightarrow exp$ representing
 how you would use a variable representing the result in the rest of the
-expression.
+computation.
 
 However, the type of that variable also determines how you can use it: can you
 write to it or must you copy it? This information depends on how the expression
@@ -463,14 +459,14 @@ integer, element and boolean literals.
 
 To make the code produced readable, I added a few `optimisations', to the
 compiler, to `re-sugar' some of the constructs translated where appropriate.
-Almost all of them involved the erasing the !-eliminator which is not needed in
-regular, intuitionistic OCaml. So, so we can simply replace any expression of
+Almost all of them involved the erasing the \mbox{!-eliminator} which is not needed in
+regular, intuitionistic OCaml. So, we can simply replace any expression of
 the form:
 
 \begin{itemize}
 
     \item \ltfla{let xy, z = <exp> in let x,y = xy in <body>} with
-        \ltfla{let (x,y), z = <exp in <body>}, 
+        \ltfla{let (x,y), z = <exp> in <body>}, 
 
     \item \ltfla{let Many x = x in let Many x = Many (Many x) in <body>} with
         \ltfla{<body>},
@@ -500,7 +496,7 @@ let rec f i n x0 row =
 in
 f
     \end{minted}
-    \caption{Recursive OCaml function for a summing an array, generated (at
+    \caption{Recursive OCaml function for a summing over an array, generated (at
         \emph{compile time}) from the code in Figure~\ref{fig:ltfla_sumarray},
         passed through \texttt{ocamlformat} for presentation.}\label{fig:ocaml_sumarray}
 
@@ -508,10 +504,10 @@ f
 
 It is clear that both Figures~\ref{fig:fortran_kalman}
 and~\ref{fig:ocaml_kalman} are realisations of a concise, linearly-typed Kalman
-filter~\ref{fig:ltfla_kalman} \emph{specification} that describes the whole
-behaviour and intent (with respect to read/writes permissions, memory
-management and aliasing) of the program and the BLAS primitives it uses more
-accurately than a Fortran, C or OCaml implementation could.
+filter~\ref{fig:ltfla_kalman} \emph{specification} that describes the intensional
+behaviour and assumptions (with respect to read/writes permissions, memory
+management and aliasing) of the program and the BLAS primitives it uses \textbf{more
+accurately} than a Fortran, C or OCaml implementation could.
 
 \begin{figure}[p]
     \begin{minted}[linenos, fontsize=\footnotesize]{ocaml}
@@ -585,30 +581,30 @@ and with any other OCaml function.
         build system.}\label{fig:build}
 \end{figure}
 
-Advantages of generating code at compile time include avoiding runtime overhead
-as well as catching any interface changes (type-signatures now include
-\emph{intensional} information about which parameters are read from or written
-to) between the generated code and the code that uses it via OCaml's type
-system, \emph{another benefit} (in addition to a sanity check on LT4LA's
-type-checker implementation) of \emph{embedding} LT4LA's type system inside of
-OCaml's.
+Generating code at compile time has two advantages. First, it avoids runtime
+overhead. Second, it catches interface and \textbf{relevant implementation
+changes} between the generated code and the code that uses it.  The second
+advantage is \emph{another benefit} of \emph{embedding} LT4LA's type system
+inside of OCaml's. Relevant implementation changes are caught because LT4LA's
+types express some of the intensional behaviour and assumptions of its
+programs.
 
 I suspect that this approach will be very valuable to not just \emph{users} of
 libraries such as Numpy or Owl, but also their \emph{implementors}: library
 functions which present a safe, value-semantic interface but use unsafe,
-mutating operations on the inside could now be expressed using LT4LA and have
-an extra safety-net and automatic checking for their implementations.
+mutating operations on the inside could now be expressed using LT4LA and gain
+\textbf{safety, value-semantics and automatic checking for their implementations}.
 
 \clearpage%
 \section{Summary}
 
-I have explained how a few core features -- linearity, the \ltfla{Many}
+I explained how a few core features -- linearity, the \ltfla{Many}
 constructor, value-restriction, fractional-capabilities with inference,
 if-expressions and recursive functions -- are enough to \emph{statically
 capture and automatically check} aliasing, read/write permissions, memory
-allocation, re-use and deallocation of non-trivial linear-algebra programs. I
-have also demonstrated that simple pattern-matching and desugaring provides the
-potential for a new, \emph{type-directed} approach to matrix expression
+allocation, re-use and deallocation of non-trivial linear algebra programs. I
+also demonstrated that simple pattern-matching and desugaring provides the
+potential for a \textbf{new, \emph{type-directed}} approach to matrix expression
 compilation. Lastly I have shown that it is possible to use these features with
 \emph{existing} languages and frameworks.\footnote{As mentioned in the previous
 chapter, if the host language supports \emph{syntax-extensions}, like PPX

@@ -64,6 +64,13 @@ measurements.  Core\_bench performs a linear-regression (here, time against
 batch-size) so includes 95\% confidence-interval with $R^2$. Larger scales have
 errors reported to $\pm \sigma$ (one standard-deviation).
 
+\subsection{Memory Usage}
+
+Inspecting the trace for LT4LA shows 6 calls to `empty' (function for
+allocating new matrices): 4 temporaries plus 2 for storing the results. From
+the CBLAS implementation (Figure~\ref{fig:cblas_kalman}), we can see that it
+too has 6 calls to malloc: 4 temporaries plus 2 to storing the results.
+
 \begin{landscape}
 \begin{figure}[p]
     \centering
@@ -108,13 +115,6 @@ static void kalman( const int n,               const int k,                const
     \end{minipage}
 \end{figure}
 \end{landscape}
-
-\subsection{Memory Usage}
-
-Inspecting the trace for LT4LA shows 6 calls to `empty' (function for
-allocating new matrices): 4 temporaries plus 2 for storing the results. From
-the CBLAS implementation (Figure~\ref{fig:cblas_kalman}), we can see that it
-too has 6 calls to malloc: 4 temporaries plus 2 to storing the results.
 
 \subsection{Execution Time}
 

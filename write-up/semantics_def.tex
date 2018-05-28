@@ -70,18 +70,18 @@
 
 \newcommand{\otte}{
 \ottrulehead{\ottnt{e}}{::=}{\ottcom{expression}}\ottprodnewline
-\ottfirstprodline{|}{\ottnt{p}}{}{}{}{\ottcom{primitives (arithmetic, L1 BLAS, Owl)}}\ottprodnewline
+\ottfirstprodline{|}{\ottnt{p}}{}{}{}{\ottcom{primitives}}\ottprodnewline
 \ottprodline{|}{\mathit{x}}{}{}{}{\ottcom{variable}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \mathit{x}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{\textsf{bind}\; \mathit{x}\; \textsf{in}\; \ottnt{e'}}{}{\ottcom{let binding}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottsym{)}}{}{}{}{\ottcom{unit introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottsym{(}  \ottsym{)}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{}{}{\ottcom{unit elimination}}\ottprodnewline
-\ottprodline{|}{\ottkw{true}}{}{}{}{\ottcom{true (boolean introduction)}}\ottprodnewline
-\ottprodline{|}{\ottkw{false}}{}{}{}{\ottcom{false (boolean introduction)}}\ottprodnewline
-\ottprodline{|}{\ottkw{if} \, \ottnt{e} \, \ottkw{then} \, \ottnt{e_{{\mathrm{1}}}} \, \ottkw{else} \, \ottnt{e_{{\mathrm{2}}}}}{}{}{}{\ottcom{if (boolean elimination)}}\ottprodnewline
+\ottprodline{|}{\ottkw{true}}{}{}{}{\ottcom{true}}\ottprodnewline
+\ottprodline{|}{\ottkw{false}}{}{}{}{\ottcom{false}}\ottprodnewline
+\ottprodline{|}{\ottkw{if} \, \ottnt{e} \, \ottkw{then} \, \ottnt{e_{{\mathrm{1}}}} \, \ottkw{else} \, \ottnt{e_{{\mathrm{2}}}}}{}{}{}{\ottcom{if}}\ottprodnewline
 \ottprodline{|}{\mathit{k}}{}{}{}{\ottcom{integer}}\ottprodnewline
 \ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
-\ottprodline{|}{\ottkw{Many} \, \ottnt{e}}{}{}{}{\ottcom{packing-up a non-linear value}}\ottprodnewline
-\ottprodline{|}{\ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{}{}{\ottcom{using a non-linear value}}\ottprodnewline
+\ottprodline{|}{\ottkw{Many} \, \ottnt{e}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
+\ottprodline{|}{\ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{}{}{\ottcom{!-elimination}}\ottprodnewline
 \ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{e}}{}{}{}{\ottcom{frac. cap. abstraction}}\ottprodnewline
 \ottprodline{|}{\ottnt{e}  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. cap. specialisation}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{e}  \ottsym{,}  \ottnt{e'}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
@@ -105,21 +105,21 @@
 \ottprodline{|}{\ottsym{(}  \ottsym{*.}  \ottsym{)}}{}{}{}{\ottcom{element multiplication}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottsym{/.}  \ottsym{)}}{}{}{}{\ottcom{element division}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottsym{=.}  \ottsym{)}}{}{}{}{\ottcom{element equality}}\ottprodnewline
-\ottprodline{|}{\ottsym{(}  \ottsym{<.}  \ottsym{)}}{}{}{}{\ottcom{element comparsion (less-than)}}\ottprodnewline
+\ottprodline{|}{\ottsym{(}  \ottsym{<.}  \ottsym{)}}{}{}{}{\ottcom{element less-than}}\ottprodnewline
 \ottprodline{|}{\ottkw{not}}{}{}{}{\ottcom{boolean negation}}\ottprodnewline
 \ottprodline{|}{\ottkw{share}}{}{}{}{\ottcom{share array}}\ottprodnewline
 \ottprodline{|}{\ottkw{unshare}}{}{}{}{\ottcom{unshare array}}\ottprodnewline
 \ottprodline{|}{\ottkw{free}}{}{}{}{\ottcom{free arrary}}\ottprodnewline
 \ottprodline{|}{\ottkw{array}}{}{}{}{\ottcom{Owl:  make array}}\ottprodnewline
 \ottprodline{|}{\ottkw{copy}}{}{}{}{\ottcom{Owl:  copy array}}\ottprodnewline
-\ottprodline{|}{\ottkw{sin}}{}{}{}{\ottcom{Owl:  sine of all elements in array}}\ottprodnewline
+\ottprodline{|}{\ottkw{sin}}{}{}{}{\ottcom{Owl:  map sine over array}}\ottprodnewline
 \ottprodline{|}{\ottkw{hypot}}{}{}{}{\ottcom{Owl:  $x_i := \sqrt{x_i^2 + y_i^2}$}}\ottprodnewline
 \ottprodline{|}{\ottkw{asum}}{}{}{}{\ottcom{BLAS: $\sum_i | x_i |$}}\ottprodnewline
 \ottprodline{|}{\ottkw{axpy}}{}{}{}{\ottcom{BLAS: $x := \alpha x + y$}}\ottprodnewline
 \ottprodline{|}{\ottkw{dot}}{}{}{}{\ottcom{BLAS: $x \cdot y$}}\ottprodnewline
-\ottprodline{|}{\ottkw{rotmg}}{}{}{}{\ottcom{BLAS: gen. mod. Givens rotation}}\ottprodnewline
+\ottprodline{|}{\ottkw{rotmg}}{}{}{}{\ottcom{BLAS: see its docs}}\ottprodnewline
 \ottprodline{|}{\ottkw{scal}}{}{}{}{\ottcom{BLAS: $x := \alpha x$}}\ottprodnewline
-\ottprodline{|}{\ottkw{amax}}{}{}{}{\ottcom{BLAS: index of maximum absolute value}}\ottprodnewline
+\ottprodline{|}{\ottkw{amax}}{}{}{}{\ottcom{BLAS: index of max. abs. value}}\ottprodnewline
 \ottprodline{|}{\ottkw{setM}}{}{}{}{\ottcom{matrix index assignment}}\ottprodnewline
 \ottprodline{|}{\ottkw{getM}}{}{}{}{\ottcom{matrix indexing}}\ottprodnewline
 \ottprodline{|}{\ottkw{shareM}}{}{}{}{\ottcom{share matrix}}\ottprodnewline
@@ -127,11 +127,11 @@
 \ottprodline{|}{\ottkw{freeM}}{}{}{}{\ottcom{free matrix}}\ottprodnewline
 \ottprodline{|}{\ottkw{matrix}}{}{}{}{\ottcom{Owl:  make matrix}}\ottprodnewline
 \ottprodline{|}{\ottkw{copyM}}{}{}{}{\ottcom{Owl:  copy matrix}}\ottprodnewline
-\ottprodline{|}{\ottsym{copyM\_to}}{}{}{}{\ottcom{Owl:  copy matrix onto another matrix}}\ottprodnewline
+\ottprodline{|}{ \textbf{copyM\_to} }{}{}{}{\ottcom{Owl:  copy matrix onto another matrix}}\ottprodnewline
 \ottprodline{|}{\ottkw{gemm}}{}{}{}{\ottcom{BLAS: $C := \alpha A^{T?} B^{T?} + \beta C$}}\ottprodnewline
-\ottprodline{|}{\ottkw{symm}}{}{}{}{\ottcom{BLAS: $C := \alpha A B + \beta C$ A or B symmetric}}\ottprodnewline
-\ottprodline{|}{\ottkw{posv}}{}{}{}{\ottcom{BLAS: Cholesky decomposition and solve}}\ottprodnewline
-\ottprodline{|}{\ottkw{potrs}}{}{}{}{\ottcom{BLAS: solve with given Cholesky factorisation}}}
+\ottprodline{|}{\ottkw{symm}}{}{}{}{\ottcom{BLAS: $C := \alpha A B + \beta C$}}\ottprodnewline
+\ottprodline{|}{\ottkw{posv}}{}{}{}{\ottcom{BLAS: Cholesky decomp. and solve}}\ottprodnewline
+\ottprodline{|}{\ottkw{potrs}}{}{}{}{\ottcom{BLAS: solve with given Cholesky}}}
 
 \newcommand{\ottT}{
 \ottrulehead{\Theta}{::=}{\ottcom{fractional capability environment}}\ottprodnewline
@@ -168,7 +168,7 @@
 
 \newcommand{\ottTypes}{
 \ottrulehead{\ottnt{Types}}{::=}{}\ottprodnewline
-\ottfirstprodline{|}{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \ottnt{t}}{}{}{}{\ottcom{Typing rules for expressions (primitives omitted)}}}
+\ottfirstprodline{|}{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \ottnt{t}}{}{}{}{\ottcom{Typing rules for expressions}}}
 
 \newcommand{\ottjudgement}{
 \ottrulehead{\ottnt{judgement}}{::=}{}\ottprodnewline
@@ -601,7 +601,7 @@
 {\ottdrulename{Ty\_Fix}}{}%
 }}
 
-\newcommand{\ottdefnTyXXTypeXX}[1]{\begin{ottdefnblock}[#1]{$\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \ottnt{t}$}{\ottcom{Typing rules for expressions (primitives omitted)}}
+\newcommand{\ottdefnTyXXTypeXX}[1]{\begin{ottdefnblock}[#1]{$\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \ottnt{t}$}{\ottcom{Typing rules for expressions}}
 \ottusedrule{\ottdruleTyXXVarXXLin{}}
 \ottusedrule{\ottdruleTyXXVar{}}
 \ottusedrule{\ottdruleTyXXLet{}}

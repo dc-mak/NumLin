@@ -117,6 +117,7 @@
   \AtBeginEnvironment{minted}{\dontdofcolorbox}
   \def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
   \makeatother
+\RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
 
 % Graphs
 \RequirePackage{pgfplots}

@@ -107,7 +107,7 @@ grammar
      | dot      ::  :: Dot      {{ com BLAS: $x \cdot y$                           }}
      | rotmg    ::  :: Rotmg    {{ com BLAS: see its docs                          }}
      | scal     ::  :: Scal     {{ com BLAS: $x := \alpha x$                       }}
-     | amax     ::  :: Amax     {{ com BLAS: index of max. abs. value              }}
+     | amax     ::  :: Amax     {{ com BLAS: $\textrm{argmax}\,i:\,x_i$            }}
      | setM     ::  :: SetM     {{ com matrix index assignment                     }}
      | getM     ::  :: GetM     {{ com matrix indexing                             }}
      | shareM   ::  :: ShareM   {{ com share matrix                                }}

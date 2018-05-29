@@ -106,7 +106,7 @@ are: intuitionistic values, value-restriction, fractional-capabilities
     \end{minipage}
     \begin{minipage}{.3\textwidth}
         \centering
-        \begin{minted}[fontsize=\small, linenos]{ocaml}
+        \begin{minted}[fontsize=\small]{ocaml}
 module Arr =
   Owl.Dense.Ndarray.D
 
@@ -283,6 +283,7 @@ Figure~\ref{fig:same_resources} to easily save, reset and compare the state
 either side of running those monadic values.
 
 \begin{figure}[tp]
+    \centering
     \begin{minted}[fontsize=\small]{ocaml}
 let same_resources (wf_a, loc_a) (wf_b, loc_b) =
   let open Let_syntax in
@@ -325,9 +326,7 @@ recursive function may evaluate its body multiple times.
 \begin{landscape}
     \begin{figure}[p]
     \centering
-    \begin{minipage}{1.47\textheight}
-    \inputminted[linenos, fontsize=\footnotesize]{fortran}{kalman.f90}
-    \end{minipage}
+    \inputminted[fontsize=\footnotesize]{fortran}{kalman.f90}
     \caption{Kalman filter in Fortran 90.}\label{fig:fortran_kalman}
     \end{figure}
 \end{landscape}
@@ -380,7 +379,8 @@ compilation of an expression, I would argue it is just as easy (if not easier)
 to learn how to work with as Rust's borrow checker.
 
 \begin{figure}[tp]
-    \inputminted[linenos, fontsize=\small]{ocaml}{../test/examples/kalman.lt}
+    \centering
+    \inputminted[fontsize=\small]{ocaml}{../test/examples/kalman.lt}
     \caption{Kalman filter in LT4LA. In contrast with the Fortran
         (Figure~\ref{fig:fortran_kalman}) or C (Figure~\ref{fig:cblas_kalman})
         implementations, this one is readable (equational and algebraic),
@@ -406,6 +406,7 @@ nested matrix expression compiler; I will now highlight some of the
 difficulties inherent in the problem.
 
 \begin{figure}[tp]
+    \centering
     \begin{minted}[fontsize=\small]{ocaml}
 let x <- [| y |] in ..              ==> let (y,x) = copyM_to _ y x in ..
 let x <- new [| y |] in ..          ==> let (y,x) = copyM _ y in ..
@@ -487,7 +488,7 @@ obviously safe, as promised at the start of the chapter.
 
 \begin{figure}[tp]
     \centering
-    \begin{minted}[linenos, fontsize=\small]{ocaml}
+    \begin{minted}[fontsize=\small]{ocaml}
 let rec f i n x0 row =
   if Prim.extract @@ Prim.eqI i n then (row, x0)
   else
@@ -510,7 +511,8 @@ management and aliasing) of the program and the BLAS primitives it uses \textbf{
 accurately} than a Fortran, C or OCaml implementation could.
 
 \begin{figure}[p]
-    \begin{minted}[linenos, fontsize=\footnotesize]{ocaml}
+    \centering
+    \begin{minted}[fontsize=\footnotesize]{ocaml}
 let kalman sigma h mu r_1 data_1 =
   let h, _p_k_n_p_ = Prim.size_mat h in
   let k, n = _p_k_n_p_ in

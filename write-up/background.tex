@@ -103,8 +103,9 @@ on the sparsity of the inputs and so is not immediately amenable to the
 techniques proposed in this thesis.
 
 \subsection{One Too Many Copies and a Thousand Bytes Behind}
-\begin{figure}[tbp]
+\begin{figure}[tp]
     \centering
+
     \begin{minipage}{0.45\textwidth}
     \centering
     \begin{minted}[fontsize=\small]{python}
@@ -113,8 +114,6 @@ import numpy.matlib
 a = [[1,0],[0,1]]
 b = [[4,1],[2,2]]
 c = numpy.matmul(a,b)
-    \end{minted}
-    \begin{minted}[fontsize=\small]{julia}
 # Julia
 c = [1 0; 0 1] * [4 1; 2 2]
     \end{minted}
@@ -131,7 +130,10 @@ let b = Mat.of_arrays
 let c = Mat.(a *@ b)
     \end{minted}
     \end{minipage}
-    \caption{Matrix Multiplication in Numpy (Python), Julia and Owl (OCaml).}\label{fig:mat_mul_copies}
+
+    \caption{Matrix Multiplication in Numpy (Python), Julia and Owl
+        (OCaml).}\label{fig:mat_mul_copies}
+
 \end{figure}
 
 In Figure~\ref{fig:mat_mul_copies}, we see that matrix multiplication is fairly
@@ -144,7 +146,7 @@ approach does permit \emph{aliasing}, the consequences are benign because the
 result of any computation is a \emph{new} value, distinct from any used during
 the calculation of that value.
 
-\begin{figure}[tbp]
+\begin{figure}[tp]
     \centering
     \begin{minted}[fontsize=\small]{ocaml}
 let mul x y =
@@ -186,7 +188,8 @@ factors such as memory layout, allocation, re-use as well as cache behaviour
 and parallelism are important. Of these, \textbf{only memory allocation and
 re-use} are relevant to linear types and this thesis.
 
-\begin{figure}[tbp]
+\begin{figure}[tp]
+    \centering
     \begin{minted}[fontsize=\small]{fortran}
   program blasMatMul
   implicit none
@@ -231,6 +234,7 @@ permits (this informal, general statement comes with many nuances left for the
 interested reader to pursue).
 
 \begin{figure}[tp]
+    \centering
     \begin{minted}[fontsize=\small]{c++}
 #include <iostream>
 #include <Eigen/Dense>
@@ -251,7 +255,8 @@ int main()
 	Figure~\ref{fig:fortran_blas}.}\label{fig:cpp_eigen}
 \end{figure}
 
-\begin{figure}[tbp]
+\begin{figure}[tp]
+    \centering
     \begin{minted}[fontsize=\small]{c++}
 noalias(C) = prod(A, B);
 // Preferable if T is preallocated
@@ -285,12 +290,14 @@ types.  We can define the factorial function
 (Figure~\ref{fig:ltfla_sumarray}).
 
 \begin{figure}[tp]
-    \inputminted[linenos, fontsize=\small]{ocaml}{../test/examples/factorial.lt}
+    \centering
+    \inputminted[fontsize=\small]{ocaml}{../test/examples/factorial.lt}
     \caption{Factorial function in LT4LA.}\label{fig:ltfla_factorial}
 \end{figure}
 
 \begin{figure}[tp]
-    \inputminted[linenos, fontsize=\small]{ocaml}{../test/examples/sum_array.lt}
+    \centering
+    \inputminted[fontsize=\small]{ocaml}{../test/examples/sum_array.lt}
     \caption{Summing over an array in LT4LA.}\label{fig:ltfla_sumarray}
 \end{figure}
 
@@ -304,7 +311,8 @@ write to it. If we did try to write to or free \ltfla{row}, we would get a
 helpful error message, as shown in Figure~\ref{fig:ltfla_univ}.
 
 \begin{figure}[tp]
-    \begin{minted}[linenos, firstnumber=7, fontsize=\small]{ocaml}
+    \centering
+    \begin{minted}[fontsize=\small]{ocaml}
 let row = row[i] := x1 in (* or *) let () = free row in
 (* Could not show equality:                                        *)
 (*     z arr                                                       *)
@@ -337,7 +345,8 @@ so, we must first \ltfla{unshare} any read-only aliases that exist, to get back
 a single, read-write handle.
 
 \begin{figure}[tp]
-    \begin{minted}[linenos, fontsize=\small]{ocaml}
+    \centering
+    \begin{minted}[fontsize=\small]{ocaml}
 let (a1, a2) = share _ a in
 let ((a1, a2), c) = simple_dgemm _ a1 _ a2 c in
 let a = unshare _ a1 a2 in
@@ -366,7 +375,8 @@ simple_dgemm _ a11 _ a12 a2} would result in an error similar to the one shown
 in Figure~\ref{fig:ltfla_free}.
 
 \begin{figure}[tp]
-    \begin{minted}[linenos, fontsize=\small]{ocaml}
+    \centering
+    \begin{minted}[fontsize=\small]{ocaml}
 let (a1, a2) = share _ a in
 let ((a1, a2), c) = simple_dgemm _ a1 _ a2 c in
 let () = free a1 in c
@@ -414,6 +424,7 @@ programming side, we have Linear Haskell, Rust and Idris (experimental). On the
 research side, we have Resource Aware ML~\cite{hoffmann} and the tantalising
 promise of integrating linear and dependent types~\cite{atkey}.
 
+\newpage%
 \section{Summary}
 
 I have given an \emph{intuitive} exposition of linear types with

@@ -62,7 +62,7 @@
 \renewcommand{\cftsecpagefont}{\bfseries}% Bold (not sans for ToC & page consistency) page numbers
 \cleardoublepage{}
 
-% \onehalfspacing%
+\onehalfspacing%
 
 %% START OF MAIN TEXT
 
@@ -80,6 +80,7 @@
 
 \appendix%
 \include{ott_spec}
+\RecustomVerbatimEnvironment{Verbatim}{Verbatim}{}%
 \include{primitives}
 \include{eval_data}
 \singlespacing%

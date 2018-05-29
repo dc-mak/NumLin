@@ -64,18 +64,10 @@ Core\_bench performs a linear regression (here, time against batch-size) so
 includes a 95\% confidence-interval with $R^2$. Larger scales have
 errors reported to $\pm \sigma$ (one standard-deviation).
 
-\subsection{Memory Usage}
-
-Inspecting the trace for LT4LA shows 6 calls to `empty' (function for
-allocating new matrices): 4 temporaries plus 2 for storing the results. From
-the CBLAS implementation (Figure~\ref{fig:cblas_kalman}), we can see that it
-too has 6 calls to malloc: 4 temporaries plus 2 for storing the results.
-
 \begin{landscape}
 \begin{figure}[p]
     \centering
-    \begin{minipage}{1.45\textheight}
-    \begin{minted}[linenos, fontsize=\small]{c}
+    \begin{minted}[fontsize=\footnotesize]{c}
 static void kalman( const int n,               const int k,                const double *sigma, /* n,n */
                     const double *h, /* k,n */ const double *mu, /* n,1 */ double *r,           /* k,k */
                     double *data,    /* k,1 */ double **ret_mu,  /* k,1 */ double **ret_sigma   /* n,n */ ) {
@@ -112,9 +104,15 @@ static void kalman( const int n,               const int k,                const
         `measure\_kalman' function that sandwiches a call to this function with
         \texttt{getrusage} is omitted for brevity.}\label{fig:cblas_kalman}
 
-    \end{minipage}
 \end{figure}
 \end{landscape}
+
+\subsection{Memory Usage}
+
+Inspecting the trace for LT4LA shows 6 calls to `empty' (function for
+allocating new matrices): 4 temporaries plus 2 for storing the results. From
+the CBLAS implementation (Figure~\ref{fig:cblas_kalman}), we can see that it
+too has 6 calls to malloc: 4 temporaries plus 2 for storing the results.
 
 \subsection{Execution Time}
 
@@ -187,7 +185,8 @@ inversion at the time of writing.} more implementations of a Kalman filter:
 \end{enumerate}
 
 \begin{figure}[tp]
-    \begin{minted}[linenos, fontsize=\small]{ocaml}
+    \centering
+    \begin{minted}[fontsize=\small]{ocaml}
 let potrs ~uplo a b =
   let b = Owl.Mat.copy b in
   Owl.Lapacke.potrs ~uplo ~a ~b

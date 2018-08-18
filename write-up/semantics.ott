@@ -13,6 +13,8 @@ metavar k ::=
 metavar el ::=
   {{ tex \mathit{[[el]]} }} {{ com array-element variable }}
 
+metavar l ::=
+  {{ tex \mathit{ \ell } }} {{ com location variable }}
 
 grammar
 
@@ -28,6 +30,7 @@ grammar
     | !     ::  :: bang      {{ tex \: !          }}
     | ->    ::  :: arrow     {{ tex \rightarrow   }}
     | value ::  :: value
+    | __    ::  :: hole      {{ tex [ - ]         }}
 
 
   f :: 'f_' ::=       {{ com fractional capability }}
@@ -52,6 +55,26 @@ grammar
     | ( t )        :: S :: Paren   {{ com parentheses               }}
 
 
+  v :: 'v_' ::=                                       {{ com values                    }}
+    | p                           ::   :: Prim        {{ com primitives                }}
+    | x                           ::   :: Var         {{ com variable                  }}
+    | ( )                         ::   :: Unit_Intro  {{ com unit introduction         }}
+    | true                        ::   :: Bool_True   {{ com true                      }}
+    | false                       ::   :: Bool_False  {{ com false                     }}
+    | k                           ::   :: Int_Intro   {{ com integer                   }}
+    | l                           ::   :: Location    {{ com heap location             }}
+    | el                          ::   :: Elt_Intro   {{ com array element             }}
+    | Many v                      ::   :: Bang_Intro  {{ com !-introduction            }}
+    | fun fc -> v                 ::   :: Gen         {{ com frac. cap. abstraction    }}
+    | v [ f ]                     ::   :: Spc         {{ com frac. cap. specialisation }}
+    | ( v , v' )                  ::   :: Pair_Intro  {{ com pair introduction         }}
+    | fun x : t -> e              ::   :: Lambda      (+ bind x in e                   +)
+                                                      {{ com abstraction               }}
+    | fix ( g , x : t , e : t' )  ::   :: Fix         (+ bind g union x in e           +)
+                                                      {{ com fixpoint                  }}
+%   | ( e )                       :: S :: Paren       {{ com parentheses               }}
+
+
   e :: 'e_' ::=                                       {{ com expression                }}
     | p                           ::   :: Prim        {{ com primitives                }}
     | x                           ::   :: Var         {{ com variable                  }}
@@ -63,6 +86,7 @@ grammar
     | false                       ::   :: Bool_False  {{ com false                     }}
     | if e then e1 else e2        ::   :: Bool_Elim   {{ com if                        }}
     | k                           ::   :: Int_Intro   {{ com integer                   }}
+    | l                           ::   :: Location    {{ com heap location             }}
     | el                          ::   :: Elt_Intro   {{ com array element             }}
     | Many e                      ::   :: Bang_Intro  {{ com !-introduction            }}
     | let Many x = e in e'        ::   :: Bang_Elim   {{ com !-elimination             }}
@@ -79,9 +103,25 @@ grammar
 %   | ( e )                       :: S :: Paren       {{ com parentheses               }}
 
 
+  C :: 'C_' ::=                                     {{ com evaluation contexts       }}
+    | let x = __ in e             ::   :: Let        (+ bind x in e                   +)
+                                                    {{ com let binding               }}
+    | let ( ) = __ in e           ::   :: Unit_Elim  {{ com unit elimination          }}
+    | if __ then e1 else e2       ::   :: Bool_Elim  {{ com if                        }}
+    | Many __                     ::   :: Bang_Intro {{ com !-introduction            }}
+    | let Many x = __ in e        ::   :: Bang_Elim  {{ com !-elimination             }}
+    | fun fc -> __                ::   :: Gen        {{ com frac. cap. abstraction    }}
+    | __ [ f ]                    ::   :: Spc        {{ com frac. cap. specialisation }}
+    | ( __ , e )                  ::   :: Pair_Fst   {{ com pair introduction         }}
+    | ( v , __ )                  ::   :: Pair_Snd   {{ com pair introduction         }}
+    | let ( a , b ) = __ in e     ::   :: Pair_Elim  (+ bind a union b in e           +)
+                                                    {{ com pair elimination          }}
+    | __ e                        ::   :: App_Fun    {{ com application               }}
+    | v __                        ::   :: App_Arg    {{ com application               }}
+%   | ( __ )                      :: S :: Paren      {{ com parentheses               }}
+
    p :: 'p_' ::=                {{ com primitive                                   }}
-     | set      ::  :: Set      {{ com array index assignment                      }}
-     | get      ::  :: Get      {{ com array indexing                              }}
+     | not      ::  :: Not      {{ com boolean negation                            }}
      | ( + )    ::  :: Int_Add  {{ com integer addition                            }}
      | ( - )    ::  :: Int_Sub  {{ com integer subtraction                         }}
      | ( * )    ::  :: Int_Mul  {{ com integer multiplication                      }}
@@ -94,7 +134,8 @@ grammar
      | ( /. )   ::  :: Elt_Div  {{ com element division                            }}
      | ( =. )   ::  :: Elt_Eq   {{ com element equality                            }}
      | ( <. )   ::  :: Elt_Lt   {{ com element less-than                           }}
-     | not      ::  :: Not      {{ com boolean negation                            }}
+     | set      ::  :: Set      {{ com array index assignment                      }}
+     | get      ::  :: Get      {{ com array indexing                              }}
      | share    ::  :: Share    {{ com share array                                 }}
      | unshare  ::  :: Unshare  {{ com unshare array                               }}
      | free     ::  :: Free     {{ com free arrary                                 }}
@@ -117,6 +158,8 @@ grammar
      | copyM    ::  :: CopyM    {{ com Owl:  copy matrix                           }}
      | copyM_to ::  :: CopyM_to {{ com Owl:  copy matrix onto another              }}
                                 {{ tex \textbf{copyM\_to}                          }}
+     | sizeM    ::  :: SizeM    {{ com dimension of matrix                         }}
+     | trnsp    ::  :: Trnsp    {{ com transpose matrix                            }}
      | gemm     ::  :: Gemm     {{ com BLAS: $C := \alpha A^{T?} B^{T?} + \beta C$ }}
      | symm     ::  :: Symm     {{ com BLAS: $C := \alpha A B + \beta C$           }}
      | posv     ::  :: Posv     {{ com BLAS: Cholesky decomp. and solve            }}
@@ -135,9 +178,14 @@ grammar
 
 
   D {{ tex \Delta }} :: 'D_' ::= {{ com linear types environment }}
-    | nil       ::  :: Nil    {{ tex \cdot }}
-    | D , x : t ::  :: Ext
+    | nil       ::   :: Nil {{ tex \cdot }}
+    | D , x : t ::   :: Ext
 
+subrules
+  v <:: e
+
+contextrules
+  C _:: e :: e
 
 defns
   Well_Formed :: 'WF_' ::=
@@ -209,57 +257,6 @@ defns
 
 
 defns
-  Values :: 'Val_' ::=
-
-
-  defn
-  value ( e ) :: ::Value_:: '' {{ com Value restriction for !-introduction }} by
-
-  ----------- :: Prim
-  value ( p )
-
-  ------------ :: Unit_Intro
-  value ( () )
-
-  -------------- :: Bool_True
-  value ( true )
-
-  --------------- :: Bool_False
-  value ( false )
-
-  ----------- :: Int_Intro
-  value ( k )
-
-  ------------ :: Elt_Intro
-  value ( el )
-
-  ----------- :: Var
-  value ( x )
-
-  ------------------------------- :: Fix
-  value ( fix ( g , x : t , e : t' ) )
-
-  ------------------------ :: Lambda
-  value ( fun x : t -> e )
-
-  value ( e )
-  --------------------- :: Gen
-  value ( fun fc -> e )
-
-  value ( e )
-  ------------------ :: Spc
-  value ( e [ fc ] )
-
-  value ( e )
-  ---------------- :: Bang_Intro
-  value ( Many e )
-
-  value ( e1 )
-  value ( e2 )
-  --------------------- :: Pair_Intro
-  value ( ( e1 , e2 ) )
-
-defns
   Types :: 'Ty_' ::=
 
 
@@ -315,10 +312,9 @@ defns
     T ; D ; nil |- el : ! elt
 
 
-    value ( e )
-    T ; D ; nil |- e : t
+    T ; D ; nil |- v : t
     --------------------------- :: Bang_Intro
-    T ; D ; nil |- Many e : ! t
+    T ; D ; nil |- Many v : ! t
 
 
     T ; D ; G          |- e : ! t
@@ -373,7 +369,6 @@ grammar
     | x : t mem D    ::  :: xtD
     | x : t mem G    ::  :: xtG
     | fc    mem T    ::  :: fcT
-    | value ( e  )   ::  :: valE
 
 
 % vim: sw=2 sts=2

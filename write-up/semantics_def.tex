@@ -31,21 +31,8 @@
  $ \mathit{x} ,\, \mathit{g} ,\, \mathit{a} ,\, \mathit{b} $ & \ottcom{expression variable} \\
  $ \mathit{k} $ & \ottcom{integer variable} \\
  $ \mathit{el} $ & \ottcom{array-element variable} \\
+ $ \mathit{ \ell } $ & \ottcom{location variable} \\
 }}
-
-\newcommand{\ottterminals}{
-\ottrulehead{symb}{::=}{}\ottprodnewline
-\ottfirstprodline{|}{ \lambda }{}{}{}{}\ottprodnewline
-\ottprodline{|}{ \otimes }{}{}{}{}\ottprodnewline
-\ottprodline{|}{ \multimap }{}{}{}{}\ottprodnewline
-\ottprodline{|}{ \vdash }{}{}{}{}\ottprodnewline
-\ottprodline{|}{ \in }{}{}{}{}\ottprodnewline
-\ottprodline{|}{ \forall }{}{}{}{}\ottprodnewline
-\ottprodline{|}{ \textsf{Cap} }{}{}{}{}\ottprodnewline
-\ottprodline{|}{ \textsf{Type} }{}{}{}{}\ottprodnewline
-\ottprodline{|}{ \: ! }{}{}{}{}\ottprodnewline
-\ottprodline{|}{ \rightarrow }{}{}{}{}\ottprodnewline
-\ottprodline{|}{\ottkw{value}}{}{}{}{}}
 
 \newcommand{\ottf}{
 \ottrulehead{\ottnt{f}}{::=}{\ottcom{fractional capability}}\ottprodnewline
@@ -65,8 +52,24 @@
 \ottprodline{|}{\forall \, \mathit{fc}  \ottsym{.}  \ottnt{t}}{}{\textsf{bind}\; \mathit{fc}\; \textsf{in}\; \ottnt{t}}{}{\ottcom{frac. cap. generalisation}}\ottprodnewline
 \ottprodline{|}{\ottnt{t}  \otimes  \ottnt{t'}}{}{}{}{\ottcom{pair}}\ottprodnewline
 \ottprodline{|}{\ottnt{t}  \multimap  \ottnt{t'}}{}{}{}{\ottcom{linear function}}\ottprodnewline
-\ottprodline{|}{\ottnt{t}  \ottsym{\{}  \ottnt{f}  \ottsym{/}  \mathit{fc}  \ottsym{\}}} {\textsf{M}}{}{}{\ottcom{substitution}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{t}  \ottsym{)}} {\textsf{S}}{}{}{\ottcom{parentheses}}}
+
+\newcommand{\ottv}{
+\ottrulehead{\ottnt{v}}{::=}{\ottcom{values}}\ottprodnewline
+\ottfirstprodline{|}{\ottnt{p}}{}{}{}{\ottcom{primitives}}\ottprodnewline
+\ottprodline{|}{\mathit{x}}{}{}{}{\ottcom{variable}}\ottprodnewline
+\ottprodline{|}{\ottsym{(}  \ottsym{)}}{}{}{}{\ottcom{unit introduction}}\ottprodnewline
+\ottprodline{|}{\ottkw{true}}{}{}{}{\ottcom{true}}\ottprodnewline
+\ottprodline{|}{\ottkw{false}}{}{}{}{\ottcom{false}}\ottprodnewline
+\ottprodline{|}{\mathit{k}}{}{}{}{\ottcom{integer}}\ottprodnewline
+\ottprodline{|}{\mathit{ \ell }}{}{}{}{\ottcom{heap location}}\ottprodnewline
+\ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
+\ottprodline{|}{\ottkw{Many} \, \ottnt{v}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
+\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}}{}{}{}{\ottcom{frac. cap. abstraction}}\ottprodnewline
+\ottprodline{|}{\ottnt{v}  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. cap. specialisation}}\ottprodnewline
+\ottprodline{|}{\ottsym{(}  \ottnt{v}  \ottsym{,}  \ottnt{v'}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
+\ottprodline{|}{\ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}}{}{\textsf{bind}\; \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{abstraction}}\ottprodnewline
+\ottprodline{|}{\ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}}{}{\textsf{bind}\; \mathit{g} \cup  \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{fixpoint}}}
 
 \newcommand{\otte}{
 \ottrulehead{\ottnt{e}}{::=}{\ottcom{expression}}\ottprodnewline
@@ -79,6 +82,7 @@
 \ottprodline{|}{\ottkw{false}}{}{}{}{\ottcom{false}}\ottprodnewline
 \ottprodline{|}{\ottkw{if} \, \ottnt{e} \, \ottkw{then} \, \ottnt{e_{{\mathrm{1}}}} \, \ottkw{else} \, \ottnt{e_{{\mathrm{2}}}}}{}{}{}{\ottcom{if}}\ottprodnewline
 \ottprodline{|}{\mathit{k}}{}{}{}{\ottcom{integer}}\ottprodnewline
+\ottprodline{|}{\mathit{ \ell }}{}{}{}{\ottcom{heap location}}\ottprodnewline
 \ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, \ottnt{e}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{}{}{\ottcom{!-elimination}}\ottprodnewline
@@ -90,10 +94,24 @@
 \ottprodline{|}{\ottnt{e} \, \ottnt{e'}}{}{}{}{\ottcom{application}}\ottprodnewline
 \ottprodline{|}{\ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}}{}{\textsf{bind}\; \mathit{g} \cup  \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{fixpoint}}}
 
+\newcommand{\ottC}{
+\ottrulehead{\ottnt{C}}{::=}{\ottcom{evaluation contexts}}\ottprodnewline
+\ottfirstprodline{|}{\ottkw{let} \, \mathit{x}  \ottsym{=}  [ - ] \, \ottkw{in} \, \ottnt{e}}{}{\textsf{bind}\; \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{let binding}}\ottprodnewline
+\ottprodline{|}{\ottkw{let} \, \ottsym{(}  \ottsym{)}  \ottsym{=}  [ - ] \, \ottkw{in} \, \ottnt{e}}{}{}{}{\ottcom{unit elimination}}\ottprodnewline
+\ottprodline{|}{\ottkw{if} \, [ - ] \, \ottkw{then} \, \ottnt{e_{{\mathrm{1}}}} \, \ottkw{else} \, \ottnt{e_{{\mathrm{2}}}}}{}{}{}{\ottcom{if}}\ottprodnewline
+\ottprodline{|}{\ottkw{Many} \, [ - ]}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
+\ottprodline{|}{\ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  [ - ] \, \ottkw{in} \, \ottnt{e}}{}{}{}{\ottcom{!-elimination}}\ottprodnewline
+\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  [ - ]}{}{}{}{\ottcom{frac. cap. abstraction}}\ottprodnewline
+\ottprodline{|}{[ - ]  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. cap. specialisation}}\ottprodnewline
+\ottprodline{|}{\ottsym{(}  [ - ]  \ottsym{,}  \ottnt{e}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
+\ottprodline{|}{\ottsym{(}  \ottnt{v}  \ottsym{,}  [ - ]  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
+\ottprodline{|}{\ottkw{let} \, \ottsym{(}  \mathit{a}  \ottsym{,}  \mathit{b}  \ottsym{)}  \ottsym{=}  [ - ] \, \ottkw{in} \, \ottnt{e}}{}{\textsf{bind}\; \mathit{a} \cup  \mathit{b}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{pair elimination}}\ottprodnewline
+\ottprodline{|}{[ - ]  \ottnt{e}}{}{}{}{\ottcom{application}}\ottprodnewline
+\ottprodline{|}{\ottnt{v}  [ - ]}{}{}{}{\ottcom{application}}}
+
 \newcommand{\ottp}{
 \ottrulehead{\ottnt{p}}{::=}{\ottcom{primitive}}\ottprodnewline
-\ottfirstprodline{|}{\ottkw{set}}{}{}{}{\ottcom{array index assignment}}\ottprodnewline
-\ottprodline{|}{\ottkw{get}}{}{}{}{\ottcom{array indexing}}\ottprodnewline
+\ottfirstprodline{|}{\ottkw{not}}{}{}{}{\ottcom{boolean negation}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottsym{+}  \ottsym{)}}{}{}{}{\ottcom{integer addition}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottsym{-}  \ottsym{)}}{}{}{}{\ottcom{integer subtraction}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottsym{*}  \ottsym{)}}{}{}{}{\ottcom{integer multiplication}}\ottprodnewline
@@ -106,7 +124,8 @@
 \ottprodline{|}{\ottsym{(}  \ottsym{/.}  \ottsym{)}}{}{}{}{\ottcom{element division}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottsym{=.}  \ottsym{)}}{}{}{}{\ottcom{element equality}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottsym{<.}  \ottsym{)}}{}{}{}{\ottcom{element less-than}}\ottprodnewline
-\ottprodline{|}{\ottkw{not}}{}{}{}{\ottcom{boolean negation}}\ottprodnewline
+\ottprodline{|}{\ottkw{set}}{}{}{}{\ottcom{array index assignment}}\ottprodnewline
+\ottprodline{|}{\ottkw{get}}{}{}{}{\ottcom{array indexing}}\ottprodnewline
 \ottprodline{|}{\ottkw{share}}{}{}{}{\ottcom{share array}}\ottprodnewline
 \ottprodline{|}{\ottkw{unshare}}{}{}{}{\ottcom{unshare array}}\ottprodnewline
 \ottprodline{|}{\ottkw{free}}{}{}{}{\ottcom{free arrary}}\ottprodnewline
@@ -128,6 +147,8 @@
 \ottprodline{|}{\ottkw{matrix}}{}{}{}{\ottcom{Owl:  make matrix}}\ottprodnewline
 \ottprodline{|}{\ottkw{copyM}}{}{}{}{\ottcom{Owl:  copy matrix}}\ottprodnewline
 \ottprodline{|}{ \textbf{copyM\_to} }{}{}{}{\ottcom{Owl:  copy matrix onto another}}\ottprodnewline
+\ottprodline{|}{\ottkw{sizeM}}{}{}{}{\ottcom{dimension of matrix}}\ottprodnewline
+\ottprodline{|}{\ottkw{trnsp}}{}{}{}{\ottcom{transpose matrix}}\ottprodnewline
 \ottprodline{|}{\ottkw{gemm}}{}{}{}{\ottcom{BLAS: $C := \alpha A^{T?} B^{T?} + \beta C$}}\ottprodnewline
 \ottprodline{|}{\ottkw{symm}}{}{}{}{\ottcom{BLAS: $C := \alpha A B + \beta C$}}\ottprodnewline
 \ottprodline{|}{\ottkw{posv}}{}{}{}{\ottcom{BLAS: Cholesky decomp. and solve}}\ottprodnewline
@@ -149,64 +170,16 @@
 \ottfirstprodline{|}{ \cdot }{}{}{}{}\ottprodnewline
 \ottprodline{|}{\Delta  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}}{}{}{}{}}
 
-\newcommand{\ottformula}{
-\ottrulehead{\ottnt{formula}}{::=}{}\ottprodnewline
-\ottfirstprodline{|}{\ottnt{judgement}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\mathit{x}  \ottsym{:}  \ottnt{t} \, \in \, \Delta}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\mathit{x}  \ottsym{:}  \ottnt{t} \, \in \, \Gamma}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\mathit{fc} \, \in \, \Theta}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\ottkw{value} \, \ottsym{(}  \ottnt{e}  \ottsym{)}}{}{}{}{}}
-
-\newcommand{\ottWellXXFormed}{
-\ottrulehead{\ottnt{Well\_Formed}}{::=}{}\ottprodnewline
-\ottfirstprodline{|}{\Theta  \vdash  \ottnt{f} \, \textsf{Cap}}{}{}{}{\ottcom{Valid fractional capabilities}}\ottprodnewline
-\ottprodline{|}{\Theta  \vdash  \ottnt{t} \, \textsf{Type}}{}{}{}{\ottcom{Valid types}}}
-
-\newcommand{\ottValues}{
-\ottrulehead{\ottnt{Values}}{::=}{}\ottprodnewline
-\ottfirstprodline{|}{\ottkw{value} \, \ottsym{(}  \ottnt{e}  \ottsym{)}}{}{}{}{\ottcom{Value restriction for !-introduction}}}
-
-\newcommand{\ottTypes}{
-\ottrulehead{\ottnt{Types}}{::=}{}\ottprodnewline
-\ottfirstprodline{|}{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \ottnt{t}}{}{}{}{\ottcom{Typing rules for expressions}}}
-
-\newcommand{\ottjudgement}{
-\ottrulehead{\ottnt{judgement}}{::=}{}\ottprodnewline
-\ottfirstprodline{|}{\ottnt{Well\_Formed}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\ottnt{Values}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\ottnt{Types}}{}{}{}{}}
-
-\newcommand{\ottuserXXsyntax}{
-\ottrulehead{\ottnt{user\_syntax}}{::=}{}\ottprodnewline
-\ottfirstprodline{|}{\mathit{fc}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\mathit{x}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\mathit{k}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\mathit{el}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{symb}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\ottnt{f}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\ottnt{t}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\ottnt{e}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\ottnt{p}}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\Theta}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\Gamma}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\Delta}{}{}{}{}\ottprodnewline
-\ottprodline{|}{\ottnt{formula}}{}{}{}{}}
-
 \newcommand{\ottgrammar}{\ottgrammartabular{
-\ottterminals\ottinterrule
 \ottf\ottinterrule
 \ottt\ottinterrule
+\ottv\ottinterrule
 \otte\ottinterrule
+\ottC\ottinterrule
 \ottp\ottinterrule
 \ottT\ottinterrule
 \ottG\ottinterrule
-\ottD\ottinterrule
-\ottformula\ottinterrule
-\ottWellXXFormed\ottinterrule
-\ottValues\ottinterrule
-\ottTypes\ottinterrule
-\ottjudgement\ottinterrule
-\ottuserXXsyntax\ottafterlastrule
+\ottD\ottafterlastrule
 }}
 
 % defnss
@@ -326,123 +299,6 @@
 \newcommand{\ottdefnsWellXXFormed}{
 \ottdefnWFXXCapXX{}\ottdefnWFXXTypeXX{}}
 
-% defns Values
-%% defn Value_
-\newcommand{\ottdruleValXXPrim}[1]{\ottdrule[#1]{%
-}{
-\ottkw{value} \, \ottsym{(}  \ottnt{p}  \ottsym{)}}{%
-{\ottdrulename{Val\_Prim}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXUnitXXIntro}[1]{\ottdrule[#1]{%
-}{
-\ottkw{value} \, \ottsym{(}  \ottsym{(}  \ottsym{)}  \ottsym{)}}{%
-{\ottdrulename{Val\_Unit\_Intro}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXBoolXXTrue}[1]{\ottdrule[#1]{%
-}{
-\ottkw{value} \, \ottsym{(}  \ottkw{true}  \ottsym{)}}{%
-{\ottdrulename{Val\_Bool\_True}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXBoolXXFalse}[1]{\ottdrule[#1]{%
-}{
-\ottkw{value} \, \ottsym{(}  \ottkw{false}  \ottsym{)}}{%
-{\ottdrulename{Val\_Bool\_False}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXIntXXIntro}[1]{\ottdrule[#1]{%
-}{
-\ottkw{value} \, \ottsym{(}  \mathit{k}  \ottsym{)}}{%
-{\ottdrulename{Val\_Int\_Intro}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXEltXXIntro}[1]{\ottdrule[#1]{%
-}{
-\ottkw{value} \, \ottsym{(}  \mathit{el}  \ottsym{)}}{%
-{\ottdrulename{Val\_Elt\_Intro}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXVar}[1]{\ottdrule[#1]{%
-}{
-\ottkw{value} \, \ottsym{(}  \mathit{x}  \ottsym{)}}{%
-{\ottdrulename{Val\_Var}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXFix}[1]{\ottdrule[#1]{%
-}{
-\ottkw{value} \, \ottsym{(}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}  \ottsym{)}}{%
-{\ottdrulename{Val\_Fix}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXLambda}[1]{\ottdrule[#1]{%
-}{
-\ottkw{value} \, \ottsym{(}  \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}  \ottsym{)}}{%
-{\ottdrulename{Val\_Lambda}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXGen}[1]{\ottdrule[#1]{%
-\ottpremise{\ottkw{value} \, \ottsym{(}  \ottnt{e}  \ottsym{)}}%
-}{
-\ottkw{value} \, \ottsym{(}  \ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{e}  \ottsym{)}}{%
-{\ottdrulename{Val\_Gen}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXSpc}[1]{\ottdrule[#1]{%
-\ottpremise{\ottkw{value} \, \ottsym{(}  \ottnt{e}  \ottsym{)}}%
-}{
-\ottkw{value} \, \ottsym{(}  \ottnt{e}  \ottsym{[}  \mathit{fc}  \ottsym{]}  \ottsym{)}}{%
-{\ottdrulename{Val\_Spc}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXBangXXIntro}[1]{\ottdrule[#1]{%
-\ottpremise{\ottkw{value} \, \ottsym{(}  \ottnt{e}  \ottsym{)}}%
-}{
-\ottkw{value} \, \ottsym{(}  \ottkw{Many} \, \ottnt{e}  \ottsym{)}}{%
-{\ottdrulename{Val\_Bang\_Intro}}{}%
-}}
-
-
-\newcommand{\ottdruleValXXPairXXIntro}[1]{\ottdrule[#1]{%
-\ottpremise{\ottkw{value} \, \ottsym{(}  \ottnt{e_{{\mathrm{1}}}}  \ottsym{)}}%
-\ottpremise{\ottkw{value} \, \ottsym{(}  \ottnt{e_{{\mathrm{2}}}}  \ottsym{)}}%
-}{
-\ottkw{value} \, \ottsym{(}  \ottsym{(}  \ottnt{e_{{\mathrm{1}}}}  \ottsym{,}  \ottnt{e_{{\mathrm{2}}}}  \ottsym{)}  \ottsym{)}}{%
-{\ottdrulename{Val\_Pair\_Intro}}{}%
-}}
-
-\newcommand{\ottdefnValXXValueXX}[1]{\begin{ottdefnblock}[#1]{$\ottkw{value} \, \ottsym{(}  \ottnt{e}  \ottsym{)}$}{\ottcom{Value restriction for !-introduction}}
-\ottusedrule{\ottdruleValXXPrim{}}
-\ottusedrule{\ottdruleValXXUnitXXIntro{}}
-\ottusedrule{\ottdruleValXXBoolXXTrue{}}
-\ottusedrule{\ottdruleValXXBoolXXFalse{}}
-\ottusedrule{\ottdruleValXXIntXXIntro{}}
-\ottusedrule{\ottdruleValXXEltXXIntro{}}
-\ottusedrule{\ottdruleValXXVar{}}
-\ottusedrule{\ottdruleValXXFix{}}
-\ottusedrule{\ottdruleValXXLambda{}}
-\ottusedrule{\ottdruleValXXGen{}}
-\ottusedrule{\ottdruleValXXSpc{}}
-\ottusedrule{\ottdruleValXXBangXXIntro{}}
-\ottusedrule{\ottdruleValXXPairXXIntro{}}
-\end{ottdefnblock}}
-
-
-\newcommand{\ottdefnsValues}{
-\ottdefnValXXValueXX{}}
-
 % defns Types
 %% defn Type_
 \newcommand{\ottdruleTyXXVarXXLin}[1]{\ottdrule[#1]{%
@@ -524,10 +380,9 @@
 
 
 \newcommand{\ottdruleTyXXBangXXIntro}[1]{\ottdrule[#1]{%
-\ottpremise{\ottkw{value} \, \ottsym{(}  \ottnt{e}  \ottsym{)}}%
-\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}   \cdot   \vdash  \ottnt{e}  \ottsym{:}  \ottnt{t}}%
+\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}   \cdot   \vdash  \ottnt{v}  \ottsym{:}  \ottnt{t}}%
 }{
-\Theta  \ottsym{;}  \Delta  \ottsym{;}   \cdot   \vdash  \ottkw{Many} \, \ottnt{e}  \ottsym{:}  \: !  \ottnt{t}}{%
+\Theta  \ottsym{;}  \Delta  \ottsym{;}   \cdot   \vdash  \ottkw{Many} \, \ottnt{v}  \ottsym{:}  \: !  \ottnt{t}}{%
 {\ottdrulename{Ty\_Bang\_Intro}}{}%
 }}
 
@@ -629,7 +484,6 @@
 
 \newcommand{\ottdefnss}{
 \ottdefnsWellXXFormed
-\ottdefnsValues
 \ottdefnsTypes
 }
 

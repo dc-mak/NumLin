@@ -39,7 +39,7 @@ semantics.tex: semantics_def.tex
 	touch $@
 
 semantics_def.tex: semantics.ott
-	ott -i $< -tex_wrap false -o $@
+	ott -i $< -tex_show_meta false -tex_wrap false -o $@
 
 $(BUILD_AUX): $(BUILD)
 $(BUILD):

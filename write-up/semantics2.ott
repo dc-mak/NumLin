@@ -46,10 +46,10 @@ grammar
 grammar
 
   m :: 'm_' ::= {{ com matrix expressions }}
-    | M k1 k2 ::  :: Var   {{ tex [[M]]_{[[k1]], [[k2]]} }}
-                           {{ com matrix variables       }}
-    | m + m'  ::  :: Plus  {{ com matrix addition        }}
-    | m m'    ::  :: Times {{ com matrix multiplication  }}
+    | M      ::   :: Var   {{ com matrix variables       }}
+    | m + m' ::   :: Plus  {{ com matrix addition        }}
+    | m m'   ::   :: Times {{ com matrix multiplication  }}
+    | ( m )  :: S :: Paren {{ com parentheses            }}
 
 
 grammar
@@ -439,12 +439,11 @@ defns
 
 grammar
 
-  H {{ tex \sigma }} :: 'Heap_' ::=  {{ com heap                                    }}
-    | nil                ::  :: Nil  {{ tex \{ \}                                   }}
-                                     {{ com empty heap                              }}
-    | H and { l |->  m } ::  :: Ext  {{ tex [[H]] [[and]] \{ [[l]] [[|->]] [[m]] \} }}
-                                     {{ com location [[l]] points to matrix [[m]]   }}
-
+  H {{ tex \sigma }} :: 'Heap_' ::=  {{ com heap }}
+    | nil :: :: Nil  {{ tex \{ \} }} {{ com empty heap }}
+    | H and { l |-> m k1 k2 } :: :: Ext 
+    {{ tex [[H]] [[and]] \{ [[l]] [[|->]] [[m]]_{[[k1]], [[k2]]} \} }}
+    {{ com location [[l]] points to matrix [[m]] }}
 
 defns
 
@@ -471,7 +470,7 @@ defns
     --------------------------------------------------- :: App
     < H , ( fun x -> er ) ev > -> < H , er [ x / ev ] >
 
-    er -> er'
+    < H , er > -> < H , er' >
     ----------------------------------- :: Context
     < H , C [ er ] > -> < H , C [ er' ] >
 
@@ -480,7 +479,7 @@ defns
     < H , matrix k1 k2 > -> < H and { l |-> M k1 k2 } , l >
 
     --------------------------------------------------- :: Free
-    < H and { l |-> M k1 k2 } , free l > -> < H , ( ) >
+    < H and { l |-> m k1 k2 } , free l > -> < H , ( ) >
 
     ------------------------------------ :: Share
     < H , share l > -> < H , ( l , l ) >
@@ -488,10 +487,10 @@ defns
     -------------------------------- :: Unshare
     < H , unshare l l > -> < H , l >
 
-    H ( l1 ) = M k1 k2
-    H ( l2 ) = M k2 k3
+    H ( l1 ) = M1 k1 k2
+    H ( l2 ) = M2 k2 k3
     ---------------------------------------------------------------------------------------- :: Gemm
-    < H and { l3 |-> M k1 k3 } , gemm l1 l2 l3 > -> < H and { l3 |-> M k1 k2 M k2 k3 + M k1 k3 } , l3 >
+    < H and { l3 |-> M1 k1 k3 } , gemm l1 l2 l3 > -> < H and { l3 |-> ( M1 M2 + M3 ) k1 k3 } , ( ( l1 , l2 ) , l3 ) >
 
 grammar
 
@@ -502,9 +501,8 @@ grammar
     | fc    mem T  ::  :: fcT
     | e <> e'      ::  :: eNeq
     | e = e'       ::  :: eEq
-    | er -> er'    ::  :: stepsTo
     | 0 <= k1 , k2 ::  :: posDim {{ tex [[0]] \leq [[k1]], [[k2]]  }}
-    | H ( l ) = m  ::  :: inStore {{ tex [[ H ]] ( [[l]] ) = [[m]] }}
+    | H ( l ) = m k1 k2 ::  :: inStore {{ tex [[ H ]] ( [[l]] ) = [[m]]_{[[k1]], [[k2]]} }}
 
 
 % vim: sw=2 sts=2

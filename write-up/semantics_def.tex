@@ -37,9 +37,10 @@
 
 \newcommand{\ottm}{
 \ottrulehead{\ottnt{m}}{::=}{\ottcom{matrix expressions}}\ottprodnewline
-\ottfirstprodline{|}{ \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } }{}{}{}{\ottcom{matrix variables}}\ottprodnewline
+\ottfirstprodline{|}{\mathit{M}}{}{}{}{\ottcom{matrix variables}}\ottprodnewline
 \ottprodline{|}{\ottnt{m}  \ottsym{+}  \ottnt{m'}}{}{}{}{\ottcom{matrix addition}}\ottprodnewline
-\ottprodline{|}{\ottnt{m} \, \ottnt{m'}}{}{}{}{\ottcom{matrix multiplication}}}
+\ottprodline{|}{\ottnt{m} \, \ottnt{m'}}{}{}{}{\ottcom{matrix multiplication}}\ottprodnewline
+\ottprodline{|}{\ottsym{(}  \ottnt{m}  \ottsym{)}} {\textsf{S}}{}{}{}}
 
 \newcommand{\ottf}{
 \ottrulehead{\ottnt{f}}{::=}{\ottcom{fractional capability}}\ottprodnewline
@@ -182,7 +183,7 @@
 \newcommand{\ottH}{
 \ottrulehead{\sigma}{::=}{\ottcom{heap}}\ottprodnewline
 \ottfirstprodline{|}{ \{ \} }{}{}{}{\ottcom{empty heap}}\ottprodnewline
-\ottprodline{|}{ \sigma   \uplus  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m}  \} }{}{}{}{\ottcom{location $\mathit{l}$ points to matrix $\ottnt{m}$}}}
+\ottprodline{|}{ \sigma   \uplus  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \} }{}{}{}{\ottcom{location $\mathit{l}$ points to matrix $\ottnt{m}$}}}
 
 \newcommand{\ottgrammar}{\ottgrammartabular{
 \ottm\ottinterrule
@@ -559,7 +560,7 @@
 
 
 \newcommand{\ottdruleOpXXContext}[1]{\ottdrule[#1]{%
-\ottpremise{\ottnt{e}  \rightarrow  \ottnt{e'}}%
+\ottpremise{\langle  \sigma  \ottsym{,}  \ottnt{e}  \rangle  \rightarrow  \langle  \sigma'  \ottsym{,}  \ottnt{e'}  \rangle}%
 }{
 \langle  \sigma  \ottsym{,}  \ottnt{C}  \ottsym{[}  \ottnt{e}  \ottsym{]}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{C}  \ottsym{[}  \ottnt{e'}  \ottsym{]}  \rangle}{%
 {\ottdrulename{Op\_Context}}{}%
@@ -569,37 +570,36 @@
 \newcommand{\ottdruleOpXXMatrix}[1]{\ottdrule[#1]{%
 \ottpremise{ \ottsym{0}  \leq  \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }%
 }{
-\langle  \sigma  \ottsym{,}  \ottkw{matrix} \, \mathit{k_{{\mathrm{1}}}} \, \mathit{k_{{\mathrm{2}}}}  \rangle  \rightarrow  \langle   \sigma   \uplus  \{  \mathit{l}   \mapsto _  1     \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }   \}   \ottsym{,}  \mathit{l}  \rangle}{%
+\langle  \sigma  \ottsym{,}  \ottkw{matrix} \, \mathit{k_{{\mathrm{1}}}} \, \mathit{k_{{\mathrm{2}}}}  \rangle  \rightarrow  \langle   \sigma   \uplus  \{  \mathit{l}   \mapsto _  1    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \mathit{l}  \rangle}{%
 {\ottdrulename{Op\_Matrix}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXFree}[1]{\ottdrule[#1]{%
 }{
-\langle   \sigma   \uplus  \{  \mathit{l}   \mapsto _  1     \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }   \}   \ottsym{,}  \ottkw{free} \, \mathit{l}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottsym{(}  \ottsym{)}  \rangle}{%
+\langle   \sigma   \uplus  \{  \mathit{l}   \mapsto _  1    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{free} \, \mathit{l}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottsym{(}  \ottsym{)}  \rangle}{%
 {\ottdrulename{Op\_Free}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXShare}[1]{\ottdrule[#1]{%
 }{
-\langle   \sigma   \uplus  \{  \mathit{l}   \mapsto _ \ottnt{f}    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }   \}   \ottsym{,}  \ottkw{share} \, \mathit{l}  \rangle  \rightarrow  \langle    \sigma   \uplus  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }     \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }   \}    \uplus  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }     \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }   \}   \ottsym{,}  \ottsym{(}  \mathit{l}  \ottsym{,}  \mathit{l}  \ottsym{)}  \rangle}{%
+\langle   \sigma   \uplus  \{  \mathit{l}   \mapsto _ \ottnt{f}   \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{share} \, \mathit{l}  \rangle  \rightarrow  \langle    \sigma   \uplus  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    \uplus  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottsym{(}  \mathit{l}  \ottsym{,}  \mathit{l}  \ottsym{)}  \rangle}{%
 {\ottdrulename{Op\_Share}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXUnshare}[1]{\ottdrule[#1]{%
 }{
-\langle    \sigma   \uplus  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }     \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }   \}    \uplus  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }     \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }   \}   \ottsym{,}  \ottkw{unshare} \, \mathit{l} \, \mathit{l}  \rangle  \rightarrow  \langle   \sigma   \uplus  \{  \mathit{l}   \mapsto _ \ottnt{f}    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }   \}   \ottsym{,}  \mathit{l}  \rangle}{%
+\langle    \sigma   \uplus  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    \uplus  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{unshare} \, \mathit{l} \, \mathit{l}  \rangle  \rightarrow  \langle   \sigma   \uplus  \{  \mathit{l}   \mapsto _ \ottnt{f}   \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \mathit{l}  \rangle}{%
 {\ottdrulename{Op\_Unshare}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXGemm}[1]{\ottdrule[#1]{%
-\ottpremise{ \sigma  (  \mathit{l_{{\mathrm{1}}}}  ) =   \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }  }%
-\ottpremise{ \sigma  (  \mathit{l_{{\mathrm{2}}}}  ) =   \mathit{M} _{ \mathit{k_{{\mathrm{2}}}} ,  \mathit{k_{{\mathrm{3}}}} }  }%
+\ottpremise{\sigma'  \ottsym{=}    \sigma   \uplus  \{  \mathit{l_{{\mathrm{1}}}}   \mapsto _ \mathit{fc_{{\mathrm{1}}}}   \mathit{M_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    \uplus  \{  \mathit{l_{{\mathrm{2}}}}   \mapsto _ \mathit{fc_{{\mathrm{2}}}}   \mathit{M_{{\mathrm{2}}}} _{ \mathit{k_{{\mathrm{2}}}} ,  \mathit{k_{{\mathrm{3}}}} } \} }%
 }{
-\langle   \sigma   \uplus  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1     \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} }   \}   \ottsym{,}  \ottkw{gemm} \, \mathit{l_{{\mathrm{1}}}} \, \mathit{l_{{\mathrm{2}}}} \, \mathit{l_{{\mathrm{3}}}}  \rangle  \rightarrow  \langle   \sigma   \uplus  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1     \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }  \,  \mathit{M} _{ \mathit{k_{{\mathrm{2}}}} ,  \mathit{k_{{\mathrm{3}}}} }   \ottsym{+}   \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} }   \}   \ottsym{,}  \ottsym{(}  \ottsym{(}  \mathit{l_{{\mathrm{1}}}}  \ottsym{,}  \mathit{l_{{\mathrm{2}}}}  \ottsym{)}  \ottsym{,}  \mathit{l_{{\mathrm{3}}}}  \ottsym{)}  \rangle}{%
+\langle   \sigma'   \uplus  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1    \mathit{M_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottkw{gemm} \, \mathit{l_{{\mathrm{1}}}} \, \mathit{l_{{\mathrm{2}}}} \, \mathit{l_{{\mathrm{3}}}}  \rangle  \rightarrow  \langle   \sigma'   \uplus  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1    \ottsym{(}  \mathit{M_{{\mathrm{1}}}} \, \mathit{M_{{\mathrm{2}}}}  \ottsym{+}  \mathit{M_{{\mathrm{3}}}}  \ottsym{)} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottsym{(}  \ottsym{(}  \mathit{l_{{\mathrm{1}}}}  \ottsym{,}  \mathit{l_{{\mathrm{2}}}}  \ottsym{)}  \ottsym{,}  \mathit{l_{{\mathrm{3}}}}  \ottsym{)}  \rangle}{%
 {\ottdrulename{Op\_Gemm}}{}%
 }}
 

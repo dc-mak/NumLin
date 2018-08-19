@@ -45,11 +45,11 @@ grammar
 
 grammar
 
-  m :: 'm_' ::= {{ com matrix expressions }}
-    | M k1 k2 ::  :: Var   {{ tex [[M]]_{[[k1]], [[k2]]} }}
-                           {{ com matrix variables       }}
-    | m + m'  ::  :: Plus  {{ com matrix addition        }}
-    | m m'    ::  :: Times {{ com matrix multiplication  }}
+  m :: 'm_' ::=           {{ com matrix expressions     }}
+    | M      ::  :: Var   {{ com matrix variables       }}
+    | m + m' ::  :: Plus  {{ com matrix addition        }}
+    | m m'   ::  :: Times {{ com matrix multiplication  }}
+    | ( m )  :: S :: Paren
 
 
 grammar
@@ -401,11 +401,11 @@ defns
 
 grammar
 
-  H {{ tex \sigma }} :: 'Heap_' ::=  {{ com heap                                    }}
-    | nil                ::  :: Nil  {{ tex \{ \}                                   }}
-                                     {{ com empty heap                              }}
-    | H and { l |-> f , m } ::  :: Ext  {{ tex [[H]] [[and]] \{ [[l]] [[|->]]_[[f]] [[m]] \} }}
-                                     {{ com location [[l]] points to matrix [[m]]   }}
+  H {{ tex \sigma }} :: 'Heap_' ::=  {{ com heap }}
+    | nil :: :: Nil  {{ tex \{ \} }} {{ com empty heap }}
+    | H and { l |-> f , m k1 k2 } :: :: Ext 
+    {{ tex [[H]] [[and]] \{ [[l]] [[|->]]_[[f]] [[m]]_{[[k1]], [[k2]]} \} }}
+    {{ com location [[l]] points to matrix [[m]] }}
 
 
 defns
@@ -440,7 +440,7 @@ defns
     --------------------------------------------------- :: App
     < H , ( fun x : t -> e ) v > -> < H , e [ x / v ] >
 
-    e -> e'
+    < H , e >  -> < H' , e' >
     ----------------------------------- :: Context
     < H , C [ e ] > -> < H , C [ e' ] >
 
@@ -457,10 +457,9 @@ defns
     ----------------------------------------------------------------------------------------------------------------- :: Unshare
     < H and { l |-> S f , M k1 k2 } and { l |-> S f , M k1 k2 } , unshare l l > -> < H and { l |-> f , M k1 k2 } , l >
 
-    H ( l1 ) = M k1 k2
-    H ( l2 ) = M k2 k3
+    H' = H and { l1 |-> fc1 , M1 k1 k2 } and { l2 |-> fc2 , M2 k2 k3 }
     --------------------------------------------------------------------------------------------------------------------------- :: Gemm
-    < H and { l3 |-> Z , M k1 k3 } , gemm l1 l2 l3 > -> < H and { l3 |-> Z , M k1 k2 M k2 k3 + M k1 k3 } , ( (l1 , l2) , l3 ) >
+    < H' and { l3 |-> Z , M1 k1 k3 } , gemm l1 l2 l3 > -> < H' and { l3 |-> Z , ( M1 M2 + M3 ) k1 k3 } , ( (l1 , l2) , l3 ) >
 
 grammar
 
@@ -471,9 +470,8 @@ grammar
     | fc    mem T  ::  :: fcT
     | e <> e'      ::  :: eNeq
     | e = e'       ::  :: eEq
-    | e -> e'      ::  :: stepsTo
     | 0 <= k1 , k2 ::  :: posDim {{ tex [[0]] \leq [[k1]], [[k2]]  }}
-    | H ( l ) = m  ::  :: inStore {{ tex [[ H ]] ( [[l]] ) = [[m]] }}
+    | H' = H       ::  :: storeEq
 
 
 % vim: sw=2 sts=2

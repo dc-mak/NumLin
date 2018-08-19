@@ -176,32 +176,70 @@ grammar
     | e [ fc / f  ]               :: M :: Sub_fc      {{ com substitution              }}
     | e [ x / e'  ]               :: M :: Sub         {{ com substitution              }}
     | ( e )                       :: S :: Paren       {{ com parentheses               }}
-    | C [ e ]                     :: M :: Context     {{ com evaluation context        }}
+
+
+  erased_v, ev :: 'ev_' ::=                  {{ com values                    }}
+    | p                  ::   :: Prim        {{ com primitives                }}
+    | x                  ::   :: Var         {{ com variable                  }}
+    | ( )                ::   :: Unit_Intro  {{ com unit introduction         }}
+    | true               ::   :: Bool_True   {{ com true                      }}
+    | false              ::   :: Bool_False  {{ com false                     }}
+    | k                  ::   :: Int_Intro   {{ com integer                   }}
+    | l                  ::   :: Location    {{ com heap location             }}
+    | el                 ::   :: Elt_Intro   {{ com array element             }}
+    | ( ev , ev' )       ::   :: Pair_Intro  {{ com pair introduction         }}
+    | fun x -> er        ::   :: Lambda      (+ bind x in er                  +)
+                                             {{ com abstraction               }}
+    | fix ( g , x , er ) ::   :: Fix         (+ bind g union x in er          +)
+                                             {{ com fixpoint                  }}
+    | ( ev )             :: S :: Paren       {{ com parentheses               }}
+
+
+  erased, er :: 'er_' ::=                             {{ com expression                }}
+    | p                           ::   :: Prim        {{ com primitives                }}
+    | x                           ::   :: Var         {{ com variable                  }}
+    | let x = er in er'           ::   :: Let         (+ bind x in er'                 +)
+                                                      {{ com let binding               }}
+    | ( )                         ::   :: Unit_Intro  {{ com unit introduction         }}
+    | let ( ) = er in er'         ::   :: Unit_Elim   {{ com unit elimination          }}
+    | true                        ::   :: Bool_True   {{ com true                      }}
+    | false                       ::   :: Bool_False  {{ com false                     }}
+    | if er then er1 else er2     ::   :: Bool_Elim   {{ com if                        }}
+    | k                           ::   :: Int_Intro   {{ com integer                   }}
+    | l                           ::   :: Location    {{ com heap location             }}
+    | el                          ::   :: Elt_Intro   {{ com array element             }}
+    | ( er , er' )                ::   :: Pair_Intro  {{ com pair introduction         }}
+    | let ( a , b ) = er in er'   ::   :: Pair_Elim   (+ bind a union b in er'         +)
+                                                      {{ com pair elimination          }}
+    | fun x -> er                 ::   :: Lambda      (+ bind x in er                  +)
+                                                      {{ com abstraction               }}
+    | er er'                      ::   :: App         {{ com application               }}
+    | fix ( g , x , er )          ::   :: Fix         (+ bind g union x in er          +)
+                                                      {{ com fixpoint                  }}
+    | er [ x / er' ]              :: M :: Sub         {{ com substitution              }}
+    | ( er )                      :: S :: Paren       {{ com parentheses               }}
+    | C [ er ]                    :: M :: Context     {{ com evaluation context        }}
 
   C :: 'C_' ::=                                      {{ com evaluation contexts       }}
-    | let x = __ in e             ::   :: Let        (+ bind x in e                   +)
+    | let x = __ in er            ::   :: Let        (+ bind x in er                  +)
                                                      {{ com let binding               }}
-    | let ( ) = __ in e           ::   :: Unit_Elim  {{ com unit elimination          }}
-    | if __ then e1 else e2       ::   :: Bool_Elim  {{ com if                        }}
-    | Many __                     ::   :: Bang_Intro {{ com !-introduction            }}
-    | let Many x = __ in e        ::   :: Bang_Elim  {{ com !-elimination             }}
-    | fun fc -> __                ::   :: Gen        {{ com frac. cap. abstraction    }}
-    | __ [ f ]                    ::   :: Spc        {{ com frac. cap. specialisation }}
-    | ( __ , e )                  ::   :: Pair_Fst   {{ com pair introduction         }}
-    | ( v , __ )                  ::   :: Pair_Snd   {{ com pair introduction         }}
-    | let ( a , b ) = __ in e     ::   :: Pair_Elim  (+ bind a union b in e           +)
+    | let ( ) = __ in er          ::   :: Unit_Elim  {{ com unit elimination          }}
+    | if __ then er1 else er2     ::   :: Bool_Elim  {{ com if                        }}
+    | ( __ , er )                 ::   :: Pair_Fst   {{ com pair introduction         }}
+    | ( ev , __ )                 ::   :: Pair_Snd   {{ com pair introduction         }}
+    | let ( a , b ) = __ in er    ::   :: Pair_Elim  (+ bind a union b in er          +)
                                                      {{ com pair elimination          }}
-    | __ e                        ::   :: App_Fun    {{ com application               }}
-    | v __                        ::   :: App_Arg    {{ com application               }}
-%   | ( __ )                      :: S :: Paren      {{ com parentheses               }}
+    | __ er                       ::   :: App_Fun    {{ com application               }}
+    | ev __                       ::   :: App_Arg    {{ com application               }}
 
 
 subrules
   v <:: e
+  ev <:: er
 
 
 contextrules
-  C _:: e :: e
+  C _:: er :: er
 
 
 grammar
@@ -404,7 +442,7 @@ grammar
   H {{ tex \sigma }} :: 'Heap_' ::=  {{ com heap                                    }}
     | nil                ::  :: Nil  {{ tex \{ \}                                   }}
                                      {{ com empty heap                              }}
-    | H and { l |-> f , m } ::  :: Ext  {{ tex [[H]] [[and]] \{ [[l]] [[|->]]_[[f]] [[m]] \} }}
+    | H and { l |->  m } ::  :: Ext  {{ tex [[H]] [[and]] \{ [[l]] [[|->]] [[m]] \} }}
                                      {{ com location [[l]] points to matrix [[m]]   }}
 
 
@@ -413,54 +451,47 @@ defns
   Op_Sem :: 'Op_' ::=
 
   defn
-  < H , e > -> < H' , e' > :: ::Op_:: '' {{ com operational semantics }} by
+  < H , er > -> < H' , er' > :: ::Op_:: '' {{ com operational semantics }} by
 
      --------------------------------------- :: Let_Unit
-     < H , let ( ) = ( ) in e > -> < H , e >
+     < H , let ( ) = ( ) in er > -> < H , er >
 
     --------------------------------------------- :: Let_Var
-    < H , let x = v in e > -> < H , e [ x / v ] >
+    < H , let x = ev in er > -> < H , er [ x / ev ] >
 
     --------------------------------------------- :: If_True
-    < H , if true then e1 else e2 > -> < H , e1 >
+    < H , if true then er1 else er2 > -> < H , er1 >
 
     ---------------------------------------------- :: If_False
-    < H , if false then e1 else e2 > -> < H , e2 >
+    < H , if false then er1 else er2 > -> < H , er2 >
 
-    ------------------------------------------------------- :: Let_Many
-    < H , let Many x = Many v in e > -> < H , e [ x / v ] >
-
-    e1 = e [ g / let Many g = fix ( g , x : t , e : t' ) in fun x : t -> e ]
-    ------------------------------------------------------------------------------------------- :: Let_Fix
-    < H , let Many g = fix ( g , x : t , e : t' ) in e' > -> < H , e' [ g / fun x : t -> e1 ] >
-
-    ---------------------------------------------------- :: Frac_Cap
-    < H , ( fun fc -> v ) [ f ] > -> < H , v [ fc / f ] >
+    ------------------------------------------------------------------------------- :: Let_Fix
+    < H , fix ( g , x , er ) ev > -> < H , er [ x / ev ] [ g / fix ( g , x, er ) ] >
 
     --------------------------------------------------- :: App
-    < H , ( fun x : t -> e ) v > -> < H , e [ x / v ] >
+    < H , ( fun x -> er ) ev > -> < H , er [ x / ev ] >
 
-    e -> e'
+    er -> er'
     ----------------------------------- :: Context
-    < H , C [ e ] > -> < H , C [ e' ] >
+    < H , C [ er ] > -> < H , C [ er' ] >
 
     0 <= k1 , k2
-    ----------------------------------------------------- :: Matrix
-    < H , matrix k1 k2 > -> < H and { l |-> Z ,  M k1 k2 } , l >
+    ------------------------------------------------------- :: Matrix
+    < H , matrix k1 k2 > -> < H and { l |-> M k1 k2 } , l >
 
-    ------------------------------------------------------- :: Free
-    < H and { l |-> Z , M k1 k2 } , free l > -> < H , ( ) >
+    --------------------------------------------------- :: Free
+    < H and { l |-> M k1 k2 } , free l > -> < H , ( ) >
 
-    ---------------------------------------------------------------------------------------------------------------------- :: Share
-    < H and { l |-> f , M k1 k2 } , share l > -> < H and { l |-> S f , M k1 k2 } and { l |-> S f , M k1 k2 } , ( l , l ) >
+    ------------------------------------ :: Share
+    < H , share l > -> < H , ( l , l ) >
 
-    ----------------------------------------------------------------------------------------------------------------- :: Unshare
-    < H and { l |-> S f , M k1 k2 } and { l |-> S f , M k1 k2 } , unshare l l > -> < H and { l |-> f , M k1 k2 } , l >
+    -------------------------------- :: Unshare
+    < H , unshare l l > -> < H , l >
 
     H ( l1 ) = M k1 k2
     H ( l2 ) = M k2 k3
-    --------------------------------------------------------------------------------------------------------------------------- :: Gemm
-    < H and { l3 |-> Z , M k1 k3 } , gemm l1 l2 l3 > -> < H and { l3 |-> Z , M k1 k2 M k2 k3 + M k1 k3 } , ( (l1 , l2) , l3 ) >
+    ---------------------------------------------------------------------------------------- :: Gemm
+    < H and { l3 |-> M k1 k3 } , gemm l1 l2 l3 > -> < H and { l3 |-> M k1 k2 M k2 k3 + M k1 k3 } , l3 >
 
 grammar
 
@@ -471,7 +502,7 @@ grammar
     | fc    mem T  ::  :: fcT
     | e <> e'      ::  :: eNeq
     | e = e'       ::  :: eEq
-    | e -> e'      ::  :: stepsTo
+    | er -> er'    ::  :: stepsTo
     | 0 <= k1 , k2 ::  :: posDim {{ tex [[0]] \leq [[k1]], [[k2]]  }}
     | H ( l ) = m  ::  :: inStore {{ tex [[ H ]] ( [[l]] ) = [[m]] }}
 

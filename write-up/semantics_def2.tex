@@ -615,10 +615,10 @@
 
 
 \newcommand{\ottdruleOpXXGemm}[1]{\ottdrule[#1]{%
-\ottpremise{ \sigma  (  \mathit{l_{{\mathrm{1}}}}  ) =  \mathit{M_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } }%
-\ottpremise{ \sigma  (  \mathit{l_{{\mathrm{2}}}}  ) =  \mathit{M_{{\mathrm{2}}}} _{ \mathit{k_{{\mathrm{2}}}} ,  \mathit{k_{{\mathrm{3}}}} } }%
+\ottpremise{ \sigma  (  \mathit{l_{{\mathrm{1}}}}  ) =  \ottnt{m_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } }%
+\ottpremise{ \sigma  (  \mathit{l_{{\mathrm{2}}}}  ) =  \ottnt{m_{{\mathrm{2}}}} _{ \mathit{k_{{\mathrm{2}}}} ,  \mathit{k_{{\mathrm{3}}}} } }%
 }{
-\langle   \sigma   \uplus  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto   \mathit{M_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottkw{gemm} \, \mathit{l_{{\mathrm{1}}}} \, \mathit{l_{{\mathrm{2}}}} \, \mathit{l_{{\mathrm{3}}}}  \rangle  \rightarrow  \langle   \sigma   \uplus  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto   \ottsym{(}  \mathit{M_{{\mathrm{1}}}} \, \mathit{M_{{\mathrm{2}}}}  \ottsym{+}  \mathit{M_{{\mathrm{3}}}}  \ottsym{)} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottsym{(}  \ottsym{(}  \mathit{l_{{\mathrm{1}}}}  \ottsym{,}  \mathit{l_{{\mathrm{2}}}}  \ottsym{)}  \ottsym{,}  \mathit{l_{{\mathrm{3}}}}  \ottsym{)}  \rangle}{%
+\langle   \sigma   \uplus  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto   \ottnt{m_{{\mathrm{3}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottkw{gemm} \, \mathit{l_{{\mathrm{1}}}} \, \mathit{l_{{\mathrm{2}}}} \, \mathit{l_{{\mathrm{3}}}}  \rangle  \rightarrow  \langle   \sigma   \uplus  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto   \ottsym{(}  \ottnt{m_{{\mathrm{1}}}} \, \ottnt{m_{{\mathrm{2}}}}  \ottsym{+}  \ottnt{m_{{\mathrm{3}}}}  \ottsym{)} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottsym{(}  \ottsym{(}  \mathit{l_{{\mathrm{1}}}}  \ottsym{,}  \mathit{l_{{\mathrm{2}}}}  \ottsym{)}  \ottsym{,}  \mathit{l_{{\mathrm{3}}}}  \ottsym{)}  \rangle}{%
 {\ottdrulename{Op\_Gemm}}{}%
 }}
 

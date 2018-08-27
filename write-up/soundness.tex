@@ -1,0 +1,117 @@
+\section{Soundness Proof}
+
+\begin{proof}
+
+    \pfsketch{\ %
+        Use the contrapositive both ways. This turns the negated existential into
+        witnesses we can work with.\\
+    }
+
+    \pflet{%
+        $\phi(X) = $\\
+        \emph{Note: $\forall X.\ \phi(X)\subseteq X$, $\not\subset\ \equiv\
+        \not\subseteq \, \vee \, =$ and $\not\subseteq\ \Rightarrow\ \neq$}\\
+        $a$, $b$, $c$ be elements of the Martelli's semiring \\
+        $L^+ = a \cup \phi$ \\
+        $L = \phi(L^+) = a \otimes (b \oplus c)$ \\
+        $M^+ = $ \\
+        $M = \phi(M^+) = (a \otimes b) \oplus (a \otimes c)$ \\
+    }
+
+    \prove{Distributivity holds, i.e.\ $L=M$.}
+    \suffices{%
+        Since $\oplus$ and $\otimes$ are commutative (definitions of $\oplus$
+        and $\otimes$ are symmetric in their arguments because $\exists x.\
+        \exists y.\ P(x,y) \Leftrightarrow \exists y.\ \exists x.\ P(x,y)$ and
+        $\cup$ is commutative) it suffices to show only left-distributivity.\\
+    }
+
+    \pf{~We show $L \subseteq M$ and $M \subseteq L$.\\}
+
+    \step{}{%
+        \case{%
+            $L \subseteq M$.
+        }{%
+            We show $m \notin M \Rightarrow m \notin L$ for arbitrary $m$.\\
+            \pf{~We do this by cases on $m \in M^+$}.
+            \suffices{\ %
+                Because $L \subseteq L^+$, to show $m \notin L$ it suffices to
+                show either $m \notin L^+$ or $\exists y \in L^+.\ y \subset m$.
+            }
+        }
+    }
+
+    \begin{proof}
+
+        \step{}{%
+            \case{%
+                $m \in M^+$.
+            }{%
+                This means that $ \exists x \in a \otimes b,\ y \in a \otimes
+                c.\ x \cup y = m $ and because $m \notin M$, we have $\exists
+                x' \in a \otimes b,\ y \in a \otimes c.\ x' \cup y' = m'
+                \subset m = x \cup y$. Assume, without loss of generality,
+                they are the smallest such $x'$ and $y'$. Because $\phi(X)
+                \subseteq X$ for any $X$, we proceed by cases: either $x' \in
+                a$ or $y' \in a$ or both $x' \in b$ and $y' \in c$.
+            }
+        }
+
+        \step{mplusRule}{%
+            \case{%
+                $m \notin M^+$.
+            }{%
+                This means $\forall\ x \in \phi(a \cup b),\ y \in \phi(a \cup
+                c).\ m \neq x \cup y$.
+            }
+        }
+
+        \step{}{%
+            \textbf{Thus, if $m \notin M$, then $m \notin L$.}~Q.E.D.
+        }
+
+    \end{proof}
+
+    \step{}{%
+        \case{%
+            $M \subseteq L$.
+        }{%
+            We show $l \notin L \Rightarrow l \notin M$ for arbitrary $l$.
+            \suffices{\ %
+                Because $M \subseteq M^+$, to show $l \notin M$ it suffices to
+                show either $l \notin M^+$ or $\exists y \in M^+.\ y \subset l$.
+            }
+        }
+    }
+
+    \begin{proof}
+
+        \step{lplusRule}{%
+            \case{%
+                $l \notin L^+$.
+            }{%
+                This means $l \notin a$ and $l \notin b \oplus c = \phi$.\\
+                We conclude from the latter, that $\forall x \in b,\ y \in c.\ 
+                x \cup y \neq l$.\\
+                We reason by cases on \emph{why} $l \notin a$, to show that
+                $\exists y \in M^+.\ y \subset l$ or $l \notin M^+$.
+            }
+        }
+
+        \step{}{%
+            \case{%
+                $l \in L^+$.
+            }{%
+                Under the assumption $l \notin L$, we need only consider two
+                cases: the rest produce the contradiction $l \in L$.
+            }
+        }
+
+    \end{proof}
+
+
+    \step{}{%
+        \textbf{Thus, $L = M$}~Q.E.D.
+    }
+
+\end{proof}

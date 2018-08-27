@@ -573,6 +573,14 @@
 }}
 
 
+\newcommand{\ottdruleOpXXContextXXErr}[1]{\ottdrule[#1]{%
+\ottpremise{\langle  \sigma  \ottsym{,}  \ottnt{e}  \rangle  \rightarrow  \textbf{err}}%
+}{
+\langle  \sigma  \ottsym{,}  \ottnt{C}  \ottsym{[}  \ottnt{e}  \ottsym{]}  \rangle  \rightarrow  \textbf{err}}{%
+{\ottdrulename{Op\_Context\_Err}}{}%
+}}
+
+
 \newcommand{\ottdruleOpXXMatrix}[1]{\ottdrule[#1]{%
 \ottpremise{ \ottsym{0}  \leq  \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }%
 }{
@@ -637,6 +645,7 @@
 \ottusedrule{\ottdruleOpXXFracXXCap{}}
 \ottusedrule{\ottdruleOpXXApp{}}
 \ottusedrule{\ottdruleOpXXContext{}}
+\ottusedrule{\ottdruleOpXXContextXXErr{}}
 \ottusedrule{\ottdruleOpXXMatrix{}}
 \ottusedrule{\ottdruleOpXXFree{}}
 \ottusedrule{\ottdruleOpXXShare{}}

@@ -26,6 +26,10 @@ SRC :=	myclass.cls \
 	eval_data.tex \
 	timings_all.tex
 
+SEM := semantics_def.tex \
+       interpretation.tex \
+       soundness.tex
+
 all: $(TARGETS)
 
 $(TARGETS):%.pdf: %.tex | $(BUILD) $(BUILD_AUX)
@@ -35,7 +39,7 @@ $(TARGETS):%.pdf: %.tex | $(BUILD) $(BUILD_AUX)
 dissertation.tex: $(SRC)
 	touch $@
 
-semantics.tex: semantics_def.tex
+semantics.tex: $(SEM)
 	touch $@
 
 semantics_def.tex: semantics.ott

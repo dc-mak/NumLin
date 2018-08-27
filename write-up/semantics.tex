@@ -25,48 +25,30 @@
 \newcommand{\Many}{\ottkw{Many}}%
 \newcommand{\dom}{\mathrm{dom}}%
 
-\newcommand{\empH}{\{\}}%
+\newcommand{\empH}{\emptyset}%
 \newcommand{\letManyG}{\ottkw{let} \, \ottkw{Many} \, \mathit{g}  \ottsym{=}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottkw{in} \, g\, }%
 
-\begin{document}%
-\ottall%
+\usepackage{./pf2}
+\beforePfSpace{15pt, 10pt, 10pt, 10pt, 5pt, 2pt}
+\afterPfSpace{15pt, 10pt, 10pt, 10pt, 5pt, 2pt}
+\interStepSpace{15pt, 10pt, 10pt, 10pt, 5pt, 2pt}
+\pflongindent%
+%\pfhidelevel{4}
 
-\begin{align*}
-  \V{k}{ \Unit } &= \{ (\empH, \ast) \} \\
-\\
-    \V{k}{ \Bool } &= \{ (\empH, true), (\empH, false) \} \\
-\\
-    \V{k}{ \Int } &= \{ (\empH, n) \mid 2^{-63} \leq n \leq 2^{63} -1 \} \\
-\\
-    \V{k}{ \Elt } &= \{ (\empH, f) \mid f \textrm{ a IEEE Float64 } \} \\
-\\
-    \V{k}{ f \, \Mat } &= \{ (\{ l \mapsto_{2^{-f}} \_ \} , l) \} \\
-\\
-    \V{k}{ \Bang (t' \multimap t'') } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{ t' \multimap t'' } \} \\
-                                      & \cup \{ (\empH, \ottkw{fix} (g, x : t, e : t')) \mid \forall \, j \leq k, (\sigma', v') \in \V{j}{ t' }.\\
-                                      & \qquad \qquad (\sigma', \letManyG v) \in \C{j}{ t' } \} \\
-\\
-    \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid \neg (\exists t', t''.\ t = t' \multimap t'') \wedge (\empH, v) \in \V{k}{t} \} \\
-\\
-    \V{k}{ \forall fc.\  t } &= \{ (\sigma, \forall fc.\ v) \mid \forall f.\ (\sigma, v [ fc / f ]) \in \V{k}{ t [ fc / f ] } \} \\
-\\
-    \V{k}{ t' \otimes t'' } &= \{ (\sigma, \langle v', v'' \rangle) \mid \exists \sigma', \sigma'' .\ (\sigma', v') \in \V{k}{ t } \wedge (\sigma'', v'') \in \V{k}{ t''} \wedge \sigma = \sigma' \star \sigma'' \} \\
-\\
-    \V{k}{ t \multimap t' } &= \{ (\sigma, \ottkw{fun}\, x : t \rightarrow e) \mid \forall j \leq k, (\sigma', v') \in \V{j}{ t' }.\ \sigma \star \sigma' \textrm{ defined } \Rightarrow (\sigma \star \sigma', (\ottkw{fun}\, x : t \rightarrow e) v') \in \C{j}{ t' } \} \\
-\\
-    \C{k}{ t } &= \{ (\sigma_s, e) \mid \forall \, j < k, \sigma_r.\ \sigma_s \star \sigma_r \textrm{ defined } \Rightarrow \\
-               & \qquad \quad \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \ottkw{err} \vee \exists \sigma_f, v.\ \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \star \sigma_r, v \rangle \in \V{k-j}{t} \} \\
-\\
-        \den{I}{k}{ \cdot } \theta &= [ ] \\
-\\
-    \den{I}{k}{ \Delta, x : t } \theta &= \{ \delta[x \mapsto v_x ] \mid \delta \in \den{I}{k}{\Delta}\theta \wedge (\{\}, v_x) \in \V{k}{\theta(t)} \} \\
-\\
-    \den{L}{k}{ \cdot } \theta &= \{ (\empH, []) \} \\
-\\
-    \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\sigma \uplus \sigma_x, \gamma[x \mapsto v_x ]) \mid (\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\sigma_x, v_x) \in \V{k}{\theta(t)} \} \\
-\\
-\den{}{}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, k, \delta, \gamma, \sigma.\ \dom(\Theta) = \dom(\theta) \wedge (\sigma, \delta) \in \den{L}{k}{ \Gamma }\theta \wedge \gamma \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
-                                                 & \qquad (\sigma, \gamma(\delta(e))) \in \C{k}{ \theta(t) }
-\end{align*}
+\begin{document}%
+
+\section{Typing Rules}
+\ottdefnsTypes%
+\clearpage%
+
+\section{Operational Semantics}
+\ottdefnsOpXXSem%
+\clearpage%
+
+\input{./interpretation.tex}
+\clearpage%
+
+\input{./soundness.tex}
+\clearpage%
 
 \end{document}

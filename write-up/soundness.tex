@@ -1,117 +1,160 @@
 \section{Soundness Proof}
 
+\[
+    \forall \Theta, \Delta, \Gamma, e, t.\ \Theta; \Delta ; \Gamma \vdash e : t \Rightarrow
+    \den{}{}{ \Theta; \Delta ; \Gamma \vdash e : t } 
+\]
+
 \begin{proof}
 
-    \pfsketch{\ %
-        Use the contrapositive both ways. This turns the negated existential into
-        witnesses we can work with.\\
+    \pfsketch{ Induction over the typing judgements.\\ }
+
+    \assume{%
+        Arbitrary $\Theta, \Delta, \Gamma, e, t$ such that $\Theta; \Delta ; \Gamma \vdash e : t$.\\
+        Arbitrary $\theta, k, \delta, \gamma, \sigma$ such that:
+        \begin{pfenum}
+            \item $\textrm{dom}(\Theta) = \textrm{dom}(\theta)$
+            \item $(\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta$
+            \item $\delta \in \den{I}{k}{\Delta}\theta$.\\
+        \end{pfenum}
     }
 
-    \pflet{%
-        $\phi(X) = $\\
-        \emph{Note: $\forall X.\ \phi(X)\subseteq X$, $\not\subset\ \equiv\
-        \not\subseteq \, \vee \, =$ and $\not\subseteq\ \Rightarrow\ \neq$}\\
-        $a$, $b$, $c$ be elements of the Martelli's semiring \\
-        $L^+ = a \cup \phi$ \\
-        $L = \phi(L^+) = a \otimes (b \oplus c)$ \\
-        $M^+ = $ \\
-        $M = \phi(M^+) = (a \otimes b) \oplus (a \otimes c)$ \\
-    }
-
-    \prove{Distributivity holds, i.e.\ $L=M$.}
-    \suffices{%
-        Since $\oplus$ and $\otimes$ are commutative (definitions of $\oplus$
-        and $\otimes$ are symmetric in their arguments because $\exists x.\
-        \exists y.\ P(x,y) \Leftrightarrow \exists y.\ \exists x.\ P(x,y)$ and
-        $\cup$ is commutative) it suffices to show only left-distributivity.\\
-    }
-
-    \pf{~We show $L \subseteq M$ and $M \subseteq L$.\\}
+    \prove{$(\sigma, \gamma(\delta(e))) \in \C{k}{\theta(t)}$.\\}
 
     \step{}{%
         \case{%
-            $L \subseteq M$.
+            \textsc{Ty\_Var\_Lin}.
         }{%
-            We show $m \notin M \Rightarrow m \notin L$ for arbitrary $m$.\\
-            \pf{~We do this by cases on $m \in M^+$}.
-            \suffices{\ %
-                Because $L \subseteq L^+$, to show $m \notin L$ it suffices to
-                show either $m \notin L^+$ or $\exists y \in L^+.\ y \subset m$.
-            }
+            \prove{$(\sigma, \gamma(\delta(x))) \in \C{k}{\theta(t)}$.\\}
         }
     }
-
-    \begin{proof}
-
-        \step{}{%
-            \case{%
-                $m \in M^+$.
-            }{%
-                This means that $ \exists x \in a \otimes b,\ y \in a \otimes
-                c.\ x \cup y = m $ and because $m \notin M$, we have $\exists
-                x' \in a \otimes b,\ y \in a \otimes c.\ x' \cup y' = m'
-                \subset m = x \cup y$. Assume, without loss of generality,
-                they are the smallest such $x'$ and $y'$. Because $\phi(X)
-                \subseteq X$ for any $X$, we proceed by cases: either $x' \in
-                a$ or $y' \in a$ or both $x' \in b$ and $y' \in c$.
-            }
-        }
-
-        \step{mplusRule}{%
-            \case{%
-                $m \notin M^+$.
-            }{%
-                This means $\forall\ x \in \phi(a \cup b),\ y \in \phi(a \cup
-                c).\ m \neq x \cup y$.
-            }
-        }
-
-        \step{}{%
-            \textbf{Thus, if $m \notin M$, then $m \notin L$.}~Q.E.D.
-        }
-
-    \end{proof}
 
     \step{}{%
         \case{%
-            $M \subseteq L$.
+            \textsc{Ty\_Var}.
         }{%
-            We show $l \notin L \Rightarrow l \notin M$ for arbitrary $l$.
-            \suffices{\ %
-                Because $M \subseteq M^+$, to show $l \notin M$ it suffices to
-                show either $l \notin M^+$ or $\exists y \in M^+.\ y \subset l$.
-            }
+            \prove{$(\sigma, \gamma(\delta(x))) \in \C{k}{\theta(t)}$.\\}
         }
     }
 
-    \begin{proof}
-
-        \step{lplusRule}{%
-            \case{%
-                $l \notin L^+$.
-            }{%
-                This means $l \notin a$ and $l \notin b \oplus c = \phi$.\\
-                We conclude from the latter, that $\forall x \in b,\ y \in c.\ 
-                x \cup y \neq l$.\\
-                We reason by cases on \emph{why} $l \notin a$, to show that
-                $\exists y \in M^+.\ y \subset l$ or $l \notin M^+$.
-            }
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Let}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t)}$.\\}
         }
-
-        \step{}{%
-            \case{%
-                $l \in L^+$.
-            }{%
-                Under the assumption $l \notin L$, we need only consider two
-                cases: the rest produce the contradiction $l \in L$.
-            }
-        }
-
-    \end{proof}
-
+    }
 
     \step{}{%
-        \textbf{Thus, $L = M$}~Q.E.D.
+        \case{%
+            \textsc{Ty\_Unit\_Intro}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\, ()\,))) \in \C{k}{\theta(\Unit)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Unit\_Elim}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, ()\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Bool\_True}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\ottkw{true}))) \in \C{k}{\theta(\Bool)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Bool\_False}, \textsc{Ty\_Int\_Intro}, \textsc{Ty\_Elt\_Intro}.
+        }{%
+            Similar to \textsc{Ty\_Bool\_True}.
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Bool\_Elim}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\ottkw{if}\, e\, \ottkw{then}\, e_1\, \ottkw{else}\, e_2))) \in \C{k}{\theta(t)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Bang\_Intro}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\ottkw{Many}\, e))) \in \C{k}{\theta(!t)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Bang\_Elim}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, \ottkw{Many}\, x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Pair\_Intro}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\, ( e, e')\, ))) \in \C{k}{\theta(t \otimes t')}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Pair\_Elim}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, (a, b)\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Lambda}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\ottkw{fun}\, x : t' \rightarrow e))) \in \C{k}{\theta(t' \multimap t)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_App}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\,e \,e'\,))) \in \C{k}{\theta(t)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Gen}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(\ottkw{fun}\, fc \rightarrow e))) \in \C{k}{\theta(\forall \, fc.\, t)}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Spc}.
+        }{%
+            \prove{$(\sigma, \gamma(\delta(e\, [f]))) \in \C{k}{\theta(t\, [fc/f])}$.\\}
+        }
+    }
+
+    \step{}{%
+        \case{%
+            \textsc{Ty\_Fix}.
+        }{%
+        \prove{$(\sigma, \gamma(\delta(\ottkw{fix} (g, x : t, e : t')))) \in \C{k}{\theta(!\,(t \multimap t'))}$.\\}
+        }
     }
 
 \end{proof}

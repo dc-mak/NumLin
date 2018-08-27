@@ -10,9 +10,9 @@
 
 \input{semantics_def}%
 
-\newcommand{\den}[2]{ \mathcal{#1} [\![ #2 ]\!] }%
-\newcommand{\V}[1]{ \den{V}{#1} }%
-\newcommand{\C}[1]{ \den{C}{#1} }%
+\newcommand{\den}[3]{ \mathcal{#1}_{#2} [\![ #3 ]\!] }%
+\newcommand{\V}[2]{ \den{V}{#1}{#2} }%
+\newcommand{\C}[2]{ \den{C}{#1}{#2} }%
  
 \newcommand{\Unit}{\ottkw{unit}}%
 \newcommand{\Bang}{\ottkw{!}}
@@ -26,44 +26,47 @@
 \newcommand{\dom}{\mathrm{dom}}%
 
 \newcommand{\empH}{\{\}}%
-\newcommand{\funEOne}{\ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e_{{\mathrm{1}}}}}%
-\newcommand{\eOneEq}{\ottnt{e_{{\mathrm{1}}}}  \ottsym{=}  \ottnt{e}  \ottsym{[}  \mathit{g}  \ottsym{/}  \ottkw{let} \, \ottkw{Many} \, \mathit{g}  \ottsym{=}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottkw{in} \, \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}  \ottsym{]}}%
+\newcommand{\letManyG}{\ottkw{let} \, \ottkw{Many} \, \mathit{g}  \ottsym{=}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottkw{in} \, g\, }%
 
 \begin{document}%
 \ottall%
 
 \begin{align*}
-  \V{ \Unit } &= \{ (\empH, \ast) \} \\
+  \V{k}{ \Unit } &= \{ (\empH, \ast) \} \\
 \\
-    \V{ \Bang \Bool } &= \{ (\empH, true), (\empH, false) \} \\
+    \V{k}{ \Bool } &= \{ (\empH, true), (\empH, false) \} \\
 \\
-    \V{ \Bang \Int } &= \{ (\empH, n) \mid 2^{-63} \leq n \leq 2^{63} -1 \} \\
+    \V{k}{ \Int } &= \{ (\empH, n) \mid 2^{-63} \leq n \leq 2^{63} -1 \} \\
 \\
-    \V{ \Bang \Elt } &= \{ (\empH, f) \mid f \mathrm{ a IEEE Float64} \} \\
+    \V{k}{ \Elt } &= \{ (\empH, f) \mid f \textrm{ a IEEE Float64 } \} \\
 \\
-    \V{ \Zf \, \Mat } &= \{ (\{ l \mapsto_{m_W} \_ \} , l) \} \\
+    \V{k}{ f \, \Mat } &= \{ (\{ l \mapsto_{2^{-f}} \_ \} , l) \} \\
 \\
-    \V{ (\Sf f) \Mat } &= \{ (\sigma , l) \mid l \in \dom(\sigma) \wedge \sigma \star \sigma \in \pi_1 [ \V{ f \ottkw{mat} } ] \} \\
+    \V{k}{ \Bang (t' \multimap t'') } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{ t' \multimap t'' } \} \\
+                                      & \cup \{ (\empH, \ottkw{fix} (g, x : t, e : t')) \mid \forall \, j \leq k, (\sigma', v') \in \V{j}{ t' }.\\
+                                      & \qquad \qquad (\sigma', \letManyG v) \in \C{j}{ t' } \} \\
 \\
-    \V{ \Bang (t' \multimap t'') } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{ t' \multimap t'' } \} \\
-                                       & \cup \{ (\empH, \ottkw{fix} (g, x : t, e : t')) \mid \forall (\sigma', v') \in \V{ t' }.\ e [ x / v ] [ g / \funEOne ] \in \C{ t' } \} \\
-                                       & \mathrm{where } \eOneEq  \\
+    \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid \neg (\exists t', t''.\ t = t' \multimap t'') \wedge (\empH, v) \in \V{k}{t} \} \\
 \\
-    \V{ \Bang t' } &= \{ (\empH, \Many\, v) \mid t \notin \{ \Bool, \Int, \Elt, t' \multimap t'' \} \wedge (\empH, v) \in \V{ t' } \} \\
+    \V{k}{ \forall fc.\  t } &= \{ (\sigma, \forall fc.\ v) \mid \forall f.\ (\sigma, v [ fc / f ]) \in \V{k}{ t [ fc / f ] } \} \\
 \\
-    \V{ \forall fc.\  t } &= \{ (\sigma, \forall fc.\ v) \mid \forall f.\ (\sigma, v [ fc / f ]) \in \V{ t [ fc / f ] } \} \\
+    \V{k}{ t' \otimes t'' } &= \{ (\sigma, \langle v', v'' \rangle) \mid \exists \sigma', \sigma'' .\ (\sigma', v') \in \V{k}{ t } \wedge (\sigma'', v'') \in \V{k}{ t''} \wedge \sigma = \sigma' \star \sigma'' \} \\
 \\
-    \V{ t' \otimes t'' } &= \{ (\sigma, \langle v', v'' \rangle) \mid \exists \sigma', \sigma'' .\ (\sigma', v') \in \V{ t } \wedge (\sigma'', v'') \in \V{ t''} \wedge \sigma = \sigma' \star \sigma'' \} \\
+    \V{k}{ t \multimap t' } &= \{ (\sigma, \ottkw{fun}\, x : t \rightarrow e) \mid \forall j \leq k, (\sigma', v') \in \V{j}{ t' }.\ \sigma \star \sigma' \textrm{ defined } \Rightarrow (\sigma \star \sigma', (\ottkw{fun}\, x : t \rightarrow e) v') \in \C{j}{ t' } \} \\
 \\
-    \V{ t' \multimap t'' } &= \{ (\sigma, \ottkw{fun}\, x : t' \rightarrow e'') \mid \forall (\sigma', v') \in \V{ t' }.\ \sigma = \sigma' \star \sigma'' \mathrm{ defined } \Rightarrow (\sigma' \star \sigma'', e'' [ x / v' ]) \in \C{ t'' } \} \\
+    \C{k}{ t } &= \{ (\sigma_s, e) \mid \forall \, j < k, \sigma_r.\ \sigma_s \star \sigma_r \textrm{ defined } \Rightarrow \\
+               & \qquad \quad \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \ottkw{err} \vee \exists \sigma_f, v.\ \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \star \sigma_r, v \rangle \in \V{k-j}{t} \} \\
 \\
-    \C{ t } &= \{ (\sigma_s, e) \mid \forall \sigma_r.\ \sigma_s \star \sigma_r \mathrm{ defined } \Rightarrow \exists \sigma_f, v, . (\sigma_s \star \sigma_r, e) \rightarrow^n (\sigma_f \star \sigma_r, v) \in \V{ t } \} \\
+        \den{I}{k}{ \cdot } \theta &= [ ] \\
 \\
-    \den{S}{ \Delta ; \cdot } \theta &= \{ (\empH, \delta) \mid \dom(\Delta) = (\delta) \wedge \forall x \in \dom(\Delta).\ (\empH, \delta(x)) \in \V{ \theta(t) } \} \\
+    \den{I}{k}{ \Delta, x : t } \theta &= \{ \delta[x \mapsto v_x ] \mid \delta \in \den{I}{k}{\Delta}\theta \wedge (\{\}, v_x) \in \V{k}{\theta(t)} \} \\
 \\
-    \den{S}{ \Delta ; \Gamma , x : t } \theta &= \{ (\sigma \uplus \sigma_x, \delta[x \mapsto v_x ]) \mid (\sigma, \delta) \in \den{S}{ \Delta; \Gamma } \wedge (\sigma_x, v_x) \in \V{ \theta(t) } \} \\
+    \den{L}{k}{ \cdot } \theta &= \{ (\empH, []) \} \\
 \\
-    \den{}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, \delta, \sigma.\ \dom(\Theta) = \dom(\theta) \wedge (\sigma, \delta) \in  \den{S}{ \Delta; \Gamma }\theta \Rightarrow \sigma(\delta(e)) \in \C{ \theta(t) }
+    \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\sigma \uplus \sigma_x, \gamma[x \mapsto v_x ]) \mid (\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\sigma_x, v_x) \in \V{k}{\theta(t)} \} \\
+\\
+\den{}{}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, k, \delta, \gamma, \sigma.\ \dom(\Theta) = \dom(\theta) \wedge (\sigma, \delta) \in \den{L}{k}{ \Gamma }\theta \wedge \gamma \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
+                                                 & \qquad (\sigma, \gamma(\delta(e))) \in \C{k}{ \theta(t) }
 \end{align*}
 
 \end{document}

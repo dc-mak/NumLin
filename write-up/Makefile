@@ -3,7 +3,6 @@
 FLAGS := -quiet
 
 TARGETS :=  semantics.pdf \
-	    semantics2.pdf \
 	    proposal.pdf  \
 	    dissertation.pdf
 
@@ -40,12 +39,6 @@ semantics.tex: semantics_def.tex
 	touch $@
 
 semantics_def.tex: semantics.ott
-	ott -i $< -tex_show_meta false -tex_wrap false -o $@
-
-semantics2.tex: semantics_def2.tex
-	touch $@
-
-semantics_def2.tex: semantics2.ott
 	ott -i $< -tex_show_meta false -tex_wrap false -o $@
 
 $(BUILD_AUX): $(BUILD)

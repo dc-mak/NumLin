@@ -41,6 +41,7 @@ grammar
     | <     ::  :: langle    {{ tex \langle       }}
     | >     ::  :: rangle    {{ tex \rangle       }}
     | <>    ::  :: neq       {{ tex \neq          }}
+    | err   ::  :: err       {{ tex \textbf{err}  }}
 
 
 grammar
@@ -325,14 +326,14 @@ defns
 
 
     ---------------------------- :: Bool_True
-    T ; D ; nil |- true : ! bool
+    T ; D ; nil |- true : bool
 
 
     ----------------------------- :: Bool_False
-    T ; D ; nil |- false : ! bool
+    T ; D ; nil |- false : bool
 
 
-    T ; D ; G  |- e  : bool
+    T ; D ; G  |- e  : ! bool
     T ; D ; G' |- e1 : t'
     T ; D ; G' |- e2 : t'
     ------------------------------------------ :: Bool_Elim
@@ -340,11 +341,11 @@ defns
 
 
     ------------------------ :: Int_Intro
-    T ; D ; nil |- k : ! int
+    T ; D ; nil |- k : int
 
 
     ------------------------- :: Elt_Intro
-    T ; D ; nil |- el : ! elt
+    T ; D ; nil |- el : elt
 
 
     T ; D ; nil |- v : t
@@ -408,58 +409,90 @@ grammar
     {{ com location [[l]] points to matrix [[m]] }}
 
 
+  StepsTo :: 'StepsTo_' ::= {{ com result of small step }}
+    | < H , e > :: :: Ok    {{ com heap and expression  }}
+    | err       :: :: Error {{ com error                }}
+
+
 defns
 
   Op_Sem :: 'Op_' ::=
 
   defn
-  < H , e > -> < H' , e' > :: ::Op_:: '' {{ com operational semantics }} by
+  < H , e > -> StepsTo :: ::Op_:: '' {{ com operational semantics }} by
 
-     --------------------------------------- :: Let_Unit
-     < H , let ( ) = ( ) in e > -> < H , e >
+
+    --------------------------------------- :: Let_Unit
+    < H , let ( ) = ( ) in e > -> < H , e >
+
 
     --------------------------------------------- :: Let_Var
     < H , let x = v in e > -> < H , e [ x / v ] >
 
+
     --------------------------------------------- :: If_True
-    < H , if true then e1 else e2 > -> < H , e1 >
+    < H , if ( Many true ) then e1 else e2 > -> < H , e1 >
+
 
     ---------------------------------------------- :: If_False
-    < H , if false then e1 else e2 > -> < H , e2 >
+    < H , if ( Many false) then e1 else e2 > -> < H , e2 >
+
 
     ------------------------------------------------------- :: Let_Many
     < H , let Many x = Many v in e > -> < H , e [ x / v ] >
+
 
     e1 = e [ g / let Many g = fix ( g , x : t , e : t' ) in fun x : t -> e ]
     ------------------------------------------------------------------------------------------- :: Let_Fix
     < H , let Many g = fix ( g , x : t , e : t' ) in e' > -> < H , e' [ g / fun x : t -> e1 ] >
 
+
     ---------------------------------------------------- :: Frac_Cap
     < H , ( fun fc -> v ) [ f ] > -> < H , v [ fc / f ] >
 
+
     --------------------------------------------------- :: App
     < H , ( fun x : t -> e ) v > -> < H , e [ x / v ] >
+
 
     < H , e >  -> < H' , e' >
     ----------------------------------- :: Context
     < H , C [ e ] > -> < H , C [ e' ] >
 
+
     0 <= k1 , k2
     ----------------------------------------------------- :: Matrix
     < H , matrix k1 k2 > -> < H and { l |-> Z ,  M k1 k2 } , l >
 
+
     ------------------------------------------------------- :: Free
-    < H and { l |-> Z , M k1 k2 } , free l > -> < H , ( ) >
+    < H and { l |-> Z , m k1 k2 } , free l > -> < H , ( ) >
+
 
     ---------------------------------------------------------------------------------------------------------------------- :: Share
-    < H and { l |-> f , M k1 k2 } , share l > -> < H and { l |-> S f , M k1 k2 } and { l |-> S f , M k1 k2 } , ( l , l ) >
+    < H and { l |-> f , m k1 k2 } , share l > -> < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , ( l , l ) >
 
-    ----------------------------------------------------------------------------------------------------------------- :: Unshare
-    < H and { l |-> S f , M k1 k2 } and { l |-> S f , M k1 k2 } , unshare l l > -> < H and { l |-> f , M k1 k2 } , l >
 
-    H' = H and { l1 |-> fc1 , M1 k1 k2 } and { l2 |-> fc2 , M2 k2 k3 }
-    --------------------------------------------------------------------------------------------------------------------------- :: Gemm
-    < H' and { l3 |-> Z , M1 k1 k3 } , gemm l1 l2 l3 > -> < H' and { l3 |-> Z , ( M1 M2 + M3 ) k1 k3 } , ( (l1 , l2) , l3 ) >
+    f <= 1
+    ----------------------------------------------------------------------------------------------------------------- :: Unshare_Eq
+    < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , unshare l l > -> < H and { l |-> f , m k1 k2 } , l >
+
+
+    l <> l'
+    ------------------------------------------------------------------------------------ :: Unshare_Neq
+    < H and { l |-> S f , m k1 k2 } and { l' |-> S f , m k1 k2 } , unshare l l' > -> err
+
+
+    H' = H and { l1 |-> fc1 , m1 k1 k2 } and { l2 |-> fc2 , m2 k2 k3 }
+    --------------------------------------------------------------------------------------------------------------------------- :: Gemm_Match
+    < H' and { l3 |-> Z , m1 k1 k3 } , gemm l1 l2 l3 > -> < H' and { l3 |-> Z , ( m1 m2 + m3 ) k1 k3 } , ( (l1 , l2) , l3 ) >
+
+
+    k2 <> k2'
+    H' = H and { l1 |-> fc1 , m1 k1 k2 } and { l2 |-> fc2 , m2 k2' k3 }
+    ------------------------------------------------------------------- :: Gemm_Mismatch
+    < H' and { l3 |-> Z , m1 k1 k3 } , gemm l1 l2 l3 > -> err
+
 
 grammar
 
@@ -471,6 +504,7 @@ grammar
     | e <> e'      ::  :: eNeq
     | e = e'       ::  :: eEq
     | 0 <= k1 , k2 ::  :: posDim {{ tex [[0]] \leq [[k1]], [[k2]]  }}
+    | f <= 1       ::  :: fracBound {{ tex [[f]] \leq 1  }}
     | H' = H       ::  :: storeEq
 
 

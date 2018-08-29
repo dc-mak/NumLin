@@ -10,12 +10,19 @@
     \pfsketch{ Induction over the typing judgements.\\ }
 
     \assume{%
-        Arbitrary $\Theta, \Delta, \Gamma, e, t$ such that $\Theta; \Delta ; \Gamma \vdash e : t$.\\
-        Arbitrary $\theta, k, \delta, \gamma, \sigma$ such that:
         \begin{pfenum}
-            \item $\textrm{dom}(\Theta) = \textrm{dom}(\theta)$
-            \item $(\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta$
-            \item $\delta \in \den{I}{k}{\Delta}\theta$.\\
+            \item Arbitrary $\Theta, \Delta, \Gamma, e, t$ such that $\Theta; \Delta ; \Gamma \vdash e : t$.
+            \item Arbitrary $\theta, k, \delta, \gamma, \sigma$ such that:
+                \begin{pfenum}
+                    \item $\textrm{dom}(\Theta) = \textrm{dom}(\theta)$
+                    \item $(\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta$\label{inL}
+                    \item $\delta \in \den{I}{k}{\Delta}\theta$.\label{inI}
+                \end{pfenum}
+            \item W.l.o.g., all variables are distinct/$\dom(\Delta)$ and
+                $\dom(\Gamma)$ are disjoint.\label{disjoint}
+            \item And so that over expressions $\gamma \circ \delta = \delta \circ \gamma$.
+            \item By construction, $\dom(\Delta) = \dom(\delta)$ and $\dom(\Gamma) = \dom(\gamma)$.\label{samedom}
+            \item ??? $\V{k}{\theta(t)} \subseteq \C{k}{\theta(t)}$\label{subsetVC}\\
         \end{pfenum}
     }
 
@@ -25,7 +32,14 @@
         \case{%
             \textsc{Ty\_Var\_Lin}.
         }{%
-            \prove{$(\sigma, \gamma(\delta(x))) \in \C{k}{\theta(t)}$.\\}
+            \prove{$(\sigma, \gamma(\delta(x))) \in \C{k}{\theta(t)}$.}
+            \begin{proof}
+                \step{}{$\Gamma = \{ x : t\}$ by assumption of \textsc{Ty\_Var\_Lin}.}
+                \step{}{\suffices{$(\sigma, \gamma(x)) \in \C{k}{\theta(t)}$ by \ref{disjoint}.}}
+                \step{}{By \ref{inL}, there exist $(\sigma_x, v_x) \in \V{k}{\theta(t)}$, such
+                    that $\sigma=\sigma_x$ and $\gamma = [x \mapsto v_x]$.}
+                \step{}{??? Hence, $(\sigma_x, v_x) \in \C{k}{\theta(t)}$, by \ref{subsetVC}.}
+            \end{proof}
         }
     }
 
@@ -33,7 +47,13 @@
         \case{%
             \textsc{Ty\_Var}.
         }{%
-            \prove{$(\sigma, \gamma(\delta(x))) \in \C{k}{\theta(t)}$.\\}
+            \prove{$(\sigma, \gamma(\delta(x))) \in \C{k}{\theta(t)}$.}
+            \begin{proof}
+                \step{}{$x : t \in \Delta$ and $\Gamma = \empH$ by assumption of \textsc{Ty\_Var}.}
+                \step{}{\suffices{$(\empH, \delta(x)) \in \C{k}{\theta(t)}$ by \ref{disjoint} and \ref{inL}.}}
+                \step{}{By \ref{inI}, there exists $v_x$ such that $(\empH, v_x) \in \V{k}{\theta(t)}$.}
+                \step{}{??? Hence, $(\empH, v_x) \in \C{k}{\theta(t)}$, by \ref{subsetVC}.}
+            \end{proof}
         }
     }
 
@@ -41,7 +61,23 @@
         \case{%
             \textsc{Ty\_Let}.
         }{%
-            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t)}$.\\}
+            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t)}$.}
+            \begin{proof}
+                \step{}{\suffices{$(\sigma, \ottkw{let}\, x\, =\, \gamma(\delta(e))\, \ottkw{in}\, \gamma(\delta(e'))) \in \C{k}{\theta(t)}$.}}
+                \step{}{By induction, $\den{}{}{\Theta; \Delta; \Gamma \vdash e : t}$ and
+                    $\den{}{}{\Theta; \Delta; \Gamma', x : t \vdash e' : t'}$.}
+                \step{}{By \ref{inL} and induction on $\Gamma'$, we know there exist
+                        $\sigma_{e'},\; (\sigma_e, \gamma_e) \in \den{L}{k}{\Gamma}$, \\
+                        such that $\sigma = \sigma_e \star \sigma_{e'}$.}\pflabel{split}
+                \step{}{So, using them, $\theta, k, \delta$, and \ref{disjoint} we have
+                    $(\sigma_e, \gamma_e(e)) \in \C{k}{\theta(t)}$.}
+                \step{}{By \ref{disjoint}, $(\sigma_e, \gamma(\delta(e))) \in \C{k}{\theta(t)}$.}
+                \step{}{By definition of $\C{k}{\cdot}$ and \pfref{split}, we choose a $j<k$ and
+                    $\sigma_{e'}$ to conclude that $\langle \sigma , \gamma(\delta(e)) \rangle$
+                either reduces to $\ottkw{err}$ or another heap and expression.}
+                \step{}{In first case, by op sem, reduces to err as well.}
+                \step{}{In second case, ...}
+            \end{proof}
         }
     }
 
@@ -153,7 +189,7 @@
         \case{%
             \textsc{Ty\_Fix}.
         }{%
-        \prove{$(\sigma, \gamma(\delta(\ottkw{fix} (g, x : t, e : t')))) \in \C{k}{\theta(!\,(t \multimap t'))}$.\\}
+        \prove{$(\sigma, \gamma(\delta(\ottkw{fix} (g, x : t, e : t')))) \in \C{k}{\theta(!(t \multimap t'))}$.\\}
         }
     }
 

@@ -25,7 +25,7 @@
                             & \qquad \qquad (\sigma \star \sigma', (\ottkw{fun}\, x : t \rightarrow e)\, v') \in \C{j}{ t' } \} \\
 \\
     \C{k}{ t } &= \{ (\sigma_s, e) \mid \forall \, j < k, \sigma_r.\ \sigma_s \star \sigma_r \textrm{ defined } \Rightarrow \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e'.\\
-               & \qquad \qquad \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \star \sigma_r, e' \rangle \wedge ( e' \textrm { is a value } \Rightarrow \langle \sigma_f \star \sigma_r, e' \rangle \in \V{k-j}{t} ) \} \\
+               & \qquad \qquad \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \star \sigma_r, e' \rangle \wedge ( e' \textrm { is a value } \Rightarrow ( \sigma_f \star \sigma_r, e' ) \in \V{k-j}{t} ) \} \\
 \\
     \den{I}{k}{ \cdot } \theta &= \{ [] \} \\
 \\
@@ -33,7 +33,7 @@
 \\
     \den{L}{k}{ \cdot } \theta &= \{ (\empH, []) \} \\
 \\
-    \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\sigma \uplus \sigma_x, \gamma[x \mapsto v_x ]) \mid (\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\sigma_x, v_x) \in \V{k}{\theta(t)} \} \\
+    \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\sigma \star \sigma_x, \gamma[x \mapsto v_x ]) \mid (\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\sigma_x, v_x) \in \V{k}{\theta(t)} \} \\
 \\
 \den{}{}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, k, \delta, \gamma, \sigma.\ \dom(\Theta) = \dom(\theta) \wedge (\sigma, \gamma) \in \den{L}{k}{ \Gamma }\theta \wedge \delta \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
                                                  & \qquad \qquad (\sigma, \gamma(\delta(e))) \in \C{k}{ \theta(t) }

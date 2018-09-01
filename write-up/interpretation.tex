@@ -19,7 +19,7 @@
 \\
     \V{k}{ \forall fc.\  t } &= \{ (\sigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\sigma, v [ fc / f ]) \in \V{k}{ t [ fc / f ] } \} \\
 \\
-    \V{k}{ t' \otimes t'' } &= \{ (\sigma, ( v', v'' )) \mid \exists \sigma', \sigma'' .\ (\sigma', v') \in \V{k}{ t } \wedge (\sigma'', v'') \in \V{k}{ t''} \wedge \sigma = \sigma' \star \sigma'' \} \\
+    \V{k}{ t \otimes t' } &= \{ (\sigma \star \sigma', ( v, v' )) \mid (\sigma, v) \in \V{k}{t} \wedge (\sigma', v') \in \V{k}{t'} \} \\
 \\
     \V{k}{ t \multimap t' } &= \{ (\sigma, \ottkw{fun}\, x : t \rightarrow e) \mid \forall j \leq k, (\sigma', v') \in \V{j}{ t' }.\ \sigma \star \sigma' \textrm{ defined } \Rightarrow \\
                             & \qquad \qquad (\sigma \star \sigma', (\ottkw{fun}\, x : t \rightarrow e)\, v') \in \C{j}{ t' } \} \\

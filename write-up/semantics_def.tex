@@ -356,10 +356,10 @@
 
 
 \newcommand{\ottdruleTyXXUnitXXElim}[1]{\ottdrule[#1]{%
-\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}   \cdot   \vdash  \ottnt{e}  \ottsym{:}  \ottkw{unit}}%
-\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e'}  \ottsym{:}  \ottnt{t}}%
+\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \ottkw{unit}}%
+\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma'  \vdash  \ottnt{e'}  \ottsym{:}  \ottnt{t}}%
 }{
-\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottkw{let} \, \ottsym{(}  \ottsym{)}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}  \ottsym{:}  \ottnt{t}}{%
+\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \ottsym{,}  \Gamma'  \vdash  \ottkw{let} \, \ottsym{(}  \ottsym{)}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}  \ottsym{:}  \ottnt{t}}{%
 {\ottdrulename{Ty\_Unit\_Elim}}{}%
 }}
 
@@ -543,6 +543,13 @@
 }}
 
 
+\newcommand{\ottdruleOpXXLetXXPair}[1]{\ottdrule[#1]{%
+}{
+\langle  \sigma  \ottsym{,}  \ottkw{let} \, \ottsym{(}  \mathit{a}  \ottsym{,}  \mathit{b}  \ottsym{)}  \ottsym{=}  \ottsym{(}  \ottnt{v_{{\mathrm{1}}}}  \ottsym{,}  \ottnt{v_{{\mathrm{2}}}}  \ottsym{)} \, \ottkw{in} \, \ottnt{e}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \mathit{a}  \ottsym{/}  \ottnt{v_{{\mathrm{1}}}}  \ottsym{]}  \ottsym{[}  \mathit{b}  \ottsym{/}  \ottnt{v_{{\mathrm{2}}}}  \ottsym{]}  \rangle}{%
+{\ottdrulename{Op\_Let\_Pair}}{}%
+}}
+
+
 \newcommand{\ottdruleOpXXLetXXFix}[1]{\ottdrule[#1]{%
 \ottpremise{\ottnt{e_{{\mathrm{1}}}}  \ottsym{=}  \ottnt{e}  \ottsym{[}  \mathit{g}  \ottsym{/}  \ottkw{let} \, \ottkw{Many} \, \mathit{g}  \ottsym{=}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottkw{in} \, \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}  \ottsym{]}}%
 }{
@@ -641,6 +648,7 @@
 \ottusedrule{\ottdruleOpXXIfXXTrue{}}
 \ottusedrule{\ottdruleOpXXIfXXFalse{}}
 \ottusedrule{\ottdruleOpXXLetXXMany{}}
+\ottusedrule{\ottdruleOpXXLetXXPair{}}
 \ottusedrule{\ottdruleOpXXLetXXFix{}}
 \ottusedrule{\ottdruleOpXXFracXXCap{}}
 \ottusedrule{\ottdruleOpXXApp{}}

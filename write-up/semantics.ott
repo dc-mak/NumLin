@@ -319,10 +319,10 @@ defns
     T ; D ; nil |- ( ) : unit
 
 
-    T ; D ; nil |- e  : unit
-    T ; D ; G   |- e' : t
-    ---------------------------------- :: Unit_Elim
-    T ; D ; G |- let ( ) = e in e' : t
+    T ; D ; G  |- e  : unit
+    T ; D ; G' |- e' : t
+    -------------------------------------- :: Unit_Elim
+    T ; D ; G, G' |- let ( ) = e in e' : t
 
 
     ---------------------------- :: Bool_True
@@ -440,6 +440,10 @@ defns
 
     ------------------------------------------------------- :: Let_Many
     < H , let Many x = Many v in e > -> < H , e [ x / v ] >
+
+
+    --------------------------------------------------------------------------- :: Let_Pair
+    < H , let ( a , b ) = ( v1 , v2 ) in e > -> < H , e [ a / v1 ] [ b / v2 ] >
 
 
     e1 = e [ g / let Many g = fix ( g , x : t , e : t' ) in fun x : t -> e ]

@@ -30,7 +30,7 @@
     }
 
     \prove{$(\sigma, \gamma(\delta(e))) \in \C{k}{\theta(t')}$.}
-    \assume{Arbitrary $j < k$ ($k=0$ ???) and $\sigma_{r'}$.}
+    \assume{Arbitrary $j \leq k$ and $\sigma_{r}$.}
     \suffices{Show whole expression either reduces to $\ottkw{err}$ or takes $j$ steps.\\}
 
     \step{}{%
@@ -51,9 +51,9 @@
                         such that $\sigma = \sigma_e \star \sigma_{e'}$.}\pflabel{split}
 
                 \step{}{So, using them, $\theta, k, \delta$, and \ref{disjoint} we have
-                    $(\sigma_e, \gamma_e(e)) \in \C{k}{\theta(t')}$.}
+                    $(\sigma_e, \gamma_e(e)) \in \C{k}{\theta(t)}$.}
 
-                \step{}{By \ref{disjoint}, $(\sigma_e, \gamma(\delta(e))) \in \C{k}{\theta(t')}$.}
+                \step{}{By \ref{disjoint}, $(\sigma_e, \gamma(\delta(e))) \in \C{k}{\theta(t)}$.}
 
                 \step{}{By definition of $\C{k}{\cdot}$ and \pfref{split}, we
                     instantiate with $j$ and $\sigma_r = \sigma_{e'}$ to
@@ -62,20 +62,30 @@
 
                 \step{}{\case{$\ottkw{err}$}{??? By \textsc{Op\_Context\_Err}
                     and \ref{frame} with $\sigma_{r'}$, the whole expression
-                    reduces to $\ottkw{err}$ in $j<k$ steps. Since $j<k$ and
-                    $\sigma_{r'}$ are arbitrary, $(\sigma, \gamma(\delta(\ottkw{let}\,
+                    reduces to $\ottkw{err}$ in $j \leq k$ steps. Since $j \leq k$ and
+                    $\sigma_{r}$ are arbitrary, $(\sigma, \gamma(\delta(\ottkw{let}\,
                     x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t')}$.}}
 
-                \step{}{\case{$j$ steps to another heap and expression.}By
-                    \textsc{Op\_Context}, the whole expression does the same.}
+                \step{}{\case{$j$ steps to another heap and expression.}By \textsc{Op\_Context},
+                    the whole expression does the same.}
 
-                \step{}{Regardless of whether $\gamma(\delta(e))$ is a
-                    syntactic value in $j<k$ steps, it will take at least $j+1 \leq k$ steps
-                    to trigger \textsc{Op\_Let\_Var} and so the whole
-                    expression cannot be a syntactic value after $j<k$ steps.}
+                \step{}{If it is not a value, we are done. If it is $({\sigma_e}_f, v)
+                    \in \V{k-j}{\theta(t)}$ by \ref{valueSub}. \suffices{$({\sigma_e}_f \star
+                    \sigma_{e'}, \ottkw{let}\, x\, =\, v\, \ottkw{in}\, \gamma(\delta(e'))) \in
+                    \C{k-j}{\theta(t')}$.} \suffices{$({\sigma_e}_f \star \sigma_{e'},
+                    \gamma(\delta(e')) [x/v]) \in \C{k-j-1}{\theta(t')}$.}}
 
-                \step{}{Therefore, $(\sigma, \gamma(\delta(\ottkw{let}\,
-                    x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t')}$}
+                \step{}{\define{$\gamma_{e'} (y) = v$ if $ y=x $ and $\gamma(y)$ if $y \in \dom(\Gamma')$.}
+                    Thus, $(\sigma_{e'}, \gamma_{e'}) \in \den{L}{k}{\Gamma', x : t} \subseteq
+                    \den{L}{k-j-1}{\Gamma', x : t}$.}
+
+                \step{}{Instantiate induction hypothesis $\den{}{}{\Theta; \Delta; \Gamma', x : t
+                    \vdash e' : t'}$, with $\theta, k-j-1, \delta, \gamma_{e'}, \sigma_{e'}$ to
+                    conclude $(\sigma_{e'}, \gamma_{e'}(\delta(e'))) \in \C{k-j-1}{\theta(t')}$.}
+
+                \step{}{By \ref{disjoint}, we have $\gamma(\delta(e')) [x/v] =
+                    \gamma_{e'}(\delta(e'))$ and by \ref{frame} we conclude \\ $({\sigma_e}_f \star
+                    \sigma_{e'}, \gamma(\delta(e')) [x/v]) \in \C{k-j-1}{\theta(t')}$}
 
             \end{proof}
         }

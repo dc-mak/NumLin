@@ -12,19 +12,19 @@
     \V{k}{ f \, \Mat } &= \{ (\{ l \mapsto_{2^{-f}} \_ \} , l) \} \\
 \\
     \V{k}{ \Bang (t' \multimap t'') } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{ t' \multimap t'' } \} \\
-                                      & \cup \{ (\empH, \ottkw{fix} (g, x : t, e : t')) \mid \forall \, j \leq k, (\sigma', v') \in \V{j}{ t' }.\\
+                                      & \cup \{ (\empH, \ottkw{fix} (g, x : t, e : t')) \mid \forall \, j < k, (\sigma', v') \in \V{j}{ t' }.\\
                                       & \qquad \qquad (\sigma', \letManyG v) \in \C{j}{ t' } \} \\
 \\
     \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid \neg (\exists t', t''.\ t = t' \multimap t'') \wedge (\empH, v) \in \V{k}{t} \} \\
 \\
-    \V{k}{ \forall fc.\  t } &= \{ (\sigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\sigma, v [ fc / f ]) \in \V{k}{ t [ fc / f ] } \} \\
+    \V{k}{ \forall fc.\  t } &= \{ (\sigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\sigma, (\ottkw{fun}\, fc \rightarrow \, v)\, [ f ]) \in \V{k}{ t [ fc / f ] } \} \\
 \\
     \V{k}{ t \otimes t' } &= \{ (\sigma \star \sigma', ( v, v' )) \mid (\sigma, v) \in \V{k}{t} \wedge (\sigma', v') \in \V{k}{t'} \} \\
 \\
-    \V{k}{ t \multimap t' } &= \{ (\sigma, \ottkw{fun}\, x : t \rightarrow e) \mid \forall j \leq k, (\sigma', v') \in \V{j}{ t' }.\ \sigma \star \sigma' \textrm{ defined } \Rightarrow \\
+    \V{k}{ t \multimap t' } &= \{ (\sigma, \ottkw{fun}\, x : t \rightarrow e) \mid \forall j < k, (\sigma', v') \in \V{j}{ t' }.\ \sigma \star \sigma' \textrm{ defined } \Rightarrow \\
                             & \qquad \qquad (\sigma \star \sigma', (\ottkw{fun}\, x : t \rightarrow e)\, v') \in \C{j}{ t' } \} \\
 \\
-    \C{k}{ t } &= \{ (\sigma_s, e) \mid \forall \, j < k, \sigma_r.\ \sigma_s \star \sigma_r \textrm{ defined } \Rightarrow \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e'.\\
+    \C{k}{ t } &= \{ (\sigma_s, e) \mid \forall \, j \leq k, \sigma_r.\ \sigma_s \star \sigma_r \textrm{ defined } \Rightarrow \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e'.\\
                & \qquad \qquad \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \star \sigma_r, e' \rangle \wedge ( e' \textrm { is a value } \Rightarrow ( \sigma_f \star \sigma_r, e' ) \in \V{k-j}{t} ) \} \\
 \\
     \den{I}{k}{ \cdot } \theta &= \{ [] \} \\

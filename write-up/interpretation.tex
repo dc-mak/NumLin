@@ -12,14 +12,14 @@
     \V{k}{ f \, \Mat } &= \{ (\{ l \mapsto_{2^{-f}} \_ \} , l) \} \\
 \\
     \V{k}{ \Bang (t' \multimap t'') } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{ t' \multimap t'' } \} \\
-                                      & \cup \{ (\empH, \ottkw{fix} (g, x : t, e : t')) \mid \forall \, j < k, (\sigma', v') \in \V{j}{ t' }.\\
-                                      & \qquad \qquad (\sigma', \letManyG v) \in \C{j}{ t' } \} \\
+                                      & \cup \{ (\empH, \ottkw{fix} (g, x : t, e : t')) \mid \forall \, j < k, (\sigma, v) \in \V{j}{ t }.\\
+                                      & \qquad \qquad (\sigma, \letManyG g\, v) \in \C{j}{ t' } \} \\
 \\
     \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid \neg (\exists t', t''.\ t = t' \multimap t'') \wedge (\empH, v) \in \V{k}{t} \} \\
 \\
     \V{k}{ \forall fc.\  t } &= \{ (\sigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\sigma, (\ottkw{fun}\, fc \rightarrow \, v)\, [ f ]) \in \V{k}{ t [ fc / f ] } \} \\
 \\
-    \V{k}{ t \otimes t' } &= \{ (\sigma \star \sigma', ( v, v' )) \mid (\sigma, v) \in \V{k}{t} \wedge (\sigma', v') \in \V{k}{t'} \} \\
+    \V{k}{ t_1 \otimes t_2 } &= \{ (\sigma_1 \star \sigma_2, ( v_1, v_2 )) \mid (\sigma_1, v_1) \in \V{k}{t_1} \wedge (\sigma_2, v_2) \in \V{k}{t_2} \} \\
 \\
     \V{k}{ t \multimap t' } &= \{ (\sigma, \ottkw{fun}\, x : t \rightarrow e) \mid \forall j < k, (\sigma', v') \in \V{j}{ t' }.\ \sigma \star \sigma' \textrm{ defined } \Rightarrow \\
                             & \qquad \qquad (\sigma \star \sigma', (\ottkw{fun}\, x : t \rightarrow e)\, v') \in \C{j}{ t' } \} \\

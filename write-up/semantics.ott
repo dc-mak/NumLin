@@ -446,7 +446,7 @@ defns
     < H , let ( a , b ) = ( v1 , v2 ) in e > -> < H , e [ a / v1 ] [ b / v2 ] >
 
 
-    e1 = e [ g / let Many g = fix ( g , x : t , e : t' ) in fun x : t -> e ]
+    e1 = e [ g / fun x : t -> let Many g = fix ( g , x : t , e : t' ) in g x ]
     ------------------------------------------------------------------------------------------- :: Let_Fix
     < H , let Many g = fix ( g , x : t , e : t' ) in e' > -> < H , e' [ g / fun x : t -> e1 ] >
 

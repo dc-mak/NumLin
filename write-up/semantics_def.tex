@@ -551,7 +551,7 @@
 
 
 \newcommand{\ottdruleOpXXLetXXFix}[1]{\ottdrule[#1]{%
-\ottpremise{\ottnt{e_{{\mathrm{1}}}}  \ottsym{=}  \ottnt{e}  \ottsym{[}  \mathit{g}  \ottsym{/}  \ottkw{let} \, \ottkw{Many} \, \mathit{g}  \ottsym{=}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottkw{in} \, \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}  \ottsym{]}}%
+\ottpremise{\ottnt{e_{{\mathrm{1}}}}  \ottsym{=}  \ottnt{e}  \ottsym{[}  \mathit{g}  \ottsym{/}  \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottkw{let} \, \ottkw{Many} \, \mathit{g}  \ottsym{=}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottkw{in} \, \mathit{g} \, \mathit{x}  \ottsym{]}}%
 }{
 \langle  \sigma  \ottsym{,}  \ottkw{let} \, \ottkw{Many} \, \mathit{g}  \ottsym{=}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottkw{in} \, \ottnt{e'}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e'}  \ottsym{[}  \mathit{g}  \ottsym{/}  \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e_{{\mathrm{1}}}}  \ottsym{]}  \rangle}{%
 {\ottdrulename{Op\_Let\_Fix}}{}%

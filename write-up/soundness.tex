@@ -25,7 +25,11 @@
             \item ??? $\V{k}{\theta(t)} \subseteq \C{k}{\theta(t)}$.\label{subsetVC}
             \item ??? ``Stronger heap''/frame rule: $\langle \sigma, e \rangle
                 \rightarrow^* = \langle \sigma \star \sigma_r , e \rangle \rightarrow^*$.\label{frame}
-            \item ??? $\forall \delta, \gamma, v.\: \delta(\gamma(v))$ is a value.\label{valueSub}\\
+            \item ??? $\delta(\gamma(v))$ is a value.\label{valueSub}
+            \item ??? $j \leq k \Rightarrow \den{\_\ }{k}{\cdot} \subseteq \den{\_\ }{j}{\cdot}$\label{subset}
+            \item ??? $(\sigma', e') \in \C{k-1}{\cdot} \wedge \langle \sigma,
+                e \rangle \rightarrow \langle \sigma', e' \rangle \Rightarrow
+                (\sigma, e) \in \C{k}{\cdot}\label{stepInC}$\\
         \end{pfenum}
     }
 
@@ -42,54 +46,58 @@
             \suffices{$(\sigma, \ottkw{let}\, x\, =\, \gamma(\delta(e))\,
                 \ottkw{in}\, \gamma(\delta(e'))) \in \C{k}{\theta(t')}$.}
 
-            \begin{proof}
-                \step{}{By induction, $\den{}{}{\Theta; \Delta; \Gamma \vdash e : t}$ and
-                    $\den{}{}{\Theta; \Delta; \Gamma', x : t \vdash e' : t'}$.}
-
-                \step{}{By \ref{inL} and induction on $\Gamma'$, we know there exist
-                        $\sigma_{e'},\; (\sigma_e, \gamma_e) \in \den{L}{k}{\Gamma}$, \\
-                        such that $\sigma = \sigma_e \star \sigma_{e'}$.}\pflabel{split}
-
-                \step{}{So, using them, $\theta, k, \delta$, and \ref{disjoint} we have
-                    $(\sigma_e, \gamma_e(e)) \in \C{k}{\theta(t)}$.}
-
-                \step{}{By \ref{disjoint}, $(\sigma_e, \gamma(\delta(e))) \in \C{k}{\theta(t)}$.}
-
-                \step{}{By definition of $\C{k}{\cdot}$ and \pfref{split}, we
-                    instantiate with $j$ and $\sigma_r = \sigma_{e'}$ to
-                    conclude that $\langle \sigma , \gamma(\delta(e)) \rangle$
-                    either reduces to $\ottkw{err}$ or another heap and expression.}
-
-                \step{}{\case{$\ottkw{err}$}{??? By \textsc{Op\_Context\_Err}
-                    and \ref{frame} with $\sigma_{r'}$, the whole expression
-                    reduces to $\ottkw{err}$ in $j \leq k$ steps. Since $j \leq k$ and
-                    $\sigma_{r}$ are arbitrary, $(\sigma, \gamma(\delta(\ottkw{let}\,
-                    x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t')}$.}}
-
-                \step{}{\case{$j$ steps to another heap and expression.}By \textsc{Op\_Context},
-                    the whole expression does the same.}
-
-                \step{}{If it is not a value, we are done. If it is $({\sigma_e}_f, v)
-                    \in \V{k-j}{\theta(t)}$ by \ref{valueSub}. \suffices{$({\sigma_e}_f \star
-                    \sigma_{e'}, \ottkw{let}\, x\, =\, v\, \ottkw{in}\, \gamma(\delta(e'))) \in
-                    \C{k-j}{\theta(t')}$.} \suffices{$({\sigma_e}_f \star \sigma_{e'},
-                    \gamma(\delta(e')) [x/v]) \in \C{k-j-1}{\theta(t')}$.}}
-
-                \step{}{\define{$\gamma_{e'} (y) = v$ if $ y=x $ and $\gamma(y)$ if $y \in \dom(\Gamma')$.}
-                    Thus, $(\sigma_{e'}, \gamma_{e'}) \in \den{L}{k}{\Gamma', x : t} \subseteq
-                    \den{L}{k-j-1}{\Gamma', x : t}$.}
-
-                \step{}{Instantiate induction hypothesis $\den{}{}{\Theta; \Delta; \Gamma', x : t
-                    \vdash e' : t'}$, with $\theta, k-j-1, \delta, \gamma_{e'}, \sigma_{e'}$ to
-                    conclude $(\sigma_{e'}, \gamma_{e'}(\delta(e'))) \in \C{k-j-1}{\theta(t')}$.}
-
-                \step{}{By \ref{disjoint}, we have $\gamma(\delta(e')) [x/v] =
-                    \gamma_{e'}(\delta(e'))$ and by \ref{frame} we conclude \\ $({\sigma_e}_f \star
-                    \sigma_{e'}, \gamma(\delta(e')) [x/v]) \in \C{k-j-1}{\theta(t')}$}
-
-            \end{proof}
         }
     }
+
+    \begin{proof}
+        \step{}{By induction,
+            \begin{pfenum}
+                \item $\den{}{}{\Theta; \Delta; \Gamma \vdash e : t}$\label{IH1}
+                \item $\den{}{}{\Theta; \Delta; \Gamma', x : t \vdash e' : t'}$\label{IH2}.
+            \end{pfenum}}\pflabel{IH}
+
+        \step{}{By \ref{inL} and induction on $\Gamma'$, we know there exist
+                $\sigma_{e'},\; (\sigma_e, \gamma_e) \in \den{L}{k}{\Gamma}$, \\
+                such that $\sigma = \sigma_e \star \sigma_{e'}$.}\pflabel{split}
+
+        \step{}{So, using them, $\theta, k, \delta$, and \ref{disjoint} we have
+            $(\sigma_e, \gamma_e(e)) \in \C{k}{\theta(t)}$.}
+
+        \step{}{By \ref{disjoint}, $(\sigma_e, \gamma(\delta(e))) \in \C{k}{\theta(t)}$.}
+
+        \step{}{By definition of $\C{k}{\cdot}$ and \pfref{split}, we
+            instantiate with $j$ and $\sigma_r = \sigma_{e'}$ to
+            conclude that $\langle \sigma , \gamma(\delta(e)) \rangle$
+            either reduces to $\ottkw{err}$ or another heap and expression.}
+
+        \step{}{\case{$\ottkw{err}$}{??? By \textsc{Op\_Context\_Err}
+            and \ref{frame} with $\sigma_{r}$, the whole expression
+            reduces to $\ottkw{err}$ in $j \leq k$ steps. Since $j \leq k$ and
+            $\sigma_{r}$ are arbitrary, $(\sigma, \gamma(\delta(\ottkw{let}\,
+            x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t')}$.}}
+
+        \step{}{\case{$j$ steps to another heap and expression.}By \textsc{Op\_Context},
+            the whole expression does the same.}
+
+        \step{}{If it is not a value, we are done. ??? If it is $({\sigma_e}_f, v)
+            \in \V{k-j}{\theta(t)}$ by \ref{valueSub}. \suffices{$({\sigma_e}_f \star
+            \sigma_{e'}, \ottkw{let}\, x\, =\, v\, \ottkw{in}\, \gamma(\delta(e'))) \in
+            \C{k-j}{\theta(t')}$.} \suffices{??? $({\sigma_e}_f \star \sigma_{e'},
+            \gamma(\delta(e')) [x/v]) \in \C{k-j-1}{\theta(t')}$ by \ref{stepInC}.}}
+
+        \step{}{\define{$\gamma_{e'} (y) = v$ if $ y=x $ and $\gamma(y)$ if $y \in \dom(\Gamma')$.}
+            ??? Thus, by \ref{subset}, $(\sigma_{e'}, \gamma_{e'}) \in \den{L}{k}{\Gamma',
+            x : t}\theta \subseteq \den{L}{k-j-1}{\Gamma', x : t}\theta$.}
+
+        \step{}{Instantiate \ref{IH2} of step \pfref{IH} with $\theta, k-j-1, \delta,
+            \gamma_{e'}, \sigma_{e'}$ to conclude \\ $(\sigma_{e'}, \gamma_{e'}(\delta(e')))
+            \in \C{k-j-1}{\theta(t')}$.}
+
+        \step{}{By \ref{disjoint}, we have $\gamma(\delta(e')) [x/v] =
+            \gamma_{e'}(\delta(e'))$ and by \ref{frame} we conclude \\ $({\sigma_e}_f \star
+            \sigma_{e'}, \gamma(\delta(e')) [x/v]) \in \C{k-j-1}{\theta(t')}$}
+
+    \end{proof}
 
     \step{}{%
         \case{%
@@ -97,8 +105,29 @@
         }{%
             \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, ()\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t)}$.}
             {\pf\ Similar to \textsc{Ty\_Let} but with \textsc{Op\_Let\_Unit}.}
+
         }
     }
+
+    \begin{proof}
+
+        \step{}{When $({\sigma_e}_f, v) \in \V{k-j}{\ottkw{unit}}$, we have ${\sigma_e}_f =
+            \empH$ and $v = ()$.}
+
+        \step{}{\suffices{??? $(\sigma_{e'}, \gamma(\delta(e'))) \in
+            \C{k-j-1}{\theta(t')}$ by \ref{stepInC}.}}
+
+        \step{}{\define{$\gamma_{e'}$ to be the restriction of $\gamma$ to $\dom(\Gamma')$.}
+            ??? Thus, by \ref{subset}, $(\sigma_{e'}, \gamma_{e'}) \in \den{L}{k}{\Gamma'}\theta
+            \subseteq \den{L}{k-j-1}{\Gamma'}\theta$.}
+
+        \step{}{Instantiate $\den{}{}{\Theta; \Delta; \Gamma' \vdash e' : t'}$ with $\theta,
+            k-j-1, \delta, \gamma_{e'}, \sigma_{e'}$.}
+
+        \step{}{??? By \ref{disjoint} $(\sigma_{e'}, \gamma(\delta(e'))) \in
+            \C{k-j-1}{\theta(t')}$.}
+
+    \end{proof}
 
     \step{}{%
         \case{%
@@ -106,31 +135,41 @@
         }{%
             \prove{$(\sigma, \gamma(\delta(\ottkw{if}\, e\, \ottkw{then}\,
                 e_1\, \ottkw{else}\, e_2))) \in \C{k}{\theta(t)}$.}
-                {\pf\ Similar to \textsc{Ty\_Let} but with \textsc{Op\_If\_\{True,False\}}.}
-
-            % \suffices{$(\sigma, \ottkw{if}\, \gamma(\delta(e))\, \ottkw{then}\,
-            %     \gamma(\delta(e_1))\, \ottkw{else}\, \gamma(\delta(e_2))) \in \C{k}{\theta(t)}$.}
-
+                {\pf\ Similar to \textsc{Ty\_Unit\_Elim} but with \textsc{Op\_If\_\{True,False\}}\\
+                and ${\sigma_e}_f = \empH$ and $v = \ottkw{Many}\, \ottkw{true}$ or
+                $v = \ottkw{Many}\, \ottkw{false}$.}
         }
-            % \begin{proof}
-
-            %     \step{}{By induction, we have $\den{}{}{\Theta; \Delta; \Gamma
-            %         \vdash e : \: ! \ottkw{bool}}$, $\den{}{}{\Theta; \Delta;
-            %         \Gamma' \vdash e_1: t'}$ and similarly for $e_2$.}
-
-            %     \step{}{}
-
-            % \end{proof}
     }
 
     \step{}{%
         \case{%
             \textsc{Ty\_Pair\_Elim}.
         }{%
-            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, (a, b)\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t)}$.}
+            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, (a, b)\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t')}$.}
             {\pf\ Similar to \textsc{Ty\_Let} but with \textsc{Op\_Let\_Pair}}
         }
     }
+
+    \begin{proof}
+
+        \step{}{When $({\sigma_e}_f, v) \in \V{k-j}{\theta(t_1) \otimes \theta(t_2)}$, we have
+            $v = (v_1, v_2)$.}
+
+        \step{}{\suffices{??? $(\sigma_{e'}, \gamma(\delta(e'))) \in
+            \C{k-j-1}{\theta(t')}$ by \ref{stepInC}.}}
+
+        \step{}{\define{$\gamma_{e'}$ to be the restriction of $\gamma$ to $\dom(\Gamma')$.}
+            ??? Thus, by \ref{subset}, $(\sigma_{e'}, \gamma_{e'}[a \mapsto v_1, b \mapsto v_2 ])
+            \in \den{L}{k}{\Gamma', a : t_1, b : t_2 }\theta \\ \subseteq \den{L}{k-j-1}{\Gamma',
+            a : t_1, b : t_2}\theta$.}
+
+        \step{}{Instantiate $\den{}{}{\Theta; \Delta; \Gamma', a : t_1, b : t_2 \vdash e' : t'}$
+            with $\theta, k-j-1, \delta, \gamma_{e'} [a \mapsto v_1, b \mapsto v_2 ] , \sigma_{e'}$.}
+
+        \step{}{??? By \ref{disjoint} $(\sigma_{e'}, \gamma(\delta(e'))) \in
+            \C{k-j-1}{\theta(t')}$.}
+
+    \end{proof}
 
     \step{}{%
         \case{%
@@ -140,36 +179,60 @@
             \suffices{$(\sigma, \ottkw{Many}\, \gamma(\delta(e))) \in \C{k}{!\theta(t)}$.}
         }
 
-        \begin{proof}
-
-            \step{}{By assumption of \textsc{Ty\_Bang\_Intro}, $e = v$ for some
-                value $v \neq l$, $\Gamma = \empH$ and so $\den{}{}{\Theta;
-                \Delta; \cdot \vdash v : t}$ by induction.}
-
-            \step{}{\suffices{$(\empH, \ottkw{Many}\, \delta(v)) \in
-                \C{k}{!\theta(t)}$ by \ref{disjoint} and \ref{inL}.}}
-
-            \step{}{Instantiate $\den{}{}{\Theta; \Delta; \cdot \vdash v : t}$
-                with $\theta, k, \delta, \gamma = [], \sigma = \empH$ to obtain
-                $(\empH, \delta(v)) \in \C{k}{\theta(t)}$.}
-
-            \step{}{Instantiate $(\empH, \delta(v)) \in \C{k}{\theta(t)}$ with $j=0$, and
-                $\sigma_r = \empH$, to conclude $(\empH, v) \in \V{k}{\theta(t)}$.}
-
-            \step{}{??? By definition of $\V{k}{!\theta(t)}$, \ref{valueSub} and \ref{subsetVC} we
-                have $(\empH, \ottkw{Many}\, \delta(v)) \in \C{k}{!\theta(t)}$.}
-
-        \end{proof}
     }
+
+    \begin{proof}
+
+        \step{}{By assumption of \textsc{Ty\_Bang\_Intro}, $e = v$ for some
+            value $v \neq l$, $\Gamma = \empH$ and so \\ $\den{}{}{\Theta;
+            \Delta; \cdot \vdash v : t}$ by induction.}
+
+        \step{}{\suffices{$(\empH, \ottkw{Many}\, \delta(v)) \in
+            \C{k}{!\theta(t)}$ by \ref{disjoint} and \ref{inL}.}}
+
+        \step{}{Instantiate $\den{}{}{\Theta; \Delta; \cdot \vdash v : t}$
+            with $\theta, k, \delta, \gamma = [], \sigma = \empH$ to obtain
+            $(\empH, \delta(v)) \in \C{k}{\theta(t)}$.}
+
+        \step{}{Instantiate $(\empH, \delta(v)) \in \C{k}{\theta(t)}$ with $j=0$, and
+            $\sigma_r = \empH$, to conclude $(\empH, v) \in \V{k}{\theta(t)}$.}
+
+        \step{}{??? By definition of $\V{k}{!\theta(t)}$, \ref{valueSub} and \ref{subsetVC} we
+            have $(\empH, \ottkw{Many}\, \delta(v)) \in \C{k}{!\theta(t)}$.}
+
+    \end{proof}
 
     \step{}{%
         \case{%
             \textsc{Ty\_Bang\_Elim}.
         }{%
             \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, \ottkw{Many}\, x\, =\, e\, \ottkw{in}\, e')))
-                \in \C{k}{\theta(t)}$.\\}
+                \in \C{k}{\theta(t)}$.}
+            {\pfsketch\ Similar to \textsc{Ty\_Let}, but with the following key differences.}
         }
+
     }
+        \begin{proof}
+
+            \step{}{When $({\sigma_e}_f, v) \in \V{k-j}{\theta(!t)}$, since $\V{k-j}{\theta(!t)}
+                = \V{k-j}{!\theta(t)}$,\\ we have ${\sigma_e}_f = \empH$ and $v = \ottkw{Many}\, v'$
+                for some $(\empH, v') \in \V{k-j}{\theta(t)}$.}
+
+            \step{}{\suffices{$(\sigma_{e'}, \ottkw{let}\, \ottkw{Many}\, x\, =\, \ottkw{Many}\,
+                v'\, \ottkw{in}\, \gamma(\delta(e'))) \in \C{k-j}{\theta(t)}$.}}
+
+            \step{}{\suffices{$(\sigma_{e'}, \gamma(\delta(e')) [ x / v ]) \in \C{k-j-1}{\theta(t)}$.}}
+
+            \step{}{\define{$\gamma_{e'}$ as the restriction of $\gamma$ to $\dom(\Gamma')$.}}
+
+            \step{}{Instantiate $\den{}{}{\Theta; \Delta, x : t, \Gamma' \vdash e' : t'}$ with
+                $\theta, k-j-1, \delta_{e'} = \delta[x \mapsto v'], \gamma_{e'}, \sigma_{e'}$ to
+                conclude \\ $(\sigma_{e'}, \gamma_{e'}(\delta_{e'}(e'))) \in \C{k-j-1}{\theta(t)}$.}
+
+            \step{}{??? By \ref{disjoint}, $(\sigma_{e'}, \gamma(\delta(e')) [ x / v ]) \in
+                \C{k-j-1}{\theta(t)}$.}
+
+        \end{proof}
 
     \step{}{%
         \case{%
@@ -215,38 +278,83 @@
         \case{%
             \textsc{Ty\_Fix}.
         }{%
-        \prove{$(\sigma, \gamma(\delta(\ottkw{fix} (g, x : t, e : t')))) \in \C{k}{\theta(!(t \multimap t'))}$.\\}
+            \prove{$(\sigma, \gamma(\delta(\ottkw{fix} (g, x : t, e : t')))) \in
+                \C{k}{\theta(!(t \multimap t'))}$. This means $\sigma = \empH$.}
+                \suffices{??? to show $ \ldots \in \V{k}{!(\theta(t) \multimap
+                    \theta(t'))}$, by \ref{subsetVC}.}
         }
     }
+
+    \begin{proof}
+
+        \step{}{\assume{Arbitrary $j < k$ and $(\sigma, v) \in \V{j}{\theta(t)}$.}}
+
+        \step{}{\suffices{$(\sigma, \letManyG g\, v) \in \C{j}{\theta(t')}$.}}
+
+        \step{}{\pflet{$e_1 = e [ g / \ottkw{fun}\, x : t \rightarrow \letManyG g\, x ]$.}}
+
+        \step{}{\suffices{??? by \ref{stepInC}, $(\sigma, (\ottkw{fun}\, x : t \rightarrow e_1)\, v)
+            \in \C{j-1}{\theta(t')}$.}}
+
+        \step{}{\suffices{??? by \ref{stepInC}, $(\sigma, e_1 [ x / v ]) \in \C{j-2}{\theta(t')}$.}}
+
+        \step{}{By induction, we have $\den{}{}{\Theta; \Delta, g : t \multimap t';
+            x : t \vdash e : t'}$.}
+
+        \step{}{Instantiate this with $\theta, j-2, \delta[g \mapsto \ottkw{fun}\, x : t
+            \rightarrow e_1 ], \gamma = [ x \mapsto v ], \sigma = \empH$.
+            \prove{$(\empH, \ottkw{fun}\, x : t \rightarrow e_1) \in \V{j-2}{\theta(t)
+            \multimap \theta(t')}$.}}
+
+            \begin{proof}
+
+                \step{}{\suffices{??? by \ref{stepInC}, $(\sigma', e_1 [ x / v']) \in
+                    \C{j-2}{\theta(t')}$ for arbitrary $(\sigma', v') \in \V{j-2}{\theta(t)}$.}}
+
+                \step{}{We can again use the induction hypothesis $\den{}{}{\Theta;
+                        \Delta, g : t \multimap t'; x : t \vdash e : t'}$.}
+
+                \step{}{But since it's true for $\C{0}{\cdot}$ (base case), it's true
+                    by induction ???}
+
+            \end{proof}
+
+            \step{}{Lastly, we show $\delta(\gamma(e)) = e_1 [ x / v ]$, which follows
+                by their definitions, \\ to conclude $(\sigma, e_1 [ x / v ]) \in
+                \C{j-2}{\theta(t')}$.}
+
+    \end{proof}
 
     \step{}{%
         \case{%
             \textsc{Ty\_Var\_Lin}.
         }{%
             \prove{$(\sigma, \gamma(\delta(x))) \in \C{k}{\theta(t)}$.}
-            \begin{proof}
-                \step{}{$\Gamma = \{ x : t\}$ by assumption of \textsc{Ty\_Var\_Lin}.}
-                \step{}{\suffices{$(\sigma, \gamma(x)) \in \C{k}{\theta(t)}$ by \ref{disjoint}.}}
-                \step{}{By \ref{inL}, there exist $(\sigma_x, v_x) \in \V{k}{\theta(t)}$, such
-                    that $\sigma=\sigma_x$ and $\gamma = [x \mapsto v_x]$.}
-                \step{}{??? Hence, $(\sigma_x, v_x) \in \C{k}{\theta(t)}$, by \ref{subsetVC}.}
-            \end{proof}
         }
     }
+
+    \begin{proof}
+        \step{}{$\Gamma = \{ x : t\}$ by assumption of \textsc{Ty\_Var\_Lin}.}
+        \step{}{\suffices{$(\sigma, \gamma(x)) \in \C{k}{\theta(t)}$ by \ref{disjoint}.}}
+        \step{}{By \ref{inL}, there exist $(\sigma_x, v_x) \in \V{k}{\theta(t)}$, such
+            that $\sigma=\sigma_x$ and $\gamma = [x \mapsto v_x]$.}
+        \step{}{??? Hence, $(\sigma_x, v_x) \in \C{k}{\theta(t)}$, by \ref{subsetVC}.}
+    \end{proof}
 
     \step{}{%
         \case{%
             \textsc{Ty\_Var}.
         }{%
             \prove{$(\sigma, \gamma(\delta(x))) \in \C{k}{\theta(t)}$.}
-            \begin{proof}
-                \step{}{$x : t \in \Delta$ and $\Gamma = \empH$ by assumption of \textsc{Ty\_Var}.}
-                \step{}{\suffices{$(\empH, \delta(x)) \in \C{k}{\theta(t)}$ by \ref{disjoint} and \ref{inL}.}}
-                \step{}{By \ref{inI}, there exists $v_x$ such that $(\empH, v_x) \in \V{k}{\theta(t)}$.}
-                \step{}{??? Hence, $(\empH, v_x) \in \C{k}{\theta(t)}$, by \ref{subsetVC}.}
-            \end{proof}
         }
     }
+
+    \begin{proof}
+        \step{}{$x : t \in \Delta$ and $\Gamma = \empH$ by assumption of \textsc{Ty\_Var}.}
+        \step{}{\suffices{$(\empH, \delta(x)) \in \C{k}{\theta(t)}$ by \ref{disjoint} and \ref{inL}.}}
+        \step{}{By \ref{inI}, there exists $v_x$ such that $(\empH, v_x) \in \V{k}{\theta(t)}$.}
+        \step{}{??? Hence, $(\empH, v_x) \in \C{k}{\theta(t)}$, by \ref{subsetVC}.}
+    \end{proof}
 
     \step{}{%
         \case{%

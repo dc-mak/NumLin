@@ -21,8 +21,8 @@
 \\
     \V{k}{ t_1 \otimes t_2 } &= \{ (\sigma_1 \star \sigma_2, ( v_1, v_2 )) \mid (\sigma_1, v_1) \in \V{k}{t_1} \wedge (\sigma_2, v_2) \in \V{k}{t_2} \} \\
 \\
-    \V{k}{ t \multimap t' } &= \{ (\sigma, \ottkw{fun}\, x : t \rightarrow e) \mid \forall j < k, (\sigma', v') \in \V{j}{ t' }.\ \sigma \star \sigma' \textrm{ defined } \Rightarrow \\
-                            & \qquad \qquad (\sigma \star \sigma', (\ottkw{fun}\, x : t \rightarrow e)\, v') \in \C{j}{ t' } \} \\
+    \V{k}{ t \multimap t' } &= \{ (\sigma, \ottkw{fun}\, x : t \rightarrow e) \mid \forall j < k, (\sigma_v, v) \in \V{j}{ t }.\ \sigma \star \sigma_v \textrm{ defined } \Rightarrow \\
+                            & \qquad \qquad (\sigma \star \sigma_v, (\ottkw{fun}\, x : t \rightarrow e)\, v) \in \C{j}{ t' } \} \\
 \\
     \C{k}{ t } &= \{ (\sigma_s, e) \mid \forall \, j \leq k, \sigma_r.\ \sigma_s \star \sigma_r \textrm{ defined } \Rightarrow \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e'.\\
                & \qquad \qquad \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \star \sigma_r, e' \rangle \wedge ( e' \textrm { is a value } \Rightarrow ( \sigma_f \star \sigma_r, e' ) \in \V{k-j}{t} ) \} \\

@@ -1,8 +1,32 @@
-\section{Soundness Proof}
+\section{Proofs}
+
+\subsection{Lemmas}
 
 \[
+    \V{k}{\theta(t)} \subseteq \C{k}{\theta(t)}
+\]\label{subsetVC}
+
+\[
+    \langle \sigma, e \rangle \rightarrow^* = \langle \sigma \star \sigma_r , e \rangle \rightarrow^*
+\]\label{frame}
+
+\[
+    \delta(\gamma(v))\textrm{ is a value.}
+\]\label{valueSub}
+
+\[
+    j \leq k \Rightarrow \den{\_\ }{k}{\cdot} \subseteq \den{\_\ }{j}{\cdot}
+\]\label{subsetKJ}
+
+\[
+    (\sigma', e') \in \C{k-1}{\cdot} \wedge \langle \sigma, e \rangle \rightarrow \langle \sigma', e' \rangle
+    \Rightarrow (\sigma, e) \in \C{k}{\cdot}
+\]\label{stepInC}
+
+\subsection{Soundness}
+\[
     \forall \Theta, \Delta, \Gamma, e, t.\ \Theta; \Delta ; \Gamma \vdash e : t \Rightarrow
-    \den{}{}{ \Theta; \Delta ; \Gamma \vdash e : t }
+    \forall k.\ \den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t }
 \]
 
 \begin{proof}
@@ -22,14 +46,6 @@
                 $\dom(\Gamma)$ are disjoint.\label{disjoint}
             \item And so that over expressions $\gamma \circ \delta = \delta \circ \gamma$.
             \item By construction, $\dom(\Delta) = \dom(\delta)$ and $\dom(\Gamma) = \dom(\gamma)$.\label{samedom}
-            \item ??? $\V{k}{\theta(t)} \subseteq \C{k}{\theta(t)}$.\label{subsetVC}
-            \item ??? ``Stronger heap''/frame rule: $\langle \sigma, e \rangle
-                \rightarrow^* = \langle \sigma \star \sigma_r , e \rangle \rightarrow^*$.\label{frame}
-            \item ??? $\delta(\gamma(v))$ is a value.\label{valueSub}
-            \item ??? $j \leq k \Rightarrow \den{\_\ }{k}{\cdot} \subseteq \den{\_\ }{j}{\cdot}$\label{subsetKJ}
-            \item ??? $(\sigma', e') \in \C{k-1}{\cdot} \wedge \langle \sigma,
-                e \rangle \rightarrow \langle \sigma', e' \rangle \Rightarrow
-                (\sigma, e) \in \C{k}{\cdot}\label{stepInC}$\\
         \end{pfenum}
     }
 

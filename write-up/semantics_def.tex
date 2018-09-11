@@ -476,7 +476,7 @@
 \newcommand{\ottdruleTyXXFix}[1]{\ottdrule[#1]{%
 \ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{,}  \mathit{g}  \ottsym{:}  \ottnt{t}  \multimap  \ottnt{t'}  \ottsym{;}   \cdot   \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \vdash  \ottnt{e}  \ottsym{:}  \ottnt{t'}}%
 }{
-\Theta  \ottsym{;}  \Delta  \ottsym{;}   \cdot   \vdash  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}  \ottsym{:}  \: !  \ottsym{(}  \ottnt{t}  \multimap  \ottnt{t'}  \ottsym{)}}{%
+\Theta  \ottsym{;}  \Delta  \ottsym{;}   \cdot   \vdash  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}  \ottsym{:}  \ottnt{t}  \multimap  \ottnt{t'}}{%
 {\ottdrulename{Ty\_Fix}}{}%
 }}
 
@@ -550,14 +550,6 @@
 }}
 
 
-\newcommand{\ottdruleOpXXLetXXFix}[1]{\ottdrule[#1]{%
-\ottpremise{\ottnt{e_{{\mathrm{1}}}}  \ottsym{=}  \ottnt{e}  \ottsym{[}  \mathit{g}  \ottsym{/}  \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottkw{let} \, \ottkw{Many} \, \mathit{g}  \ottsym{=}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottkw{in} \, \mathit{g} \, \mathit{x}  \ottsym{]}}%
-}{
-\langle  \sigma  \ottsym{,}  \ottkw{let} \, \ottkw{Many} \, \mathit{g}  \ottsym{=}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottkw{in} \, \ottnt{e'}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e'}  \ottsym{[}  \mathit{g}  \ottsym{/}  \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e_{{\mathrm{1}}}}  \ottsym{]}  \rangle}{%
-{\ottdrulename{Op\_Let\_Fix}}{}%
-}}
-
-
 \newcommand{\ottdruleOpXXFracXXCap}[1]{\ottdrule[#1]{%
 }{
 \langle  \sigma  \ottsym{,}  \ottsym{(}  \ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}  \ottsym{)}  \ottsym{[}  \ottnt{f}  \ottsym{]}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{v}  \ottsym{[}  \mathit{fc}  \ottsym{/}  \ottnt{f}  \ottsym{]}  \rangle}{%
@@ -565,10 +557,17 @@
 }}
 
 
-\newcommand{\ottdruleOpXXApp}[1]{\ottdrule[#1]{%
+\newcommand{\ottdruleOpXXAppXXFix}[1]{\ottdrule[#1]{%
+}{
+\langle  \sigma  \ottsym{,}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottnt{v}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \mathit{x}  \ottsym{/}  \ottnt{v}  \ottsym{]}  \ottsym{[}  \mathit{g}  \ottsym{/}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}  \ottsym{]}  \rangle}{%
+{\ottdrulename{Op\_App\_Fix}}{}%
+}}
+
+
+\newcommand{\ottdruleOpXXAppXXLambda}[1]{\ottdrule[#1]{%
 }{
 \langle  \sigma  \ottsym{,}  \ottsym{(}  \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}  \ottsym{)} \, \ottnt{v}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \mathit{x}  \ottsym{/}  \ottnt{v}  \ottsym{]}  \rangle}{%
-{\ottdrulename{Op\_App}}{}%
+{\ottdrulename{Op\_App\_Lambda}}{}%
 }}
 
 
@@ -649,9 +648,9 @@
 \ottusedrule{\ottdruleOpXXIfXXFalse{}}
 \ottusedrule{\ottdruleOpXXLetXXMany{}}
 \ottusedrule{\ottdruleOpXXLetXXPair{}}
-\ottusedrule{\ottdruleOpXXLetXXFix{}}
 \ottusedrule{\ottdruleOpXXFracXXCap{}}
-\ottusedrule{\ottdruleOpXXApp{}}
+\ottusedrule{\ottdruleOpXXAppXXFix{}}
+\ottusedrule{\ottdruleOpXXAppXXLambda{}}
 \ottusedrule{\ottdruleOpXXContext{}}
 \ottusedrule{\ottdruleOpXXContextXXErr{}}
 \ottusedrule{\ottdruleOpXXMatrix{}}

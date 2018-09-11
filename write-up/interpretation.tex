@@ -1,5 +1,33 @@
 \section{Interpretation}
 
+\subsection{Definitions}
+
+Let $ Heap \equiv Loc \rightharpoonup Permission \times Matrix$ and
+$\star: Heap \times Heap \rightharpoonup Heap$ as follows:
+\[
+    (\sigma_1 \star \sigma_2)(l) \equiv
+    \begin{cases}
+        \sigma_1(l) & \textrm{if } l \in \dom(\sigma_1) \wedge l \notin \dom(\sigma_2) \\
+        \sigma_2(l) & \textrm{if } l \in \dom(\sigma_2) \wedge l \notin \dom(\sigma_1) \\
+        (f_1 + f_2, m) & \textrm{if } (f_1, m) = \sigma_1(l) \wedge (f_2, m) = \sigma_2(l) \wedge f_1 + f_2 \leq 1 \\
+        \textrm{undefined} & \textrm{otherwise}
+    \end{cases}
+\]
+Commutativity and associativity of $\star$ follows from that of $+$.\\
+$\sigma_1 \star \sigma_2$ is ``defined'' if it is for all $l \in \dom(\sigma_1) \cup \dom(\sigma_2)$.\\
+\\
+The $n-$fold iteration for the (functional) $StepsTo$ relation, is also a (functional) relation:
+\begin{align*}
+    \forall n.\ \ottkw{err} &\rightarrow^n \ottkw{err}\\
+    \forall n.\ \langle \sigma , v \rangle &\rightarrow^n \langle \sigma , v \rangle\\
+    \langle \sigma , e \rangle &\rightarrow^0 \langle \sigma , e \rangle\\
+    \langle \sigma , e \rangle &\rightarrow^{n+1} ((\langle \sigma , e \rangle \rightarrow) \rightarrow^n)
+\end{align*}
+Hence, all bounded iterations end in either an $\ottkw{err}$, a heap-and-expression or a
+heap-and-value.
+
+\subsection{Interpretation}
+
 \begin{align*}
   \V{k}{ \Unit } &= \{ (\empH, \ast) \} \\
 \\
@@ -11,18 +39,14 @@
 \\
     \V{k}{ f \, \Mat } &= \{ (\{ l \mapsto_{2^{-f}} \_ \} , l) \} \\
 \\
-    \V{k}{ \Bang (t' \multimap t'') } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{ t' \multimap t'' } \} \\
-                                      & \cup \{ (\empH, \ottkw{fix} (g, x : t, e : t')) \mid \forall \, j < k, (\sigma, v) \in \V{j}{ t }.\\
-                                      & \qquad \qquad (\sigma, \letManyG g\, v) \in \C{j}{ t' } \} \\
-\\
-    \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid \neg (\exists t', t''.\ t = t' \multimap t'') \wedge (\empH, v) \in \V{k}{t} \} \\
+    \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{t} \} \\
 \\
     \V{k}{ \forall fc.\  t } &= \{ (\sigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\sigma, (\ottkw{fun}\, fc \rightarrow \, v)\, [ f ]) \in \V{k}{ t [ fc / f ] } \} \\
 \\
     \V{k}{ t_1 \otimes t_2 } &= \{ (\sigma_1 \star \sigma_2, ( v_1, v_2 )) \mid (\sigma_1, v_1) \in \V{k}{t_1} \wedge (\sigma_2, v_2) \in \V{k}{t_2} \} \\
 \\
-    \V{k}{ t \multimap t' } &= \{ (\sigma, \ottkw{fun}\, x : t \rightarrow e) \mid \forall j < k, (\sigma_v, v) \in \V{j}{ t }.\ \sigma \star \sigma_v \textrm{ defined } \Rightarrow \\
-                            & \qquad \qquad (\sigma \star \sigma_v, (\ottkw{fun}\, x : t \rightarrow e)\, v) \in \C{j}{ t' } \} \\
+    \V{k}{ t \multimap t' } &= \{ (\sigma, v' ) \mid ( v' = \ottkw{fun}\, x : t \rightarrow e \vee v' = \ottkw{fix} (g, x : t, e : t') ) \, \wedge\\
+                            & \qquad \qquad \forall j < k, (\sigma_v, v) \in \V{j}{ t }.\ \sigma \star \sigma_v \textrm{ defined } \Rightarrow (\sigma \star \sigma_v, v'\, v) \in \C{j}{ t' } \} \\
 \\
     \C{k}{ t } &= \{ (\sigma_s, e) \mid \forall \, j \leq k, \sigma_r.\ \sigma_s \star \sigma_r \textrm{ defined } \Rightarrow \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e'.\\
                & \qquad \qquad \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \star \sigma_r, e' \rangle \wedge ( e' \textrm { is a value } \Rightarrow ( \sigma_f \star \sigma_r, e' ) \in \V{k-j}{t} ) \} \\
@@ -35,6 +59,6 @@
 \\
     \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\sigma \star \sigma_x, \gamma[x \mapsto v_x ]) \mid (\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\sigma_x, v_x) \in \V{k}{\theta(t)} \} \\
 \\
-\den{}{}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, k, \delta, \gamma, \sigma.\ \dom(\Theta) = \dom(\theta) \wedge (\sigma, \gamma) \in \den{L}{k}{ \Gamma }\theta \wedge \delta \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
+\den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, \delta, \gamma, \sigma.\ \dom(\Theta) = \dom(\theta) \wedge (\sigma, \gamma) \in \den{L}{k}{ \Gamma }\theta \wedge \delta \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
                                                  & \qquad \qquad (\sigma, \gamma(\delta(e))) \in \C{k}{ \theta(t) }
 \end{align*}

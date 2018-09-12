@@ -2,26 +2,75 @@
 
 \subsection{Lemmas}
 
-\[
-    \V{k}{\theta(t)} \subseteq \C{k}{\theta(t)}
-\]\label{subsetVC}
+\subsubsection{$
+    \forall \sigma_s, \sigma_r, e.\ \varsigma_s \star \varsigma_r \textrm{ defined }
+    \Rightarrow \forall n.\ \langle \sigma_s, e \rangle \rightarrow^n =
+    \langle \sigma_f \cup \sigma_r , e \rangle \rightarrow^n
+$}\label{frame}
 
-\[
-    \langle \sigma, e \rangle \rightarrow^* = \langle \sigma \star \sigma_r , e \rangle \rightarrow^*
-\]\label{frame}
+\begin{proof}
 
-\[
-    \delta(\gamma(v))\textrm{ is a value.}
-\]\label{valueSub}
+    \pfsketch{~By induction on $n$, consider only the cases
+        $\langle \sigma_s, e \rangle \rightarrow \langle \sigma_f, e_f \rangle$
+        where $\sigma_s \neq \sigma_f$.\\
+        Only \textsc{Op\_\{Free,Matrix,Share,Unshare\_Eq,Gemm\_Match\}} change
+        the heap.\\
+        The rest are either parametric in the heap or step to an $\ottkw{err}$.\\}
 
-\[
-    j \leq k \Rightarrow \den{\_\ }{k}{\cdot} \subseteq \den{\_\ }{j}{\cdot}
-\]\label{subsetKJ}
+    \prove{$\langle \sigma_s \cup \sigma_r, e \rangle \rightarrow
+        \langle \sigma_f \cup \sigma_r, e_f \rangle$.\\}
 
-\[
-    (\sigma', e') \in \C{k-1}{\cdot} \wedge \langle \sigma, e \rangle \rightarrow \langle \sigma', e' \rangle
-    \Rightarrow (\sigma, e) \in \C{k}{\cdot}
-\]\label{stepInC}
+    \step{}{\case{\textsc{Op\_Free}, $\sigma_s \equiv \sigma' \cup \{ l
+        \mapsto_1 m \}$, $\sigma_f = \sigma'$.}{\pf~Instantiate
+        \textsc{Op\_Free} with $(\sigma' \cup \sigma_r) \cup \{ l \mapsto_1 m
+        \}$,\\valid because $l \notin \dom(\varsigma_r)$ by $\varsigma' \star
+        [l \mapsto_1 m] \star \varsigma_r$ defined (assumption).}}
+
+    \step{}{\case{\textsc{Op\_Matrix}}{
+        \pf~Rule has no requirements on $\sigma_s$ so will also work with
+        $\sigma_s \cup \sigma_r$.
+    }}
+
+    \step{}{\case{\textsc{Op\_Share}}{
+        \pf~Union-ing $\sigma_r$ does not remove elements, so we can still
+        split up $ \sigma_s \cup \sigma_r$ as originally.
+    }}
+
+    \step{}{\case{\textsc{Op\_Unshare\_Eq}}{
+        \pf~By assumption of $\varsigma_s \star \varsigma_r$ defined, we know
+        any splitting of $\sigma_s \cup \sigma_r$ will satisfy $f \leq 1$.
+    }}
+
+    \step{}{\case{\textsc{Op\_Gemm\_Match}}{
+        \pf~None of the permissions are changed, only the pointed to matrix
+        value at $l_3$. By assumption of $\varsigma_s \star \varsigma_r$
+        defined, $l_3 \notin \dom(\varsigma_r)$ so not in $\sigma_r$ (cannot be
+        affected by its union to $\sigma_s$). As for $l_1$ and $l_2$, their
+        permissions are universally quantified over, and so will not be
+        affected by union-ing $\sigma_r$ to $\sigma_s$.
+    }}
+
+\end{proof}
+
+\subsubsection{$\forall k, t.\ \V{k}{t} \subseteq \C{k}{t}$}\label{subsetVC}
+Follows from definition of $\C{k}{t}$, $\rightarrow^j$ for arbitrary $j \leq k$
+and \ref{frame}.
+
+\subsubsection{$\forall \delta, \gamma, v.\ \delta(\gamma(v))\textrm{ is a value.}$}\label{valueSub}
+
+By construction, $\delta$ and $\gamma$ only map variables to values, and values
+are closed under substitution.
+
+\subsubsection{$
+    \forall k, \sigma, \sigma', e, e', t.  \ (\varsigma', e') \in \C{k}{t} \wedge
+    \langle \sigma, e \rangle \rightarrow \langle \sigma', e' \rangle
+    \Rightarrow (\varsigma, e) \in \C{k+1}{t}
+$}\label{stepInC}
+
+Assume arbitrary $j \leq k + 1$. If $j=0$, then in trivally. If $j \geq 1$,
+then take a step and appeal to assumption, with $j-1 \leq k$.
+
+\subsubsection{$j \leq k \Rightarrow \den{\_\ }{k}{\cdot} \subseteq \den{\_\ }{j}{\cdot}$}\label{subsetKJ}
 
 \subsection{Soundness}
 \[
@@ -448,9 +497,9 @@
 
         \step{}{\assume{Arbitrary $j < k$ and $(\sigma, v) \in \V{j}{\theta(t)}$.}}
 
-        \step{}{\suffices{$(\sigma, \letManyG g\, v) \in \C{j}{\theta(t')}$.}}
+        \step{}{\suffices{$(\sigma, \emph{letManyG } g\, v) \in \C{j}{\theta(t')}$.}}
 
-        \step{}{\pflet{$e_1 = e [ g / \ottkw{fun}\, x : t \rightarrow \letManyG g\, x ]$.}}
+        \step{}{\pflet{$e_1 = e [ g / \ottkw{fun}\, x : t \rightarrow \emph{letManyG } g\, x ]$.}}
 
         \step{}{\suffices{??? by \ref{stepInC}, $(\sigma, (\ottkw{fun}\, x : t \rightarrow e_1)\, v)
             \in \C{j-1}{\theta(t')}$.}}

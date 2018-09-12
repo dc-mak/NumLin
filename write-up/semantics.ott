@@ -36,7 +36,7 @@ grammar
     | ->    ::  :: arrow     {{ tex \rightarrow   }}
     | value ::  :: value
     | __    ::  :: hole      {{ tex [ - ]         }}
-    | and   ::  :: disjU     {{ tex \uplus        }}
+    | and   ::  :: disjU     {{ tex \cup          }}
     | |->   ::  :: points    {{ tex \mapsto       }}
     | <     ::  :: langle    {{ tex \langle       }}
     | >     ::  :: rangle    {{ tex \rangle       }}
@@ -402,7 +402,7 @@ defns
 
 grammar
 
-  H {{ tex \sigma }} :: 'Heap_' ::=  {{ com heap }}
+  H {{ tex \sigma }} :: 'Heap_' ::=  {{ com heap (sets of triples) }}
     | nil :: :: Nil  {{ tex \{ \} }} {{ com empty heap }}
     | H and { l |-> f , m k1 k2 } :: :: Ext 
     {{ tex [[H]] [[and]] \{ [[l]] [[|->]]_[[f]] [[m]]_{[[k1]], [[k2]]} \} }}
@@ -469,6 +469,7 @@ defns
 
 
     0 <= k1 , k2
+    l fresh
     ----------------------------------------------------- :: Matrix
     < H , matrix k1 k2 > -> < H and { l |-> Z ,  M k1 k2 } , l >
 
@@ -514,6 +515,7 @@ grammar
     | 0 <= k1 , k2 ::  :: posDim {{ tex [[0]] \leq [[k1]], [[k2]]  }}
     | f <= 1       ::  :: fracBound {{ tex [[f]] \leq 1  }}
     | H' = H       ::  :: storeEq
+    | l fresh      ::  :: freshL {{ tex [[l]] \textrm{ fresh } }}
 
 
 % vim: sw=2 sts=2

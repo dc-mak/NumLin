@@ -2,19 +2,25 @@
 
 \subsection{Definitions}
 
-Let $ Heap \equiv Loc \rightharpoonup Permission \times Matrix$ and
-$\star: Heap \times Heap \rightharpoonup Heap$ as follows:
+Operationally, $\emph{Heap} \subseteq \emph{Loc} \times \emph{Permission}
+\times \emph{Matrix} $, denoted with a $\sigma$.\\
+Define its \emph{interpretation} to be $\emph{Loc} \rightharpoonup
+\emph{Permission} \times \emph{Matrix}$ with $\star:
+\emph{Heap} \times \emph{Heap} \rightharpoonup \emph{Heap}$ as follows:
 \[
-    (\sigma_1 \star \sigma_2)(l) \equiv
+    (\varsigma_1 \star \varsigma_2)(l) \equiv
     \begin{cases}
-        \sigma_1(l) & \textrm{if } l \in \dom(\sigma_1) \wedge l \notin \dom(\sigma_2) \\
-        \sigma_2(l) & \textrm{if } l \in \dom(\sigma_2) \wedge l \notin \dom(\sigma_1) \\
-        (f_1 + f_2, m) & \textrm{if } (f_1, m) = \sigma_1(l) \wedge (f_2, m) = \sigma_2(l) \wedge f_1 + f_2 \leq 1 \\
+        \varsigma_1(l) & \textrm{if } l \in \dom(\varsigma_1) \wedge l \notin \dom(\varsigma_2) \\
+        \varsigma_2(l) & \textrm{if } l \in \dom(\varsigma_2) \wedge l \notin \dom(\varsigma_1) \\
+        (f_1 + f_2, m) & \textrm{if } (f_1, m) = \varsigma_1(l) \wedge (f_2, m) = \varsigma_2(l) \wedge f_1 + f_2 \leq 1 \\
         \textrm{undefined} & \textrm{otherwise}
     \end{cases}
 \]
 Commutativity and associativity of $\star$ follows from that of $+$.\\
-$\sigma_1 \star \sigma_2$ is ``defined'' if it is for all $l \in \dom(\sigma_1) \cup \dom(\sigma_2)$.\\
+$\varsigma_1 \star \varsigma_2$ is \emph{defined} if it is for all $l \in
+\dom(\varsigma_1) \cup \dom(\varsigma_2)$.\\
+\textbf{Implicitly denote} $\varsigma \equiv \den{H}{}{\sigma} \equiv
+\bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]$.\\
 \\
 The $n-$fold iteration for the (functional) $StepsTo$ relation, is also a (functional) relation:
 \begin{align*}
@@ -41,15 +47,15 @@ heap-and-value.
 \\
     \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{t} \} \\
 \\
-    \V{k}{ \forall fc.\  t } &= \{ (\sigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\sigma, (\ottkw{fun}\, fc \rightarrow \, v)\, [ f ]) \in \V{k}{ t [ fc / f ] } \} \\
+    \V{k}{ \forall fc.\  t } &= \{ (\varsigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\varsigma, (\ottkw{fun}\, fc \rightarrow \, v)\, [ f ]) \in \V{k}{ t [ fc / f ] } \} \\
 \\
-    \V{k}{ t_1 \otimes t_2 } &= \{ (\sigma_1 \star \sigma_2, ( v_1, v_2 )) \mid (\sigma_1, v_1) \in \V{k}{t_1} \wedge (\sigma_2, v_2) \in \V{k}{t_2} \} \\
+    \V{k}{ t_1 \otimes t_2 } &= \{ (\varsigma_1 \star \varsigma_2, ( v_1, v_2 )) \mid (\varsigma_1, v_1) \in \V{k}{t_1} \wedge (\varsigma_2, v_2) \in \V{k}{t_2} \} \\
 \\
-    \V{k}{ t \multimap t' } &= \{ (\sigma, v' ) \mid ( v' = \ottkw{fun}\, x : t \rightarrow e \vee v' = \ottkw{fix} (g, x : t, e : t') ) \, \wedge\\
-                            & \qquad \qquad \forall j < k, (\sigma_v, v) \in \V{j}{ t }.\ \sigma \star \sigma_v \textrm{ defined } \Rightarrow (\sigma \star \sigma_v, v'\, v) \in \C{j}{ t' } \} \\
+    \V{k}{ t \multimap t' } &= \{ (\varsigma, v' ) \mid ( v' = \ottkw{fun}\, x : t \rightarrow e \vee v' = \ottkw{fix} (g, x : t, e : t') ) \, \wedge\\
+                            & \qquad \qquad \forall j < k, (\varsigma_v, v) \in \V{j}{ t }.\ \varsigma \star \varsigma_v \textrm{ defined } \Rightarrow (\varsigma \star \varsigma_v, v'\, v) \in \C{j}{ t' } \} \\
 \\
-    \C{k}{ t } &= \{ (\sigma_s, e) \mid \forall \, j \leq k, \sigma_r.\ \sigma_s \star \sigma_r \textrm{ defined } \Rightarrow \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e'.\\
-               & \qquad \qquad \langle \sigma_s \star \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \star \sigma_r, e' \rangle \wedge ( e' \textrm { is a value } \Rightarrow ( \sigma_f \star \sigma_r, e' ) \in \V{k-j}{t} ) \} \\
+    \C{k}{ t } &= \{ (\varsigma_s, e) \mid \forall \, j \leq k, \varsigma_r.\ \varsigma_s \star \varsigma_r \textrm{ defined } \Rightarrow \langle \sigma_s \uplus \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e'.\\
+               & \qquad \qquad \langle \sigma_s \uplus \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \uplus \sigma_r, e' \rangle \wedge ( e' \textrm { is a value } \Rightarrow ( \varsigma_f \star \varsigma_r, e' ) \in \V{k-j}{t} ) \} \\
 \\
     \den{I}{k}{ \cdot } \theta &= \{ [] \} \\
 \\
@@ -57,8 +63,10 @@ heap-and-value.
 \\
     \den{L}{k}{ \cdot } \theta &= \{ (\empH, []) \} \\
 \\
-    \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\sigma \star \sigma_x, \gamma[x \mapsto v_x ]) \mid (\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\sigma_x, v_x) \in \V{k}{\theta(t)} \} \\
+    \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\varsigma \star \varsigma_x, \gamma[x \mapsto v_x ]) \mid (\varsigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\varsigma_x, v_x) \in \V{k}{\theta(t)} \} \\
 \\
-\den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, \delta, \gamma, \sigma.\ \dom(\Theta) = \dom(\theta) \wedge (\sigma, \gamma) \in \den{L}{k}{ \Gamma }\theta \wedge \delta \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
-                                                 & \qquad \qquad (\sigma, \gamma(\delta(e))) \in \C{k}{ \theta(t) }
+    \varsigma \equiv \den{H}{}{\sigma} &\equiv \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]\\
+\\
+\den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, \delta, \gamma, \sigma.\ \dom(\Theta) = \dom(\theta) \wedge (\varsigma, \gamma) \in \den{L}{k}{ \Gamma }\theta \wedge \delta \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
+                                                 & \qquad \qquad (\varsigma, \gamma(\delta(e))) \in \C{k}{ \theta(t) }
 \end{align*}

@@ -5,56 +5,86 @@
 \subsubsection{$
     \forall \sigma_s, \sigma_r, e.\ \varsigma_s \star \varsigma_r \textrm{ defined }
     \Rightarrow \forall n.\ \langle \sigma_s, e \rangle \rightarrow^n =
-    \langle \sigma_f \cup \sigma_r , e \rangle \rightarrow^n
+    \langle \sigma_f + \sigma_r , e \rangle \rightarrow^n
 $}\label{frame}
 
 \begin{proof}
 
-    \pfsketch{~By induction on $n$, consider only the cases
-        $\langle \sigma_s, e \rangle \rightarrow \langle \sigma_f, e_f \rangle$
-        where $\sigma_s \neq \sigma_f$.\\
-        Only \textsc{Op\_\{Free,Matrix,Share,Unshare\_Eq,Gemm\_Match\}} change
-        the heap.\\
-        The rest are either parametric in the heap or step to an $\ottkw{err}$.\\}
+    \suffices{By induction on $n$, consider only the cases $\langle \sigma_s, e
+        \rangle \rightarrow \langle \sigma_f, e_f \rangle$ where $\sigma_s \neq
+        \sigma_f$.\\}
 
-    \prove{$\langle \sigma_s \cup \sigma_r, e \rangle \rightarrow
-        \langle \sigma_f \cup \sigma_r, e_f \rangle$.\\}
+    \pfsketch{~Only \textsc{Op\_\{Free, Matrix, Share, Unshare\_Eq,
+        Gemm\_Match\}} change the heap: the rest are either parametric in the
+        heap or step to an $\ottkw{err}$.\\}
 
-    \step{}{\case{\textsc{Op\_Free}, $\sigma_s \equiv \sigma' \cup \{ l
+    \prove{$\langle \sigma_s + \sigma_r, e \rangle \rightarrow
+        \langle \sigma_f + \sigma_r, e_f \rangle$.\\}
+
+    \step{}{\case{\textsc{Op\_Free}, $\sigma_s \equiv \sigma' + \{ l
         \mapsto_1 m \}$, $\sigma_f = \sigma'$.}{\pf~Instantiate
-        \textsc{Op\_Free} with $(\sigma' \cup \sigma_r) \cup \{ l \mapsto_1 m
+        \textsc{Op\_Free} with $(\sigma' + \sigma_r) + \{ l \mapsto_1 m
         \}$,\\valid because $l \notin \dom(\varsigma_r)$ by $\varsigma' \star
         [l \mapsto_1 m] \star \varsigma_r$ defined (assumption).}}
 
     \step{}{\case{\textsc{Op\_Matrix}}{
         \pf~Rule has no requirements on $\sigma_s$ so will also work with
-        $\sigma_s \cup \sigma_r$.
+        $\sigma_s + \sigma_r$.
     }}
 
-    \step{}{\case{\textsc{Op\_Share}}{
-        \pf~Union-ing $\sigma_r$ does not remove elements, so we can still
-        split up $ \sigma_s \cup \sigma_r$ as originally.
+    \step{}{\case{\textsc{Op\_Share}, $\sigma_s \equiv \sigma' + \{ l \mapsto_f
+        m \}$, $\sigma_f = \sigma' + \{ l \mapsto_{\frac{1}{2} \cdot f} m \} +
+        \{ l \mapsto_{\frac{1}{2} \cdot f} m \}$.}{
+        \pf~Union-ing $\sigma_r$ does not remove $l \mapsto_f m$, so that can
+        be split out of $ \sigma_s + \sigma_r$ as before.
     }}
 
-    \step{}{\case{\textsc{Op\_Unshare\_Eq}}{
-        \pf~By assumption of $\varsigma_s \star \varsigma_r$ defined, we know
-        any splitting of $\sigma_s \cup \sigma_r$ will satisfy $f \leq 1$.
-    }}
+    \step{}{\case{\textsc{Op\_Unshare\_Eq}, $\sigma_s \equiv \sigma' + \{ l
+        \mapsto_{\frac{1}{2} \cdot f} m \} + \{ l \mapsto_{\frac{1}{2} \cdot f}
+        m \}$, $\sigma_f = \sigma' + \{ l \mapsto_f m \}$.}{}}
 
-    \step{}{\case{\textsc{Op\_Gemm\_Match}}{
-        \pf~None of the permissions are changed, only the pointed to matrix
-        value at $l_3$. By assumption of $\varsigma_s \star \varsigma_r$
-        defined, $l_3 \notin \dom(\varsigma_r)$ so not in $\sigma_r$ (cannot be
-        affected by its union to $\sigma_s$). As for $l_1$ and $l_2$, their
-        permissions are universally quantified over, and so will not be
-        affected by union-ing $\sigma_r$ to $\sigma_s$.
-    }}
+    \begin{proof}
+
+        \step{}{Union-ing $\sigma_r$ does not remove $l \mapsto_{\frac{1}{2}
+            \cdot f} m$, so that can still be split out of $ \sigma_s + \sigma_r$.}
+
+        \step{}{There may also be other valid splits introduced by $\sigma_r$.}
+
+        \step{}{However, by assumption of $\varsigma_s \star \varsigma_r$
+            defined, any splitting of $\sigma_s + \sigma_r$ will
+            satisfy $f \leq 1$.}
+
+    \end{proof}
+
+    \step{}{\case{\textsc{Op\_Gemm\_Match}}{}}
+
+    \begin{proof}
+
+        \step{}{By assumption of $\varsigma_s \star \varsigma_r$ defined,
+            either $l_1$ (or $l_2$, or both) are not in $\sigma_r$, or they are
+            and the matrix values they point to are the same.}
+
+        \step{}{The permissions (of $l_1$ and/or $l_2$) may differ, but
+            \textsc{Op\_Gemm\_Match} universally quantifies over them and
+            leaves them unchanged, so they are irrelevant.}
+
+        \step{}{Only the pointed to matrix value at $l_3$ changes.}
+
+        \step{}{\suffices{$l_3 \notin \pi_1 [ \sigma_r ]$.}}
+
+        \step{}{By assumption of $\varsigma_s \star \varsigma_r$ defined, $l_3
+            \notin \dom(\varsigma_r)$.}
+
+        \step{}{Hence $l_3 \notin \pi_1 [ \sigma_r ]$.}
+
+    \end{proof}
 
 \end{proof}
 
 \subsubsection{$\forall k, t.\ \V{k}{t} \subseteq \C{k}{t}$}\label{subsetVC}
-Follows from definition of $\C{k}{t}$, $\rightarrow^j$ for arbitrary $j \leq k$
-and \ref{frame}.
+Follows from definition of $\C{k}{t}$, $\rightarrow^j$ ($\forall n.\ \langle
+\sigma , v \rangle \rightarrow^n \langle \sigma , v \rangle$) for arbitrary
+$j \leq k$ and \ref{frame}.
 
 \subsubsection{$\forall \delta, \gamma, v.\ \delta(\gamma(v))\textrm{ is a value.}$}\label{valueSub}
 
@@ -67,10 +97,26 @@ are closed under substitution.
     \Rightarrow (\varsigma, e) \in \C{k+1}{t}
 $}\label{stepInC}
 
-Assume arbitrary $j \leq k + 1$. If $j=0$, then in trivally. If $j \geq 1$,
-then take a step and appeal to assumption, with $j-1 \leq k$.
+\begin{proof}
+
+    \assume{arbitrary $j \leq k + 1$, and $\sigma_r$ such that $\varsigma
+    \star \varsigma_r$ defined.\\}
+
+    \step{}{\case{$j=0$. Clearly $\sigma_f = \sigma_s + \sigma_r$ and $e' = e$.}{
+        Remains to show that if $e$ is a value then $(\varsigma_s \star
+        \varsigma_r, e) \in \V{k}{t}$.\\
+        This is true vacuously, because by assumption, $e$ is not a value.}}
+
+    \step{}{\case{$j \geq 1$. We have $\langle \sigma, e \rangle
+        \rightarrow^j\, = \langle \sigma', e' \rangle \rightarrow^{j-1}$.}{
+        Instantiate $(\varsigma', e') \in \C{k}{t}$, with $j-1 \leq k$ and
+        $\sigma_r$ to conclude the required conditions.}}
+
+\end{proof}
 
 \subsubsection{$j \leq k \Rightarrow \den{\_\ }{k}{\cdot} \subseteq \den{\_\ }{j}{\cdot}$}\label{subsetKJ}
+
+Need to prove for $\V{}{}$, by induction on \ref{stepInC} for $\C{}{}$.
 
 \subsection{Soundness}
 \[

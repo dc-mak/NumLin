@@ -36,7 +36,7 @@ grammar
     | ->    ::  :: arrow     {{ tex \rightarrow   }}
     | value ::  :: value
     | __    ::  :: hole      {{ tex [ - ]         }}
-    | and   ::  :: disjU     {{ tex \cup          }}
+    | and   ::  :: disjU     {{ tex +             }}
     | |->   ::  :: points    {{ tex \mapsto       }}
     | <     ::  :: langle    {{ tex \langle       }}
     | >     ::  :: rangle    {{ tex \rangle       }}
@@ -402,7 +402,7 @@ defns
 
 grammar
 
-  H {{ tex \sigma }} :: 'Heap_' ::=  {{ com heap (sets of triples) }}
+  H {{ tex \sigma }} :: 'Heap_' ::=  {{ com heap (multiset of triples) }}
     | nil :: :: Nil  {{ tex \{ \} }} {{ com empty heap }}
     | H and { l |-> f , m k1 k2 } :: :: Ext 
     {{ tex [[H]] [[and]] \{ [[l]] [[|->]]_[[f]] [[m]]_{[[k1]], [[k2]]} \} }}

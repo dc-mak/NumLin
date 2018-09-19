@@ -2,8 +2,8 @@
 
 \subsection{Definitions}
 
-Operationally, $\emph{Heap} \subseteq \emph{Loc} \times \emph{Permission}
-\times \emph{Matrix} $, denoted with a $\sigma$.\\
+Operationally, $\emph{Heap} \sqsubseteq \emph{Loc} \times \emph{Permission}
+\times \emph{Matrix} $ (a multiset), denoted with a $\sigma$.\\
 Define its \emph{interpretation} to be $\emph{Loc} \rightharpoonup
 \emph{Permission} \times \emph{Matrix}$ with $\star:
 \emph{Heap} \times \emph{Heap} \rightharpoonup \emph{Heap}$ as follows:
@@ -54,8 +54,8 @@ heap-and-value.
     \V{k}{ t \multimap t' } &= \{ (\varsigma, v' ) \mid ( v' = \ottkw{fun}\, x : t \rightarrow e \vee v' = \ottkw{fix} (g, x : t, e : t') ) \, \wedge\\
                             & \qquad \qquad \forall j < k, (\varsigma_v, v) \in \V{j}{ t }.\ \varsigma \star \varsigma_v \textrm{ defined } \Rightarrow (\varsigma \star \varsigma_v, v'\, v) \in \C{j}{ t' } \} \\
 \\
-    \C{k}{ t } &= \{ (\varsigma_s, e) \mid \forall \, j \leq k, \varsigma_r.\ \varsigma_s \star \varsigma_r \textrm{ defined } \Rightarrow \langle \sigma_s \uplus \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e'.\\
-               & \qquad \qquad \langle \sigma_s \uplus \sigma_r, e \rangle \rightarrow^j \langle \sigma_f \uplus \sigma_r, e' \rangle \wedge ( e' \textrm { is a value } \Rightarrow ( \varsigma_f \star \varsigma_r, e' ) \in \V{k-j}{t} ) \} \\
+    \C{k}{ t } &= \{ (\varsigma_s, e) \mid \forall \, j \leq k, \sigma_r.\ \varsigma_s \star \varsigma_r \textrm{ defined } \Rightarrow \langle \sigma_s + \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e'.\\
+               & \qquad \qquad \langle \sigma_s + \sigma_r, e \rangle \rightarrow^j \langle \sigma_f + \sigma_r, e' \rangle \wedge ( e' \textrm { is a value } \Rightarrow ( \varsigma_f \star \varsigma_r, e' ) \in \V{k-j}{t} ) \} \\
 \\
     \den{I}{k}{ \cdot } \theta &= \{ [] \} \\
 \\

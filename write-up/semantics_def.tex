@@ -25,6 +25,8 @@
 \newcommand{\ottprodnewline}{\\}
 \newcommand{\ottinterrule}{\\[5.0mm]}
 \newcommand{\ottafterlastrule}{\\}
+\renewcommand{\ottinterrule}{\\[2.0mm]}
+  
 \newcommand{\ottmetavars}{
 \ottmetavartabular{
  $ \mathit{fc} $ & \ottcom{fractional capability variable} \\
@@ -46,7 +48,7 @@
 \ottrulehead{\ottnt{f}}{::=}{\ottcom{fractional capability}}\ottprodnewline
 \ottfirstprodline{|}{\mathit{fc}}{}{}{}{\ottcom{variable}}\ottprodnewline
 \ottprodline{|}{ 1 }{}{}{}{\ottcom{whole capability}}\ottprodnewline
-\ottprodline{|}{ { \frac{1}{2} \cdot  \ottnt{f}  } }{}{}{}{}}
+\ottprodline{|}{ { \frac{1}{2}  \ottnt{f}  } }{}{}{}{}}
 
 \newcommand{\ottt}{
 \ottrulehead{\ottnt{t}}{::=}{\ottcom{linear type}}\ottprodnewline
@@ -115,7 +117,7 @@
 \ottprodline{|}{\ottkw{true}}{}{}{}{\ottcom{true}}\ottprodnewline
 \ottprodline{|}{\ottkw{false}}{}{}{}{\ottcom{false}}\ottprodnewline
 \ottprodline{|}{\mathit{k}}{}{}{}{\ottcom{integer}}\ottprodnewline
-\ottprodline{|}{\mathit{l}}{}{}{}{\ottcom{heap location}}\ottprodnewline
+\ottprodline{|}{\mathit{l}  \cdot  \ottnt{f}}{}{}{}{\ottcom{heap location}}\ottprodnewline
 \ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, \ottnt{v}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}}{}{}{}{\ottcom{frac. cap. abstraction}}\ottprodnewline
@@ -136,7 +138,7 @@
 \ottprodline{|}{\ottkw{false}}{}{}{}{\ottcom{false}}\ottprodnewline
 \ottprodline{|}{\ottkw{if} \, \ottnt{e} \, \ottkw{then} \, \ottnt{e_{{\mathrm{1}}}} \, \ottkw{else} \, \ottnt{e_{{\mathrm{2}}}}}{}{}{}{\ottcom{if}}\ottprodnewline
 \ottprodline{|}{\mathit{k}}{}{}{}{\ottcom{integer}}\ottprodnewline
-\ottprodline{|}{\mathit{l}}{}{}{}{\ottcom{heap location}}\ottprodnewline
+\ottprodline{|}{\mathit{l}  \cdot  \ottnt{f}}{}{}{}{\ottcom{heap location}}\ottprodnewline
 \ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, \ottnt{e}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{}{}{\ottcom{!-elimination}}\ottprodnewline
@@ -226,7 +228,7 @@
 \newcommand{\ottdruleWFXXCapXXSucc}[1]{\ottdrule[#1]{%
 \ottpremise{\Theta  \vdash  \ottnt{f} \, \textsf{Cap}}%
 }{
-\Theta  \vdash   { \frac{1}{2} \cdot  \ottnt{f}  }  \, \textsf{Cap}}{%
+\Theta  \vdash   { \frac{1}{2}  \ottnt{f}  }  \, \textsf{Cap}}{%
 {\ottdrulename{WF\_Cap\_Succ}}{}%
 }}
 
@@ -404,7 +406,7 @@
 
 \newcommand{\ottdruleTyXXBangXXIntro}[1]{\ottdrule[#1]{%
 \ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}   \cdot   \vdash  \ottnt{v}  \ottsym{:}  \ottnt{t}}%
-\ottpremise{\ottnt{v}  \neq  \mathit{l}}%
+\ottpremise{\ottnt{v}  \neq  \mathit{l}  \cdot  \ottnt{f}}%
 }{
 \Theta  \ottsym{;}  \Delta  \ottsym{;}   \cdot   \vdash  \ottkw{Many} \, \ottnt{v}  \ottsym{:}  \: !  \ottnt{t}}{%
 {\ottdrulename{Ty\_Bang\_Intro}}{}%
@@ -591,29 +593,30 @@
 \ottpremise{ \ottsym{0}  \leq  \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} }%
 \ottpremise{ \mathit{l}  \textrm{ fresh } }%
 }{
-\langle  \sigma  \ottsym{,}  \ottkw{matrix} \, \mathit{k_{{\mathrm{1}}}} \, \mathit{k_{{\mathrm{2}}}}  \rangle  \rightarrow  \langle   \sigma   +  \{  \mathit{l}   \mapsto _  1    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \mathit{l}  \rangle}{%
+\langle  \sigma  \ottsym{,}  \ottkw{matrix} \, \mathit{k_{{\mathrm{1}}}} \, \mathit{k_{{\mathrm{2}}}}  \rangle  \rightarrow  \langle   \sigma   +  \{  \mathit{l}   \mapsto _  1    \mathit{M} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \mathit{l}  \cdot   1   \rangle}{%
 {\ottdrulename{Op\_Matrix}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXFree}[1]{\ottdrule[#1]{%
 }{
-\langle   \sigma   +  \{  \mathit{l}   \mapsto _  1    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{free} \, \mathit{l}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottsym{(}  \ottsym{)}  \rangle}{%
+\langle   \sigma   +  \{  \mathit{l}   \mapsto _  1    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{free} \, \ottsym{(}  \mathit{l}  \cdot   1   \ottsym{)}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottsym{(}  \ottsym{)}  \rangle}{%
 {\ottdrulename{Op\_Free}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXShare}[1]{\ottdrule[#1]{%
 }{
-\langle   \sigma   +  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{share} \, \mathit{l}  \rangle  \rightarrow  \langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottsym{(}  \mathit{l}  \ottsym{,}  \mathit{l}  \ottsym{)}  \rangle}{%
+\langle   \sigma   +  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{share} \, \mathit{l}  \cdot  \ottnt{f}  \rangle  \rightarrow  \langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottsym{(}  \mathit{l}  \cdot   { \frac{1}{2}  \ottnt{f}  }   \ottsym{,}  \mathit{l}  \cdot   { \frac{1}{2}  \ottnt{f}  }   \ottsym{)}  \rangle}{%
 {\ottdrulename{Op\_Share}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXUnshareXXEq}[1]{\ottdrule[#1]{%
 \ottpremise{ \ottnt{f}  \leq 1 }%
+\ottpremise{\ottnt{v}  \equiv  \mathit{l}  \cdot   { \frac{1}{2}  \ottnt{f}  } }%
 }{
-\langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{unshare} \, \mathit{l} \, \mathit{l}  \rangle  \rightarrow  \langle   \sigma   +  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \mathit{l}  \rangle}{%
+\langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{unshare} \, \ottnt{v} \, \ottnt{v}  \rangle  \rightarrow  \langle   \sigma   +  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \mathit{l}  \cdot  \ottnt{f}  \rangle}{%
 {\ottdrulename{Op\_Unshare\_Eq}}{}%
 }}
 
@@ -621,24 +624,30 @@
 \newcommand{\ottdruleOpXXUnshareXXNeq}[1]{\ottdrule[#1]{%
 \ottpremise{\mathit{l}  \neq  \mathit{l'}}%
 }{
-\langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l'}   \mapsto _  { \frac{1}{2} \cdot  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{unshare} \, \mathit{l} \, \mathit{l'}  \rangle  \rightarrow  \textbf{err}}{%
+\langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l'}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{unshare} \, \ottsym{(}  \mathit{l}  \cdot   { \frac{1}{2}  \ottnt{f}  }   \ottsym{)} \, \ottsym{(}  \mathit{l'}  \cdot   { \frac{1}{2}  \ottnt{f'}  }   \ottsym{)}  \rangle  \rightarrow  \textbf{err}}{%
 {\ottdrulename{Op\_Unshare\_Neq}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXGemmXXMatch}[1]{\ottdrule[#1]{%
-\ottpremise{\sigma'  \ottsym{=}    \sigma   +  \{  \mathit{l_{{\mathrm{1}}}}   \mapsto _ \mathit{fc_{{\mathrm{1}}}}   \ottnt{m_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l_{{\mathrm{2}}}}   \mapsto _ \mathit{fc_{{\mathrm{2}}}}   \ottnt{m_{{\mathrm{2}}}} _{ \mathit{k_{{\mathrm{2}}}} ,  \mathit{k_{{\mathrm{3}}}} } \} }%
+\ottpremise{\sigma'  \equiv    \sigma   +  \{  \mathit{l_{{\mathrm{1}}}}   \mapsto _ \mathit{fc_{{\mathrm{1}}}}   \ottnt{m_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l_{{\mathrm{2}}}}   \mapsto _ \mathit{fc_{{\mathrm{2}}}}   \ottnt{m_{{\mathrm{2}}}} _{ \mathit{k_{{\mathrm{2}}}} ,  \mathit{k_{{\mathrm{3}}}} } \} }%
+\ottpremise{\ottnt{v_{{\mathrm{1}}}}  \equiv  \mathit{l_{{\mathrm{1}}}}  \cdot  \ottnt{f_{{\mathrm{1}}}}}%
+\ottpremise{\ottnt{v_{{\mathrm{2}}}}  \equiv  \mathit{l_{{\mathrm{2}}}}  \cdot  \ottnt{f_{{\mathrm{2}}}}}%
+\ottpremise{\ottnt{v_{{\mathrm{3}}}}  \equiv  \mathit{l_{{\mathrm{3}}}}  \cdot   1 }%
 }{
-\langle   \sigma'   +  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1    \ottnt{m_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottkw{gemm} \, \mathit{l_{{\mathrm{1}}}} \, \mathit{l_{{\mathrm{2}}}} \, \mathit{l_{{\mathrm{3}}}}  \rangle  \rightarrow  \langle   \sigma'   +  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1    \ottsym{(}  \ottnt{m_{{\mathrm{1}}}} \, \ottnt{m_{{\mathrm{2}}}}  \ottsym{+}  \ottnt{m_{{\mathrm{3}}}}  \ottsym{)} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottsym{(}  \ottsym{(}  \mathit{l_{{\mathrm{1}}}}  \ottsym{,}  \mathit{l_{{\mathrm{2}}}}  \ottsym{)}  \ottsym{,}  \mathit{l_{{\mathrm{3}}}}  \ottsym{)}  \rangle}{%
+\langle   \sigma'   +  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1    \ottnt{m_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottkw{gemm} \, \ottnt{v_{{\mathrm{1}}}} \, \ottnt{v_{{\mathrm{2}}}} \, \ottnt{v_{{\mathrm{3}}}}  \rangle  \rightarrow  \langle   \sigma'   +  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1    \ottsym{(}  \ottnt{m_{{\mathrm{1}}}} \, \ottnt{m_{{\mathrm{2}}}}  \ottsym{+}  \ottnt{m_{{\mathrm{3}}}}  \ottsym{)} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottsym{(}  \ottsym{(}  \ottnt{v_{{\mathrm{1}}}}  \ottsym{,}  \ottnt{v_{{\mathrm{2}}}}  \ottsym{)}  \ottsym{,}  \ottnt{v_{{\mathrm{3}}}}  \ottsym{)}  \rangle}{%
 {\ottdrulename{Op\_Gemm\_Match}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXGemmXXMismatch}[1]{\ottdrule[#1]{%
 \ottpremise{\mathit{k_{{\mathrm{2}}}}  \neq  \mathit{k'_{{\mathrm{2}}}}}%
-\ottpremise{\sigma'  \ottsym{=}    \sigma   +  \{  \mathit{l_{{\mathrm{1}}}}   \mapsto _ \mathit{fc_{{\mathrm{1}}}}   \ottnt{m_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l_{{\mathrm{2}}}}   \mapsto _ \mathit{fc_{{\mathrm{2}}}}   \ottnt{m_{{\mathrm{2}}}} _{ \mathit{k'_{{\mathrm{2}}}} ,  \mathit{k_{{\mathrm{3}}}} } \} }%
+\ottpremise{\sigma'  \equiv    \sigma   +  \{  \mathit{l_{{\mathrm{1}}}}   \mapsto _ \mathit{fc_{{\mathrm{1}}}}   \ottnt{m_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l_{{\mathrm{2}}}}   \mapsto _ \mathit{fc_{{\mathrm{2}}}}   \ottnt{m_{{\mathrm{2}}}} _{ \mathit{k'_{{\mathrm{2}}}} ,  \mathit{k_{{\mathrm{3}}}} } \} }%
+\ottpremise{\ottnt{v_{{\mathrm{1}}}}  \equiv  \mathit{l_{{\mathrm{1}}}}  \cdot  \ottnt{f_{{\mathrm{1}}}}}%
+\ottpremise{\ottnt{v_{{\mathrm{2}}}}  \equiv  \mathit{l_{{\mathrm{2}}}}  \cdot  \ottnt{f_{{\mathrm{2}}}}}%
+\ottpremise{\ottnt{v_{{\mathrm{3}}}}  \equiv  \mathit{l_{{\mathrm{3}}}}  \cdot   1 }%
 }{
-\langle   \sigma'   +  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1    \ottnt{m_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottkw{gemm} \, \mathit{l_{{\mathrm{1}}}} \, \mathit{l_{{\mathrm{2}}}} \, \mathit{l_{{\mathrm{3}}}}  \rangle  \rightarrow  \textbf{err}}{%
+\langle   \sigma'   +  \{  \mathit{l_{{\mathrm{3}}}}   \mapsto _  1    \ottnt{m_{{\mathrm{1}}}} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{3}}}} } \}   \ottsym{,}  \ottkw{gemm} \, \ottnt{v_{{\mathrm{1}}}} \, \ottnt{v_{{\mathrm{2}}}} \, \ottnt{v_{{\mathrm{3}}}}  \rangle  \rightarrow  \textbf{err}}{%
 {\ottdrulename{Op\_Gemm\_Mismatch}}{}%
 }}
 

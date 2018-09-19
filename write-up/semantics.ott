@@ -1,3 +1,8 @@
+embed
+  {{ tex-preamble
+\renewcommand{\[[TEX_NAME_PREFIX]]interrule}{\\[2.0mm]}
+  }}
+
 metavar fc ::=
   {{ tex \mathit{[[fc]]} }} {{ com fractional capability variable }}
 
@@ -42,6 +47,8 @@ grammar
     | >     ::  :: rangle    {{ tex \rangle       }}
     | <>    ::  :: neq       {{ tex \neq          }}
     | err   ::  :: err       {{ tex \textbf{err}  }}
+    | @     ::  :: at        {{ tex \cdot         }}
+    | ==    ::  :: judge_eq  {{ tex \equiv        }}
 
 
 grammar
@@ -55,11 +62,11 @@ grammar
 
 grammar
 
-  f :: 'f_' ::=       {{ com fractional capability       }}
-    | fc  ::  :: Var  {{ com variable                    }}
-    | Z   ::  :: Zero {{ tex 1                           }}
-                      {{ com whole capability            }}
-    | S f ::  :: Succ {{ tex { \frac{1}{2} \cdot [[f]] } }}
+  f :: 'f_' ::=       {{ com fractional capability }}
+    | fc  ::  :: Var  {{ com variable              }}
+    | Z   ::  :: Zero {{ tex 1                     }}
+                      {{ com whole capability      }}
+    | S f ::  :: Succ {{ tex { \frac{1}{2} [[f]] } }}
 
 
   t :: 't_' ::=                    {{ com linear type               }}
@@ -135,7 +142,7 @@ grammar
     | true                        ::   :: Bool_True   {{ com true                      }}
     | false                       ::   :: Bool_False  {{ com false                     }}
     | k                           ::   :: Int_Intro   {{ com integer                   }}
-    | l                           ::   :: Location    {{ com heap location             }}
+    | l @ f                       ::   :: Location    {{ com heap location             }}
     | el                          ::   :: Elt_Intro   {{ com array element             }}
     | Many v                      ::   :: Bang_Intro  {{ com !-introduction            }}
     | fun fc -> v                 ::   :: Gen         {{ com frac. cap. abstraction    }}
@@ -160,7 +167,7 @@ grammar
     | false                       ::   :: Bool_False  {{ com false                     }}
     | if e then e1 else e2        ::   :: Bool_Elim   {{ com if                        }}
     | k                           ::   :: Int_Intro   {{ com integer                   }}
-    | l                           ::   :: Location    {{ com heap location             }}
+    | l @ f                       ::   :: Location    {{ com heap location             }}
     | el                          ::   :: Elt_Intro   {{ com array element             }}
     | Many e                      ::   :: Bang_Intro  {{ com !-introduction            }}
     | let Many x = e in e'        ::   :: Bang_Elim   {{ com !-elimination             }}
@@ -349,7 +356,7 @@ defns
 
 
     T ; D ; nil |- v : t
-    v <> l
+    v <> l @ f
     --------------------------- :: Bang_Intro
     T ; D ; nil |- Many v : ! t
 
@@ -470,37 +477,44 @@ defns
 
     0 <= k1 , k2
     l fresh
-    ----------------------------------------------------- :: Matrix
-    < H , matrix k1 k2 > -> < H and { l |-> Z ,  M k1 k2 } , l >
+    ---------------------------------------------------------------- :: Matrix
+    < H , matrix k1 k2 > -> < H and { l |-> Z ,  M k1 k2 } , l @ Z >
 
 
-    ------------------------------------------------------- :: Free
-    < H and { l |-> Z , m k1 k2 } , free l > -> < H , ( ) >
+    --------------------------------------------------------------- :: Free
+    < H and { l |-> Z , m k1 k2 } , free ( l @ Z ) > -> < H , ( ) >
 
 
-    ---------------------------------------------------------------------------------------------------------------------- :: Share
-    < H and { l |-> f , m k1 k2 } , share l > -> < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , ( l , l ) >
+    --------------------------------------------------------------------------------------------------------------------------------------- :: Share
+    < H and { l |-> f , m k1 k2 } , share l @ f  > -> < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , ( l @ S f , l @ S f ) >
 
 
     f <= 1
-    ----------------------------------------------------------------------------------------------------------------- :: Unshare_Eq
-    < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , unshare l l > -> < H and { l |-> f , m k1 k2 } , l >
+    v == l @ S f
+    ---------------------------------------------------------------------------------------------------------------------- :: Unshare_Eq
+    < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , unshare v v > -> < H and { l |-> f , m k1 k2 } , l @ f >
 
 
     l <> l'
-    ------------------------------------------------------------------------------------ :: Unshare_Neq
-    < H and { l |-> S f , m k1 k2 } and { l' |-> S f , m k1 k2 } , unshare l l' > -> err
+    --------------------------------------------------------------------------------------------------------- :: Unshare_Neq
+    < H and { l |-> S f , m k1 k2 } and { l' |-> S f , m k1 k2 } , unshare ( l @ S f ) ( l' @ S f' ) > -> err
 
 
-    H' = H and { l1 |-> fc1 , m1 k1 k2 } and { l2 |-> fc2 , m2 k2 k3 }
+    H' == H and { l1 |-> fc1 , m1 k1 k2 } and { l2 |-> fc2 , m2 k2 k3 }
+    v1 == l1 @ f1
+    v2 == l2 @ f2
+    v3 == l3 @ Z
     --------------------------------------------------------------------------------------------------------------------------- :: Gemm_Match
-    < H' and { l3 |-> Z , m1 k1 k3 } , gemm l1 l2 l3 > -> < H' and { l3 |-> Z , ( m1 m2 + m3 ) k1 k3 } , ( (l1 , l2) , l3 ) >
+    < H' and { l3 |-> Z , m1 k1 k3 } , gemm v1 v2 v3 > -> < H' and { l3 |-> Z , ( m1 m2 + m3 ) k1 k3 } , ( ( v1 , v2 ) , v3 ) >
 
 
     k2 <> k2'
-    H' = H and { l1 |-> fc1 , m1 k1 k2 } and { l2 |-> fc2 , m2 k2' k3 }
-    ------------------------------------------------------------------- :: Gemm_Mismatch
-    < H' and { l3 |-> Z , m1 k1 k3 } , gemm l1 l2 l3 > -> err
+    H' == H and { l1 |-> fc1 , m1 k1 k2 } and { l2 |-> fc2 , m2 k2' k3 }
+    v1 == l1 @ f1
+    v2 == l2 @ f2
+    v3 == l3 @ Z
+    --------------------------------------------------------- :: Gemm_Mismatch
+    < H' and { l3 |-> Z , m1 k1 k3 } , gemm v1 v2 v3 > -> err
 
 
 grammar
@@ -511,10 +525,11 @@ grammar
     | x : t mem G  ::  :: xtG
     | fc    mem T  ::  :: fcT
     | e <> e'      ::  :: eNeq
-    | e = e'       ::  :: eEq
+    | l <> l'      ::  :: lNeq
+    | e == e'      ::  :: eEq
     | 0 <= k1 , k2 ::  :: posDim {{ tex [[0]] \leq [[k1]], [[k2]]  }}
     | f <= 1       ::  :: fracBound {{ tex [[f]] \leq 1  }}
-    | H' = H       ::  :: storeEq
+    | H' == H      ::  :: storeEq
     | l fresh      ::  :: freshL {{ tex [[l]] \textrm{ fresh } }}
 
 

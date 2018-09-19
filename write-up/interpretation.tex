@@ -2,6 +2,10 @@
 
 \subsection{Definitions}
 
+% Changed to multiset because normal disjoint unions and subsets of cartesian
+% products for the heap wouldn't capture _multiplicity_:different variables
+% in the environment could have identical permissions/types.
+
 Operationally, $\emph{Heap} \sqsubseteq \emph{Loc} \times \emph{Permission}
 \times \emph{Matrix} $ (a multiset), denoted with a $\sigma$.\\
 Define its \emph{interpretation} to be $\emph{Loc} \rightharpoonup
@@ -22,12 +26,15 @@ $\varsigma_1 \star \varsigma_2$ is \emph{defined} if it is for all $l \in
 \textbf{Implicitly denote} $\varsigma \equiv \den{H}{}{\sigma} \equiv
 \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]$.\\
 \\
-The $n-$fold iteration for the (functional) $StepsTo$ relation, is also a (functional) relation:
+The $n-$fold iteration for the $StepsTo$ relation, is also a relation:
 \begin{align*}
     \forall n.\ \ottkw{err} &\rightarrow^n \ottkw{err}\\
     \forall n.\ \langle \sigma , v \rangle &\rightarrow^n \langle \sigma , v \rangle\\
     \langle \sigma , e \rangle &\rightarrow^0 \langle \sigma , e \rangle\\
-    \langle \sigma , e \rangle &\rightarrow^{n+1} ((\langle \sigma , e \rangle \rightarrow) \rightarrow^n)
+    \langle \sigma , e \rangle &\rightarrow^{n+1} \langle \sigma'', e'' \rangle
+    \equiv \exists \sigma', e'.\ \langle \sigma , e \rangle \rightarrow \langle
+    \sigma' , e' \rangle \wedge \langle \sigma' , e' \rangle \rightarrow^n
+    \langle \sigma'', e'' \rangle
 \end{align*}
 Hence, all bounded iterations end in either an $\ottkw{err}$, a heap-and-expression or a
 heap-and-value.

@@ -6,9 +6,13 @@
 \usepackage{ifthen}%
 \usepackage{alltt}%hack%
 \geometry{a4paper,dvips,twoside,left=22.5mm,right=22.5mm,top=20mm,bottom=30mm}%
-\usepackage{color}%
 
 \input{semantics_def}%
+\usepackage{ottlayout}%
+\renewcommand{\ottpremise}[1]{\premiseSTY{#1}}%
+\renewcommand{\ottusedrule}[1]{\usedruleSTY{#1}}%
+\renewcommand{\ottdrule}[4][]{\druleSTY[#1]{#2}{#3}{#4}}%
+\renewenvironment{ottdefnblock}[3][]{\defnblockSTY[#1]{#2}{#3}}{\enddefnblockSTY}%
 
 \newcommand{\den}[3]{ \mathcal{#1}_{#2} [\![ #3 ]\!] }%
 \newcommand{\V}[2]{ \den{V}{#1}{#2} }%
@@ -39,13 +43,13 @@
 
 \begin{document}%
 
+\ottstyledefaults{premiselayout=justify}%
+
 \section{Static Semantics}
 \ottdefnsTypes%
-\clearpage%
 
 \section{Dynamic Semantics}
 \ottdefnsOpXXSem%
-\clearpage%
 
 \input{./interpretation.tex}
 \clearpage%

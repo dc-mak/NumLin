@@ -600,7 +600,7 @@
 
 \newcommand{\ottdruleOpXXFree}[1]{\ottdrule[#1]{%
 }{
-\langle   \sigma   +  \{  \mathit{l}   \mapsto _  1    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{free} \, \ottsym{(}  \mathit{l}  \cdot   1   \ottsym{)}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottsym{(}  \ottsym{)}  \rangle}{%
+\langle   \sigma   +  \{  \mathit{l}   \mapsto _  1    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{free} \, \mathit{l}  \cdot   1   \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottsym{(}  \ottsym{)}  \rangle}{%
 {\ottdrulename{Op\_Free}}{}%
 }}
 
@@ -624,7 +624,7 @@
 \newcommand{\ottdruleOpXXUnshareXXNeq}[1]{\ottdrule[#1]{%
 \ottpremise{\mathit{l}  \neq  \mathit{l'}}%
 }{
-\langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l'}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{unshare} \, \ottsym{(}  \mathit{l}  \cdot   { \frac{1}{2}  \ottnt{f}  }   \ottsym{)} \, \ottsym{(}  \mathit{l'}  \cdot   { \frac{1}{2}  \ottnt{f'}  }   \ottsym{)}  \rangle  \rightarrow  \textbf{err}}{%
+\langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l'}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m'} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{unshare} \, \ottsym{(}  \mathit{l}  \cdot   { \frac{1}{2}  \ottnt{f}  }   \ottsym{)} \, \ottsym{(}  \mathit{l'}  \cdot   { \frac{1}{2}  \ottnt{f'}  }   \ottsym{)}  \rangle  \rightarrow  \textbf{err}}{%
 {\ottdrulename{Op\_Unshare\_Neq}}{}%
 }}
 

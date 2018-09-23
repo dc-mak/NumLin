@@ -5,7 +5,7 @@
 \subsubsection{$
     \forall \sigma_s, \sigma_r, e.\ \varsigma_s \star \varsigma_r \textrm{ defined }
     \Rightarrow \forall n.\ \langle \sigma_s, e \rangle \rightarrow^n =
-    \langle \sigma_f + \sigma_r , e \rangle \rightarrow^n
+    \langle \sigma_s + \sigma_r , e \rangle \rightarrow^n
 $}\label{frame}
 
 \begin{proof}
@@ -122,20 +122,42 @@ Need to prove for $\V{}{}$, by induction on $t$ and then index.
 \begin{proof}
 
     \suffices{Consider only $t \multimap t'$ case, rest use $k$ directly on structure of type.}
+
     \assume{Arbitrary $j \leq k$ and $(\varsigma_{v'}, v') \in \V{k}{t
         \multimap t'}$.}
+
     \prove{$(\varsigma_{v'}, v') \in \V{j}{t \multimap t'}$.\\}
 
-    \step{}{$v'$ is of the correct syntactic form (lambda or fixpoint) by assumption.}
+    \step{}{$v'$ is of the correct syntactic form (lambda or fixpoint) by
+        assumption.}
+
     \step{}{\assume{arbitrary $j' \leq j$ and $(\varsigma_v, v) \in \V{j'}{t}$
         such that $\varsigma_{v'} \star \varsigma_v$ is defined.}}
-    \step{}{\suffices{to show $(\varsigma_{v'} \star \varsigma_v, v' v) \in \C{j'}{t'}$.}}
+
     \step{}{\suffices{to show $(\varsigma_{v'} \star \varsigma_v, v' v) \in
-        \C{j}{t'}$ by $\C{j}{} \subseteq \C{j'}{}$.}}
-    \step{}{Instantiate $(\varsigma_{v'}, v') \in \V{k}{t \multimap t'}$ with
-        $j$ and $(\varsigma_v, v) \in \V{j}{t} $ ??? by induction on $t$.}
+        \C{j'}{t'}$.}}
+
+    \step{}{This is true by instantiating $(\varsigma_{v'}, v') \in \V{k}{t
+        \multimap t'}$ with $j' \leq k$ and $(\varsigma_v, v) \in \V{j'}{t}$.}
 
 \end{proof}
+
+\subsubsection{$\forall \Delta, \Gamma, t, k, \theta, \delta, \gamma.\ %
+    \delta \in \den{I}{k}{\Delta}\theta \wedge \gamma \in \pi_2[\den{L}{k}{\Gamma}\theta]
+    \Rightarrow \dom(\Delta) = \dom(\delta)$ and $\dom(\Gamma) = \dom(\gamma)$}\label{samedom}
+
+\pf~By induction on $\Delta$ and $\Gamma$.
+
+\subsubsection{$\forall k, \Gamma, \Gamma', \theta, \sigma_+, \gamma_+.\ %
+    (\varsigma_+, \gamma) \in \den{L}{k}{ \Gamma, \Gamma' }\theta
+    \wedge \Gamma, \Gamma' \textrm{ disjoint } \Rightarrow\\
+    \exists \sigma, \gamma, \sigma' , \gamma' .\ \sigma_+ = \sigma + \sigma'
+    \wedge \gamma, \gamma' \textrm{ disjoint }
+    \wedge \gamma_+ = \gamma \cup \gamma'\\
+    \wedge (\varsigma, \gamma) \in \den{L}{k}{\Gamma}
+    \wedge (\varsigma', \gamma') \in \den{L}{k}{\Gamma'} $}\label{restriction}
+
+\pf~By induction on $\Gamma'$.
 
 \clearpage%
 \subsection{Soundness}
@@ -150,82 +172,96 @@ Need to prove for $\V{}{}$, by induction on $t$ and then index.
 
     \assume{%
         \begin{pfenum}
-            \item Arbitrary $\Theta, \Delta, \Gamma, e, t$ such that $\Theta; \Delta ; \Gamma \vdash e : t$.
-            \item Arbitrary $\theta, k, \delta, \gamma, \sigma$ such that:
+
+            \item Arbitrary $\Theta, \Delta, \Gamma, e, t$ such that
+                $\Theta; \Delta ; \Gamma \vdash e : t$.
+
+            \item Arbitrary $k, \theta, \delta, \gamma, \sigma$ such that:
                 \begin{pfenum}
                     \item $\textrm{dom}(\Theta) = \textrm{dom}(\theta)$
-                    \item $(\sigma, \gamma) \in \den{L}{k}{\Gamma}\theta$\label{inL}
+                    \item $(\varsigma, \gamma) \in \den{L}{k}{\Gamma}\theta$\label{inL}
                     \item $\delta \in \den{I}{k}{\Delta}\theta$.\label{inI}
                 \end{pfenum}
-            \item W.l.o.g., all variables are distinct/$\dom(\Delta)$ and
-                $\dom(\Gamma)$ are disjoint.\label{disjoint}
-            \item And so that over expressions $\gamma \circ \delta = \delta \circ \gamma$.
-            \item By construction, $\dom(\Delta) = \dom(\delta)$ and $\dom(\Gamma) = \dom(\gamma)$.\label{samedom}
+
+            \item W.l.o.g., all variables are distinct,\\hence $\dom(\Delta)$ and
+                $\dom(\Gamma)$ are disjoint\\so $\gamma \circ \delta = \delta
+                \circ \gamma$ (as substitutions defined recursively over expressions).\label{disjoint}\\
+
         \end{pfenum}
     }
 
-    \prove{$(\sigma, \gamma(\delta(e))) \in \C{k}{\theta(t')}$.}
-    \assume{Arbitrary $j \leq k$ and $\sigma_{r}$.}
-    \suffices{Show whole expression either reduces to $\ottkw{err}$ or takes $j$ steps.\\}
+    \prove{$(\varsigma, \gamma(\delta(e))) \in \C{k}{\theta(t)}$.}
+
+    \assume{Arbitrary $j < k$ and $\sigma_{r}$, such that $\varsigma \star \varsigma_r$ defined.}
+
+    \suffices{$\langle \sigma + \sigma_r, e \rangle \rightarrow^j \ottkw{err}\ %
+        \vee \exists \sigma_f, e_f.\ \langle \sigma + \sigma_r, e \rangle \rightarrow^j
+        \langle \sigma_f + \sigma_r, e_f \rangle\\
+        \qquad \wedge ( e_f \textrm { is a value } \Rightarrow
+        ( \varsigma_f \star \varsigma_r, e_f ) \in \V{k-j}{t} )$.}
+
+    \suffices{By \ref{frame}, to show $\langle \sigma, e \rangle \rightarrow^j \ottkw{err}\ %
+        \vee \exists \sigma_f, e_f.\ \langle \sigma, e \rangle \rightarrow^j
+        \langle \sigma_f, e_f \rangle\\
+        \qquad \wedge ( e_f \textrm { is a value } \Rightarrow
+        ( \varsigma_f, e_f ) \in \V{k-j}{t} )$\\}
+
 
     \step{}{%
         \case{%
             \textsc{Ty\_Let}.
         }{%
-            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t')}$.}
-
-            \suffices{$(\sigma, \ottkw{let}\, x\, =\, \gamma(\delta(e))\,
-                \ottkw{in}\, \gamma(\delta(e'))) \in \C{k}{\theta(t')}$.}
-
         }
     }
 
     \begin{proof}
         \step{}{By induction,
             \begin{pfenum}
-                \item $\den{}{}{\Theta; \Delta; \Gamma \vdash e : t}$\label{IH1}
-                \item $\den{}{}{\Theta; \Delta; \Gamma', x : t \vdash e' : t'}$\label{IH2}.
+                \item $\forall k.\ \den{}{k}{\Theta; \Delta; \Gamma \vdash e : t}$\label{IH1}
+                \item $\forall k.\ \den{}{k}{\Theta; \Delta; \Gamma', x : t \vdash e' : t'}$\label{IH2}.
             \end{pfenum}}\pflabel{IH}
 
-        \step{}{By \ref{inL} and induction on $\Gamma'$, we know there exist
-                $\sigma_{e'},\; (\sigma_e, \gamma_e) \in \den{L}{k}{\Gamma}$, \\
-                such that $\sigma = \sigma_e \star \sigma_{e'}$.}\pflabel{split}
+        \step{}{By \ref{inL}, \ref{disjoint} and \ref{restriction}, we know there exists the following:
+            \begin{pfenum}
+                \item $(\varsigma_e, \gamma_e) \in \den{L}{k}{\Gamma}$
+                \item $\gamma = \gamma_e \cup \gamma_{e'}$
+                \item $\sigma = \sigma_e + \sigma_{e'}$.
+            \end{pfenum}}\pflabel{split}
 
-        \step{}{So, using them, $\theta, k, \delta$, and \ref{disjoint} we have
-            $(\sigma_e, \gamma_e(\delta(e))) \in \C{k}{\theta(t)}$.}
+        \step{}{So, using $k, \theta, \delta, \gamma_e, \sigma_e$, we have
+            $(\varsigma_e, \gamma_e(\delta(e))) \in \C{k}{\theta(t)}$.}
 
-        \step{}{By \ref{disjoint}, $(\sigma_e, \gamma(\delta(e))) \in \C{k}{\theta(t)}$.}
+        \step{}{By \pfref{split}, $(\varsigma_e, \gamma(\delta(e))) \in \C{k}{\theta(t)}$.}
 
         \step{}{By definition of $\C{k}{\cdot}$ and \pfref{split}, we
             instantiate with $j$ and $\sigma_r = \sigma_{e'}$ to
-            conclude that $\langle \sigma , \gamma(\delta(e)) \rangle$
-            either reduces to $\ottkw{err}$ or another heap and expression.}
+            conclude that $\langle \varsigma , \gamma(\delta(e)) \rangle$
+            either takes $j$ step to $\ottkw{err}$ or another heap-and-expression
+            $\langle \sigma_f, \gamma(\delta(e_f)) \rangle$.}
 
-        \step{}{\case{$\ottkw{err}$}{By \textsc{Op\_Context\_Err} and \ref{disjoint},
-            the whole expression reduces to $\ottkw{err}$ in $j \leq k$ steps. Since $j \leq k$ and
-            $\sigma_{r}$ (for \ref{frame}) are arbitrary, $(\sigma, \gamma(\delta(\ottkw{let}\,
-            x\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t')}$.}}
+        \step{}{\case{$\ottkw{err}$}{By \textsc{Op\_Context\_Err},
+            the whole expression reduces to $\ottkw{err}$ in $j < k$ steps.}}
 
-        \step{}{\case{$j$ steps to another heap and expression.}By \textsc{Op\_Context} and
-            \ref{disjoint}, the whole expression does the same.}
+        \step{}{\case{$j$ steps to another heap and expression.}By \textsc{Op\_Context} and,
+            the whole expression does the same.}
 
-        \step{}{If it is not a value, we are done. If it is $({\sigma_e}_f, v)
-            \in \V{k-j}{\theta(t)}$ by \ref{valueSub}. \suffices{$({\sigma_e}_f \star
-            \sigma_{e'}, \ottkw{let}\, x\, =\, v\, \ottkw{in}\, \gamma(\delta(e'))) \in
-            \C{k-j}{\theta(t')}$.} \suffices{$({\sigma_e}_f \star \sigma_{e'},
-            \gamma(\delta(e')) [x/v]) \in \C{k-j-1}{\theta(t')}$ by \ref{stepInC}.}}
+        \step{}{If it is not a value, we are done. If it is $(\varsigma_f, v)
+            \in \V{k-j}{\theta(t)}$ by \ref{valueSub}.
+            \suffices{$(\varsigma_f \star \varsigma_{e'}, \ottkw{let}\, x\, =\, v\, \ottkw{in}\,
+                \gamma(\delta(e'))) \in \C{k-j}{\theta(t')}$ by \ref{stepInC} $j$ times.}
+            \suffices{$(\varsigma_f \star \varsigma_{e'}, \gamma(\delta(e')) [x/v]) \in
+                \C{k-j-1}{\theta(t')}$ by \ref{stepInC}.}}
 
-        \step{}{\define{$\gamma_{e'} (y) = v$ if $ y=x $ and $\gamma(y)$ if $y \in \dom(\Gamma')$.}
-            Thus, by \ref{subsetKJ}, $(\sigma_{e'}, \gamma_{e'}) \in \den{L}{k}{\Gamma',
-            x : t}\theta \subseteq \den{L}{k-j-1}{\Gamma', x : t}\theta$.}
+        \step{}{By \ref{subsetKJ}, $(\varsigma_{e'}, \gamma_{e'}[x \mapsto v]) \in
+            \den{L}{k}{\Gamma', x : t}\theta \subseteq \den{L}{k-j-1}{\Gamma', x : t}\theta$.}
 
         \step{}{Instantiate \ref{IH2} of step \pfref{IH} with $\theta, k-j-1, \delta,
-            \gamma_{e'}, \sigma_{e'}$ to conclude \\ $(\sigma_{e'}, \gamma_{e'}(\delta(e')))
-            \in \C{k-j-1}{\theta(t')}$.}
+            \gamma_{e'}[x \mapsto v], \sigma_{e'}$ to conclude \\ $(\varsigma_{e'},
+            \gamma_{e'}[x \mapsto v](\delta(e'))) \in \C{k-j-1}{\theta(t')}$.}
 
         \step{}{By \ref{disjoint}, we have $\gamma(\delta(e')) [x/v] =
-            \gamma_{e'}(\delta(e'))$ and by \ref{frame} we conclude \\ $({\sigma_e}_f \star
-            \sigma_{e'}, \gamma(\delta(e')) [x/v]) \in \C{k-j-1}{\theta(t')}$}
+            \gamma_{e'}[x \mapsto v](\delta(e'))$ and \\ by \ref{frame} we conclude
+            $(\varsigma_f \star \varsigma_{e'}, \gamma(\delta(e')) [x/v]) \in \C{k-j-1}{\theta(t')}$}
 
     \end{proof}
 
@@ -233,29 +269,26 @@ Need to prove for $\V{}{}$, by induction on $t$ and then index.
         \case{%
             \textsc{Ty\_Pair\_Elim}.
         }{%
-            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, (a, b)\, =\, e\, \ottkw{in}\, e'))) \in \C{k}{\theta(t')}$.}
-            {\pf\ Similar to \textsc{Ty\_Let} but with \textsc{Op\_Let\_Pair}}
+            {\pfsketch~Similar to \textsc{Ty\_Let}, but with the following key differences.}
         }
     }
 
     \begin{proof}
 
-        \step{}{When $({\sigma_e}_f, v) \in \V{k-j}{\theta(t_1) \otimes \theta(t_2)}$, we have
+        \step{}{When $(\varsigma_f, v) \in \V{k-j}{\theta(t_1) \otimes \theta(t_2)}$, we have
             $v = (v_1, v_2)$.}
 
-        \step{}{\suffices{$(\sigma_{e'}, \gamma(\delta(e'))) \in
-            \C{k-j-1}{\theta(t')}$ by \ref{stepInC}.}}
+        \step{}{\suffices{$(\varsigma_{e'}, \gamma(\delta(e'))) \in
+            \C{k-j-1}{\theta(t')}$ by \ref{stepInC} $j+1$ times.}}
 
-        \step{}{\define{$\gamma_{e'}$ to be the restriction of $\gamma$ to $\dom(\Gamma')$.}
-            Thus, by \ref{subsetKJ}, $(\sigma_{e'}, \gamma_{e'}[a \mapsto v_1, b \mapsto v_2 ])
-            \in \den{L}{k}{\Gamma', a : t_1, b : t_2 }\theta \\ \subseteq \den{L}{k-j-1}{\Gamma',
+        \step{}{By \ref{subsetKJ}, $(\varsigma_{e'}, \gamma_{e'}[a \mapsto v_1, b \mapsto v_2 ])
+            \in \den{L}{k}{\Gamma', a : t_1, b : t_2 }\theta \subseteq \den{L}{k-j-1}{\Gamma',
             a : t_1, b : t_2}\theta$.}
 
-        \step{}{Instantiate $\den{}{}{\Theta; \Delta; \Gamma', a : t_1, b : t_2 \vdash e' : t'}$
-            with $\theta, k-j-1, \delta, \gamma_{e'} [a \mapsto v_1, b \mapsto v_2 ] , \sigma_{e'}$.}
+        \step{}{Instantiate $\den{}{k-j-1}{\Theta; \Delta; \Gamma', a : t_1, b : t_2 \vdash e' : t'}$
+            with $\theta, \delta, \gamma_{e'} [a \mapsto v_1, b \mapsto v_2 ] , \sigma_{e'}$.}
 
-        \step{}{By \ref{disjoint} $(\sigma_{e'}, \gamma(\delta(e'))) \in
-            \C{k-j-1}{\theta(t')}$.}
+        \step{}{By \ref{disjoint} $(\varsigma_{e'}, \gamma(\delta(e'))) \in \C{k-j-1}{\theta(t')}$.}
 
     \end{proof}
 
@@ -263,30 +296,26 @@ Need to prove for $\V{}{}$, by induction on $t$ and then index.
         \case{%
             \textsc{Ty\_Bang\_Elim}.
         }{%
-            \prove{$(\sigma, \gamma(\delta(\ottkw{let}\, \ottkw{Many}\, x\, =\, e\, \ottkw{in}\, e')))
-                \in \C{k}{\theta(t)}$.}
-            {\pfsketch\ Similar to \textsc{Ty\_Let}, but with the following key differences.}
+            {\pfsketch~Similar to \textsc{Ty\_Let}, but with the following key differences.}
         }
     }
 
     \begin{proof}
 
-        \step{}{When $({\sigma_e}_f, v) \in \V{k-j}{\theta(!t)}$, since $\V{k-j}{\theta(!t)}
-            = \V{k-j}{!\theta(t)}$,\\ we have ${\sigma_e}_f = \empH$ and $v = \ottkw{Many}\, v'$
+        \step{}{When $(\varsigma_f, v) \in \V{k-j}{\theta(!t)}$, since $\V{k-j}{\theta(!t)}
+            = \V{k-j}{!\theta(t)}$,\\ we have $\varsigma_f = \empH$ and $v = \ottkw{Many}\, v'$
             for some $(\empH, v') \in \V{k-j}{\theta(t)}$.}
 
-        \step{}{\suffices{$(\sigma_{e'}, \ottkw{let}\, \ottkw{Many}\, x\, =\, \ottkw{Many}\,
+        \step{}{\suffices{$(\varsigma_{e'}, \ottkw{let}\, \ottkw{Many}\, x\, =\, \ottkw{Many}\,
             v'\, \ottkw{in}\, \gamma(\delta(e'))) \in \C{k-j}{\theta(t)}$.}}
 
-        \step{}{\suffices{$(\sigma_{e'}, \gamma(\delta(e')) [ x / v ]) \in \C{k-j-1}{\theta(t)}$.}}
+        \step{}{\suffices{$(\varsigma_{e'}, \gamma(\delta(e')) [ x / v ]) \in \C{k-j-1}{\theta(t)}$
+            by \ref{stepInC} $j+1$ times.}}
 
-        \step{}{\define{$\gamma_{e'}$ as the restriction of $\gamma$ to $\dom(\Gamma')$.}}
+        \step{}{Instantiate $\den{}{k-j-1}{\Theta; \Delta, x : t, \Gamma' \vdash e' : t'}$ with
+            $\theta, \delta_{e'} = \delta[x \mapsto v'], \gamma_{e'}, \sigma_{e'}$.}
 
-        \step{}{Instantiate $\den{}{}{\Theta; \Delta, x : t, \Gamma' \vdash e' : t'}$ with
-            $\theta, k-j-1, \delta_{e'} = \delta[x \mapsto v'], \gamma_{e'}, \sigma_{e'}$ to
-            conclude \\ $(\sigma_{e'}, \gamma_{e'}(\delta_{e'}(e'))) \in \C{k-j-1}{\theta(t)}$.}
-
-        \step{}{By \ref{disjoint}, $(\sigma_{e'}, \gamma(\delta(e')) [ x / v ]) \in
+        \step{}{By \ref{disjoint}, $(\varsigma_{e'}, \gamma(\delta(e')) [ x / v ]) \in
             \C{k-j-1}{\theta(t)}$.}
 
     \end{proof}

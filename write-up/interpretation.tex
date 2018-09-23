@@ -23,19 +23,17 @@ Define its \emph{interpretation} to be $\emph{Loc} \rightharpoonup
 Commutativity and associativity of $\star$ follows from that of $+$.\\
 $\varsigma_1 \star \varsigma_2$ is \emph{defined} if it is for all $l \in
 \dom(\varsigma_1) \cup \dom(\varsigma_2)$.\\
+%Note that $\forall \varsigma.\ \exists \textrm{ cardinally minimal}\, \sigma.\ \varsigma = \den{H}{}{\sigma}$.\\
+%{\pf~Binary representation of $\varsigma(l)$ for each $l \in \emph{Loc}$.}\\
 \textbf{Implicitly denote} $\varsigma \equiv \den{H}{}{\sigma} \equiv
 \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]$.\\
 \\
 The $n-$fold iteration for the $StepsTo$ (functional) relation, is also a (functional) relation:
 \begin{align*}
-    \forall n.\ \ottkw{err} &\rightarrow^n \ottkw{err}\\
-    \forall n.\ \langle \sigma , v \rangle &\rightarrow^n \langle \sigma , v \rangle\\
-    \langle \sigma , e \rangle &\rightarrow^0 \langle \sigma , e \rangle\\
+    \forall n.\ \ottkw{err} &\rightarrow^n \ottkw{err} &
+    \langle \sigma , v \rangle &\rightarrow^n \langle \sigma , v \rangle &
+    \langle \sigma , e \rangle &\rightarrow^0 \langle \sigma , e \rangle &
     \langle \sigma , e \rangle &\rightarrow^{n+1} ((\langle \sigma , e \rangle \rightarrow) \rightarrow^n)
-    % \langle \sigma , e \rangle &\rightarrow^{n+1} \langle \sigma'', e'' \rangle
-    % \equiv \exists \sigma', e'.\ \langle \sigma , e \rangle \rightarrow \langle
-    % \sigma' , e' \rangle \wedge \langle \sigma' , e' \rangle \rightarrow^n
-    % \langle \sigma'', e'' \rangle
 \end{align*}
 Hence, all bounded iterations end in either an $\ottkw{err}$, a heap-and-expression or a
 heap-and-value.

@@ -133,7 +133,7 @@ let r, r_copy =
 
 let reset () =
   (* Stdio.printf "\nreset\n---\n"; *)
-  List.iter ~f:(fun (orig, copy) -> Owl.Mat.copy_to copy orig) [
+  List.iter ~f:(fun (orig, copy) -> Owl.Mat.copy_ copy ~out:orig) [
     (sigma, sigma_copy);
     (h, h_copy);
     (mu, mu_copy);
@@ -283,12 +283,12 @@ module Lazy_Nd =
 
 let lazy_kalman =
   let open Lazy_Nd in
-  let sigma = variable ()
-  and h = variable ()
-  and h' = variable ()
-  and mu = variable ()
-  and r = variable ()
-  and data = variable ()
+  let sigma = var_arr "sigma"
+  and h = var_arr "h"
+  and h' = var_arr "h'"
+  and mu = var_arr "mu"
+  and r = var_arr "r"
+  and data = var_arr "data"
   in
   fun ~sigma:sigma_ ~h:h_ ~mu:mu_ ~r:r_ ~data:data_ ->
   let ( := ) = assign_arr in
@@ -300,13 +300,16 @@ let lazy_kalman =
   data := data_;
   let ( * ) = dot and ( + ) = add and ( - ) = sub in
   let sigma_h' = sigma * h' in
-  let to_inv = r + h * sigma_h' in
-  let x = sigma_h' * (of_arr @@ Owl.Mat.inv @@ to_arr @@ (eval to_inv; to_inv)) in
+  let x = sigma_h' * (inv @@ r + h * sigma_h') in
   let new_mu = mu + x * (h * mu - data) in
   let new_sigma = sigma - x * h * sigma in
-  eval new_sigma;
-  eval new_mu;
-  ((sigma_, (h_, (mu_, (r_, data_)))), (to_arr new_mu, to_arr new_sigma))
+  let graph =
+    let input = Array.map ~f:arr_to_node [| sigma; h; h'; mu; r; data |] in
+    let output = Array.map ~f:arr_to_node [| new_mu; new_sigma |] in
+    make_graph ~input ~output "lazy_kalman" in
+  Owl_io.write_file "lazy_kalman.dot" @@ graph_to_dot graph;
+  eval_graph graph;
+  ((sigma_, (h_, (mu_, (r_, data_)))), (unpack_arr new_mu, unpack_arr new_sigma))
 ;;
 
 let%expect_test "lazy kalman" =
@@ -318,11 +321,11 @@ let%expect_test "lazy kalman" =
   Owl.Mat.print ~header:false new_mu;
 
   [%expect {|
-     -0.541272 0.00852694  -0.133997   -0.234808  -0.0897324
-    0.00852694   -0.17944  0.0357339  -0.0665866   -0.078525
-     -0.133997  0.0357339  -0.100837  -0.0120868  0.00196882
-     -0.234808 -0.0665866 -0.0120868   -0.227933 -0.00138223
-    -0.0897324  -0.078525 0.00196882 -0.00138223    -0.18484
+       0.541272 -0.00852694    0.133997   0.234808   0.0897324
+    -0.00852694     0.17944  -0.0357339  0.0665866    0.078525
+       0.133997  -0.0357339    0.100837  0.0120868 -0.00196882
+       0.234808   0.0665866   0.0120868   0.227933  0.00138223
+      0.0897324    0.078525 -0.00196882 0.00138223     0.18484
 
 
        1.40304
@@ -331,4 +334,3 @@ let%expect_test "lazy kalman" =
        1.06233
       0.313462 |}]
 ;;
-

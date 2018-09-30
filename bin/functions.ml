@@ -63,5 +63,5 @@ let name : wrap -> string = function
 
 
 let all =
-  [W Owl; W Chol; W LT4LA; W TRANSP; W CBLAS]
+  [W CBLAS; W LT4LA; W TRANSP; W Chol; W Owl]
 ;;

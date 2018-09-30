@@ -223,9 +223,7 @@ struct
   ;;
 
   let copy_mat_to (type a) (M read) (M write) : a mat * z mat =
-    (* remove when copy_to has a runtime check of its own *)
-    let () = assert (dim read = dim write) in
-    let () = Arr.copy_to read write in
+    let () = Arr.copy_ read ~out:write in
     (M read, M write)
   ;;
 

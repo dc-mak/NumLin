@@ -12,14 +12,12 @@ MAINTAINER Dhruv Makwana
 # lipcre3-dev used by patdiff used by expect_tests
 RUN sudo apt-get update        \
     && sudo apt-get -y install \
-        m4                \
-        libshp-dev        \
-        libplplot-dev     \
-        libgsl-dev        \
-        libopenblas-dev   \
-        liblapacke-dev    \
-        # LT4LA           \
-        libpcre3-dev
+        m4              \
+        libshp-dev      \
+        libplplot-dev   \
+        libopenblas-dev \
+        liblapacke-dev  \
+        libpcre3-dev    # LT4LA
 
 # Permissions - recursive takes waaaay too long
 RUN chown opam:opam $HOME $HOME/*
@@ -37,44 +35,30 @@ WORKDIR $HOME
 # 4) Running 'docker run --security-opt seccomp=unconfined' (I'm not going to
 #    set up my own security profile for this project) runs into
 #    'bwrap: Failed to make / slave: Permission denied'
-# 5) The Docker image I'm pulling from does not include '--show-default-opamrc'
-#    flag yet so I can't modify that. Even if I could...
-# 6) Creating one without bwrap/sandboxing/wrap-* configurations and using
-#    'opam init -y --config=~/.opamrc' didn't work for me.
-# 7) Neither did doing the same, but for .opam/config.
-# 8) github.com/ocaml/opam/blob/bc0e83df7dcc71e1a14396d868883d18cef6df32/doc/pages/FAQ.md#--why-does-opam-require-bwrap
-# 9) An alternative, much more sound way of doing the following would be this
-#    github.com/OCamlPro/opam/blob/b5834a944842890d642a801976b7cdd42a56cc64/.travis-ci.sh#L43
-#    cat <<EOF >>~/.opamrc
-#    wrap-build-commands: []
-#    wrap-install-commands: []
-#    wrap-remove-commands: []
-#    EOF
-RUN opam init -y || \
-    sed -i -- 's/wrap-\(.*\)-commands: \[.*\]$/wrap-\1-commands: []/g' ~/.opam/config \
-    && opam switch create 4.06.1
+# 5) Hence --disable-sandboxing
+RUN opam init -y --bare --disable-sandboxing && opam switch create 4.06.1
 # OCaml Packages Used
 RUN opam install -y           \
-        oasis                 \
-        "ocamlmod=0.0.9"      \
-        jbuilder              \
-        ocaml-compiler-libs   \
-        ctypes                \
-        utop                  \
-        plplot                \
-        "gsl=1.20.0"          \
         alcotest              \
+        ctypes                \
+        dune                  \
+        configurator          \
+        "eigen=0.0.5"         \
+        ocaml-compiler-libs   \
+        "ocamlmod=0.0.9"      \
+        plplot                \
+        utop                  \
         # LT4LA               \
         base                  \
+        lambda-term           \
+        lwt lwt_ppx           \
+        menhir                \
         ppx_driver            \
         ppx_expect            \
         ppx_inline_test       \
         ppx_jane              \
         ppx_traverse          \
         ppx_traverse_builtins \
-        menhir                \
-        lambda-term           \
-        lwt lwt_ppx           \
     && opam env
 
 # Environment variables
@@ -82,33 +66,18 @@ ENV OPAM_SWITCH_PREFIX /home/opam/.opam/4.06.1
 ENV CAML_LD_LIBRARY_PATH /home/opam/.opam/4.06.1/lib/stublibs:/home/opam/.opam/4.06.1/lib/ocaml/stublibs:/home/opam/.opam/4.06.1/lib/ocaml
 ENV OCAML_TOPLEVEL_PATH /home/opam/.opam/4.06.1/lib/toplevel
 ENV MANPATH /home/opam/.opam/default/man:/home/opam/.opam/4.06.1/man
-ENV PATH /home/opam/.opam/4.06.1/bin:/home/opam/.opam/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
-
-# Eigen from source
-ENV EIGENPATH $HOME/eigen
-RUN git clone https://github.com/ryanrhymes/eigen.git                                           \
-    # Owl: FIXME                                                                                \
-    && sed -i -- 's/-flto/ /g' $EIGENPATH/lib/Makefile                                          \
-    # Owl: FIXME                                                                                \
-    && sed -i -- 's/-flto/ /g' $EIGENPATH/_oasis                                                \
-    && make -C $EIGENPATH oasis                                                                 \
-    # LT4LA: Hack - needs to copy to /usr/local/bin                                             \
-    && sudo sh -c 'PATH='"$PATH"' && make -C '"$EIGENPATH"' && make -C'"$EIGENPATH"' install'
+ENV PATH /home/opam/.opam/4.06.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Owl from source
 ENV OWLPATH $HOME/owl
-RUN git clone https://github.com/ryanrhymes/owl.git                                                   \
-    # Owl: FIXME (hacking ... needs to be fixed)                                                      \
-    && sed -i -- 's/-lopenblas/-lopenblas -llapacke/g' $OWLPATH/src/owl/jbuild                        \
-    && sed -i -- 's:/usr/local/opt/openblas/lib:/usr/lib/x86_64-linux-gnu/:g' $OWLPATH/src/owl/jbuild \
-    && make -C $OWLPATH                                                                               \
-    && make -C $OWLPATH install
+RUN git clone https://github.com/ryanrhymes/owl.git                                                               
+RUN sed -i -- 's:/usr/local/opt/openblas/lib:/usr/lib/x86_64-linux-gnu:g' $OWLPATH/src/owl/config/configure.ml \
+    && make -C $OWLPATH && make -C $OWLPATH install && make -C $OWLPATH clean
 
 # Build LT4LA in the current (host) directory
 ENV LT4LAPATH $HOME/lt4la
 ADD --chown=opam:opam . $LT4LAPATH
 WORKDIR $LT4LAPATH
-RUN sed -i -- 's~(name runtest)~& (locks (../dot_owl_dir))~g' test/jbuild oldtest/jbuild
-RUN jbuilder runtest --dev --display=short \
-    && jbuilder build bin/repl.exe
+RUN sed -i -- 's~(name runtest)~& (locks (/home/opam/owl))~g' test/jbuild old/test/jbuild
+RUN dune runtest --display=short && dune build bin/repl.exe && dune build bin/benchmark.exe
 ENTRYPOINT /bin/bash

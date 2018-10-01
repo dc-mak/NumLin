@@ -242,20 +242,6 @@ struct
 
   (* Level 3 BLAS/LAPACK *)
 
-  (* let gemm (type a b)                                                          *)
-  (*       (Many alpha) ((M a : a mat), Many transa) ((M b : b mat), Many transb) *)
-  (*       (Many beta) (M c : z mat) =                                            *)
-  (*   let () = Owl_cblas.gemm ~transa ~transb ~alpha ~beta ~a ~b ~c in           *)
-  (*   ((M a, M b), M c)                                                          *)
-  (* ;;                                                                           *)
-  (*                                                                              *)
-  (* let symm (Many flip) (Many alpha) (M a) (M b) (Many beta) (M c) =            *)
-  (*   let side = if flip then Cblas.CblasRight else CblasLeft in                 *)
-  (*   let uplo = Cblas.CblasUpper in                                             *)
-  (*   let () = Owl_cblas.symm ~side ~uplo ~alpha ~beta ~a ~b ~c in               *)
-  (*   ((M a, M b), M c)                                                          *)
-  (* ;;                                                                           *)
-
   let mult_dims (a, transp_a) (b, transp_b) c =
     let (m1, n1) = dim ~transp:transp_a a
     and (n2, k1) = dim ~transp:transp_b b
@@ -270,7 +256,7 @@ struct
   ;;
 
   let symm (Many flip) (Many alpha) (M a) (M b) (Many beta) (M c) =
-    let side, m, n, lda, ldb, ldc=
+    let side, m, n, lda, ldb, ldc =
       if flip then
         let m, k, n = mult_dims (b, false) (a, false) c in
         let () = assert (k = n) (* snd/a is square *) in
@@ -283,9 +269,6 @@ struct
                       m n
                       alpha (conv a) lda (conv b) ldb
                       beta (conv c) ldc) in
-    (* let () = Stdio.printf "RowMajor %s Upper %d %d %f a %d b %d %f c %d\n"   *)
-    (*            (if flip then "Right" else "Left") m n alpha lda ldb beta ldc *)
-    (* in                                                                       *)
     ((M a, M b), M c)
   ;;
 
@@ -301,15 +284,6 @@ struct
                      (conv a) (if tr_a then m else k)
                      (conv b) (if tr_b then k else n)
                      beta (conv c) n) in
-    (* let () = Stdio.printf "RowMajor %s %s %d %d %d %f a %d b %d %f c %d\n" *)
-    (*            (if tr_a then "Trans" else "NoTrans")                       *)
-    (*            (if tr_b then "Trans" else "NoTrans")                       *)
-    (*            m n k                                                       *)
-    (*            alpha                                                       *)
-    (*            (if tr_a then m else k)                                     *)
-    (*            (if tr_b then k else n)                                     *)
-    (*            beta n                                                      *)
-    (* in                                                                     *)
     ((M a, M b), M c)
   ;;
 

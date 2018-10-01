@@ -77,7 +77,7 @@ let%expect_test "Fix/App" =
   check_expr @@
   Fix (Ast.dummy, one, two, Bang Int, Bang Bool, App (Ast.dummy, App (Ast.dummy, Prim (Ast.dummy, IntOp Eq), Var (Ast.dummy, two)), Int_I (Ast.dummy, 0)))
   |> pretty;
-  [%expect {| (Ok "!( !int --o !bool )") |}]
+  [%expect {| (Ok "!int --o !bool") |}]
 ;;
 
 let gen : Ast.exp =

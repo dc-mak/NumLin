@@ -78,3 +78,8 @@ let%test_module "Kalman" =
 let%test_module "L1_norm_min" =
   (module L1_norm_min_test)
 ;;
+
+let%test_module "Lin_reg" =
+  (module Lin_reg_test)
+;;
+

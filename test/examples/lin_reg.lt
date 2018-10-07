@@ -1,0 +1,12 @@
+let !lin_reg ('x) (x : 'x mat)
+             ('y) (y : 'y mat) =
+  let (x, (!_n, !m)) = sizeM _ x in
+  let xy <- new (m, 1) [| x^T * y |] in
+  let (x1, x2) = shareM _ x in
+  let x_T_x <- new (m, m) [| x1^T * x2 |] in
+  let x = unshareM _ x1 x2 in
+  let (to_del, answer) = posv x_T_x xy in
+  let () = freeM to_del in
+  (answer, (x, y)) in
+lin_reg
+;;

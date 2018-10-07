@@ -79,5 +79,5 @@ ENV LT4LAPATH $HOME/lt4la
 ADD --chown=opam:opam . $LT4LAPATH
 WORKDIR $LT4LAPATH
 RUN sed -i -- 's~(name runtest)~& (locks (/home/opam/owl))~g' test/jbuild old/test/jbuild
-RUN dune runtest --display=short && dune build bin/repl.exe && dune build bin/benchmark.exe
+RUN dune runtest --display=short && dune build bin/repl.exe
 ENTRYPOINT /bin/bash

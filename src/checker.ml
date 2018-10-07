@@ -49,6 +49,7 @@ let check_prim =
   | Unshare_mat -> All (x, Fun (Mat (S (V x)), Fun (Mat (S (V x)), Mat (V x))))
   | Free_mat -> Fun(Mat Z, Unit)
   | Matrix -> Fun (int, Fun (int, Mat Z))
+  | Eye -> Fun (int, Mat Z)
   | Copy_mat -> All (x, Fun (Mat (V x), Pair (Mat (V x), Mat Z)))
   | Copy_mat_to -> All (x, Fun (Mat (V x), Fun (Mat Z, Pair (Mat (V x), Mat Z))))
   | Size_mat -> All (x, Fun (Mat (V x), Pair (Mat (V x), Pair (int, int))))
@@ -56,6 +57,8 @@ let check_prim =
   (* Level 3 BLAS/LAPACK *)
   | Gemm -> Fun (elt, All(x, Fun (Pair (Mat (V x), bool), All (y, Fun (Pair (Mat (V y), bool), Fun (elt, Fun (Mat Z, Pair (Pair (Mat (V x), Mat (V y)), Mat Z))))))))
   | Symm -> Fun (bool, Fun (elt, All(x, Fun (Mat (V x), All (y, Fun (Mat (V y), Fun (elt, Fun (Mat Z, Pair (Pair (Mat (V x), Mat (V y)), Mat Z)))))))))
+  (* FIXME: This is a lie because of IPIV parameter *)
+  | Gesv -> Fun (Mat Z, Fun (Mat Z, Pair (Mat Z, Mat Z)))
   | Posv -> Fun (Mat Z, Fun (Mat Z, Pair (Mat Z, Mat Z)))
   | Potrs -> All (x, Fun (Mat (V x), Fun (Mat Z, Pair (Mat (V x), Mat Z))))
 ;;

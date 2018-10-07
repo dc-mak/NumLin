@@ -38,12 +38,14 @@ type prim =
   | Unshare_mat
   | Free_mat
   | Matrix
+  | Eye
   | Copy_mat
   | Copy_mat_to
   | Size_mat
   | Transpose
   | Symm
   | Gemm
+  | Gesv
   | Posv
   | Potrs
 [@@deriving sexp_of]

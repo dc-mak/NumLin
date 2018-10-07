@@ -240,6 +240,10 @@ struct
     M (Arr.empty [| rows; cols |])
   ;;
 
+  let eye (Many n) : z mat =
+    M (Owl.Mat.eye n)
+  ;;
+
   (* Level 3 BLAS/LAPACK *)
 
   let mult_dims (a, transp_a) (b, transp_b) c =
@@ -287,6 +291,13 @@ struct
     ((M a, M b), M c)
   ;;
 
+
+  let gesv (M a : z mat) (M b : z mat) =
+    (* FIXME: To re-use a/use getrf/getrs we need the ignored [_ipiv] parameter *)
+    let (a',b', _ipiv) = Owl_lapacke.(gesv ~a ~b) in
+    let () = assert (Base.(phys_equal a a' && phys_equal b b')) in
+    (M a, M b)
+  ;;
 
   let posv (M a : z mat) (M b : z mat) =
     let (a',b') = Owl_lapacke.(posv ~uplo:'U' ~a ~b) in

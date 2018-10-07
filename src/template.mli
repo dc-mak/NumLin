@@ -52,6 +52,7 @@ sig
   val unshare_mat : 'a s mat -> 'a s mat -> 'a mat
   val free_mat : z mat -> unit
   val matrix : int bang -> int bang -> z mat
+  val eye : int bang -> z mat
   val copy_mat : 'a mat -> 'a mat * z mat
   val copy_mat_to : 'a mat -> z mat -> 'a mat * z mat
   val size_mat : 'a mat -> 'a mat * (int bang * int bang)
@@ -59,6 +60,7 @@ sig
   (* Level 3 BLAS/LAPACK *)
   val gemm : float bang -> ('a mat * bool bang) -> ('b mat * bool bang) -> float bang -> z mat -> ('a mat * 'b mat) * z mat
   val symm : bool bang -> float bang -> 'a mat -> 'b mat -> float bang -> z mat -> ('a mat * 'b mat) * z mat
+  val gesv : z mat -> z mat -> z mat * z mat
   val posv : z mat -> z mat -> z mat * z mat
   val potrs : 'a mat -> z mat -> 'a mat * z mat
 end

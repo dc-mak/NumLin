@@ -68,6 +68,7 @@ type prim =
   | Unshare_mat
   | Free_mat
   | Matrix
+  | Eye
   | Copy_mat
   | Copy_mat_to
   | Size_mat
@@ -75,6 +76,7 @@ type prim =
   (** Level 3 BLAS/LAPACK *)
   | Symm
   | Gemm
+  | Gesv
   | Posv
   | Potrs
 [@@deriving sexp_of]

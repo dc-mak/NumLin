@@ -1,0 +1,14 @@
+let !l1_norm_min (q : z mat) (u : z mat) =
+  let (u , (!_n, !k)) = sizeM _ u in
+  let (u , u_T ) = transpose _ u in
+  let (tmp_5_5 , q_inv_u ) = gesv q u in
+  let i = eye k in
+  let to_inv <- [| i + u_T * q_inv_u |] in
+  let (tmp_3_3, inv_u_T ) = gesv to_inv u_T in
+  let () = freeM tmp_3_3 in
+  let answer <- [| 0. * tmp_5_5 + q_inv_u * inv_u_T |] in
+  let () = freeM q_inv_u in
+  let () = freeM inv_u_T in
+  answer in
+l1_norm_min
+;;

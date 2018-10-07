@@ -79,6 +79,7 @@ type prim =
   | Unshare_mat
   | Free_mat
   | Matrix
+  | Eye
   | Copy_mat
   | Copy_mat_to
   | Size_mat
@@ -86,6 +87,7 @@ type prim =
   (* Level 2/3 BLAS *)
   | Symm
   | Gemm
+  | Gesv
   | Posv
   | Potrs
 [@@deriving sexp_of]
@@ -252,6 +254,7 @@ let rec ds_exp : exp -> Ast.exp = function
       | Unshare_mat -> Unshare_mat
       | Free_mat -> Free_mat
       | Matrix -> Matrix
+      | Eye -> Eye
       | Copy_mat -> Copy_mat
       | Copy_mat_to -> Copy_mat_to
       | Size_mat -> Size_mat
@@ -259,6 +262,7 @@ let rec ds_exp : exp -> Ast.exp = function
       (* Level 2/3 BLAS *)
       | Symm -> Symm
       | Gemm -> Gemm
+      | Gesv -> Gesv
       | Posv -> Posv
       | Potrs -> Potrs
     end)

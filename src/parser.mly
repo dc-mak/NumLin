@@ -116,12 +116,14 @@ type destruct =
 %token UNSHARE_M
 %token FREE_M
 %token MATRIX
+%token EYE
 %token COPY_M
 %token COPY_M_TO
 %token SIZE_M
 %token TRANSPOSE
 %token SYMM
 %token GEMM
+%token GESV
 %token POSV
 %token POTRS
 
@@ -353,12 +355,14 @@ prim:
     | UNSHARE_M { Sugar.Unshare_mat }
     | FREE_M    { Sugar.Free_mat    }
     | MATRIX    { Sugar.Matrix      }
+    | EYE       { Sugar.Eye         }
     | COPY_M    { Sugar.Copy_mat    }
     | COPY_M_TO { Sugar.Copy_mat_to }
     | SIZE_M    { Sugar.Size_mat    }
     | TRANSPOSE { Sugar.Transpose   }
     | SYMM      { Sugar.Symm        }
     | GEMM      { Sugar.Gemm        }
+    | GESV      { Sugar.Gesv        }
     | POSV      { Sugar.Posv        }
     | POTRS     { Sugar.Potrs       }
 

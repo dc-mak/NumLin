@@ -30,12 +30,12 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 
 | Command                                             | Meaning                                       |
 | ---                                                 | ----                                          |
-| `jbuilder build src/lt4la.a`                        | Build the library (everything inside `src`).  |
-| `pushd src && jbuilder utop && popd`                | As above + launches UTop with library loaded. |
-| `jbuilder build test/test.exe`                      | Build library & tests.                        |
-| `jbuilder runtest`                                  | Build library & tests _and_ run all tests.    |
-| `jbuilder build bin/{repl,benchmark,transpile}.exe` | Build library, REPL and transpiler.           |
-| `jbuilder clean`                                    | Delete `_build` directory of build artifacts. |
+| `dune build src/lt4la.a`                        | Build the library (everything inside `src`).  |
+| `pushd src && dune utop && popd`                | As above + launches UTop with library loaded. |
+| `dune build test/test.exe`                      | Build library & tests.                        |
+| `dune runtest`                                  | Build library & tests _and_ run all tests.    |
+| `dune build bin/{repl,benchmark,transpile}.exe` | Build library, REPL and transpiler.           |
+| `dune clean`                                    | Delete `_build` directory of build artifacts. |
 | `_build/default/bin/*.exe`                          | Launch {repl,transpile,benchmark}.exe         |
 
 ### Roadmap (in _rough_ order of priority)
@@ -49,7 +49,7 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
  - Size types
 
 **Done:**
- - Fixed `jbuilder utop` crash
+ - Fixed `dune utop` crash
  - Semantics written in Ott
  - Well-formed types
  - (Some) Owl/Level 1 BLAS Primitives
@@ -181,13 +181,13 @@ let%expect_test "addition" =
   [%expect {| 3 |}]
 ```
 Almost all types can be printed with `printf !"%{sexp: <type>}" <value>"`. You
-can simply write `[%expect {||}]` when first writing the test, run `jbuilder
-runtest` then `jbuilder promote` to update the test file with the _if_ it is
+can simply write `[%expect {||}]` when first writing the test, run `dune
+runtest` then `dune promote` to update the test file with the _if_ it is
 correct/what you expect.
 
 ### Benchmarking
 
-Run `jbuilder build bin/benchmark.exe --dev`.
+Run `dune build bin/benchmark.exe --dev`.
 
 Something `_build/default/bin/benchmark.exe --start 1 --limit 4 --alg all
 --micro-quota 10 --macro-runs 10` maybe a good place to get started. It will
@@ -249,8 +249,8 @@ Triggered with every push to the `master` branch.
 There is currently no straightforward way to "generate" `.mli` files from an `.ml`
 file. There are [plans to update Merlin](https://github.com/ocaml/merlin/issues/538) with this
 feature. So, in the meantime, say you are in directory `src` and you want to generate `ast.mli`.
- - `jbuilder clean`
- - `jbuilder build lt4la.a --verbose`
+ - `dune clean`
+ - `dune build lt4la.a --verbose`
  - Find command ending in `-impl ast.pp.ml` and copy it
  - Replace `-impl` with `-i`
  - At the end of it all, append ` > /path/to/file/ast.mli`.

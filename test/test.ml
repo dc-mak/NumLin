@@ -22,5 +22,5 @@ let%test_module "Examples" =
   (module Examples_test)
 ;;
 
-include Examples_test
+include Kalman_test
 ;;

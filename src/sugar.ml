@@ -410,7 +410,7 @@ let rec ds_exp : exp -> Ast.exp = function
 
     let (_, arg_var, res_exp) = ds_pat pat res_exp
     and arg_lin = ds_lin arg_lin in
-    Bang_E (loc, fun_var, Fix (loc, fun_var, arg_var, arg_lin, res_lin, res_exp), ds_exp in_body)
+    Bang_E (loc, fun_var, Bang_I(loc, Fix (loc, fun_var, arg_var, arg_lin, res_lin, res_exp)), ds_exp in_body)
 
   | LetMat (new_loc, new_var, prim_loc, mat_exp, body) ->
 

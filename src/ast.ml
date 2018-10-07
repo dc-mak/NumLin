@@ -528,12 +528,6 @@ let pp_exp ?(comments=false) ppf =
       fprintf ppf !"@[@[<2>let %s =@ %a in@]@ %a@]"
         var pp_exp exp pp_exp body
 
-    (* readability *)
-    | Bang_E (_, fun_var, Fix (_, fun_var', arg_var, _, _, res), body)
-      when fun_var = fun_var' ->
-      fprintf ppf !"@[@[<2>let rec %s %s =@ %a in@]@ %a@]"
-        fun_var arg_var pp_exp res pp_exp body
-
     | Bang_E (_, var, exp, body) ->
       fprintf ppf "@[@[<2>let Many %s =@ %a in@]@ %a@]" var pp_exp exp pp_exp body
 
@@ -548,7 +542,7 @@ let pp_exp ?(comments=false) ppf =
         var1 var2 pp_exp exp1 pp_exp exp2
 
     | Fix (_, f, x, _, _, body) ->
-      fprintf ppf !"@[@[<2>let rec %s %s =@ %a in@]@ Many %s@]"
+      fprintf ppf !"@[@[<2>let rec %s %s =@ %a in@]@ %s@]"
         f x pp_exp body f
 
     | If (_, cond, True _, False _) ->

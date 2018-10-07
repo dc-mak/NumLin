@@ -130,7 +130,7 @@ let rec check =
              in_empty (check body |> with_lin x tx |> with_int f (wf_Fun tx res)) in
            match%bind same_lin res actual with
            | Ok subs ->
-             return @@ apply subs @@ wf_Bang @@ wf_Fun tx res
+             return @@ apply subs @@ wf_Fun tx res
            | Error err ->
              failf !"%{Error.to_string_hum}%{string_of_loc}\n" err loc)
 

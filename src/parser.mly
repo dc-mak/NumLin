@@ -126,6 +126,7 @@ type destruct =
 %token GESV
 %token POSV
 %token POTRS
+%token SYRK
 
 (* Simple expressions *)
 %token TRUE
@@ -365,6 +366,7 @@ prim:
     | GESV      { Sugar.Gesv        }
     | POSV      { Sugar.Posv        }
     | POTRS     { Sugar.Potrs       }
+    | SYRK      { Sugar.Syrk        }
 
 (* types *)
 lin:

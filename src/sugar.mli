@@ -48,6 +48,7 @@ type prim =
   | Gesv
   | Posv
   | Potrs
+  | Syrk
 [@@deriving sexp_of]
 
 type bang_var = NotB of var | Bang of var

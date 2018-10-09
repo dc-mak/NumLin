@@ -61,6 +61,7 @@ let check_prim =
   | Gesv -> Fun (Mat Z, Fun (Mat Z, Pair (Mat Z, Mat Z)))
   | Posv -> Fun (Mat Z, Fun (Mat Z, Pair (Mat Z, Mat Z)))
   | Potrs -> All (x, Fun (Mat (V x), Fun (Mat Z, Pair (Mat (V x), Mat Z))))
+  | Syrk -> Fun (bool, Fun (elt, All (x, Fun (Mat (V x), Fun (elt, Fun (Mat Z, Pair (Mat (V x), Mat Z)))))))
 ;;
 
 let string_of_loc (loc : Ast.loc) =

@@ -352,6 +352,7 @@ type prim =
   | Gesv
   | Posv
   | Potrs
+  | Syrk
 [@@deriving sexp_of]
 ;;
 

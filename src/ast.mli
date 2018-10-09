@@ -79,6 +79,7 @@ type prim =
   | Gesv
   | Posv
   | Potrs
+  | Syrk
 [@@deriving sexp_of]
 val string_of_prim : prim -> string
 

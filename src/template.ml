@@ -256,7 +256,7 @@ struct
 
   let conv x =
     let (m, n) = dim x in
-    Bigarray.(array1_of_genarray @@ reshape x [| m * n |])
+    Bigarray.reshape_1 x (m * n)
   ;;
 
   let symm (Many flip) (Many alpha) (M a) (M b) (Many beta) (M c) =
@@ -309,6 +309,11 @@ struct
     let b' = Owl_lapacke.(potrs ~uplo:'U' ~a ~b) in
     let () = assert (Base.phys_equal b b') in
     (M a, M b)
+  ;;
+
+  let syrk (type a) (Many trans) (Many alpha) (M a : a mat) (Many beta) (M c : z mat) =
+    let () = Owl_cblas.syrk ~uplo:Cblas.CblasUpper ~trans ~alpha ~beta ~a ~c in
+    (M a, M c)
   ;;
 
 end

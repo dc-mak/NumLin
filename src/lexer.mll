@@ -66,6 +66,7 @@ let keywords =
     ; ("gesv", GESV)
     ; ("posv", POSV)
     ; ("potrs", POTRS)
+    ; ("syrk", SYRK)
     (* expressions *)
     ; ("true", TRUE)
     ; ("false", FALSE)

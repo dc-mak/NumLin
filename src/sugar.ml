@@ -417,34 +417,58 @@ let rec ds_exp : exp -> Ast.exp = function
   | LetMat (new_loc, new_var, prim_loc, mat_exp, body) ->
 
     let match_on ~alpha_loc ~alpha ~a ~b ~beta_loc ~beta ~c_loc ~c : Ast.exp =
-      match a , b with
 
-      (* gemm *)
-      | (Just (a_loc, a) as a'), (Just (b_loc, b) as b')
-      | (Just (a_loc, a) as a'), (Trsp (b_loc, b) as b')
-      | (Trsp (a_loc, a) as a'), (Just (b_loc, b) as b')
-      | (Trsp (a_loc, a) as a'), (Trsp (b_loc, b) as b') ->
+      let trsp = function
+        | Trsp (loc,_) -> True loc
+        | Just (loc,_) -> False loc
+        | Symm _ -> assert false in
 
-        let trsp = function
-          | Trsp (loc,_) -> True loc
-          | Just (loc,_) -> False loc
-          | Symm _ -> assert false in
+      let gemm ~a_loc ~a ~trsp_a ~b_loc ~b ~trsp_b =
 
         let first = Exp (Elt_I (alpha_loc, alpha))
         and rest = [
           Underscore a_loc;
-          Exp (Pair_I (a_loc, Var (a_loc, a), trsp a'));
+          Exp (Pair_I (a_loc, Var (a_loc, a), trsp_a));
           Underscore b_loc;
-          Exp (Pair_I (b_loc, Var (b_loc, b), trsp b'));
+          Exp (Pair_I (b_loc, Var (b_loc, b), trsp_b));
           Exp (Elt_I (beta_loc, beta));
           Exp (Var (c_loc, c));
         ]
 
         and tmp_var = "_p_" ^ a ^ "_" ^ "_p_" in
         let exp = ds_exp @@ AppLike (Prim (prim_loc, Gemm), {first; rest}) in
-        Pair_E (new_loc, tmp_var, new_var, exp,
-                (* using prim_loc is arbitrary here *)
-                Pair_E (prim_loc, a, b, Var (prim_loc, tmp_var), ds_exp body))
+        Ast.Pair_E (new_loc, tmp_var, new_var, exp,
+                    (* using prim_loc is arbitrary here *)
+                    Pair_E (prim_loc, a, b, Var (prim_loc, tmp_var), ds_exp body))
+      in
+
+      match a, b with
+
+      (* syrk or gemm *)
+      | (Just (a_loc, a) as a'), (Trsp (b_loc, b) as b')
+      | (Trsp (a_loc, a) as a'), (Just (b_loc, b) as b') ->
+
+        if not String.(a = b) then
+          gemm ~a_loc ~a ~trsp_a:(trsp a') ~b_loc ~b ~trsp_b:(trsp b')
+        else
+          (* syrk *)
+          let first = Exp (trsp a')
+          and rest = [
+            Exp (Elt_I (alpha_loc, alpha));
+            Underscore a_loc;
+            Exp (Var (a_loc, a));
+            Exp (Elt_I (beta_loc, beta));
+            Exp (Var (c_loc, c));
+          ] in
+
+          let exp = ds_exp @@ AppLike (Prim (prim_loc, Syrk), {first; rest}) in
+          Pair_E (prim_loc, a, c, exp, ds_exp body)
+
+      (* gemm *)
+      | (Just (a_loc, a) as a'), (Just (b_loc, b) as b')
+      | (Trsp (a_loc, a) as a'), (Trsp (b_loc, b) as b') ->
+
+        gemm ~a_loc ~a ~trsp_a:(trsp a') ~b_loc ~b ~trsp_b:(trsp b')
 
       (* symm *)
       | (Symm (a_loc, a) as a'), Just (b_loc, b)

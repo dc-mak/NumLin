@@ -238,6 +238,7 @@ delim_mat_exp:
 mat_ab:
     | alpha=float_star a=mat_var STAR b=mat_var
     { fun row col -> Sugar.New_AB (row, col, $startpos(alpha), alpha, a, b) }
+(* TODO revisit: need to support sym(c) for full syrk matching *)
 mat_ab_c:
     | alpha=float_star a=mat_var STAR b=mat_var op=pm beta=float_star c=ID
     { Sugar.AB_C ($startpos(alpha), alpha, a, b, $startpos(beta), op beta, $startpos(c), c) }

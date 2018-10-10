@@ -131,6 +131,7 @@ grammar
      | symm     ::  :: Symm     {{ com BLAS: $C := \alpha A B + \beta C$           }}
      | posv     ::  :: Posv     {{ com BLAS: Cholesky decomp. and solve            }}
      | potrs    ::  :: Potrs    {{ com BLAS: solve with given Cholesky             }}
+     | syrk     ::  :: syrk     {{ com BLAS: $C := \alpha A^{T?} A^{T?} + \beta C$ }}
 
 
 grammar

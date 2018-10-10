@@ -58,8 +58,8 @@ heap-and-value.
     \V{k}{ t_1 \otimes t_2 } &= \{ (\varsigma_1 \star \varsigma_2, ( v_1, v_2 )) \mid (\varsigma_1, v_1) \in \V{k}{t_1} \wedge (\varsigma_2, v_2) \in \V{k}{t_2} \} \\
 \\
 % j <= k because beta-reduction is guaranteed to take one step AND our types aren't recursive.
-    \V{k}{ t \multimap t' } &= \{ (\varsigma_{v'}, v' ) \mid ( v' \equiv \ottkw{fun}\, x : t \rightarrow e \vee v' \equiv \ottkw{fix} (g, x : t, e : t') ) \, \wedge\\
-                            & \qquad \qquad \forall j \leq k, (\varsigma_v, v) \in \V{j}{ t }.\ \varsigma_{v'} \star \varsigma_v \textrm{ defined } \Rightarrow (\varsigma_{v'} \star \varsigma_v, v'\, v) \in \C{j}{ t' } \} \\
+    \V{k}{ t' \multimap t } &= \{ (\varsigma_v, v ) \mid ( v \equiv \ottkw{fun}\, x : t \rightarrow e \vee v \equiv \ottkw{fix} (g, x : t' , e : t) ) \, \wedge\\
+                            & \qquad \qquad \forall j \leq k, (\varsigma_{v'}, v') \in \V{j}{ t' }.\ \varsigma_v \star \varsigma_v' \textrm{ defined } \Rightarrow (\varsigma_v \star \varsigma_v', v\, v') \in \C{j}{t} \} \\
 \\
 % j < k to match L3 Fluet/Ahmed paper
     \C{k}{ t } &= \{ (\varsigma_s, e_s) \mid \forall \, j < k, \sigma_r.\ \varsigma_s \star \varsigma_r \textrm{ defined } \Rightarrow \langle \sigma_s + \sigma_r, e_s \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e_f.\\

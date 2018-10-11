@@ -110,7 +110,7 @@
 % \RequirePackage{docmute}
 
 % Source code highlighting
-\RequirePackage[outputdir=build]{minted}
+\RequirePackage[outputdir=../build]{minted}
   % Magic incantation to stop minted from putting red boxes around shit
   \RequirePackage{etoolbox}
   \makeatletter

@@ -92,12 +92,13 @@ type annot_arg = { pat : pat; lin : lin; }
 
 type arg_like = Underscore of loc | Fc of loc * fc | Exp of exp
 and mat_exp =
-    Copy_mat of loc * var
+  | Copy_mat of loc * var
   | Copy_mat_to of loc * var
   | New_AB of exp * exp * loc * float * mat_var * mat_var
   | AB_C of loc * float * mat_var * mat_var * loc * float * loc * var
+  | ArrIndex of var * loc * (exp * exp option)
 and exp =
-    Prim of loc * prim
+  | Prim of loc * prim
   | Var of loc * var
   | Unit_I of loc
   | True of loc
@@ -116,6 +117,6 @@ and exp =
   | LetPat of loc * pat * exp * exp
   | LetFun of loc * bang_var * (annot_arg, loc * var) Base.Either.t non_empty * exp * exp
   | LetRecFun of loc * var * annot_arg * (annot_arg, loc * var) Base.Either.t list * lin * exp * exp
-  | LetMat of loc * var * loc * mat_exp * exp
+  | LetMat of loc * bang_var * loc * mat_exp * exp
 [@@deriving sexp_of]
 val ds_exp : exp -> (Ast.exp, string) result

@@ -162,6 +162,7 @@ and mat_exp =
   | Copy_mat_to of loc * var
   | New_AB of exp * exp * loc * float * mat_var * mat_var
   | AB_C of loc * float * mat_var * mat_var * loc * float * loc * var
+  | ArrIndex of var * loc * (exp * exp option)
 
 and exp =
   | Prim of loc * prim
@@ -183,7 +184,7 @@ and exp =
   | LetPat of loc * pat * exp * exp
   | LetFun of loc * bang_var * (annot_arg, loc * var) Either.t non_empty * exp * exp
   | LetRecFun of loc * var * annot_arg * (annot_arg, loc * var) Either.t list * lin * exp * exp
-  | LetMat of loc * var * loc * mat_exp * exp
+  | LetMat of loc * bang_var * loc * mat_exp * exp
 [@@deriving sexp_of]
 ;;
 
@@ -414,7 +415,22 @@ let rec ds_exp : exp -> Ast.exp = function
     and arg_lin = ds_lin arg_lin in
     Bang_E (loc, fun_var, Bang_I(loc, Fix (loc, fun_var, arg_var, arg_lin, res_lin, res_exp)), ds_exp in_body)
 
-  | LetMat (new_loc, new_var, prim_loc, mat_exp, body) ->
+  | LetMat (var_loc, bang_var, arr_loc, ArrIndex (arr, index_loc, (index1, index2)), in_body) ->
+    ds_exp @@
+    LetPat (
+      var_loc,
+      Pair (var_loc, Base (arr_loc, NotB arr) , Base (var_loc, bang_var)),
+      Index (arr_loc, arr, index_loc, index1, index2),
+      in_body
+    )
+
+  | LetMat (new_loc, Bang new_var, _, (Copy_mat _ | Copy_mat_to _ | New_AB _ | AB_C _), _) ->
+    raise @@
+    MatrixPat
+      (Printf.sprintf !"Can't use ! on %s at %{Ast.line_col}, make aliases \
+                        of arrays & matrices with share and unshare.\n"  new_var new_loc)
+
+  | LetMat (new_loc, NotB new_var, prim_loc, (Copy_mat _ | Copy_mat_to _ | New_AB _ | AB_C _ as mat_exp), body) ->
 
     let match_on ~alpha_loc ~alpha ~a ~b ~beta_loc ~beta ~c_loc ~c : Ast.exp =
 
@@ -513,6 +529,9 @@ let rec ds_exp : exp -> Ast.exp = function
     in
 
     begin match mat_exp with
+
+    | ArrIndex _ -> assert false
+
     | Copy_mat (reb_loc, rebound) ->
       let unify = unify_var () in
       Pair_E (new_loc, rebound, new_var,

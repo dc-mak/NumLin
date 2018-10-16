@@ -5,7 +5,7 @@
 (* ------------ *)
 (* TODO:                                                         *)
 (* - Make 'let (a,a) = (); Array a' error more accurate          *)
-(*   (change return type to loc * Sugar.exp and remove exceptions) *)
+(*   (change return type to loc * Sugar.exp, remove exceptions)  *)
 (* - arithmetic, boolean and matrix expressions                  *)
 (* - .messages error reporting                                   *)
 
@@ -211,18 +211,18 @@ prog:
     | exp=exp EOP { exp         }
 
 exp:
-    | simple_exp                                        { $1                                                          }
-    | MINUS i=INT                                       { Sugar.Int_I ($symbolstartpos, ~- i)                         }
-    | MINUS f=FLOAT                                     { Sugar.Elt_I ($symbolstartpos, ~-. f)                        }
-    | MANY exp=simple_exp                               { Sugar.Bang_I ($symbolstartpos, exp)                         }
-    | exp=simple_exp args=arg_like+                     { mk_app_like exp args                                        }
-    | IF cond=exp THEN t=exp ELSE f=exp                 { Sugar.If ($symbolstartpos, cond, t, f)                      }
-    | FUN binds=binds R_ARROW body=exp                  { mk_lambda binds body                                        }
-    | LET fun_args=fun_args EQUAL exp=exp IN body=exp   { fun_args ($symbolstartpos) exp body                         }
-    | str=ID index=index                                { mk_index ($symbolstartpos) str ($startpos(index)) index     }
-    | str=ID index=index _set=COLON_EQ exp=exp          { mk_assign ($symbolstartpos) str ($startpos(_set)) index exp }
-    | fst=exp op=op snd=exp                             { op fst snd                                                  }
-    | LET str=ID L_ARROW mat=delim_mat_exp IN body=exp  { mk_mat ($startpos(str)) str ($startpos(mat)) mat body       }
+    | simple_exp                                          { $1                                                          }
+    | MINUS i=INT                                         { Sugar.Int_I ($symbolstartpos, ~- i)                         }
+    | MINUS f=FLOAT                                       { Sugar.Elt_I ($symbolstartpos, ~-. f)                        }
+    | MANY exp=simple_exp                                 { Sugar.Bang_I ($symbolstartpos, exp)                         }
+    | exp=simple_exp args=arg_like+                       { mk_app_like exp args                                        }
+    | IF cond=exp THEN t=exp ELSE f=exp                   { Sugar.If ($symbolstartpos, cond, t, f)                      }
+    | FUN binds=binds R_ARROW body=exp                    { mk_lambda binds body                                        }
+    | LET fun_args=fun_args EQUAL exp=exp IN body=exp     { fun_args ($symbolstartpos) exp body                         }
+    | str=ID index=index                                  { mk_index ($symbolstartpos) str ($startpos(index)) index     }
+    | str=ID index=index _set=COLON_EQ exp=exp            { mk_assign ($symbolstartpos) str ($startpos(_set)) index exp }
+    | fst=exp op=op snd=exp                               { op fst snd                                                  }
+    | LET str=bang_var L_ARROW mat=delim_mat_exp IN body=exp { mk_mat ($startpos(str)) str ($startpos(mat)) mat body    }
 
 (* could support integer literals in future *)
 delim_mat_exp:
@@ -234,6 +234,8 @@ delim_mat_exp:
     { mat row col                             }
     | L_SEMBRACK exp=mat_ab_c R_SEMBRACK
     { exp                                     }
+    | str=ID index=index
+    { Sugar.ArrIndex (str, ($startpos(index)), index) }
 
 mat_ab:
     | alpha=float_star a=mat_var STAR b=mat_var

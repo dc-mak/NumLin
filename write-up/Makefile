@@ -40,9 +40,17 @@ SEM_DIR := semantics
 SEM := $(addprefix $(SEM_DIR)/,$(SEM))
 
 PAPER := samplepaper.tex \
+         intro.tex \
+         lang_and_examples.tex \
+         formal_system.tex \
+         implementation.tex \
+         discussion.tex \
          llncs.cls \
          fig1.eps \
          splncs04.bst
+
+PAPER_DIR := samplepaper
+PAPER := $(addprefix $(PAPER_DIR)/,$(PAPER))
 
 BUILD_DIS := $(BUILD)/$(DIS_DIR)
 
@@ -53,6 +61,9 @@ all: $(TARGETS)
 $(TARGETS):%.pdf: $$*/$$*.tex | $(BUILD)
 	cd $(dir $<) && latexmk -pdf -dvi- -ps- $(notdir $<) -shell-escape -output-directory=../$(BUILD) $(FLAGS)
 	mv $(BUILD)/$@ $@
+
+$(PAPER_DIR)/samplepaper.tex: $(PAPER)
+	touch $@
 
 $(DIS_DIR)/dissertation.tex: $(DIS) | $(BUILD_DIS)
 	touch $@

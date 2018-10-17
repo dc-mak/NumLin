@@ -18,6 +18,18 @@
 }
 \renewcommand\UrlFont{\color{blue}\rmfamily}
 
+% Source code highlighting
+\usepackage[outputdir=../build]{minted}
+  % Magic incantation to stop minted from putting red boxes around shit
+  \usepackage{etoolbox}
+  \makeatletter
+  \AtBeginEnvironment{minted}{\dontdofcolorbox}
+  \def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+  \makeatother
+\RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
+
+\newmintinline[highl]{ocaml}{fontsize=\small}
+
 \begin{document}
 
 \title{NumLin: Linear Types for Numerical Libraries}

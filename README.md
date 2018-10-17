@@ -217,6 +217,7 @@ which is specified by `--macro-runs`. Be aware that for limits more than 4,
 this can be pretty slow.
 
 There are (currently) 5 implementations of a Kalman filter:
+
 | Name   | Location                          | Explanation                                                                                                                                                                                  |
 | ---    | ---                               | ---                                                                                                                                                                                          |
 | owl    | `test/examples_test.ml`           | standard maths to code translation                                                                                                                                                           |

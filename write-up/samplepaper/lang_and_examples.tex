@@ -1,20 +1,75 @@
-\section{Language Overview and Examples}
+\section{\lang\ Overview and Examples}\label{sec:lang_and_examples}
 
-\subsection{Short language description}
+\subsection{Overview}
 
-This should be a high-level description of the language. We should
-aim to spend about a page on this section, highlighting the key
-properties of \LANG{}:
-\begin{itemize}
-\item Linearity, obviously
-\item Fractional permissions: sharing and unsharing
-\item Dynamic errors: matrix dimensions and unsharing (matrix identity checks)
-  \begin{itemize}
-  \item In the related work, we should point to L3 statically tracking
-    pointer identities, but we want to keep the number of type indices
-    under control
-  \end{itemize}
-\end{itemize}
+Linearity is at the heart of \lang. Linearity allows us to express a
+pure-functional API for numerical library routines that mutate arrays and
+matrices. Linearity also restricts aliasing of (values which represent)
+pointers.
+
+However, linearity by itself is not sufficient to produce an expressive enough
+programming language. For values such as booleans, integers, floating-point
+numbers as well as pure functions, we need to be able to use them
+\emph{intuitionistically}, that is, more than once or not at all. For this
+reason, we have the !-constructor at the type level and its corresponding
+\texttt{Many}-constructor and \texttt{let Many <id> = .. in ..}-eliminator at
+the term level. Because we want to restrict how a programmer can alias pointers
+and prevent a programmer from ignoring them (a memory leak), \lang\ enforces
+simple syntactic restrictions on which values can be wrapped up in a
+\texttt{Many} constructor (details in Section \ref{sec:formal_system}).
+
+There are also valid cases in which we would want to alias pointers to a
+matrix. The most common is exemplified by the BLAS routine \texttt{gemm}, which
+(rather tersely) stands for \emph{GEneric Matrix Multiplication}.  A
+\emph{simplified} definition of \texttt{gemm($\alpha$, A, B, $\beta$, C)} is $C
+:= \alpha AB + \beta C$. In this case, \texttt{A} and \texttt{B} may alias each
+other but neither may alias \texttt{C}, because it is being written to.
+Related to \emph{mutating} arrays and matrices is \emph{freeing} them. Here, we
+would also wish to restrict aliasing so that we do not free one alias and then
+attempt to use another. Although linearity on its own suffices to prevent
+use-after-free errors when values are \emph{not} aliased (a freed value is
+\emph{out of scope} for the rest of the expression), we still need another
+simple, yet powerful concept to provide us with the extra expressivity of
+aliasing \emph{without} losing any of the benefits of linearity.
+
+Fractional permissions provide exactly this. Concretely, types of (pointers to)
+arrays and matrices are \emph{parameterised} by a \emph{fraction}. A fraction
+is either $1$ ($2^0$) or exactly \emph{half} of another fraction ($2^{-k}$, for
+natural $k$). The former represents complete ownership of that value: the
+programmer may mutate or free that value as they choose; the latter represents
+read-only access or a \emph{borrow}: the programmer may read from the value but
+not write to or free it. Creating an array/matrix gives you ownership of it, so
+too does having one (with a fractional permission of $2^0$) passed in as an
+argument.
+
+In \lang, we can produce two aliases of a single array/matrix, by
+\emph{sharing} it. If the original alias had a fractional permission of
+$2^{-k}$ then the two new aliases of it will have a fractional permission of
+$2^{-(k+1)}$ each. Thanks to linearity, the original array/matrix with a
+fractional permission of $2^{-k}$ will be out of scope after the sharing.  When
+an array/matrix is shared as such, we can prevent the programmer from freeing
+or mutating it by making the types of \texttt{free} and \texttt{set} (for
+mutation) require a \emph{whole} ($2^0$) permission.
+
+If we have two aliases \emph{to the same matrix} with \emph{identical}
+fractional permissions ($2^{-(k+1)}$), we can recombine or \emph{unshare} them
+back into a single one, with a larger $2^{-k}$ permission. As before, thanks to
+linearity, the original two aliases will be out of scope after unsharing.
+
+Matrix unsharing is one of only \emph{two} operations that can fail at runtime
+(the other being dimension checks, such as for \texttt{gemm}). The check being
+performed is a simple sanity check that the two aliasing pointers passed to
+\texttt{unshare} point to the same array/matrix. Section
+\ref{sec:discussion_related_work} contains an overview of how we could remove
+the need for this by tracking pointer identities statically by augmenting the
+type system further.
+
+The final feature of \lang\ which makes it sufficiently expressive is recursion
+(and of course, conditional branches to ensure termination). Conditional
+branches are implemented by ensuring that both branches use the same set of
+linear values. A function can be recursive if it captures no linear values from
+its environment. Like with \texttt{Many}, this is enforced via simple syntactic
+restrictions on the definition of recursive functions.
 
 \subsection{Examples}
 

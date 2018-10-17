@@ -1,10 +1,18 @@
 \section{Introduction}
 
+\lang\ is a functional programming language designed to express the APIs of
+low-level linear algebra libraries (such as BLAS/LAPACK) safely and explicitly.
+It does so by combining linear types, fractional permissions, runtime errors
+and recursion into a small, easily understandable, yet expressive set of core
+constructs. In addition to this, \lang's implementation supports several
+syntactic conveniences as well as a usable integration with real-world OCaml
+code.
+
 \subsection{Contributions}
 \begin{itemize}
-    \item We have designed the \LANG\ programming language
+    \item We have designed the \lang\ programming language
     \item We illustrate that the design is sensible with many matrix-y examples
-    \item We give a soundness proof for \LANG, using a step-indexed logical relation
+    \item We give a soundness proof for \lang, using a step-indexed logical relation
     \item Incredibly simple type inference algorihtm for polymorphic fractional permissions
         \begin{itemize}
             \item Compare to Bierhof et al's \emph{Fraction Polymorphic Permission Inference},

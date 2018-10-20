@@ -13,8 +13,8 @@ However, linearity by itself is not sufficient to produce an expressive enough
 programming language. For values such as booleans, integers, floating-point
 numbers as well as pure functions, we need to be able to use them
 \emph{intuitionistically}, that is, more than once or not at all. For this
-reason, we have the !-constructor at the type level and its corresponding
-\highl{Many}-constructor and \highl{let Many <id> = .. in ..}-eliminator at
+reason, we have the ! constructor at the type level and its corresponding
+\highl{Many} constructor and \highl{let Many <id> = .. in ..} eliminator at
 the term level. Because we want to restrict how a programmer can alias pointers
 and prevent a programmer from ignoring them (a memory leak), \lang\ enforces
 simple syntactic restrictions on which values can be wrapped up in a
@@ -62,10 +62,10 @@ linearity, the original two aliases will be out of scope after unsharing.
 
 \subsubsection{Runtime Errors}
 
-Matrix unsharing is one of only \emph{two} operations that can fail at runtime
-(the other being dimension checks, such as for \highl{gemm}). The check being
-performed is a simple sanity check that the two aliasing pointers passed to
-\highl{unshare} point to the same array/matrix.
+Aside from out-of-bounds indexing, matrix unsharing is one of only \emph{two}
+operations that can fail at runtime (the other being dimension checks, such as
+for \highl{gemm}). The check being performed is a simple sanity check that the
+two aliasing pointers passed to \highl{unshare} point to the same array/matrix.
 Section~\ref{sec:discussion_related_work} contains an overview of how we could
 remove the need for this by tracking pointer identities statically by
 augmenting the type system further.
@@ -105,7 +105,7 @@ pages on examples.
 
 Although a factorial function (Figure~\ref{fig:lang_factorial}) may seem like
 an aggresively pedestrian first example, in a linearly typed language such as
-\lang\ it represents the culmination of a rather number of features.
+\lang\ it represents the culmination of many features.
 
 To simplifiy the design and implementation of \lang's type system, recursive
 functions must have full type annotations (non-recursive functions need only
@@ -137,9 +137,51 @@ same way as a boolean-valued \highl{if}-expression.
 
 \subsubsection{Introductory: Summing over an Array}
 
+Now we can add fractional permissions to the mix:
+Figure~\ref{fig:lang_sumarray} shows a simple, tail-recursive implementation of
+summing all the elements in an array. There are many new features; first among
+them is \highl{!x0 : !elt}, the type of array/matrix elements (64-bit floating
+point).
+
 \begin{figure}[tp]
     \centering
     \inputminted[fontsize=\small]{ocaml}{../../test/examples/sum_array.lt}
     \caption{Summing over an array in \lang.}\label{fig:lang_sumarray}
 \end{figure}
 
+Second is \highl{('x) (row : 'x arr)} which is an array with a
+universally-quantified fractional permission. In particular, this means the
+body of the function cannot mutate or free the input array, only read from it.
+If the programmer did try to mutate or free \highl{row}, then they would get a
+helpful error message (Figure~\ref{fig:lang_errormsg}).
+
+\begin{figure}[tp]
+    \centering
+    \begin{minted}[fontsize=\small]{ocaml}
+let row = row[i] := x1 in (* or *) let () = free row in
+(* Could not show equality:                                        *)
+(*     z arr                                                       *)
+(* with                                                            *)
+(*     'x arr                                                      *)
+(*                                                                 *)
+(* Var 'x is universally quantified                                *)
+(* Are you trying to write to/free/unshare an array you don't own? *)
+(* In test/examples/sum_array.lt, at line: 7 and column: 19        *)
+    \end{minted}
+    \caption{Attempting to write to or free a read only array in
+    \lang.}\label{fig:lang_errormsg}
+\end{figure}
+
+Alongside taking a \highl{row : 'x arr}, the function also returns an array
+with exactly the same fractional permission as the \highl{row} (which can only
+be \highl{row}).  This is necessary because of linearity: for the caller, the
+original array passed in as an argument would be out of scope for the rest of
+the expression, so it needs to be returned and then rebound to be used for the
+rest of the function.
+
+An example of this consuming and rebinding is in \highl{let (row, !x1) =
+row[i]}. Indexing is implemented as a primitive \texttt{get: 'x. 'x arr --o
+!int --o 'x arr * !elt}. Although fractional permissions can be passed around
+explicitly  (as done in the recursive call), they can also be
+\emph{automatically inferred at call sites}, \texttt{row[i] == get \_ row i}
+takes advantage of this convenience.

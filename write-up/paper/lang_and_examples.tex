@@ -81,25 +81,6 @@ restrictions on the definition of recursive functions.
 
 \subsection{Examples}
 
-The more examples, the better. In fact, it's actually impossible to
-have too many examples -- it's okay (indeed, desirable) to spend 5-6
-pages on examples.
-\begin{itemize}
-
-    \item Simple: factorial, shows recursion, ! annotations etc.
-
-    \item Less simple: summing over an array, indexing and safety
-
-    \item Medium: one-dimensioal convolution, permissions
-
-    \item Harder: linear regression, pattern-matching and apparent non-linearity
-
-    \item Harder: L1 norm-minimisation, some frees, re-using memory
-
-    \item Big finish: Kalman filter
-
-\end{itemize}
-
 \subsubsection{Factorial}
 
 Although a factorial function (Figure~\ref{fig:lang_factorial}) may seem like
@@ -117,7 +98,7 @@ syntactic convenience for declaring the value to used intuitionistically, its
 full and precise meaning is described in Section~\ref{sec:implementation}.
 
 The condition for an \highl{if} may or may not use linear values (here, with
-\highl{x < 0 || x = 0}, it does not). Any linear values used by the conditional
+\highl{x < 0 || x = 0}, it does not). Any linear values used by the condition
 would not be in scope in either branch of the \highl{if}-expression.  Both
 branches use \texttt{x} differently: one ignores it completely and the other
 uses it twice.
@@ -148,7 +129,7 @@ point).
     \caption{Summing over an array in \lang.}\label{fig:lang_sumarray}
 \end{figure}
 
-Second is \highl{('x) (row : 'x arr)} which is an array with a
+Second is \highl{('x) (row: 'x arr)} which is an array with a
 universally-quantified fractional permission. In particular, this means the
 body of the function cannot mutate or free the input array, only read from it.
 If the programmer did try to mutate or free \texttt{row}, then they would get a
@@ -171,7 +152,7 @@ let row = row[i] := x1 in (* or *) let () = free row in
     \lang.}\label{fig:lang_errormsg}
 \end{figure}
 
-Alongside taking a \highl{row : 'x arr}, the function also returns an array
+Alongside taking a \highl{row: 'x arr}, the function also returns an array
 with exactly the same fractional permission as the \texttt{row} (which can only
 be \texttt{row}).  This is necessary because of linearity: for the caller, the
 original array passed in as an argument would be out of scope for the rest of
@@ -182,7 +163,7 @@ An example of this consuming and re-binding is in \highl{let (row, !x1) =
 row[i]}. Indexing is implemented as a primitive \highl{get: 'x. 'x arr --o
 !int --o 'x arr * !elt}. Although fractional permissions can be passed around
 explicitly  (as done in the recursive call), they can also be
-\emph{automatically inferred at call sites}, \highl{row[i] == get _ row i}
+\emph{automatically inferred at call sites}: \highl{row[i] == get _ row i}
 takes advantage of this convenience.
 
 \subsubsection{One-dimensional Convolution}
@@ -205,9 +186,9 @@ What's implemented in Figure~\ref{fig:lang_oned_conv} is a \emph{simplified}
 version of this idea, so as to not distract from the features of \lang. The
 simplifications are:
 \begin{itemize}
-    \item the kernel has a fixed length (of 3), as such, only the value of
-        \highl{write[i-1]} prior to modification in the previous iteration
-        needs to be carried forward using \highl{x0}
+    \item the kernel has a length 3, so only the value of \highl{write[i-1]}
+        (prior to modification in the previous iteration) needs to be carried
+        forward using \highl{x0}
     \item \highl{write} is assumed to have length \highl{n+1}
     \item \texttt{i}'s initial value is assumed to be \texttt{1}
     \item \highl{x0}'s initial value is assumed to be \highl{write[0]}
@@ -226,6 +207,56 @@ universally-quantified. In the recursive call, we see \texttt{\_} being used
 explicitly to tell the compiler to \emph{infer} the correct fractional
 permission based on the given arguments.
 
+\subsubsection{Squaring a Matrix}
+
+\begin{figure}[t]
+    \centering
+    \inputminted[fontsize=\small]{ocaml}{../../test/examples/square.lt}
+    \caption{Linear regression (OLS): $\hat\beta =
+        \mathbf{(X^T X)^{-1} X^T y}$}\label{fig:lang_square}
+\end{figure}
+
+\emph{The most pertinent aspect of \lang\ is the types of its primitives.}
+While the types of operations such as \texttt{get} and \texttt{set} might be
+borderline obvious, the types of BLAS/LAPACK routines become an
+\emph{incredibly useful, automated check for using the API correctly.}
+
+Figure~\ref{fig:lang_square} shows how a linearly-typed matrix squaring
+function may be written in \lang. It is a \emph{non-recursive} function
+declaration (the return type is inferred). Since we would like to be able to
+use a function like \texttt{square} more than once, it is marked with a
+\texttt{!} annotation (which also ensures it captures no linear values from the
+surrounding environment).
+
+To square a matrix, first, we extract the dimensions of the argument
+\texttt{x}. Then, because we need to use \texttt{x} twice (so that we can
+multiply it by itself) but linearity only allows one use, we use \highl{shareM:
+'x. 'x mat --o 'x s mat * 'x s mat} to split the permission \texttt{'x} (which
+represents $2^{-x}$) into two halves (\texttt{'x s}, which represents $2^{-(x+1)}$).
+
+Even if \texttt{x} had type \texttt{z mat}, sharing it now enforces the
+assumption of all BLAS/LAPACK routines that any matrix which is written to
+(which, in \lang, is always of type \texttt{z mat}) does not alias any other
+matrix in scope. So if we did try to use one of the aliases in mutating way,
+the expression would not type check, and we would get an error similar to the
+one in Figure~\ref{fig:lang_errormsg}.
+
+The line \highl{let answer <- new (m,n) [| x1 * x2 |]} is syntactic sugar for
+first creating a new $m \times n$ matrix (\highl{let answer = matrix m n}) and
+then storing the result of the multiplication in it (\highl{let ((x1, x2),
+answer) = gemm 1. _ (x1, false) _ (x2, false) 0. answer}). \highl{false} means
+the matrix should not be accessed with indices transposed.
+
+By using some simple pattern-matching and syntactic sugar, we can:
+\begin{itemize}
+    \item write normal-looking, apparently non-linear code
+    \item use matrix expressions directly and have a call to an efficient
+        call to a BLAS/LAPACK routine inserted with appropriate re-bindings
+    \item retain the safety of linear types with fractional permissions by
+        having the compiler statically enforce the aliasing and read/write rules
+        implicitly assumed by BLAS/LAPACK routines.
+\end{itemize}
+
 \subsubsection{Linear Regression}
 
 \begin{figure}[t]
@@ -235,37 +266,19 @@ permission based on the given arguments.
         \mathbf{(X^T X)^{-1} X^T y}$}\label{fig:lang_lin_reg}
 \end{figure}
 
-\emph{The most pertinent aspect of \lang's type system are the types of its
-primitives.} While the types of operations such as \texttt{get} and
-\texttt{set} might be borderline obvious, they types of BLAS/LAPACK routines
-become an \emph{incredibly useful, automated check for using the API correctly.}
+In Figure~\ref{fig:lang_lin_reg}, we wish to compute $\hat\beta = \mathbf{(X^T
+X)^{-1} X^T y}$. To do that, first, we extract the dimensions of matrix
+\texttt{x}. Then, we say we would like \texttt{xy} to be a new matrix, of
+dimension $m \times 1$, which contains the result of $\mathbf{X^T y}$ (using
+syntactic sugar for \texttt{matrix} and \texttt{gemm} calls similar to that
+used in Figure~\ref{fig:lang_square}, with a \highl{^T} annotation on
+\texttt{x} to set \texttt{x}'s `transpose indices'-flag to \highl{true}).
 
-Figure~\ref{fig:lang_lin_reg} shows a \emph{non-recursive} function declaration (the
-return type is inferred). Since we would like to be able to use a function like
-\texttt{lin\_reg} more than once, it is marked with a \texttt{!} annotation
-(which also ensure it captures no linear values from the surrounding
-environment).
-
-We wish to compute $\hat\beta = \mathbf{(X^T X)^{-1} X^T y}$. First, we extract
-the dimensions of matrix \texttt{x}. Then, we say we would like a new matrix, of
-dimension $m \times 1$, which contains the result of $\mathbf{X^T y}$. The line
-\highl{let xy <- new (m,1) [| x^T * y |]} is syntactic sugar for first creating
-a new matrix \highl{let xy = matrix m 1 in} and then storing the result of
-\highl{(x, true (* transp'd *))} multiplied with \highl{(y, false (* not
-transp'd *))} into \texttt{xy}: \highl{let (xy, (x, y)) = gemm 1.  _ (x,
-true) _ (y, false) 0. xy}, appropriately re-binding the identifiers.  The line
-\highl{let x_T_x <- new (m,m) [| x^T * x |]}, works similarly, but uses a more
-appropriate, \highl{syrk true 1. x 0. x_T_x} BLAS call.
-
-By using some simple pattern-matching and syntactic sugar, we can:
-\begin{itemize}
-    \item write normal-looking, apparently non-linear code
-    \item use matrix expressions directly and have an appropriate, efficient
-        call to a BLAS/LAPACK routine inserted
-    \item retain the safety of linear types with fractional permissions by
-        having the compiler statically enforce the aliasing and read/write rules
-        implicitly assumed by BLAS/LAPACK routines.
-\end{itemize}
+However, the line \highl{let x_T_x <- new (m,m) [| x^T * x |]}, works for a
+slightly different reason: that pattern is matched to a BLAS call to
+(\highl{syrk true 1.  x 0. x_T_x}), which only uses \texttt{x} once. Hence
+\texttt{x} can appear \emph{twice} in the \emph{pattern} without any calls to
+\texttt{share}.
 
 After computing \texttt{x\_T\_x}, we need to invert it and then multiply it by
 \texttt{xy}. The BLAS routine \highl{posv: z mat --o z mat --o z mat * z mat}
@@ -287,29 +300,31 @@ input matrices \texttt{(x,y)}.
 \end{figure}
 
 Figure~\ref{fig:lang_l1_norm_min} shows even more pattern-matching. Patterns of
-the form \highl{let <id> <- [| beta * c + alpha * a * b |]} are desugared to
+the form \highl{let <id> <- [| beta * c + alpha * a * b |]} are also desugared to
 \texttt{gemm} calls. Primitives like \highl{transpose: 'x. 'x mat --o 'x mat *
 z mat} and \highl{eye: !int --o z mat} allocate new matrices;
-\texttt{transpose} returns the transpose of a given matrix and \texttt{eye}
-returns a $k \times k$ identity matrix.
+\texttt{transpose} returns the transpose of a given matrix and \texttt{eye k}
+evaluates to a $k \times k$ identity matrix.
 
 We also see our first example of re-using memory for different matrices: like
 with \texttt{to\_del} and \texttt{posv} in the previous example, we do not need
-the value stored in \texttt{tmp\_5\_5} after the call to \texttt{gesv}. However,
-we can use the memory much later to store \texttt{answer} with \highl{let
-answer <- [| 0. * tmp_5_5 + q_inv_u * inv_u_T |]}. Again, thanks to linearity,
-the identifiers \texttt{q}, \texttt{tmp\_5\_5} are out of scope by the time
-\texttt{answer} is bound. Although during execution, all three refer to the
-same piece of memory, logically they represent different values throughout the
-computation.
+the value stored in \texttt{tmp\_5\_5} after the call to \texttt{gesv} (a
+primitive similar to \texttt{posv} but for a non-symmetric first argument).
+However, we can re-use its memory much later to store \texttt{answer} with
+\highl{let answer <- [| 0. * tmp_5_5 + q_inv_u * inv_u_T |]}. Again, thanks to
+linearity, the identifiers \texttt{q} and \texttt{tmp\_5\_5} are out of scope
+by the time \texttt{answer} is bound. Although during execution, all three
+refer to the same piece of memory, logically they represent different values
+throughout the computation.
 
 \subsubsection{Kalman Filter}
 
 \begin{figure}[t]
     \centering
     \inputminted[fontsize=\small]{ocaml}{../../test/examples/kalman.lt}
-    \caption{Kalman filter: see Figure~\ref{fig:maths_kalman} for the
-        equations this code implements.}\label{fig:lang_kalman}
+    \caption{Kalman filter: see Figure~\ref{fig:kalman_eqns} for the
+        equations this code implements. Line numbers in comments refer to
+        equivalent lines in a C implementation.}\label{fig:lang_kalman}
 \end{figure}
 
 \begin{figure}[t]
@@ -318,18 +333,18 @@ computation.
         \Sigma' &= \Sigma ( I - H^T (R + H \Sigma H^T)^{-1} H \Sigma )
     \end{align*}
     \caption{Kalman filter equations (credit:
-    \href{http://matthewrocklin.com/blog/work/2012/11/24/Kalman-Filter}{matthewrocklin.com}).}\label{fig:maths_kalman}
+    \href{http://matthewrocklin.com/blog/work/2012/11/24/Kalman-Filter}{matthewrocklin.com}).}\label{fig:kalman_eqns}
 \end{figure}
 
 Figure~\ref{fig:lang_kalman} shows a \lang\ implementation of a Kalman filter
-(equations in Figure~\ref{fig:maths_kalman}). A few new features and techniques
+(equations in Figure~\ref{fig:kalman_eqns}). A few new features and techniques
 are used in this implementation:
 \begin{itemize}
 
     \item \texttt{sym} annotations in matrix expressions: when this is used, a 
         call to \texttt{symm} (the equivalent of \texttt{gemm} but for
         symmetric matrices so that only half the operations are performed) is
-        inserted (instead of one to \texttt{gemm})
+        inserted
 
     \item \texttt{copyM\_to} is used to re-use memory by \emph{overwriting} the
         contents of its second argument to that of its first (erroring if
@@ -346,8 +361,15 @@ are used in this implementation:
             \item \texttt{data\_1}, \texttt{data\_2} and \texttt{sol\_data}
             \item \texttt{new\_h} and \texttt{sol\_h}
             \item \texttt{h\_sol\_h}, \texttt{sigma\_copy} and \texttt{new\_sigma}
-            \item \texttt{mu\_copy} and \texttt{new\_mu}
+            \item \texttt{mu\_copy} and \texttt{new\_mu}.
         \end{itemize}
 
 \end{itemize}
 
+With expressions as complex as those in Figure~\ref{fig:kalman_eqns}, it can
+get very difficult to ensure memory is not being re-used incorrectly or re-used
+enough whilst also enusring the aliasing assumptions for the BLAS/LAPACK
+routine calls are guaranteed. However, using \lang\ makes incorrect aliasing
+and memory re-use impossible. Additionally, \lang\ makes it very easy to spot
+where memory is not being re-used enough \emph{precisely because} of its
+explicit handling of matrix allocations, copies and frees.

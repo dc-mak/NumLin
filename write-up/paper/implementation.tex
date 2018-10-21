@@ -1,11 +1,131 @@
 \section{Implementation}\label{sec:implementation}
-\subsection{Implementation Strategy}
-
-% TODO desugaring
 
 Talk about how you implemented \lang\ and the general
 architecture. Talk about how simple everything is, and also
 about how implementing inference for fractions is. 
+
+\subsection{Implementation Strategy}
+
+\lang\ transpiles to OCaml and its implementation follows the structure of a
+typical domain-specific language compiler. Although \lang's current
+implementation is not as embedded DSL, its the general design is simple enough
+to adapt to being so and also to target other languages.
+
+Alongside the transpiler, a `Read-Check-Translate' loop, benchmarking program
+and a test suite are included in executable artifacts accompanying this paper.
+
+\begin{enumerate}
+
+    \item \textbf{Parsing}. A generated, LR(1) parser parses a text file into a
+        syntax tree. In general, this part will vary for different languages
+        and can also be dealt with using combinators or syntax-extensions (the
+        EDSL approach) if the host language offers such support.
+
+    \item \textbf{Desugaring}. The syntax tree is then desugared into a
+        smaller, more concise, abstract syntax tree. This allows for the type
+        checker to be simpler to specify and easier to implement.
+
+    \item \textbf{Matrix Expressions} are also desugared into the abstract
+        syntax tree through some simple pattern-matching.
+
+    \item \textbf{Type checking}. The abstract syntax tree is explicitly typed,
+        with some inference to make writing typical programs more convenient.
+
+    \item \textbf{Code Generation}. The abstract syntax tree is translated into
+        OCaml, with a few `optimisations' to produce more readable code. This
+        process is type-preserving: \lang's type system is embedded into
+        OCaml's (Figure~\ref{fig:type_grammar}), and so the OCaml type checker
+        acts as a sanity check on the generated code.
+
+\end{enumerate}
+
+A very pleasant way to use \lang\ is to have the build system generate code at
+\emph{compile-time} and then have it be used by other modules like normal OCaml
+functions. This makes it possible and even easy to use \lang\ alongside
+existing OCaml libraries; in fact, this is exactly how the benchmarking program
+and test-suite use code written in \lang.
+
+\begin{figure}[tp]
+    \centering
+    \begin{minipage}{.3\textwidth}
+        \centering
+        \begin{grammar}
+            <f> ::= `'
+            \alt <fc>
+            \alt `Z'
+            \alt `S' <f>
+
+            <t> ::= `'
+            \alt `unit'
+            \alt `bool'
+            \alt `int'
+            \alt `elt'
+            \alt <f> `arr'
+            \alt <f> `mat'
+            \alt `!' <t>
+            \alt \synt{$\forall$} <fc.> <t>
+            \alt <t> \lit{$\otimes$} \synt{$t'$}
+            \alt <t> \lit{$\multimap$} \synt{$t'$}
+        \end{grammar}
+    \end{minipage}
+    \begin{minipage}{.3\textwidth}
+        \centering
+        \begin{minted}[fontsize=\small]{ocaml}
+module Arr =
+  Owl.Dense.Ndarray.D
+
+type z = Z
+type 'a s = Succ
+
+type 'a arr =
+  A of Arr.arr
+  [@@unboxed]
+
+type 'a mat =
+  M of Arr.arr
+  [@@unboxed]
+
+type 'a bang =
+  Many of 'a
+  [@@unboxed]
+        \end{minted}
+    \end{minipage}
+    \begin{minipage}{.3\textwidth}
+        \begin{align*}
+            [\![ f\!c ]\!] &= \texttt{'fc} \\
+            [\![ \textbf{Z} ]\!] &= \texttt{z}\\
+            [\![ \textbf{S} \, f ]\!] &= [\![ f ]\!]\, \texttt{s}\\
+            [\![ \textbf{unit} ]\!] &= \texttt{unit}\\
+            [\![ \textbf{bool} ]\!] &= \texttt{bool}\\
+            [\![ \textbf{int} ]\!] &= \texttt{int}\\
+            [\![ \textbf{elt} ]\!] &= \texttt{float}\\
+            [\![ f\, \textbf{arr} ]\!] &= [\![ f ]\!]\, \texttt{arr}\\
+            [\![ f\, \textbf{mat} ]\!] &= [\![ f ]\!]\, \texttt{mat}\\
+            [\![ \textbf{!} \, t ]\!] &= [\![ t ]\!]\, \texttt{bang}\\
+            [\![ \forall f\!c.\, t ]\!] &= [\![ t ]\!]\\
+            [\![ t \otimes t' ]\!] &= [\![ t ]\!] \texttt{*} [\![ t' ]\!]\\
+            [\![ t \multimap t' ]\!] &= [\![ t ]\!] \rightarrow [\![ t' ]\!]
+        \end{align*}
+    \end{minipage}
+    \caption{\lang's type grammar (left) and its embedding into OCaml
+        (right).}\label{fig:type_grammar}
+\end{figure}
+
+\subsubsection{Desugaring}\label{subsubsec:desugaring}
+
+Straightforward enough.
+
+\subsubsection{Matrix Expressions}
+
+Pattern matching!
+
+\subsubsection{Type Checking and Fractional Permission Inference}
+
+Unification!
+
+\subsubsection{Code Generation}
+
+A few examples?
 
 \subsection{Performance Metrics}
 

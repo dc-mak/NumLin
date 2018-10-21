@@ -95,7 +95,7 @@ linear values from its environment).
 
 The only argument is \highl{!x : !int}. The ! annotation on \texttt{x} is a
 syntactic convenience for declaring the value to used intuitionistically, its
-full and precise meaning is described in Section~\ref{sec:implementation}.
+full and precise meaning is described in Section~\ref{subsubsec:desugaring}.
 
 The condition for an \highl{if} may or may not use linear values (here, with
 \highl{x < 0 || x = 0}, it does not). Any linear values used by the condition
@@ -367,9 +367,9 @@ are used in this implementation:
 \end{itemize}
 
 With expressions as complex as those in Figure~\ref{fig:kalman_eqns}, it can
-get very difficult to ensure memory is not being re-used incorrectly or re-used
-enough whilst also enusring the aliasing assumptions for the BLAS/LAPACK
-routine calls are guaranteed. However, using \lang\ makes incorrect aliasing
-and memory re-use impossible. Additionally, \lang\ makes it very easy to spot
-where memory is not being re-used enough \emph{precisely because} of its
-explicit handling of matrix allocations, copies and frees.
+get very difficult to ensure memory is not being re-used incorrectly/enough
+whilst also enusring the aliasing assumptions for the BLAS/LAPACK routine calls
+are guaranteed. However, using \lang\ makes incorrect aliasing and memory
+re-use impossible. Additionally, \lang\ makes it possible to spot where memory
+is not being re-used enough \emph{precisely because} of its explicit handling
+of allocations, aliases and frees.

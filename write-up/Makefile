@@ -39,8 +39,7 @@ SEM := semantics_def.tex \
 SEM_DIR := semantics
 SEM := $(addprefix $(SEM_DIR)/,$(SEM))
 
-PAPER := paper.tex \
-         intro.tex \
+PAPER := intro.tex \
          lang_and_examples.tex \
          formal_system.tex \
          implementation.tex \

@@ -1,9 +1,9 @@
-let rec f (!i : !int) (!n : !int) (!x0 : !elt)
-          ('x) (row : 'x arr) : 'x arr * !elt =
+let rec sum_array (!i : !int) (!n : !int) (!x0 : !elt)
+                  ('x) (row : 'x arr) : 'x arr * !elt =
     if i = n then
         (row, x0)
     else
         let (row, !x1) = row[i] in
-        f (i + 1) n (x0 +. x1) 'x row in
-    f
+        sum_array (i + 1) n (x0 +. x1) 'x row in
+    sum_array
 ;;

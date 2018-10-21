@@ -23,7 +23,7 @@ simple syntactic restrictions on which values can be wrapped up in a
 \subsubsection{Fractional Permissions}
 
 There are also valid cases in which we would want to alias pointers to a
-matrix. The most common is exemplified by the BLAS routine \texttt{gemm}, which
+matrix. The most common is exemplified by the BLAS routine \highl{gemm}, which
 (rather tersely) stands for \emph{GEneric Matrix Multiplication}.  A
 \emph{simplified} definition of \texttt{gemm($\alpha$, A, B, $\beta$, C)} is $C
 := \alpha AB + \beta C$. In this case, \texttt{A} and \texttt{B} may alias each
@@ -52,7 +52,7 @@ $2^{-k}$ then the two new aliases of it will have a fractional permission of
 $2^{-(k+1)}$ each. Thanks to linearity, the original array/matrix with a
 fractional permission of $2^{-k}$ will be out of scope after the sharing.  When
 an array/matrix is shared as such, we can prevent the programmer from freeing
-or mutating it by making the types of \highl{free} and \highl{set} (for
+or mutating it by making the types of \texttt{free} and \texttt{set} (for
 mutation) require a \emph{whole} ($2^0$) permission.
 
 If we have two aliases \emph{to the same matrix} with \emph{identical}
@@ -64,8 +64,8 @@ linearity, the original two aliases will be out of scope after unsharing.
 
 Aside from out-of-bounds indexing, matrix unsharing is one of only \emph{two}
 operations that can fail at runtime (the other being dimension checks, such as
-for \highl{gemm}). The check being performed is a simple sanity check that the
-two aliasing pointers passed to \highl{unshare} point to the same array/matrix.
+for \texttt{gemm}). The check being performed is a simple sanity check that the
+two aliasing pointers passed to \texttt{unshare} point to the same array/matrix.
 Section~\ref{sec:discussion_related_work} contains an overview of how we could
 remove the need for this by tracking pointer identities statically by
 augmenting the type system further.
@@ -84,10 +84,9 @@ restrictions on the definition of recursive functions.
 The more examples, the better. In fact, it's actually impossible to
 have too many examples -- it's okay (indeed, desirable) to spend 5-6
 pages on examples.
-
 \begin{itemize}
 
-    \item Simple: factorial, shows recursion, !-annotations etc.
+    \item Simple: factorial, shows recursion, ! annotations etc.
 
     \item Less simple: summing over an array, indexing and safety
 
@@ -101,7 +100,7 @@ pages on examples.
 
 \end{itemize}
 
-\subsubsection{Introductory: Factorial}
+\subsubsection{Factorial}
 
 Although a factorial function (Figure~\ref{fig:lang_factorial}) may seem like
 an aggresively pedestrian first example, in a linearly typed language such as
@@ -113,29 +112,29 @@ their argument types annotated). Its body is a closed expression (with respect
 to the function's arguments), so it type-checks (since it does not capture any
 linear values from its environment).
 
-The only argument is \highl{!x : !int}. The !-annotation on \highl{x} is a
+The only argument is \highl{!x : !int}. The ! annotation on \texttt{x} is a
 syntactic convenience for declaring the value to used intuitionistically, its
 full and precise meaning is described in Section~\ref{sec:implementation}.
 
 The condition for an \highl{if} may or may not use linear values (here, with
-\highl{x < 0} \highl{ || x = 0}, it does not). Any linear values used by the conditional
+\highl{x < 0 || x = 0}, it does not). Any linear values used by the conditional
 would not be in scope in either branch of the \highl{if}-expression.  Both
-branches use \highl{x} differently: one ignores it completely and the other
+branches use \texttt{x} differently: one ignores it completely and the other
 uses it twice.
 
 All numeric and boolean literals are implicitly wrapped in a \highl{Many} and
 all primitives involving them return a \highl{!int}, \highl{!bool} or
 \highl{!elt} (types of elements of arrays/matrices, typically 64-bit
-floating-point numbers). The short-circuting \highl{||} behaves in exactly the
+floating-point numbers). The short-circuting \texttt{||} behaves in exactly the
 same way as a boolean-valued \highl{if}-expression.
 
-\begin{figure}[tp]
+\begin{figure}[t]
     \centering
     \inputminted[fontsize=\small, linenos]{ocaml}{../../test/examples/factorial.lt}
     \caption{Factorial function in \lang.}\label{fig:lang_factorial}
 \end{figure}
 
-\subsubsection{Introductory: Summing over an Array}
+\subsubsection{Summing over an Array}
 
 Now we can add fractional permissions to the mix:
 Figure~\ref{fig:lang_sumarray} shows a simple, tail-recursive implementation of
@@ -143,7 +142,7 @@ summing all the elements in an array. There are many new features; first among
 them is \highl{!x0 : !elt}, the type of array/matrix elements (64-bit floating
 point).
 
-\begin{figure}[tp]
+\begin{figure}[t]
     \centering
     \inputminted[fontsize=\small]{ocaml}{../../test/examples/sum_array.lt}
     \caption{Summing over an array in \lang.}\label{fig:lang_sumarray}
@@ -152,10 +151,10 @@ point).
 Second is \highl{('x) (row : 'x arr)} which is an array with a
 universally-quantified fractional permission. In particular, this means the
 body of the function cannot mutate or free the input array, only read from it.
-If the programmer did try to mutate or free \highl{row}, then they would get a
+If the programmer did try to mutate or free \texttt{row}, then they would get a
 helpful error message (Figure~\ref{fig:lang_errormsg}).
 
-\begin{figure}[tp]
+\begin{figure}[t]
     \centering
     \begin{minted}[fontsize=\small]{ocaml}
 let row = row[i] := x1 in (* or *) let () = free row in
@@ -173,15 +172,182 @@ let row = row[i] := x1 in (* or *) let () = free row in
 \end{figure}
 
 Alongside taking a \highl{row : 'x arr}, the function also returns an array
-with exactly the same fractional permission as the \highl{row} (which can only
-be \highl{row}).  This is necessary because of linearity: for the caller, the
+with exactly the same fractional permission as the \texttt{row} (which can only
+be \texttt{row}).  This is necessary because of linearity: for the caller, the
 original array passed in as an argument would be out of scope for the rest of
 the expression, so it needs to be returned and then rebound to be used for the
 rest of the function.
 
-An example of this consuming and rebinding is in \highl{let (row, !x1) =
-row[i]}. Indexing is implemented as a primitive \texttt{get: 'x. 'x arr --o
+An example of this consuming and re-binding is in \highl{let (row, !x1) =
+row[i]}. Indexing is implemented as a primitive \highl{get: 'x. 'x arr --o
 !int --o 'x arr * !elt}. Although fractional permissions can be passed around
 explicitly  (as done in the recursive call), they can also be
-\emph{automatically inferred at call sites}, \texttt{row[i] == get \_ row i}
+\emph{automatically inferred at call sites}, \highl{row[i] == get _ row i}
 takes advantage of this convenience.
+
+\subsubsection{One-dimensional Convolution}
+
+\begin{figure}[t]
+    \centering
+    \inputminted[fontsize=\small]{ocaml}{../../test/examples/weighted_avg_infer.lt}
+    \caption{\emph{Simplified} one-dimensional convolution.}\label{fig:lang_oned_conv}
+\end{figure}
+
+Figure~\ref{fig:lang_oned_conv} extends the set of features demonstrated by the
+previous examples by mutating one of the input arrays. A one-dimensional
+convolution involves two arrays: a read-only kernel (array of weights) and an
+input vector. It modifies the input vector \emph{in-place} by replacing each
+\highl{write[i]} with a weighted (as per the values in the kernel) sum of it
+and its neighbours; intuitively, sliding a dot-product with the kernel across
+the vector.
+
+What's implemented in Figure~\ref{fig:lang_oned_conv} is a \emph{simplified}
+version of this idea, so as to not distract from the features of \lang. The
+simplifications are:
+\begin{itemize}
+    \item the kernel has a fixed length (of 3), as such, only the value of
+        \highl{write[i-1]} prior to modification in the previous iteration
+        needs to be carried forward using \highl{x0}
+    \item \highl{write} is assumed to have length \highl{n+1}
+    \item \texttt{i}'s initial value is assumed to be \texttt{1}
+    \item \highl{x0}'s initial value is assumed to be \highl{write[0]}
+    \item the first and last values of \texttt{write} are ignored.
+\end{itemize}
+
+Mutating an array is implemented similarly to indexing one: a primitive
+\highl{set: z arr --o !int --o !elt --o z arr}.  It consumes the original
+array and returns a new array with the updated value.  \highl{let written =
+write[i] := <exp> } is just syntactic sugar for \highl{let written = set write i <exp>}.
+
+Since \highl{write: z arr} (where \texttt{z} stands for $k=0$, representing a
+fractional permission of $2^{-k} = 2^{-0} = 1$), we may mutate it, but since we
+only need to read from \texttt{weights}, its fractional permission index can be
+universally-quantified. In the recursive call, we see \texttt{\_} being used
+explicitly to tell the compiler to \emph{infer} the correct fractional
+permission based on the given arguments.
+
+\subsubsection{Linear Regression}
+
+\begin{figure}[t]
+    \centering
+    \inputminted[fontsize=\small]{ocaml}{../../test/examples/lin_reg.lt}
+    \caption{Linear regression (OLS): $\hat\beta =
+        \mathbf{(X^T X)^{-1} X^T y}$}\label{fig:lang_lin_reg}
+\end{figure}
+
+\emph{The most pertinent aspect of \lang's type system are the types of its
+primitives.} While the types of operations such as \texttt{get} and
+\texttt{set} might be borderline obvious, they types of BLAS/LAPACK routines
+become an \emph{incredibly useful, automated check for using the API correctly.}
+
+Figure~\ref{fig:lang_lin_reg} shows a \emph{non-recursive} function declaration (the
+return type is inferred). Since we would like to be able to use a function like
+\texttt{lin\_reg} more than once, it is marked with a \texttt{!} annotation
+(which also ensure it captures no linear values from the surrounding
+environment).
+
+We wish to compute $\hat\beta = \mathbf{(X^T X)^{-1} X^T y}$. First, we extract
+the dimensions of matrix \texttt{x}. Then, we say we would like a new matrix, of
+dimension $m \times 1$, which contains the result of $\mathbf{X^T y}$. The line
+\highl{let xy <- new (m,1) [| x^T * y |]} is syntactic sugar for first creating
+a new matrix \highl{let xy = matrix m 1 in} and then storing the result of
+\highl{(x, true (* transp'd *))} multiplied with \highl{(y, false (* not
+transp'd *))} into \texttt{xy}: \highl{let (xy, (x, y)) = gemm 1.  _ (x,
+true) _ (y, false) 0. xy}, appropriately re-binding the identifiers.  The line
+\highl{let x_T_x <- new (m,m) [| x^T * x |]}, works similarly, but uses a more
+appropriate, \highl{syrk true 1. x 0. x_T_x} BLAS call.
+
+By using some simple pattern-matching and syntactic sugar, we can:
+\begin{itemize}
+    \item write normal-looking, apparently non-linear code
+    \item use matrix expressions directly and have an appropriate, efficient
+        call to a BLAS/LAPACK routine inserted
+    \item retain the safety of linear types with fractional permissions by
+        having the compiler statically enforce the aliasing and read/write rules
+        implicitly assumed by BLAS/LAPACK routines.
+\end{itemize}
+
+After computing \texttt{x\_T\_x}, we need to invert it and then multiply it by
+\texttt{xy}. The BLAS routine \highl{posv: z mat --o z mat --o z mat * z mat}
+does exactly that: assuming the first argument is symmetric, \texttt{posv}
+mutates its second argument to contain the desired value. Its first argument is
+also mutated to contain the (upper triangular) Cholesky decomposition factor of
+the original matrix. Since we do not need that matrix (or its memory) again, we
+\texttt{free} it. If we forgot to, we would get a \texttt{Variable to\_del not
+used} error. Lastly, we return the \texttt{answer} alongside the untouched
+input matrices \texttt{(x,y)}.
+
+\subsubsection{L1-Norm Minimisation on Manifolds}
+
+\begin{figure}[t]
+    \centering
+    \inputminted[fontsize=\small]{ocaml}{../../test/examples/l1_norm_min.lt}
+    \caption{L1-norm minimisation on manifolds:
+        $\mathbf{Q^{-1}U(I+U^TQ^{-1}U)^{-1}U^T}$}\label{fig:lang_l1_norm_min}
+\end{figure}
+
+Figure~\ref{fig:lang_l1_norm_min} shows even more pattern-matching. Patterns of
+the form \highl{let <id> <- [| beta * c + alpha * a * b |]} are desugared to
+\texttt{gemm} calls. Primitives like \highl{transpose: 'x. 'x mat --o 'x mat *
+z mat} and \highl{eye: !int --o z mat} allocate new matrices;
+\texttt{transpose} returns the transpose of a given matrix and \texttt{eye}
+returns a $k \times k$ identity matrix.
+
+We also see our first example of re-using memory for different matrices: like
+with \texttt{to\_del} and \texttt{posv} in the previous example, we do not need
+the value stored in \texttt{tmp\_5\_5} after the call to \texttt{gesv}. However,
+we can use the memory much later to store \texttt{answer} with \highl{let
+answer <- [| 0. * tmp_5_5 + q_inv_u * inv_u_T |]}. Again, thanks to linearity,
+the identifiers \texttt{q}, \texttt{tmp\_5\_5} are out of scope by the time
+\texttt{answer} is bound. Although during execution, all three refer to the
+same piece of memory, logically they represent different values throughout the
+computation.
+
+\subsubsection{Kalman Filter}
+
+\begin{figure}[t]
+    \centering
+    \inputminted[fontsize=\small]{ocaml}{../../test/examples/kalman.lt}
+    \caption{Kalman filter: see Figure~\ref{fig:maths_kalman} for the
+        equations this code implements.}\label{fig:lang_kalman}
+\end{figure}
+
+\begin{figure}[t]
+    \begin{align*}
+        \mu' &= \mu + \Sigma H^T (R + H \Sigma H^T)^{-1} (H \mu - \textrm{data})\\
+        \Sigma' &= \Sigma ( I - H^T (R + H \Sigma H^T)^{-1} H \Sigma )
+    \end{align*}
+    \caption{Kalman filter equations (credit:
+    \href{http://matthewrocklin.com/blog/work/2012/11/24/Kalman-Filter}{matthewrocklin.com}).}\label{fig:maths_kalman}
+\end{figure}
+
+Figure~\ref{fig:lang_kalman} shows a \lang\ implementation of a Kalman filter
+(equations in Figure~\ref{fig:maths_kalman}). A few new features and techniques
+are used in this implementation:
+\begin{itemize}
+
+    \item \texttt{sym} annotations in matrix expressions: when this is used, a 
+        call to \texttt{symm} (the equivalent of \texttt{gemm} but for
+        symmetric matrices so that only half the operations are performed) is
+        inserted (instead of one to \texttt{gemm})
+
+    \item \texttt{copyM\_to} is used to re-use memory by \emph{overwriting} the
+        contents of its second argument to that of its first (erroring if
+        dimensions do not match)
+
+    \item \highl{let new_r <- new [| r_2 |]} creates a copy of \texttt{r\_2}
+
+    \item \texttt{potrs \_ chol\_r data\_2} uses a pre-computed Cholesky decomposition
+        to multiply \texttt{data\_2} by \texttt{r\_2} $= (R + H \Sigma H^T)^{-1}$
+
+    \item a lot of memory re-use; the following sets of identifiers alias each other:
+        \begin{itemize}
+            \item \texttt{r\_1} and \texttt{r\_2}
+            \item \texttt{data\_1}, \texttt{data\_2} and \texttt{sol\_data}
+            \item \texttt{new\_h} and \texttt{sol\_h}
+            \item \texttt{h\_sol\_h}, \texttt{sigma\_copy} and \texttt{new\_sigma}
+            \item \texttt{mu\_copy} and \texttt{new\_mu}
+        \end{itemize}
+
+\end{itemize}
+

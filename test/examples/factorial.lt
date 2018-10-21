@@ -1,6 +1,6 @@
-let rec f ( !x : !int ) : !int =
+let rec factorial ( !x : !int ) : !int =
     if x < 0 || x = 0 then
         1
     else
-        x * f (x - 1) in f
+        x * factorial (x - 1) in factorial
 ;;

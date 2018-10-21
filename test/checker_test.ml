@@ -213,6 +213,7 @@ let ops =
   List.concat_map ~f:(fun x -> Ast.[IntOp x; EltOp x]) arith
 ;;
 
+(* TODO update these for new primitives *)
 let prims =
   (** Boolean *)
   [ Ast.Not_ ] @

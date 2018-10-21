@@ -1,0 +1,8 @@
+let !square ('x) (x : 'x mat) =
+    let (x, (!m, !n)) = sizeM _ x in
+    let (x1, x2) = shareM _ x in
+    let answer <- new (m, n) [| x1 * x2 |] in
+    let x = unshareM _ x1 x2 in
+    (x, answer) in
+    square
+;;

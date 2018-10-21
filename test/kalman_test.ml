@@ -64,8 +64,8 @@ let r, r_copy =
   r, r_copy
 ;;
 
+(* Matrices. Must reset before every test. *)
 let reset () =
-  (* Stdio.printf "\nreset\n---\n"; *)
   List.iter ~f:(fun (orig, copy) -> Owl.Mat.copy_ copy ~out:orig) [
     (sigma, sigma_copy);
     (h, h_copy);

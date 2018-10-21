@@ -55,7 +55,7 @@ let%expect_test "l1_norm_min" =
 
   let naive = naive_lin_reg ~x ~y in
   let [| owl |] = owl_lin_reg ~x ~y [@@warning "-8"] in
-  let (M lt4la, _ ) = lt4la_lin_reg ~x ~y in
+  let (_, M lt4la) = lt4la_lin_reg ~x ~y in
   let () = assert Owl.Mat.(x = x_copy && y = y_copy) in
   let (=) = Owl.Mat.(=~) in
   Stdio.printf "Naive and Owl: %b\n\

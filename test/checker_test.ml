@@ -213,7 +213,6 @@ let ops =
   List.concat_map ~f:(fun x -> Ast.[IntOp x; EltOp x]) arith
 ;;
 
-(* TODO update these for new primitives *)
 let prims =
   (** Boolean *)
   [ Ast.Not_ ] @
@@ -245,14 +244,18 @@ let prims =
   ; Unshare_mat
   ; Free_mat
   ; Matrix
+  ; Eye
   ; Copy_mat
   ; Copy_mat_to
   ; Size_mat
+  ; Transpose
   (** Level 3 BLAS/LAPACK *)
   ; Symm
   ; Gemm
+  ; Gesv
   ; Posv
   ; Potrs
+  ; Syrk
   ]
 ;;
 
@@ -301,14 +304,18 @@ let%expect_test "check_array_elim" =
     unshare_mat: 'x. 'x s mat --o 'x s mat --o 'x mat
     free_mat: z mat --o unit
     matrix: !int --o !int --o z mat
+    eye: !int --o z mat
     copy_mat: 'x. 'x mat --o 'x mat * z mat
     copy_mat_to: 'x. 'x mat --o z mat --o 'x mat * z mat
     size_mat: 'x. 'x mat --o 'x mat * ( !int * !int )
+    transpose: 'x. 'x mat --o 'x mat * z mat
     symm: !bool --o !float --o 'x.
       'x mat --o 'y. 'y mat --o !float --o z mat --o ( 'x mat * 'y mat ) * z mat
     gemm: !float --o 'x.
       'x mat * !bool --o 'y.
         'y mat * !bool --o !float --o z mat --o ( 'x mat * 'y mat ) * z mat
+    gesv: z mat --o z mat --o z mat * z mat
     posv: z mat --o z mat --o z mat * z mat
-    potrs: 'x. 'x mat --o z mat --o 'x mat * z mat |}]
+    potrs: 'x. 'x mat --o z mat --o 'x mat * z mat
+    syrk: !bool --o !float --o 'x. 'x mat --o !float --o z mat --o 'x mat * z mat |}]
 ;;

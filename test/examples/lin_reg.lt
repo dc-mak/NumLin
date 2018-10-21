@@ -5,6 +5,6 @@ let !lin_reg ('x) (x : 'x mat)
   let x_T_x <- new (m, m) [| x^T * x |] in
   let (to_del, answer) = posv x_T_x xy in
   let () = freeM to_del in
-  (answer, (x, y)) in
+  ((x, y), answer) in
 lin_reg
 ;;

@@ -1,8 +1,8 @@
 let rec simp_oned_conv
         (!i : !int) (!n : !int) (!x0 : !elt)
         (write : z arr) ('x) (weights : 'x arr)
-        : z arr * 'x arr =
-    if n = i then (write, weights) else
+        : 'x arr * z arr =
+    if n = i then (weights, write) else
     let !w0 <- weights[0]   in
     let !w1 <- weights[1]   in
     let !w2 <- weights[2]   in

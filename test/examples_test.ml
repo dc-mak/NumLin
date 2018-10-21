@@ -45,7 +45,7 @@ let%expect_test "one_d_conv" =
   let (A row) : z arr = make_arr () in
   let n = Owl.Arr.numel row in
   let weights : z arr = A (Owl.Arr.(init [| n |] (fun _ -> 1. /. 3.))) in
-  let (A row, _) = one_d_conv (Many 1) (Many (n-1)) (Many 10.) (A row) weights in
+  let (_, A row) = one_d_conv (Many 1) (Many (n-1)) (Many 10.) (A row) weights in
   Stdio.printf !"%{sexp: float array}" (Owl.Arr.to_array row);
   [%expect {| (10 40 40 30 19.999999999999996 30 40) |}]
 ;;
@@ -56,7 +56,7 @@ let%expect_test "one_d_conv" =
   let (A row) : z arr = make_arr () in
   let n = Owl.Arr.numel row in
   let weights : z arr = A (Owl.Arr.(init [| n |] (fun _ -> 1. /. 3.))) in
-  let (A row, _) = one_d_conv (Many 1) (Many (n-1)) (Many 10.) (A row) weights in
+  let (_ ,A row) = one_d_conv (Many 1) (Many (n-1)) (Many 10.) (A row) weights in
   Stdio.printf !"%{sexp: float array}" (Owl.Arr.to_array row);
   [%expect {| (10 40 40 30 19.999999999999996 30 40) |}]
 ;;
@@ -70,7 +70,14 @@ let%expect_test "sugar" =
   [%expect {| (1 1 1) and 3 and 9 |}]
 ;;
 
-(* Matrices. Must resest before every test. *)
+let%test "square" =
+  let square = Examples.Square.it in
+  let rand = Owl.Mat.uniform 5 5 in
+  let (_, M answer) = square (M rand) in
+  let answer2 = Owl.Mat.dot rand rand in
+  Owl.Mat.(answer = answer2)
+;;
+
 let%test_module "Kalman" = 
   (module Kalman_test)
 ;;

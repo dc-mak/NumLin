@@ -204,7 +204,7 @@ let with_fc var lin =
   (* THEN run computation *)
   let%bind result = lin in
 
-  (* THEN remove the fraction_capability variables and return *)
+  (* THEN remove the frac. cap. variable and return *)
   let%bind () =
     let%bind {fc_vars; _} as state = get in
     match fc_vars with

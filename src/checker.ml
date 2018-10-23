@@ -199,7 +199,7 @@ let rec check =
       end
 
     | WFL inferred ->
-      error loc ~expected:"If: expected Bool" inferred
+      error loc ~expected:"If: expected (Bang Bool)" inferred
     end
 
   | Gen (_, var, exp) ->

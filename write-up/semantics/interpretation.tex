@@ -40,6 +40,8 @@ heap-and-value.
 
 \subsection{Interpretation}
 
+% TODO How to handle primitives?
+
 \begin{align*}
   \V{k}{ \Unit } &= \{ (\empH, \ast) \} \\
 \\
@@ -53,7 +55,7 @@ heap-and-value.
 \\
     \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{t} \} \\
 \\
-    \V{k}{ \forall fc.\  t } &= \{ (\varsigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\varsigma, (\ottkw{fun}\, fc \rightarrow \, v)\, [ f ]) \in \V{k}{ t [ fc / f ] } \} \\
+    \V{k}{ \forall fc.\  t } &= \{ (\varsigma, \ottkw{fun}\, fc \rightarrow \, e) \mid \forall f.\ (\varsigma, (\ottkw{fun}\, fc \rightarrow \, e)\, [ f ]) \in \C{k}{ t [ fc / f ] } \} \\
 \\
     \V{k}{ t_1 \otimes t_2 } &= \{ (\varsigma_1 \star \varsigma_2, ( v_1, v_2 )) \mid (\varsigma_1, v_1) \in \V{k}{t_1} \wedge (\varsigma_2, v_2) \in \V{k}{t_2} \} \\
 \\
@@ -75,6 +77,6 @@ heap-and-value.
 \\
     \varsigma \equiv \den{H}{}{\sigma} &\equiv \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]\\
 \\
-\den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, \delta, \gamma, \sigma.\ \dom(\Theta) = \dom(\theta) \wedge (\varsigma, \gamma) \in \den{L}{k}{ \Gamma }\theta \wedge \delta \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
-                                                 & \qquad \qquad (\varsigma, \gamma(\delta(e))) \in \C{k}{ \theta(t) }
+\den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, \delta, \gamma, \sigma.\ \Theta = \dom(\theta) \wedge (\varsigma, \gamma) \in \den{L}{k}{ \Gamma }\theta \wedge \delta \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
+                                                 & \qquad \qquad (\varsigma, \theta(\gamma(\delta(e)))) \in \C{k}{ \theta(t) }
 \end{align*}

@@ -34,6 +34,7 @@ DIS := $(addprefix $(DIS_DIR)/,$(DIS))
 
 SEM := semantics_def.tex \
        interpretation.tex \
+       lemmas.tex \
        soundness.tex
 
 SEM_DIR := semantics

@@ -579,38 +579,50 @@
         \case{%
             \textsc{Ty\_Var\_Lin}.
         }{%
-            \prove{$(\sigma, \theta(\delta(\gamma(x)))) \in \C{k}{\theta(t)}$.}
+            \prove{$(\varsigma, \theta(\delta(\gamma(x)))) \in \C{k}{\theta(t)}$.}
         }
     }
 
     \begin{proof}
+
         \step{}{$\Gamma = \{ x : t\}$ by assumption of \textsc{Ty\_Var\_Lin}.}
-        \step{}{\suffices{$(\sigma, \gamma(x)) \in \C{k}{\theta(t)}$ by \ref{disjoint}.}}
-        \step{}{By \ref{inL}, there exist $(\sigma_x, v_x) \in \V{k}{\theta(t)}$, such
-            that $\sigma=\sigma_x$ and $\gamma = [x \mapsto v_x]$.}
-        \step{}{Hence, $(\sigma_x, v_x) \in \C{k}{\theta(t)}$, by \ref{subsetVC}.}
+
+        \step{}{\suffices{$(\varsigma, \gamma(x)) \in \C{k}{\theta(t)}$ by
+            \ref{disjoint} ($\theta$ and $\delta$ irrelevant).}}
+
+        \step{}{By \ref{inL}, there exist $(\varsigma_x, v_x) \in \V{k}{\theta(t)}$, such
+            that $\varsigma=\varsigma_x$ and $\gamma = [x \mapsto v_x]$.}
+
+        \step{}{Hence, $(\varsigma_x, v_x) \in \C{k}{\theta(t)}$, by \ref{subsetVC}.}
+
     \end{proof}
 
     \step{}{%
         \case{%
             \textsc{Ty\_Var}.
         }{%
-            \prove{$(\sigma, \theta(\delta(\gamma(x)))) \in \C{k}{\theta(t)}$.}
+            \prove{$(\varsigma, \theta(\delta(\gamma(x)))) \in \C{k}{\theta(t)}$.}
         }
     }
 
     \begin{proof}
+
         \step{}{$x : t \in \Delta$ and $\Gamma = \empH$ by assumption of \textsc{Ty\_Var}.}
-        \step{}{\suffices{$(\empH, \delta(x)) \in \C{k}{\theta(t)}$ by \ref{disjoint} and \ref{inL}.}}
-        \step{}{By \ref{inI}, there exists $v_x$ such that $(\empH, v_x) \in \V{k}{\theta(t)}$.}
+
+        \step{}{\suffices{$(\empH, \delta(x)) \in \C{k}{\theta(t)}$ by \ref{disjoint}.}}
+
+        \step{}{By \ref{inI}, there exists $v_x$ such that $(\empH, v_x) \in \V{k}{\theta(t)}$
+            ($\theta$ irrelevant and $\gamma$ empty).}
+
         \step{}{Hence, $(\empH, v_x) \in \C{k}{\theta(t)}$, by \ref{subsetVC}.}
+
     \end{proof}
 
     \step{}{%
         \case{%
             \textsc{Ty\_Unit\_Intro}.
         }{%
-            \prove{$(\sigma, \theta(\delta(\gamma(\, ())\,))) \in \C{k}{\theta(\Unit)}$.\\}
+            True by \ref{subsetVC} and definition of $\V{k}{\ottkw{unit}}$.
         }
     }
 

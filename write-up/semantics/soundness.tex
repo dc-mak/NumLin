@@ -17,8 +17,8 @@
             \item Arbitrary $k, \theta, \delta, \gamma, \sigma$ such that:
                 \begin{pfenum}
                     \item $\Theta = \textrm{dom}(\theta)$
-                    \item $(\varsigma, \gamma) \in \den{L}{k}{\Gamma}\theta$\label{inL}
                     \item $\delta \in \den{I}{k}{\Delta}\theta$.\label{inI}
+                    \item $(\varsigma, \gamma) \in \den{L}{k}{\Gamma}\theta$\label{inL}
                 \end{pfenum}
 
             \item W.l.o.g., all variables are distinct, hence $\Theta$,
@@ -217,22 +217,22 @@
 
     \begin{proof}
 
-        \step{}{We have, $e = v$ for some value $v \neq l \cdot f$, $\Gamma = \empH$
+        \step{}{We have, $e = v$ for some value $v \neq l$, $\Gamma = \empH$
             and so \\ $\forall k.\ \den{}{k}{\Theta; \Delta; \cdot \vdash v : t}$ by induction.}
 
-        \step{}{\suffices{$(\empH, \ottkw{Many}\, \delta(v)) \in \C{k}{!\theta(t)}$ by \ref{inL}
+        \step{}{\suffices{$(\empH, \ottkw{Many}\, \theta(\delta(v))) \in \C{k}{!\theta(t)}$ by \ref{inL}
             $(\varsigma = \empH, \gamma = [])$.}}
 
         \step{}{Instantiate $\den{}{k}{\Theta; \Delta; \cdot \vdash v : t}$
             with $\theta, \delta, \gamma = [], \sigma = \empH$ to obtain
-            $(\empH, \delta(v)) \in \C{k}{\theta(t)}$.}
+            $(\empH, \theta(\delta(v))) \in \C{k}{\theta(t)}$.}
 
-        \step{}{Instantiate $(\empH, \delta(v)) \in \C{k}{\theta(t)}$ with $j=0$,
-            $\sigma_r = \empH$ and \ref{valueSub} ($\delta(v)$ is a value), \\
-            to conclude $(\empH, \delta(v)) \in \V{k}{\theta(t)}$.}
+        \step{}{Instantiate $(\empH, \theta(\delta(v))) \in \C{k}{\theta(t)}$ with $j=0$,
+            $\sigma_r = \empH$ and \ref{valueSub} ($\theta(\delta(v))$ is a value), \\
+            to conclude $(\empH, \theta(\delta(v))) \in \V{k}{\theta(t)}$.}
 
         \step{}{By definition of $\V{k}{!\theta(t)}$, \ref{valueSub} and \ref{subsetVC} we
-            have $(\empH, \ottkw{Many}\, \delta(v)) \in \C{k}{!\theta(t)}$.}
+            have $(\empH, \ottkw{Many}\, \theta(\delta(v))) \in \C{k}{!\theta(t)}$.}
 
     \end{proof}
 
@@ -339,7 +339,7 @@
 
         \step{}{By induction, $\forall k.\ \den{}{k}{\Theta; \Delta; \Gamma, x : t \vdash e}$.}
 
-        \step{}{Instantiate it $j-1, \theta, \gamma[x \mapsto v], \sigma + \sigma_v$.}
+        \step{}{Instantiate it $j-1, \theta, \delta, \gamma[x \mapsto v], \sigma + \sigma_v$.}
 
         \step{}{Hence, $(\,\varsigma \star \varsigma_v, \theta(\delta(\gamma[x \mapsto
             v](e)))\,) \in \C{j-1}{\theta(t')}$.}
@@ -373,7 +373,7 @@
                 \item $\forall k.\ \den{}{k}{\Theta; \Delta; \Gamma' \vdash e' : t' }$.
             \end{pfenum}}
 
-        \step{}{Instantiate the first with $\theta, k, \delta, \gamma_e, \sigma_e$ to conclude
+        \step{}{Instantiate the first with $k, \theta, \delta, \gamma_e, \sigma_e$ to conclude
             $(\varsigma_e, \theta(\delta(\gamma_e(e)))) \in \C{k}{\theta(t') \multimap \theta(t)}$.}
 
         \step{}{Instantiate \emph{this} with $j$ and $\sigma_{e'}$ and use \pfref{splitA} to conclude
@@ -530,20 +530,20 @@
             \textsc{Ty\_Fix}.
         }{%
             
-            \suffices{$(\sigma, \theta(\delta(\gamma(\ottkw{fix} (g, x : t, e : t'))))) \in
-                \V{k}{\theta(t \multimap t')}$, by \ref{subsetVC}.}
+            \suffices{$(\empH, \theta(\delta(\ottkw{fix} (g, x : t, e : t'))))) \in
+                \V{k}{\theta(t \multimap t')}$, by \ref{subsetVC}
+                ($\sigma = \{\}$, $\gamma = []$).}
 
-            \assume{Arbitrary $j \leq k$, $(\varsigma_v, v) \in \V{j}{\theta(t)}$ such that
-                $\varsigma \star \varsigma_v$ is defined.}
+            \assume{Arbitrary $j \leq k$, $(\varsigma_v, v) \in \V{j}{\theta(t)}$
+                ($\varsigma = \empH$, so $\varsigma \star \varsigma_v$ is defined).}
 
-            \pflet{$\tilde{e} \equiv \theta(\delta(\gamma(e)))$.}
+            \pflet{$\tilde{e} \equiv \theta(\delta(e)))$.}
 
-            \suffices{$(\varsigma \star \varsigma_v,\ottkw{fix} (g, x : t,
-                \tilde{e} : t')\ v) \in \C{j}{\theta(t')}$.}
+            \suffices{$(\varsigma_v,\ottkw{fix} (g, x : t, \tilde{e} : t')\ v)
+                \in \C{j}{\theta(t')}$.}
 
-            \suffices{$(\varsigma \star \varsigma_v, \tilde{e}\,
-                [x / v]\, [g /\ottkw{fix} (g, x : t, \tilde{e} : t')]) \in
-                \C{j-1}{\theta(t')}$ by \ref{stepInC}.}
+            \suffices{$(\varsigma_v, \tilde{e}\, [x / v]\, [g /\ottkw{fix} (g,
+                x : t, \tilde{e} : t')]) \in \C{j-1}{\theta(t')}$ by \ref{stepInC}.}
 
         }
     }
@@ -553,7 +553,25 @@
         \step{}{By induction, $\forall k.\ \den{}{k}{\Theta; \Delta, g : t
             \multimap t'; x : t \vdash e : t'}$.}
 
-        \step{}{Instantiate this with $j-1$.}
+        \step{}{Instantiate this with $j-1, \delta[g \mapsto \ottkw{fix}(g, x : t, \tilde{e} : t')],
+            \gamma = [x \mapsto v], \sigma_v$.}
+
+        \step{}{We have $(\empH, \ottkw{fix}(g, x : t, \tilde{e} : t')) \in
+            \V{j-1}{\theta(t \multimap t')}$.}
+
+            \begin{proof}
+
+                \step{}{Again by induction (over $k$), $(\empH, \ottkw{fix}(g,
+                    x : t, \tilde{e} : t')) \in \C{j-1}{\theta(t \multimap t')}$.}
+
+                \step{}{Instantiate \emph{this} with $j=0$ and $\empH$ and we are done.}
+
+            \end{proof}
+
+        \step{}{We have $(\varsigma_v, v) \in \V{j-1}{\theta(t)}$ by assumption and \ref{subsetKJ}.}
+
+        \step{}{So we conclude $(\varsigma_v, \theta(\delta'(\gamma(e)))) \in
+            \C{j-1}{\theta(t')}$ as required.}
 
     \end{proof}
 

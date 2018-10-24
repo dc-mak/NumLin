@@ -29,7 +29,7 @@
         \end{pfenum}
     }
 
-    \prove{$(\varsigma, \theta(\gamma(\delta(e)))) \in \C{k}{\theta(t)}$.}
+    \prove{$(\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{\theta(t)}$.}
 
     \assume{Arbitrary $j < k$ and $\sigma_{r}$, such that $\varsigma \star \varsigma_r$ defined.}
 
@@ -60,7 +60,8 @@
                 \item $\forall k.\ \den{}{k}{\Theta; \Delta; \Gamma', x : t \vdash e' : t'}$\label{IH2}.
             \end{pfenum}}\pflabel{IH}
 
-        \step{}{By \ref{inL}, \ref{disjoint} and \ref{restriction}, we know there exists the following (for all $k$):
+        \step{}{By \ref{inL}, \ref{disjoint} and \ref{restriction}, we know
+            there exists the following (for all $k$):
             \begin{pfenum}
                 \item $(\varsigma_e, \gamma_e) \in \den{L}{k}{\Gamma}$
                 \item $\gamma = \gamma_e \cup \gamma_{e'}$
@@ -68,16 +69,16 @@
             \end{pfenum}}\pflabel{split}
 
         \step{}{So, using $k, \theta, \delta, \gamma_e, \sigma_e$, we have
-            $(\varsigma_e, \theta(\gamma_e(\delta(e)))) \in \C{k}{\theta(t)}$.}
+            $(\varsigma_e, \theta(\delta(\gamma_e(e)))) \in \C{k}{\theta(t)}$.}
 
         \step{}{By \pfref{split} ($\gamma = \gamma_e \cup \gamma_{e'}$), have
-            $(\varsigma_e, \theta(\gamma(\delta(e)))) \in \C{k}{\theta(t)}$.}
+            $(\varsigma_e, \theta(\delta(\gamma(e)))) \in \C{k}{\theta(t)}$.}
 
         \step{}{By definition of $\C{k}{\cdot}$ and \pfref{split}, we
             instantiate with $j$ and $\sigma_r = \sigma_{e'}$ to conclude that
-            $\langle \varsigma , \theta(\gamma(\delta(e))) \rangle$ either takes $j$
+            $\langle \varsigma , \theta(\delta(\gamma(e))) \rangle$ either takes $j$
             steps to $\ottkw{err}$ or another heap-and-expression $\langle
-            \sigma_f, \theta(\gamma(\delta(e_f))) \rangle$.}
+            \sigma_f, \theta(\delta(\gamma(e_f))) \rangle$.}
 
         \step{}{\case{$j$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
             the whole expression reduces to $\ottkw{err}$ in $j < k$ steps.}}
@@ -91,11 +92,12 @@
         % _{k-i} <_ k - j
 
         \step{}{If it is, then $\exists i \leq j.\  (\varsigma_f, v_1)
-            \in \V{k-i}{\theta(t_1)} \subseteq \V{k-j}{\theta(t_1)}$ by \ref{valueSub} and \ref{subsetKJ}.\\
+            \in \V{k-i}{\theta(t_1)} \subseteq \V{k-j}{\theta(t_1)}$ by \ref{valueSub}
+            and \ref{subsetKJ}.\\
             So, \textsc{Op\_Context} runs $i$ times, and then we have the following.
             \suffices{$(\varsigma_f \star \varsigma_{e'}, \ottkw{let}\, x\, =\, v\, \ottkw{in}\,
-                \theta(\gamma(\delta(e')))) \in \C{k-i}{\theta(t')}$ by \ref{stepInC} $i$ times.}
-            \suffices{$(\varsigma_f \star \varsigma_{e'}, \theta(\gamma(\delta(e'))) [x/v]) \in
+                \theta(\delta(\gamma(e')))) \in \C{k-i}{\theta(t')}$ by \ref{stepInC} $i$ times.}
+            \suffices{$(\varsigma_f \star \varsigma_{e'}, \theta(\delta(\gamma(e'))) [x/v]) \in
                 \C{k-i-1}{\theta(t')}$ by \ref{stepInC}.}}
 
         \step{}{By \ref{subsetKJ}, $(\varsigma_{e'}, \gamma_{e'}[x \mapsto v]) \in
@@ -103,11 +105,12 @@
 
         \step{}{Instantiate \ref{IH2} of step \pfref{IH} with $k-i-1, \theta, \delta,
             \gamma_{e'}[x \mapsto v], \sigma_{e'}$ to conclude \\ $(\varsigma_{e'},
-            \theta(\gamma_{e'}[x \mapsto v](\delta(e')))) \in \C{k-i-1}{\theta(t')}$.}
+            \theta(\delta(\gamma_{e'}[x \mapsto v](e')))) \in \C{k-i-1}{\theta(t')}$.}
 
-        \step{}{By \ref{disjoint}, we have $\theta(\gamma(\delta(e'))) [x/v] =
-            \theta(\gamma_{e'}[x \mapsto v](\delta(e')))$ and \\ by \ref{frame} we conclude
-            $(\varsigma_f \star \varsigma_{e'}, \theta(\gamma(\delta(e'))) [x/v]) \in \C{k-i-1}{\theta(t')}$}
+        \step{}{By \ref{disjoint}, we have $\theta(\delta(\gamma(e'))) [x/v] =
+            \theta(\delta(\gamma_{e'}[x \mapsto v](e')))$ and \\ by \ref{frame} we conclude
+            $(\varsigma_f \star \varsigma_{e'}, \theta(\delta(\gamma(e'))) [x/v])
+            \in \C{k-i-1}{\theta(t')}$}
 
     \end{proof}
 
@@ -124,7 +127,7 @@
         \step{}{When $(\varsigma_f, v) \in \V{k-i}{\theta(t_1) \otimes \theta(t_2)}$, we have
             $v = (v_1, v_2)$.}
 
-        \step{}{\suffices{$(\varsigma_{e'}, \theta(\gamma(\delta(e')))) \in
+        \step{}{\suffices{$(\varsigma_{e'}, \theta(\delta(\gamma(e')))) \in
             \C{k-i-1}{\theta(t')}$ by \ref{stepInC} $i+1$ times.}}
 
         \step{}{By \ref{subsetKJ}, $(\varsigma_{e'}, \gamma_{e'}[a \mapsto v_1, b \mapsto v_2 ])
@@ -135,7 +138,7 @@
             with $\theta, \delta, \gamma_{e'} [a \mapsto v_1, b \mapsto v_2 ] , \sigma_{e'}$.}
 
         \step{}{By \ref{disjoint} (for $\gamma = \gamma_e \cup \gamma_{e'}$ and $a,b$), conclude
-            $(\varsigma_{e'}, \theta(\gamma(\delta(e'[a / v_1][b / v_2])))) \in \C{k-i-1}{\theta(t')}$.}
+            $(\varsigma_{e'}, \theta(\delta(\gamma(e'[a / v_1][b / v_2])))) \in \C{k-i-1}{\theta(t')}$.}
 
     \end{proof}
 
@@ -154,15 +157,15 @@
             for some $(\empH, v') \in \V{k-i}{\theta(t)}$.}
 
         \step{}{\suffices{$(\varsigma_{e'}, \ottkw{let}\, \ottkw{Many}\, x\, =\, \ottkw{Many}\,
-            v'\, \ottkw{in}\, \theta(\gamma(\delta(e')))) \in \C{k-i}{\theta(t)}$.}}
+            v'\, \ottkw{in}\, \theta(\delta(\gamma(e')))) \in \C{k-i}{\theta(t)}$.}}
 
-        \step{}{\suffices{$(\varsigma_{e'}, \theta(\gamma(\delta(e'))) [ x / v ]) \in \C{k-i-1}{\theta(t)}$
-            by \ref{stepInC} $i+1$ times.}}
+        \step{}{\suffices{$(\varsigma_{e'}, \theta(\delta(\gamma(e'))) [ x / v ])
+            \in \C{k-i-1}{\theta(t)}$ by \ref{stepInC} $i+1$ times.}}
 
         \step{}{Instantiate $\den{}{k-i-1}{\Theta; \Delta, x : t, \Gamma' \vdash e' : t'}$ with
             $\theta, \delta_{e'} = \delta[x \mapsto v'], \gamma_{e'}, \sigma_{e'}$.}
 
-        \step{}{By \ref{disjoint}, $(\varsigma_{e'}, \theta(\gamma(\delta(e'))) [ x / v ]) \in
+        \step{}{By \ref{disjoint}, $(\varsigma_{e'}, \theta(\delta(\gamma(e'))) [ x / v ]) \in
             \C{k-i-1}{\theta(t)}$.}
 
     \end{proof}
@@ -180,7 +183,7 @@
         \step{}{When $(\varsigma_f, v) \in \V{k-i}{\ottkw{unit}}$, we have $\varsigma_f =
             \empH$ and $v = ()$.}
 
-        \step{}{\suffices{$(\varsigma_{e'}, \theta(\gamma(\delta(e')))) \in
+        \step{}{\suffices{$(\varsigma_{e'}, \theta(\delta(\gamma(e')))) \in
             \C{k-i-1}{\theta(t')}$ by \ref{stepInC} $i+1$ times.}}
 
         \step{}{By \ref{subsetKJ}, $(\varsigma_{e'}, \gamma_{e'}) \in \den{L}{k}{\Gamma'}\theta
@@ -189,7 +192,7 @@
         \step{}{Instantiate $\den{}{k-i-1}{\Theta; \Delta; \Gamma' \vdash e' : t'}$ with $\theta,
             \delta, \gamma_{e'}, \sigma_{e'}$.}
 
-        \step{}{By \ref{disjoint} $(\varsigma_{e'}, \theta(\gamma(\delta(e')))) \in
+        \step{}{By \ref{disjoint} $(\varsigma_{e'}, \theta(\delta(\gamma(e')))) \in
             \C{k-i-1}{\theta(t')}$.}
 
     \end{proof}
@@ -199,7 +202,8 @@
             \textsc{Ty\_Bool\_Elim}.
         }{%
             \pfsketch~Similar to \textsc{Ty\_Unit\_Elim} but with \textsc{Op\_If\_\{True,False\}},
-            $\varsigma_f = \empH$ and $v = \ottkw{Many}\, \ottkw{true}$ or $v = \ottkw{Many}\, \ottkw{false}$.
+            $\varsigma_f = \empH$ and $v = \ottkw{Many}\, \ottkw{true}$
+            or $v = \ottkw{Many}\, \ottkw{false}$.
         }
     }
 
@@ -242,7 +246,8 @@
     % Intro dual of Unit_Elim
     \begin{proof}
 
-        \step{}{By \ref{inL}, \ref{disjoint} and \ref{restriction}, we know there exists the following (for all $k$):
+        \step{}{By \ref{inL}, \ref{disjoint} and \ref{restriction}, we know there exists
+            the following (for all $k$):
             \begin{pfenum}
                 \item $(\varsigma_1, \gamma_1) \in \den{L}{k}{\Gamma_1}$
                 \item $(\varsigma_2, \gamma_2) \in \den{L}{k}{\Gamma_2}$
@@ -258,10 +263,10 @@
 
         \step{}{Instantiate the first with $k, \theta, \delta, \gamma_1, \sigma_1$.}
 
-        \step{}{By that and \pfref{splitP}, $(\varsigma_1, \theta(\gamma_1(\delta(e_1)))) =
-            (\varsigma_1, \theta(\gamma(\delta(e_1)))) \in \den{C}{k}{\theta(t)}$.}
+        \step{}{By that and \pfref{splitP}, $(\varsigma_1, \theta(\delta(\gamma_1(e_1)))) =
+            (\varsigma_1, \theta(\delta(\gamma(e_1)))) \in \den{C}{k}{\theta(t)}$.}
 
-        \step{}{So, $\langle \sigma_1 + \sigma_2, \theta(\gamma_1(\delta(e_1))) \rangle$ either takes $j$
+        \step{}{So, $\langle \sigma_1 + \sigma_2, \theta(\delta(\gamma_1(e_1))) \rangle$ either takes $j$
             steps to $\ottkw{err}$ or a heap-and-expression $\langle \sigma_{1f}, e_{1f} \rangle$.}
 
         \step{}{\case{$j$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
@@ -276,15 +281,17 @@
         % _{k-i} <_ k - j
 
         \step{}{If it is, then $\exists i_1 \leq j.\  (\varsigma_{1f}, v_1)
-            \in \V{k-i_1}{\theta(t_1)} \subseteq \V{k-j}{\theta(t_1)}$ by \ref{valueSub} and \ref{subsetKJ}.\\
+            \in \V{k-i_1}{\theta(t_1)} \subseteq \V{k-j}{\theta(t_1)}$ by
+            \ref{valueSub} and \ref{subsetKJ}.\\
             So, \textsc{Op\_Context} runs $i_1$ times, and then we have the following.
             \suffices{By \ref{stepInC}, $(\varsigma_{1f} \star \varsigma_2, \, (v_1, e_2)\, )
             \in \C{k-i_1}{\theta(t_1 \otimes t_2)}$.}}
 
         \step{}{Instantiate the second IH with $k, \theta, \delta, \gamma_2, \sigma_2$.}
 
-        \step{}{So, $\langle \sigma_{1f} \star \sigma_2, \theta(\gamma_2(\delta(e_2))) \rangle$ either takes
-            $j$ steps to $\ottkw{err}$ or a heap-and-expression $\langle \sigma_{2f}, e_{2f} \rangle$.}
+        \step{}{So, $\langle \sigma_{1f} \star \sigma_2, \theta(\delta(\gamma_2(e_2))) \rangle$
+            either takes $j$ steps to $\ottkw{err}$ or a heap-and-expression
+            $\langle \sigma_{2f}, e_{2f} \rangle$.}
 
         \step{}{\case{$j$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
             the whole expression reduces to $\ottkw{err}$ in $j < k$ steps.}}
@@ -293,14 +300,16 @@
             \textsc{Op\_Context} runs $j$ times and we are done.}
 
         \step{}{If it is, then $\exists i_2 \leq j.\  (\varsigma_{2f}, v_2)
-            \in \V{k-i_2}{\theta(t_2)} \subseteq \V{k-j}{\theta(t_2)}$ by \ref{valueSub} and \ref{subsetKJ}.\\
+            \in \V{k-i_2}{\theta(t_2)} \subseteq \V{k-j}{\theta(t_2)}$ by \ref{valueSub}
+            and \ref{subsetKJ}.\\
             So, \textsc{Op\_Context} runs $i_2$ times, and then we have the following.
             \suffices{By \ref{stepInC}, $(\varsigma_{1f} \star \varsigma_{2f}, \, (v_1, v_2)\, )
             \in \V{k-i_1-i_2}{\theta(t_1) \otimes \theta(t_2)}$.}}
 
         \step{}{By \ref{subsetKJ} and $ k - i_1 - i_2 \leq k - i_1, k - i_2 $, have\\
             $(\varsigma_{1f}, v_1) \in \V{k-i_1}{\theta(t_1)} \subseteq \V{k-i_1-i_2}{\theta(t_1)}$ and\\
-            $(\varsigma_{2f}, v_2) \in \V{k-i_2}{\theta(t_2)} \subseteq \V{k-i_1-i_2}{\theta(t_2)}$ as needed.}
+            $(\varsigma_{2f}, v_2) \in \V{k-i_2}{\theta(t_2)} \subseteq \V{k-i_1-i_2}{\theta(t_2)}$
+            as needed.}
 
     \end{proof}
 
@@ -308,17 +317,20 @@
         \case{%
             \textsc{Ty\_Lambda}.
         }{%
-            \suffices{By \ref{subsetVC}, to show $(\,\varsigma, \gamma(\delta(\ottkw{fun}\, x : t
-                \rightarrow e))\,) \in \V{k}{\theta(t \multimap t')}$.}
+
+            \suffices{By \ref{subsetVC}, to show $(\,\varsigma,
+                \theta(\delta(\gamma(\ottkw{fun}\, x : t \rightarrow e)))\,)
+                \in \V{k}{\theta(t \multimap t')}$.}
 
             \assume{Arbitrary $j \leq k$, $(\varsigma_v, v) \in \V{j}{\theta(t)}$ such that
                 $\varsigma \star \varsigma_v$ is defined.}
 
-            \suffices{$(\varsigma \star \varsigma_v, \gamma(\delta(\ottkw{fun}\, x : t \rightarrow
-                e))\, v) \in \C{j}{\theta(t')}$.}
+            \suffices{$(\varsigma \star \varsigma_v,
+                \theta(\delta(\gamma(\ottkw{fun}\, x : t \rightarrow e)))\, v)
+                \in \C{j}{\theta(t')}$.}
 
-            \suffices{$(\varsigma \star \varsigma_v, \theta(\gamma(\delta(e))) [x / v]) \in \C{j-1}{\theta(t')}$
-                by \ref{stepInC}.}
+            \suffices{$(\varsigma \star \varsigma_v, \theta(\delta(\gamma(e)))
+                [x / v]) \in \C{j-1}{\theta(t')}$ by \ref{stepInC}.}
 
         }
     }
@@ -329,9 +341,11 @@
 
         \step{}{Instantiate it $j-1, \theta, \gamma[x \mapsto v], \sigma + \sigma_v$.}
 
-        \step{}{Hence, $(\,\varsigma \star \varsigma_v, \theta(\gamma[x \mapsto v](\delta(e)))\,) \in \C{j-1}{\theta(t)}$.}
+        \step{}{Hence, $(\,\varsigma \star \varsigma_v, \theta(\delta(\gamma[x \mapsto
+            v](e)))\,) \in \C{j-1}{\theta(t')}$.}
 
-        \step{}{By \ref{disjoint}, $\theta(\gamma[x \mapsto v](\delta(e))) = \theta(\gamma(\delta(e))) [x / v]$, we are done.}
+        \step{}{By \ref{disjoint}, $\theta(\delta(\gamma[x \mapsto v](e))) =
+            \theta(\delta(\gamma(e))) [x / v]$, we are done.}
 
     \end{proof}
 
@@ -344,7 +358,8 @@
 
     \begin{proof}
 
-        \step{}{By \ref{inL}, \ref{disjoint} and \ref{restriction}, we know there exists the following (for all $k$):
+        \step{}{By \ref{inL}, \ref{disjoint} and \ref{restriction}, we know there exists
+            the following (for all $k$):
             \begin{pfenum}
                 \item $(\varsigma_e, \gamma_e) \in \den{L}{k}{\Gamma_e}$
                 \item $(\varsigma_{e'}, \gamma_{e'}) \in \den{L}{k}{\Gamma_{e'}}$
@@ -359,10 +374,10 @@
             \end{pfenum}}
 
         \step{}{Instantiate the first with $\theta, k, \delta, \gamma_e, \sigma_e$ to conclude
-            $(\varsigma_e, \theta(\gamma_e(\delta(e)))) \in \C{k}{\theta(t') \multimap \theta(t)}$.}
+            $(\varsigma_e, \theta(\delta(\gamma_e(e)))) \in \C{k}{\theta(t') \multimap \theta(t)}$.}
 
         \step{}{Instantiate \emph{this} with $j$ and $\sigma_{e'}$ and use \pfref{splitA} to conclude
-            $\langle \sigma_e + \sigma_{e'}, \theta(\gamma(\delta(e))) \rangle$ \\ either takes $j$
+            $\langle \sigma_e + \sigma_{e'}, \theta(\delta(\gamma(e))) \rangle$ \\ either takes $j$
             steps to $\ottkw{err}$ or a heap-and-expression $\langle \sigma_f + \sigma_{e'}, e_f \rangle$.}
 
         \step{}{\case{$j$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
@@ -387,12 +402,13 @@
             \subseteq \den{L}{k-i_e}{\Gamma'}\theta$.}
 
         \step{}{So, instantiate the second IH with $k - i_e, \theta, \delta, \gamma_{e'},
-            \sigma_{e'}$ to conclude \\ $(\varsigma_{e'}, \theta(\gamma_{e'}(\delta(e')))) \in
+            \sigma_{e'}$ to conclude \\ $(\varsigma_{e'}, \theta(\delta(\gamma_{e'}(e')))) \in
             \C{k-i_e}{\theta(t')}$.}
 
         \step{}{Instantiate \emph{this} with $j - i_e$ and $\sigma_f$ to conclude
-            $\langle \sigma_f + \sigma_{e'}, \theta(\gamma_{e'}(\delta(e'))) \rangle$ \\ either takes $j-i_e$
-            steps to $\ottkw{err}$ or $\langle \sigma_f + \sigma_f', e_f' \rangle$.}
+            $\langle \sigma_f + \sigma_{e'}, \theta(\delta(\gamma_{e'}(e'))) \rangle$ \\
+            either takes $j-i_e$ steps to $\ottkw{err}$ or $\langle \sigma_f +
+            \sigma_f', e_f' \rangle$.}
 
         \step{}{\case{$j -i_e$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
             the whole expression reduces to $\ottkw{err}$ in $j - i_e < k - i_e$ steps.}}
@@ -459,8 +475,7 @@
         \step{}{\assume{Arbitrary $f'$.} \suffices{$(\varsigma', e' [fc / f'] )
             \in \V{k-1-i_e}{\theta(t)[fc/f']}$ (for $f=fc$).}}
 
-        \step{}{This is true by definition of $\V{-}{\forall fc.\ t}$ and
-            \pfref{valueAllF} for $f=f'$.}
+        \step{}{This is true by instantiate \pfref{valueAllF} with $f=f'$.}
 
     \end{proof}
 
@@ -477,10 +492,10 @@
             \vdash e : \forall fc.\ t }$.}
 
         \step{}{Instantiate with $k, \theta, \delta, \gamma, \sigma$ to conclude
-            $(\varsigma, \theta(\gamma(\delta(e)))) \in \C{k}{\theta(\forall fc.\ t})$.}
+            $(\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{\theta(\forall fc.\ t})$.}
 
         \step{}{Instantiate \emph{this} with $j$ and $\empH$ and to conclude
-            $\langle \sigma, \theta(\gamma(\delta(e))) \rangle$ \\
+            $\langle \sigma, \theta(\delta(\gamma(e))) \rangle$ \\
             either takes $j$ steps to $\ottkw{err}$ or a heap-and-expression
             $\langle \sigma_f, e_f \rangle$.}
 
@@ -514,51 +529,31 @@
         \case{%
             \textsc{Ty\_Fix}.
         }{%
-            \prove{$(\sigma, \theta(\gamma(\delta(\ottkw{fix} (g, x : t, e : t'))))) \in
-                \C{k}{\theta(!(t \multimap t'))}$.}
+            
+            \suffices{$(\sigma, \theta(\delta(\gamma(\ottkw{fix} (g, x : t, e : t'))))) \in
+                \V{k}{\theta(t \multimap t')}$, by \ref{subsetVC}.}
 
-            \suffices{to show $ \ldots \in \V{k}{!(\theta(t) \multimap
-                \theta(t'))}$, by \ref{subsetVC}.}
+            \assume{Arbitrary $j \leq k$, $(\varsigma_v, v) \in \V{j}{\theta(t)}$ such that
+                $\varsigma \star \varsigma_v$ is defined.}
+
+            \pflet{$\tilde{e} \equiv \theta(\delta(\gamma(e)))$.}
+
+            \suffices{$(\varsigma \star \varsigma_v,\ottkw{fix} (g, x : t,
+                \tilde{e} : t')\ v) \in \C{j}{\theta(t')}$.}
+
+            \suffices{$(\varsigma \star \varsigma_v, \tilde{e}\,
+                [x / v]\, [g /\ottkw{fix} (g, x : t, \tilde{e} : t')]) \in
+                \C{j-1}{\theta(t')}$ by \ref{stepInC}.}
+
         }
     }
 
     \begin{proof}
+        
+        \step{}{By induction, $\forall k.\ \den{}{k}{\Theta; \Delta, g : t
+            \multimap t'; x : t \vdash e : t'}$.}
 
-        \step{}{\assume{Arbitrary $j < k$ and $(\sigma, v) \in \V{j}{\theta(t)}$.}}
-
-        \step{}{\suffices{$(\sigma, \emph{letManyG } g\, v) \in \C{j}{\theta(t')}$.}}
-
-        \step{}{\pflet{$e_1 = e [ g / \ottkw{fun}\, x : t \rightarrow \emph{letManyG } g\, x ]$.}}
-
-        \step{}{\suffices{by \ref{stepInC}, $(\sigma, (\ottkw{fun}\, x : t \rightarrow e_1)\, v)
-            \in \C{j-1}{\theta(t')}$.}}
-
-        \step{}{\suffices{by \ref{stepInC}, $(\sigma, e_1 [ x / v ]) \in \C{j-2}{\theta(t')}$.}}
-
-        \step{}{By induction, we have $\den{}{}{\Theta; \Delta, g : t \multimap t';
-            x : t \vdash e : t'}$.}
-
-        \step{}{Instantiate this with $\theta, j-2, \delta[g \mapsto \ottkw{fun}\, x : t
-            \rightarrow e_1 ], \gamma = [ x \mapsto v ], \sigma$ (???).
-            \prove{$(\sigma, \ottkw{fun}\, x : t \rightarrow e_1) \in \V{j-2}{\theta(t)
-            \multimap \theta(t')}$.}}
-
-            \begin{proof}
-
-                \step{}{\suffices{by \ref{stepInC}, $(\sigma', e_1 [ x / v']) \in
-                    \C{j-2}{\theta(t')}$ for arbitrary $(\sigma', v') \in \V{j-2}{\theta(t)}$.}}
-
-                \step{}{We can again use the induction hypothesis $\den{}{}{\Theta;
-                        \Delta, g : t \multimap t'; x : t \vdash e : t'}$.}
-
-                \step{}{But since it's true for $\C{0}{\cdot}$ (base case), it's true
-                    by induction ???}
-
-            \end{proof}
-
-            \step{}{Lastly, we show $\delta(\theta(\gamma(e))) = e_1 [ x / v ]$, which follows
-                by their definitions, \\ to conclude $(\sigma, e_1 [ x / v ]) \in
-                \C{j-2}{\theta(t')}$.}
+        \step{}{Instantiate this with $j-1$.}
 
     \end{proof}
 
@@ -566,7 +561,7 @@
         \case{%
             \textsc{Ty\_Var\_Lin}.
         }{%
-            \prove{$(\sigma, \theta(\gamma(\delta(x)))) \in \C{k}{\theta(t)}$.}
+            \prove{$(\sigma, \theta(\delta(\gamma(x)))) \in \C{k}{\theta(t)}$.}
         }
     }
 
@@ -582,7 +577,7 @@
         \case{%
             \textsc{Ty\_Var}.
         }{%
-            \prove{$(\sigma, \theta(\gamma(\delta(x)))) \in \C{k}{\theta(t)}$.}
+            \prove{$(\sigma, \theta(\delta(\gamma(x)))) \in \C{k}{\theta(t)}$.}
         }
     }
 
@@ -597,7 +592,7 @@
         \case{%
             \textsc{Ty\_Unit\_Intro}.
         }{%
-            \prove{$(\sigma, \theta(\gamma(\delta(\, ())\,))) \in \C{k}{\theta(\Unit)}$.\\}
+            \prove{$(\sigma, \theta(\delta(\gamma(\, ())\,))) \in \C{k}{\theta(\Unit)}$.\\}
         }
     }
 

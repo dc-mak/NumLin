@@ -376,12 +376,12 @@
         % k - j <= k - i
         % _{k-i} <_ k - j
 
-        \step{}{If it is, then $\exists i_e \leq j.\  (\varsigma_f, v_e) \in
+        \step{}{If it is, then $\exists i_e \leq j.\  (\varsigma_f, e_f) \in
             \V{k-i_e}{\theta(t') \multimap \theta(t)} \subseteq \V{k-j}{\ldots}$ by
             \ref{valueSub} and \ref{subsetKJ}.\\
             So, \textsc{Op\_Context} runs $i_e$ times, and then we have the following.
             \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma_f \star \varsigma_{e'}, \,
-            v_e\, e'\, ) \in \C{k-i_e}{\theta(t')}$.}}
+            e_f\, e'\, ) \in \C{k-i_e}{\theta(t')}$.}}
 
         \step{}{By \ref{subsetKJ}, $(\varsigma_{e'}, \gamma_{e'} \in \den{L}{k}{\Gamma'}\theta
             \subseteq \den{L}{k-i_e}{\Gamma'}\theta$.}
@@ -392,7 +392,7 @@
 
         \step{}{Instantiate \emph{this} with $j - i_e$ and $\sigma_f$ to conclude
             $\langle \sigma_f + \sigma_{e'}, \theta(\gamma_{e'}(\delta(e'))) \rangle$ \\ either takes $j-i_e$
-            steps to $\ottkw{err}$ or $\langle \sigma_f + \sigma_{f'}, e_{f'} \rangle$.}
+            steps to $\ottkw{err}$ or $\langle \sigma_f + \sigma_f', e_f' \rangle$.}
 
         \step{}{\case{$j -i_e$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
             the whole expression reduces to $\ottkw{err}$ in $j - i_e < k - i_e$ steps.}}
@@ -400,15 +400,15 @@
         \step{}{\case{$j - i_e$ steps to another heap-and-expression.} If it is not a value, then
             \textsc{Op\_Context} runs $j-i_e$ times and we are done.}
 
-        \step{}{If it is, then $\exists i_{e'} \leq j - i_e.\  (\varsigma_{f'}, v_{e'}) \in
+        \step{}{If it is, then $\exists i_{e'} \leq j - i_e.\  (\varsigma_f', v_{e'}) \in
             \V{k-i_e-i_e'}{\theta(t')}$ by \ref{valueSub}.\\
             So, \textsc{Op\_Context} runs $i_{e'}$ times, and then we have the following.
-            \suffices{By \ref{stepInC} $i_{e'}$ times, $(\varsigma_f \star \varsigma_{f'}, \, v_e\, v_e'\, )
+            \suffices{By \ref{stepInC} $i_{e'}$ times, $(\varsigma_f \star \varsigma_f', \, e_f\, e_f'\, )
             \in \C{k-i_e-i_{e'}}{\theta(t')}$.}}
 
-        \step{}{Instantiate $(\varsigma_f, v_e) \in \V{k-i_e}{\theta(t') \multimap \theta(t)}$ with
+        \step{}{Instantiate $(\varsigma_f, e_f) \in \V{k-i_e}{\theta(t') \multimap \theta(t)}$ with
             $k-i_e-i_{e'} \leq k - i_e$ and \\ $(\varsigma_{v'}, v_{e'}) \in
-            \V{k-i_e-i_{e'}}{\theta(t')}$, to conclude $(\varsigma_f \star \varsigma_{f'}, v\, v')
+            \V{k-i_e-i_{e'}}{\theta(t')}$, to conclude $(\varsigma_f \star \varsigma_f', e_f\, e_f')
             \in \C{k-i_e-i_{e'}}{\theta(t)}$ as needed.}
 
     \end{proof}
@@ -417,14 +417,6 @@
         \case{%
             \textsc{Ty\_Gen}.
         }{%
-            \suffices{By \ref{subsetVC} to show $(\sigma,
-                \theta(\gamma(\delta(\ottkw{fun}\, fc \rightarrow e)))) \in
-                \V{k}{\theta(\forall \, fc.\, t)}$.}
-
-            \assume{Assume arbitrary fraction $f$.}
-
-            \suffices{$(\varsigma, \theta(\gamma(\delta(e [fc/f] )))) \in
-                \C{k}{\theta(t) [fc/f]}.$ }
         }
     }
 
@@ -433,10 +425,41 @@
         \step{}{By induction, $\forall k.\ \den{}{k}{\Theta, fc; \Delta; \Gamma
             \vdash e : t}$.}
 
-        \step{}{So using $k, \theta[fc \mapsto f], \delta, \gamma, \sigma$ we conclude
-            $(\varsigma, \theta[fc \mapsto f](\gamma(\delta(e)))) \in \C{k}{\theta[fc \mapsto f](t)}$.}
+        \step{}{\pflet{ $f$ be arbitrary; $\theta' \equiv \theta[fc \mapsto f]$.}
+            Instantiate induction hypothesis with $k, \theta', \delta, \gamma, \sigma$,
+            \\ to conclude $(\varsigma, \theta'(\gamma(\delta(e)))) \in \C{k}{\theta'(t)}$
+            (for all $f$).}
 
-        \step{}{By \ref{disjoint}, we are done.}
+        \step{}{Instantiate \emph{this} with $j$ and $\empH$ to conclude
+            $\langle \sigma, \theta' (\gamma(\delta(e))) \rangle$ \\
+            either takes $j$ steps to $\ottkw{err}$ or a heap-and-expression
+            $\langle \sigma', e' \rangle$ (for all $f$).}
+
+        \step{}{\case{$j$ steps to $\ottkw{err}$.}{By
+            \textsc{Op\_Context\_Err}, whole expression reduces to
+            $\ottkw{err}$ in $j < k$ steps (for $f=fc$).}}
+
+        \step{}{\case{$j$ steps to another heap-and-expression.} If it is not a
+            value, then for $f=fc$, \textsc{Op\_Context} runs $j$ times and we
+            are done.}
+
+        % i <= j < k
+        % -j <=  -i
+        % k - j <= k - i
+        % _{k-i} <_ k - j
+
+        \step{}{If it is, then $\exists i_e \leq j.\  (\varsigma', e') \in
+            \V{k-i_e}{\theta'(t)} \subseteq \V{k-j}{\ldots}$ by \ref{valueSub} and
+            \ref{subsetKJ} (for all $f$).}\pflabel{valueAllF}
+
+        \step{}{So, \textsc{Op\_Context} runs $i_e$ times, and then we have the
+            following.  \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma', \ottkw{fun}
+            fc \rightarrow e' ) \in \V{k-i_e}{\theta(\forall fc.\ t)}$ (for $f=fc$).}}
+
+        \step{}{\assume{Arbitrary $f'$.}
+            \suffices{$(\varsigma', e' [fc / f'] ) \in \V{k}{\theta(t)[fc/f']}$ (for $f=fc$).}}
+
+        \step{}{This is true by \pfref{valueAllF} for $f=f'$.}
 
     \end{proof}
 
@@ -444,11 +467,43 @@
         \case{%
             \textsc{Ty\_Spc}.
         }{%
-            \prove{$(\sigma, \theta(\gamma(\delta(e\, [f])))) \in \C{k}{\theta(t\, [fc/f])}$.}
         }
     }
 
     \begin{proof}
+
+        \step{}{By induction, $\forall k.\ \den{}{k}{\Theta; \Delta; \Gamma
+            \vdash e : \forall fc.\ t }$.}
+
+        \step{}{Instantiate with $k, \theta, \delta, \gamma, \sigma$ to conclude
+            $(\varsigma, \theta(\gamma(\delta(e)))) \in \C{k}{\forall fc.\ t}$.}
+
+        \step{}{Instantiate \emph{this} with $j$ and $\empH$ and to conclude
+            $\langle \sigma, \theta(\gamma(\delta(e))) \rangle$ \\
+            either takes $j$ steps to $\ottkw{err}$ or a heap-and-expression
+            $\langle \sigma_f, e_f \rangle$.}
+
+        \step{}{\case{$j$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
+            the whole expression reduces to $\ottkw{err}$ in $j < k$ steps.}}
+
+        \step{}{\case{$j$ steps to another heap-and-expression.} If it is not a value, then
+            \textsc{Op\_Context} runs $j$ times and we are done.}
+
+        % i <= j < k
+        % -j <=  -i
+        % k - j <= k - i
+        % _{k-i} <_ k - j
+
+        \step{}{If it is, then $\exists i_e \leq j.\  (\varsigma_f, e_f) \in
+            \V{k-i_e}{\forall fc. t} \subseteq \V{k-j}{\ldots}$ by
+            \ref{valueSub} and \ref{subsetKJ}.\\
+            So, \textsc{Op\_Context} runs $i_e$ times, and then we have the following.
+            \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma_f, e_f\, [f] )
+                \in \C{k-i_e}{t[fc/f]}$.}}
+        
+        \step{}{Instantiate $(\varsigma_f, e_f) \in \V{k-i_e}{\forall fc. t}$
+            with $f$ to conclude precisely that.}
+
     \end{proof}
 
     \step{}{%

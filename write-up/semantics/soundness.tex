@@ -426,8 +426,8 @@
             \vdash e : t}$.}
 
         \step{}{\pflet{ $f$ be arbitrary; $\theta' \equiv \theta[fc \mapsto f]$.}
-            Instantiate induction hypothesis with $k, \theta', \delta, \gamma, \sigma$,
-            \\ to conclude $(\varsigma, \theta'(\gamma(\delta(e)))) \in \C{k}{\theta'(t)}$
+            Instantiate induction hypothesis with $k-1, \theta', \delta, \gamma, \sigma$,
+            \\ to conclude $(\varsigma, \theta'(\gamma(\delta(e)))) \in \C{k-1}{\theta'(t)}$
             (for all $f$).}
 
         \step{}{Instantiate \emph{this} with $j$ and $\empH$ to conclude
@@ -437,7 +437,7 @@
 
         \step{}{\case{$j$ steps to $\ottkw{err}$.}{By
             \textsc{Op\_Context\_Err}, whole expression reduces to
-            $\ottkw{err}$ in $j < k$ steps (for $f=fc$).}}
+            $\ottkw{err}$ in $j < k-1$ steps (for $f=fc$).}}
 
         \step{}{\case{$j$ steps to another heap-and-expression.} If it is not a
             value, then for $f=fc$, \textsc{Op\_Context} runs $j$ times and we
@@ -449,17 +449,18 @@
         % _{k-i} <_ k - j
 
         \step{}{If it is, then $\exists i_e \leq j.\  (\varsigma', e') \in
-            \V{k-i_e}{\theta'(t)} \subseteq \V{k-j}{\ldots}$ by \ref{valueSub} and
+            \V{k-1-i_e}{\theta'(t)} \subseteq \V{k-1-j}{\ldots}$ by \ref{valueSub} and
             \ref{subsetKJ} (for all $f$).}\pflabel{valueAllF}
 
         \step{}{So, \textsc{Op\_Context} runs $i_e$ times, and then we have the
             following.  \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma', \ottkw{fun}
             fc \rightarrow e' ) \in \V{k-i_e}{\theta(\forall fc.\ t)}$ (for $f=fc$).}}
 
-        \step{}{\assume{Arbitrary $f'$.}
-            \suffices{$(\varsigma', e' [fc / f'] ) \in \V{k}{\theta(t)[fc/f']}$ (for $f=fc$).}}
+        \step{}{\assume{Arbitrary $f'$.} \suffices{$(\varsigma', e' [fc / f'] )
+            \in \V{k-1-i_e}{\theta(t)[fc/f']}$ (for $f=fc$).}}
 
-        \step{}{This is true by \pfref{valueAllF} for $f=f'$.}
+        \step{}{This is true by definition of $\V{-}{\forall fc.\ t}$ and
+            \pfref{valueAllF} for $f=f'$.}
 
     \end{proof}
 
@@ -476,14 +477,14 @@
             \vdash e : \forall fc.\ t }$.}
 
         \step{}{Instantiate with $k, \theta, \delta, \gamma, \sigma$ to conclude
-            $(\varsigma, \theta(\gamma(\delta(e)))) \in \C{k}{\forall fc.\ t}$.}
+            $(\varsigma, \theta(\gamma(\delta(e)))) \in \C{k}{\theta(\forall fc.\ t})$.}
 
         \step{}{Instantiate \emph{this} with $j$ and $\empH$ and to conclude
             $\langle \sigma, \theta(\gamma(\delta(e))) \rangle$ \\
             either takes $j$ steps to $\ottkw{err}$ or a heap-and-expression
             $\langle \sigma_f, e_f \rangle$.}
 
-        \step{}{\case{$j$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
+        \step{}{\case{$j$ steps to $\ottkw{err}$.}{By \textsc{Op\_Context\_Err},
             the whole expression reduces to $\ottkw{err}$ in $j < k$ steps.}}
 
         \step{}{\case{$j$ steps to another heap-and-expression.} If it is not a value, then
@@ -495,14 +496,17 @@
         % _{k-i} <_ k - j
 
         \step{}{If it is, then $\exists i_e \leq j.\  (\varsigma_f, e_f) \in
-            \V{k-i_e}{\forall fc. t} \subseteq \V{k-j}{\ldots}$ by
+            \V{k-i_e}{\theta(\forall fc. t)} \subseteq \V{k-j}{\ldots}$ by
             \ref{valueSub} and \ref{subsetKJ}.\\
-            So, \textsc{Op\_Context} runs $i_e$ times, and then we have the following.
-            \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma_f, e_f\, [f] )
-                \in \C{k-i_e}{t[fc/f]}$.}}
-        
-        \step{}{Instantiate $(\varsigma_f, e_f) \in \V{k-i_e}{\forall fc. t}$
-            with $f$ to conclude precisely that.}
+            So $e_f \equiv \ottkw{fun} fc \rightarrow v$ for some $v$.}\pflabel{valueAllF2}
+
+        \step{}{So, \textsc{Op\_Context} runs $i_e$ times, and then we have the following.
+            \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma_f,
+            (\ottkw{fun} fc \rightarrow v)\, [f] ) \in \C{k-i_e}{\theta(t[fc/f])}$.}
+            \suffices{By \ref{stepInC} once more, $(\varsigma_f, v [fc / f]) \in
+            \C{k-i_e-1}{\theta(t[fc/f])}$.}}
+
+        \step{}{This is true by instantiating \pfref{valueAllF2} with $f$ and \ref{subsetVC}.}
 
     \end{proof}
 

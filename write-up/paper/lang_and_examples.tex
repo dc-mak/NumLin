@@ -353,7 +353,8 @@ are used in this implementation:
     \item \highl{let new_r <- new [| r_2 |]} creates a copy of \texttt{r\_2}
 
     \item \texttt{potrs \_ chol\_r data\_2} uses a pre-computed Cholesky decomposition
-        to multiply \texttt{data\_2} by \texttt{r\_2} $= (R + H \Sigma H^T)^{-1}$
+        to multiply \texttt{data\_2} $ = H \mu - \textrm{data}$ by
+        \texttt{r\_2} $= (R + H \Sigma H^T)^{-1}$
 
     \item a lot of memory re-use; the following sets of identifiers alias each other:
         \begin{itemize}
@@ -371,5 +372,5 @@ get very difficult to ensure memory is not being re-used incorrectly/enough
 whilst also enusring the aliasing assumptions for the BLAS/LAPACK routine calls
 are guaranteed. However, using \lang\ makes incorrect aliasing and memory
 re-use impossible. Additionally, \lang\ makes it possible to spot where memory
-is not being re-used enough \emph{precisely because} of its explicit handling
-of allocations, aliases and frees.
+is not being re-used enough \emph{precisely because} of its explicit
+allocations, aliases and frees.

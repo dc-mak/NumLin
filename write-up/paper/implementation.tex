@@ -7,12 +7,12 @@ about how implementing inference for fractions is.
 \subsection{Implementation Strategy}
 
 \lang\ transpiles to OCaml and its implementation follows the structure of a
-typical domain-specific language compiler. Although \lang's current
+typical domain-specific language (DSL) compiler. Although \lang's current
 implementation is not as embedded DSL, its the general design is simple enough
 to adapt to being so and also to target other languages.
 
 Alongside the transpiler, a `Read-Check-Translate' loop, benchmarking program
-and a test suite are included in executable artifacts accompanying this paper.
+and a test suite are included in the artifacts accompanying this paper.
 
 \begin{enumerate}
 
@@ -40,10 +40,60 @@ and a test suite are included in executable artifacts accompanying this paper.
 \end{enumerate}
 
 A very pleasant way to use \lang\ is to have the build system generate code at
-\emph{compile-time} and then have it be used by other modules like normal OCaml
-functions. This makes it possible and even easy to use \lang\ alongside
-existing OCaml libraries; in fact, this is exactly how the benchmarking program
-and test-suite use code written in \lang.
+\emph{compile-time} and then have the generated code be used by other modules
+like normal OCaml functions. This makes it possible and even easy to use \lang\
+alongside existing OCaml libraries; in fact, this is exactly how the
+benchmarking program and test-suite use code written in \lang.
+
+
+\subsubsection{Desugaring}\label{subsubsec:desugaring}
+
+Desugaring is conventional.
+
+\begin{align*}
+    \mathbf{fun}\ (x : t)\ 'r\ (y : {'r}\ \mathbf{mat}) \rightarrow e
+    & \Rightarrow
+    \mathbf{fun}\ (x : t) \rightarrow \mathbf{fun}\ {'r} \rightarrow
+    \mathbf{fun}\ (y : {'r}\ \mathbf{mat}) \rightarrow e
+\\
+    x[e]
+    & \Rightarrow
+    \mathbf{get}\ \_\ x\ (e) \qquad \textrm{(similarly for matrices)}
+\\
+    x[e_1] := e_2
+    & \Rightarrow
+    \mathbf{set}\ x\ (e_1)\ (e_2) \qquad \textrm{(similarly for matrices)}
+\\
+    \mathbf{let}\ !x = e_1\ \mathbf{in}\ e_2
+    & \Rightarrow
+    \mathbf{let\ Many}\ x = e_1\ \mathbf{in\ }
+    \mathbf{let\ Many}\ x = \mathbf{Many}\ (\mathbf{Many}\ x)\ \mathbf{in}\ e_2
+\\
+    \mathbf{let}\ f\ {\langle args \rangle} = e_1\ \mathbf{in}\ e_2
+    & \Rightarrow
+    \mathbf{let}\ f = \mathbf{fun}\ {\langle args \rangle} \rightarrow e_1\
+    \mathbf{in}\ e_2
+\\
+    \mathbf{let}\ !f\ {\langle args \rangle} = e_1\ \mathbf{in}\ e_2
+    & \Rightarrow
+    \mathbf{let\ Many}\ f = \mathbf{Many}\ (\mathbf{fun}\ {\langle args \rangle}
+    \rightarrow e_1)\ \mathbf{in}\ e_2
+\\
+    \mathbf{let\ rec}\ f\ (x : t)\ {\langle args \rangle} : {t'} = e_1\ \mathbf{in}\ e_2
+    & \Rightarrow
+    \mathbf{let\ Many}\ f = \mathbf{Many}\ (\mathbf{fix}\ (f, x : t,
+    \mathbf{fun}\ {\langle args \rangle} \rightarrow e_1 : {t'} ))\ \mathbf{in}\ e_2
+\end{align*}
+
+\subsubsection{Matrix Expressions}
+
+Pattern matching!
+
+\subsubsection{Type Checking and Fractional Permission Inference}
+
+Unification!
+
+\subsubsection{Code Generation}
 
 \begin{figure}[tp]
     \centering
@@ -110,21 +160,6 @@ type 'a bang =
     \caption{\lang's type grammar (left) and its embedding into OCaml
         (right).}\label{fig:type_grammar}
 \end{figure}
-
-\subsubsection{Desugaring}\label{subsubsec:desugaring}
-
-Straightforward enough.
-
-\subsubsection{Matrix Expressions}
-
-Pattern matching!
-
-\subsubsection{Type Checking and Fractional Permission Inference}
-
-Unification!
-
-\subsubsection{Code Generation}
-
 A few examples?
 
 \subsection{Performance Metrics}

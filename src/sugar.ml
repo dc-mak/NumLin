@@ -303,10 +303,9 @@ let rec ds_exp : exp -> Ast.exp = function
   | Index (loc, var, prim_loc, fst, snd) ->
     let one get : Ast.exp =
       let fst = ds_exp fst in
-      App (Ast.loc fst,
-           App (loc, Spc (loc,
-                          Prim (prim_loc, get), U (unify_var ())),
-                             Var (loc, var)), fst) in
+      App (Ast.loc fst, App (loc, Spc (loc,
+        Prim (prim_loc, get), U (unify_var ())), Var (loc, var)), fst) in
+
     begin match snd with
     | None -> one Get
     | Some snd -> let snd = ds_exp snd in App (Ast.loc snd, one Get_mat, snd)

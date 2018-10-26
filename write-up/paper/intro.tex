@@ -4,21 +4,26 @@
 low-level linear algebra libraries (such as BLAS/LAPACK) safely and explicitly.
 It does so by combining linear types, fractional permissions, runtime errors
 and recursion into a small, easily understandable, yet expressive set of core
-constructs. In addition to this, \lang's implementation supports several
-syntactic conveniences as well as a usable integration with real-world OCaml
-code.
+constructs. \lang\ allows a novice to understand and work with complicated
+linear algebra library APIs; as well as point out subtle aliasing bugs and
+reduce memory usage in existing programs. In addition to this, \lang's
+implementation supports several syntactic conveniences as well as a
+\emph{usable} integration with real OCaml libraries.
 
 \subsection{Contributions}
+
+In this paper
 \begin{itemize}
-    \item We have designed the \lang\ programming language
-    \item We illustrate that the design is sensible with many matrix-y examples
-    \item We give a soundness proof for \lang, using a step-indexed logical relation
-    \item Incredibly simple type inference algorihtm for polymorphic fractional permissions
-        \begin{itemize}
-            \item Compare to Bierhof et al's \emph{Fraction Polymorphic Permission Inference},
-                which uses a fancy dataflow analysis
-            \item We use exactly the same unification algorithm type polymorphism does
-        \end{itemize}
-    \item We have an implementation - compatible with and usable from existing code!
+    \item we describe \lang, a linearly typed language for linear algebra programs
+    \item we illustrate that \lang's design and features are well-suited to its
+        intended domain with progressively sophisticated examples
+    \item we prove \lang's soundness, using a step-indexed logical relation
+    \item we describe a very simple, unification based type-inference algorithm
+        for polymorphic fractional permissions (similar to ones used for
+        parametric polymorphism), demonstrating an alternative approach to the
+        dataflow analysis of Bierhof et al's \emph{Fraction Polymorphic
+        Permission Inference}
+    \item we describe an implementation that is both compatible with and usable
+        from existing code.
 \end{itemize}
 

@@ -24,18 +24,18 @@
     \Rightarrow &
     \specialcell[t]{l}{%
         \mathbf{let\ Many}\ x = x\ \mathbf{in\ } \\
-        \mathbf{let\ }\ \langle pat_x \rangle\ = x\ \mathbf{in\ } e_2}
+        \mathbf{let\ } \langle pat_x \rangle\ = x\ \mathbf{in\ } e_2}
 \\
     \mathbf{let}\ (\langle pat_a \rangle, \langle pat_b \rangle)\  = e_1\ \mathbf{in}\ e_2 &
     \Rightarrow &
     \specialcell[t]{l}{%
-        \mathbf{let\ }\ (a,b)\ = a\_b\ \mathbf{in\ }
-        \ \mathbf{let\ }\ \langle pat_a \rangle\ = a\ \mathbf{in\ } \\
-        \mathbf{let\ }\ \langle pat_b \rangle\ = b\ \mathbf{in\ } e_2}
+        \mathbf{let\ } (a,b)\ = a\_b\ \mathbf{in\ }
+        \ \mathbf{let\ } \langle pat_a \rangle\ = a\ \mathbf{in\ } \\
+        \mathbf{let\ } \langle pat_b \rangle\ = b\ \mathbf{in\ } e_2}
 \\
-    \mathbf{fun}\ (\langle pat_x \rangle\ : t) \rightarrow e &
+    \mathbf{fun}\ (\langle pat_x \rangle : t) \rightarrow e &
     \Rightarrow &
-    \mathbf{fun}\ (x : t) \rightarrow \mathbf{let\ }\ \langle pat_x \rangle = x\ \mathbf{in\ } e
+    \mathbf{fun}\ (x : t) \rightarrow \mathbf{let\ } \langle pat_x \rangle = x\ \mathbf{in\ } e
 \\
 \\
     arg & ::= & \langle pat \rangle : t\ \mid\ {'x} \textrm{ (fractional permission variable)}
@@ -44,11 +44,6 @@
     \Rightarrow &
     \mathbf{fun}\ \langle arg_1 \rangle \rightarrow ..
     \ \mathbf{fun}\ \langle arg_n \rangle \rightarrow e
-\\
-    \mathbf{let}\ f\ {\langle arg_{1 .. n} \rangle} = e_1\ \mathbf{in}\ e_2 &
-    \Rightarrow &
-    \mathbf{let}\ f = \mathbf{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1\
-    \mathbf{in}\ e_2
 \\
     \mathbf{let}\ f\ {\langle arg_{1 .. n} \rangle} = e_1\ \mathbf{in}\ e_2 &
     \Rightarrow &

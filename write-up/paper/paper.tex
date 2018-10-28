@@ -47,6 +47,9 @@
 \newcommand{\specialcell}[3][c]{%
   \begin{array}[#1]{@{}#2@{}}#3\end{array}}
 
+\newcommand{\alsocell}[3][c]{%
+  \begin{tabular}[#1]{@{}#2@{}}#3\end{tabular}}
+
 \usepackage{lscape}
 \RequirePackage[dvipsnames]{xcolor}
 \usepackage{pgfplots}
@@ -81,21 +84,21 @@ Briefly summarize the contents of the paper in 150--250 words.
 %
 %
 %
-\input{intro}
+\include{intro}
 
-\input{lang_and_examples}
+\include{lang_and_examples}
 
-\input{formal_system}
+\include{formal_system}
 
-\input{implementation}
+\include{implementation}
 
-\input{discussion}
+\include{discussion}
 
 \bibliographystyle{splncs04}
 
 \bibliography{ourbib}
 
 \appendix
-\input{appendix}
+\include{appendix}
 
 \end{document}

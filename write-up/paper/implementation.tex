@@ -204,11 +204,37 @@ and aliasing are not brought over.
 \end{figure}
 
 We actually use this fact to our advantage to clean up the output OCaml by
-removing what would otherwise be redundant re-bindings.  Combined with a
-code-formatter, the resulting code is not obviously correct and exactly what an
-expert would intend to write by hand, but now with the guarantees and safety of
-\lang\ behind it. A small example is shown in Figure~\ref{fig:ocaml_sumarray},
-a larger one in Figure~\ref{fig:ocaml_kalman}.
+removing what would otherwise be redundant re-bindings
+(Figure~\ref{fig:lang_optimise}).  Combined with a code-formatter, the
+resulting code is not obviously correct and exactly what an expert would intend
+to write by hand, but now with the guarantees and safety of \lang\ behind it. A
+small example is shown in Figure~\ref{fig:ocaml_sumarray}, a larger one in
+Figure~\ref{fig:ocaml_kalman}.
+
+\begin{figure}[t]
+\begin{center}
+    \begin{tabular}{rcl}
+        \alsocell[b]{l}{\highl{let Many x = x in} \\
+        \highl{let Many x = Many (Many x) in <exp>} } &
+        $\Rightarrow$ &
+        \highl{<exp>}
+    \\ \\
+        \alsocell[c]{l}{\highl{let Many x = <exp> in} \\
+            \highl{let Many x = Many (Many x) in <body>} \\
+            \textbf{OR} \highl{let Many x = Many <exp> in <body>} \\
+            \textbf{OR} \highl{(fun x : t -> <body>) <exp>}} &
+        $\Rightarrow$ &
+        \highl{let x = <exp> in <body>}
+    \\ \\
+        \alsocell[c]{l}{\highl{(* fixp = fix (f, x:t, <exp> : t') *)} \\
+            \highl{let Many f = Many fixp in <body>} \\
+            \textbf{OR} \highl{let f = fixp in <body>} } &
+        $\Rightarrow$ &
+        \highl{let rec f x = <exp> in <body>}
+    \end{tabular}
+\end{center}
+\caption{Removing redundant re-bindings during tranlation to OCaml.}\label{fig:lang_optimise}
+\end{figure}
 
 \begin{figure}[tp]
     \centering

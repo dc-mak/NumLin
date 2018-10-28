@@ -45,6 +45,8 @@ PAPER := intro.tex \
          formal_system.tex \
          implementation.tex \
          discussion.tex \
+         appendix.tex \
+         timings.tex \
          ourbib.bib \
          llncs.cls \
          fig1.eps \

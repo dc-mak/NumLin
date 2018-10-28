@@ -337,14 +337,19 @@ equations.
     \inputminted[fontsize=\small]{ocaml}{../../test/examples/kalman.lt}
     \caption{Kalman filter: see Figure~\ref{fig:kalman_eqns} for the
         equations this code implements. Line numbers in comments refer to
-        equivalent lines in a C implementation.}\label{fig:lang_kalman}
+        equivalent lines in a C implementation
+        (Figure~\ref{fig:cblas_kalman}).}\label{fig:lang_kalman}
 \end{figure}
 
 \begin{figure}[t]
-    \begin{align*}
+    % align* uses too much vertical space
+    {\centering
+    $  \displaystyle
+    \begin{aligned}
         \mu' &= \mu + \Sigma H^T (R + H \Sigma H^T)^{-1} (H \mu - \textrm{data})\\
         \Sigma' &= \Sigma ( I - H^T (R + H \Sigma H^T)^{-1} H \Sigma )
-    \end{align*}
+    \end{aligned}
+    $ \par}
     \caption{Kalman filter equations (credit:
     \href{http://matthewrocklin.com/blog/work/2012/11/24/Kalman-Filter}{matthewrocklin.com}).}\label{fig:kalman_eqns}
 \end{figure}
@@ -380,10 +385,14 @@ are used in this implementation:
 
 \end{itemize}
 
-With expressions as complex as those in Figure~\ref{fig:kalman_eqns}, it can
-get very difficult to ensure memory is not being re-used incorrectly/enough
-whilst also enusring the aliasing assumptions for the BLAS/LAPACK routine calls
-are guaranteed. However, using \lang\ makes incorrect aliasing and memory
-re-use impossible. Additionally, \lang\ makes it possible to spot where memory
-is not being re-used enough \emph{precisely because} of its explicit
-allocations, aliases and frees.
+The \lang\ implementation is much longer than the mathematical equations for
+two reasons. First, the \lang\ implementation is a let-normalised form of the
+Kalman equations: since there a large number of unary/binary (and occasionally
+ternary) sub-expressions in the equations, naming each one line at a time makes
+the implementation much longer.  Second, \lang\ has the additional task of
+handling explicit allocations, aliasing and frees of matrices. However, it is
+exactly this which makes it possible (and often, easy) to spot additional
+opportunities for memory re-use. Furthermore, a programmer can explore those
+opportunities easily because \lang's type system statically enforces correct
+memory management and the aliasing assumptions of BLAS/LAPACK routines.
+

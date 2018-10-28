@@ -61,77 +61,6 @@ matter of unification.
 \begin{center}
 \[\def\arraystretch{1.3}
     \begin{array}{rcl}
-    x[e] &
-    \Rightarrow &
-    \mathbf{get}\ \_\ x\ (e) \;\qquad \textrm{(similarly for matrices)}
-\\
-    x[e_1] := e_2 &
-    \Rightarrow &
-    \mathbf{set}\ x\ (e_1)\ (e_2) \quad \textrm{(similarly for matrices)}
-\\
-\\
-    pat & ::= & ()\ \mid\ x\ \mid\ !x\ \mid\ \mathbf{Many\ } pat\ \mid\ (pat, pat)
-\\
-    \mathbf{let}\ !x = e_1\ \mathbf{in}\ e_2 &
-    \Rightarrow &
-    \specialcell[t]{l}{\mathbf{let\ Many}\ x = e_1\ \mathbf{in\ } \\
-    \mathbf{let\ Many}\ x = \mathbf{Many}\ (\mathbf{Many}\ x)\ \mathbf{in}\ e_2}
-\\
-    \mathbf{let\ Many} \langle pat_x \rangle\ = e_1\ \mathbf{in}\ e_2 &
-    \Rightarrow &
-    \specialcell[t]{l}{%
-        \mathbf{let\ Many}\ x = x\ \mathbf{in\ } \\
-        \mathbf{let\ }\ \langle pat_x \rangle\ = x\ \mathbf{in\ } e_2}
-\\
-    \mathbf{let}\ (\langle pat_a \rangle, \langle pat_b \rangle)\  = e_1\ \mathbf{in}\ e_2 &
-    \Rightarrow &
-    \specialcell[t]{l}{%
-        \mathbf{let\ }\ (a,b)\ = a\_b\ \mathbf{in\ }
-        \ \mathbf{let\ }\ \langle pat_a \rangle\ = a\ \mathbf{in\ } \\
-        \mathbf{let\ }\ \langle pat_b \rangle\ = b\ \mathbf{in\ } e_2}
-\\
-    \mathbf{fun}\ (\langle pat_x \rangle\ : t) \rightarrow e &
-    \Rightarrow &
-    \mathbf{fun}\ (x : t) \rightarrow \mathbf{let\ }\ \langle pat_x \rangle = x\ \mathbf{in\ } e
-\\
-\\
-    arg & ::= & \langle pat \rangle : t\ \mid\ {'x} \textrm{ (fractional permission variable)}
-\\
-    \mathbf{fun}\ \langle arg_{1 .. n} \rangle \rightarrow e &
-    \Rightarrow &
-    \mathbf{fun}\ \langle arg_1 \rangle \rightarrow ..
-    \ \mathbf{fun}\ \langle arg_n \rangle \rightarrow e
-\\
-    \mathbf{let}\ f\ {\langle arg_{1 .. n} \rangle} = e_1\ \mathbf{in}\ e_2 &
-    \Rightarrow &
-    \mathbf{let}\ f = \mathbf{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1\
-    \mathbf{in}\ e_2
-\\
-    \mathbf{let}\ f\ {\langle arg_{1 .. n} \rangle} = e_1\ \mathbf{in}\ e_2 &
-    \Rightarrow &
-    \mathbf{let}\ f = \mathbf{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1\
-    \mathbf{in}\ e_2
-\\
-    \mathbf{let}\ !f\ {\langle arg_{1 .. n} \rangle} = e_1\ \mathbf{in}\ e_2 &
-    \Rightarrow &
-    \mathbf{let\ Many}\ f = \mathbf{Many}\ (\mathbf{fun}\ {\langle arg_{1 .. n} \rangle}
-    \rightarrow e_1)\ \mathbf{in}\ e_2
-\\
-    \mathbf{let\ rec}\ f\ (x : t)\ {\langle arg_{1 .. n} \rangle} : {t'} = e_1\ \mathbf{in}\ e_2 &
-    \Rightarrow &
-    \specialcell[t]{l}{\mathrm{fixpoint} \equiv \mathbf{fix}\ (f, x : t,
-        \mathbf{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1 : {t'} ) \\
-    \mathbf{let\ Many}\ f = \mathbf{Many}\ \mathrm{fixpoint}\ \mathbf{in}\ e_2}
-    \end{array}
-\]
-\end{center}
-\caption{Desugaring from \lang\ concrete syntax to core constructs.}\label{fig:lang_desugar}
-\end{figure}
-
-\begin{figure}[t]
-\begin{center}
-\[\def\arraystretch{1.3}
-    \begin{array}{rcl}
     \mathbf{let\ } v \leftarrow x[e]\ \mathbf{in\ } e &
     \Rightarrow &
     \mathbf{let\ } (x, !v)\ = x[e]\ \mathbf{in\ } e \qquad \textrm{(similarly for matrices)}
@@ -154,30 +83,30 @@ matter of unification.
     \mathbf{let\ } &Y \leftarrow \mathbf{new}\ (n, k)\ [|\ \alpha M_1 M_2 \ |]\ \mathbf{in\ } e
     \Rightarrow \\
     & \mathbf{let\ } Y\ = \mathbf{matrix\ } n\ k\ \mathbf{in}
-    \ \mathbf{let\ } Y \leftarrow [|\ \alpha M_1 M_2 + 0Y\ |]\ \mathbf{in\ } e \\
-\\
+    \ \mathbf{let\ } Y \leftarrow [|\ \alpha M_1 M_2 + 0Y\ |]\ \mathbf{in\ } e
+\\[0.1\baselineskip]
 %syrk
     \mathbf{let\ } &Y \leftarrow [|\ \alpha X X^T + \beta Y\ |]\ \mathbf{in\ } e
     \Rightarrow \\
     & \mathbf{let\ } (X,Y)\ = \mathbf{syrk\ } \mathbf{false}
-    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e \\
-\\
+    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e
+\\[0.1\baselineskip]
     \mathbf{let\ } &Y \leftarrow [|\ \alpha X^T X + \beta Y\ |]\ \mathbf{in\ } e
     \Rightarrow \\
     & \mathbf{let\ } (X,Y)\ = \mathbf{syrk\ } \mathbf{true}
-    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e \\
+    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e
 %symm
-\\
+\\[0.1\baselineskip]
     \mathbf{let\ } &Y \leftarrow\ [|\ \alpha\,\textrm{sym}(X_1)\,X_2 + \beta Y\ |]\ \mathbf{in\ } e
     \Rightarrow \\
     & \mathbf{let\ } ((X_1,X_2),Y)\ = \mathbf{symm\ } \mathbf{false}
-        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ }e \\
-\\
+        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ } e
+\\[0.1\baselineskip]
     \mathbf{let\ } &Y \leftarrow\ [|\ \alpha\,X_2\,\textrm{sym}(X_1) + \beta Y\ |]\ \mathbf{in\ } e
     \Rightarrow \\
     & \mathbf{let\ } ((X_1,X_2),Y)\ = \mathbf{symm\ } \mathbf{false}
-        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ } e \\
-\\
+        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ } e
+\\[0.1\baselineskip]
 %gemm
     \mathbf{let\ } &Y \leftarrow [|\ \alpha X_1^{T?} X_2^{T?} + \beta Y\ |]\ \mathbf{in\ } e
     \Rightarrow \\
@@ -268,22 +197,48 @@ use existing tools to inspect the type of the function we are using
 constructors are translated into OCaml, \lang's precise control over linearity
 and aliasing are not brought over.
 
-We actually use this fact to our advantage to clean up the output code by
-removing what would otherwise be redundant re-bindings in the output OCaml.
-Combined with a code-formatter, the resulting code is not obviously correct and
-exactly what a programmer would intend to write by hand, but now with the
-guarantees and safety of \lang\ behind it.
-
 \begin{figure}[t]
     \centering
     \includegraphics[width=\textwidth]{impl_build}
     \caption{Using \lang\ functions from OCaml.}\label{fig:build}
 \end{figure}
 
-A few examples?
+We actually use this fact to our advantage to clean up the output OCaml by
+removing what would otherwise be redundant re-bindings.  Combined with a
+code-formatter, the resulting code is not obviously correct and exactly what an
+expert would intend to write by hand, but now with the guarantees and safety of
+\lang\ behind it. A small example is shown in Figure~\ref{fig:ocaml_sumarray},
+a larger one in Figure~\ref{fig:ocaml_kalman}.
+
+\begin{figure}[tp]
+    \centering
+    \begin{minted}[fontsize=\small]{ocaml}
+let rec f i n x0 row =
+  if Prim.extract @@ Prim.eqI i n then (row, x0)
+  else
+    let row, x1 = Prim.get row i in
+    f (Prim.addI i (Many 1)) n (Prim.addE x0 x1) row
+in
+f
+    \end{minted}
+    \caption{Recursive OCaml function for a summing over an array, generated (at
+        \emph{compile time}) from the code in Figure~\ref{fig:lang_sumarray},
+        passed through \texttt{ocamlformat} for presentation.}\label{fig:ocaml_sumarray}
+\end{figure}
 
 \subsection{Performance Metrics}
 
 Here, evaluate the performance of the examples from the second
 section.  Compare with your C implementations, and perhaps as well as
 the straightforward math transcribed into (Matlab/R/Numpy?).
+
+\begin{figure}[t]
+    \centering
+    \input{timings.tex}
+    \caption{Comparison of execution times (error bars are present but quite
+        small). Small matrices and timings $n \le 5^3$ were micro-benchmarked
+        with the Core\_bench library. Larger ones used Unix's
+        \texttt{getrusage} functionality, sandwiched between calls to
+        \highl{Gc.full_major} for the OCaml implementations.}\label{fig:timings}
+\end{figure}
+

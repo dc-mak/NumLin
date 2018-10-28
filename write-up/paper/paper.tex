@@ -47,6 +47,10 @@
 \newcommand{\specialcell}[3][c]{%
   \begin{array}[#1]{@{}#2@{}}#3\end{array}}
 
+\usepackage{lscape}
+\RequirePackage[dvipsnames]{xcolor}
+\usepackage{pgfplots}
+
 \begin{document}
 
 \title{NumLin: Linear Types for Linear Algebra}
@@ -90,5 +94,8 @@ Briefly summarize the contents of the paper in 150--250 words.
 \bibliographystyle{splncs04}
 
 \bibliography{ourbib}
+
+\appendix
+\input{appendix}
 
 \end{document}

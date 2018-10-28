@@ -493,14 +493,19 @@ let pp_exp ?(comments=false) ppf =
         fprintf ppf !"@[%a@]" pp_exp exp
 
     (* readability *)
-    | App (_, Lambda (_, var, _, body), exp) ->
-      fprintf ppf !"@[@[<2>let %s =@ %a in@]@ %a@]"
-        var pp_exp exp pp_exp body
+    | App (loc, Lambda (_, var, _, body), exp) ->
+      pp_exp ppf (Let (loc, var, exp, body))
 
     | App (_, fun_, arg) as app ->
       let fl, fr = if prec fun_ >= prec app then "","" else "(", ")"
       and al, ar = parens arg app in
       fprintf ppf "@[<2>%s%a%s@ %s%a%s@]" fl pp_exp fun_ fr al pp_exp arg ar
+
+    (* readability *)
+    | Let (_, var, Fix (_, f, x, _, _, exp), body)
+      when var = f ->
+      fprintf ppf !"@[@[<2>let rec %s %s =@ %a in@]@ %a@]"
+        f x pp_exp exp pp_exp body
 
     | Let (_, var, exp, body) ->
       fprintf ppf !"@[@[<2>let %s =@ %a in@]@ %a@]"
@@ -525,10 +530,8 @@ let pp_exp ?(comments=false) ppf =
       fprintf ppf "@[@[<2>let %s =@ %a in@]@ %a@]" var1 pp_exp exp pp_exp body
 
     (* readability *)
-    (* TODO Add case(s) for Fix *)
-    | Bang_E (_, var, Bang_I(_, exp), body) ->
-      fprintf ppf !"@[@[<2>let %s =@ %a in@]@ %a@]"
-        var pp_exp exp pp_exp body
+    | Bang_E (loc, var, Bang_I(_, exp), body) ->
+      pp_exp ppf (Let (loc, var, exp, body))
 
     | Bang_E (_, var, exp, body) ->
       fprintf ppf "@[@[<2>let Many %s =@ %a in@]@ %a@]" var pp_exp exp pp_exp body

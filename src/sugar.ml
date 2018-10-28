@@ -183,7 +183,7 @@ and exp =
   | LetAnnot of loc * bang_var * lin * exp * exp
   | LetPat of loc * pat * exp * exp
   | LetFun of loc * bang_var * (annot_arg, loc * var) Either.t non_empty * exp * exp
-  | LetRecFun of loc * var * annot_arg * (annot_arg, loc * var) Either.t list * lin * exp * exp
+  | LetRecFun of loc * bang_var * annot_arg * (annot_arg, loc * var) Either.t list * lin * exp * exp
   | LetMat of loc * bang_var * loc * mat_exp * exp
 [@@deriving sexp_of]
 ;;
@@ -412,7 +412,12 @@ let rec ds_exp : exp -> Ast.exp = function
 
     let (_, arg_var, res_exp) = ds_pat pat res_exp
     and arg_lin = ds_lin arg_lin in
-    Bang_E (loc, fun_var, Bang_I(loc, Fix (loc, fun_var, arg_var, arg_lin, res_lin, res_exp)), ds_exp in_body)
+    begin match fun_var with
+    | Bang fun_var ->
+      Bang_E (loc, fun_var, Bang_I(loc, Fix (loc, fun_var, arg_var, arg_lin, res_lin, res_exp)), ds_exp in_body)
+    | NotB fun_var ->
+      Let (loc, fun_var, Fix (loc, fun_var, arg_var, arg_lin, res_lin, res_exp), ds_exp in_body)
+    end
 
   | LetMat (var_loc, bang_var, arr_loc, ArrIndex (arr, index_loc, (index1, index2)), in_body) ->
     ds_exp @@

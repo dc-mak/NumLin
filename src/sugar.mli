@@ -116,7 +116,7 @@ and exp =
   | LetAnnot of loc * bang_var * lin * exp * exp
   | LetPat of loc * pat * exp * exp
   | LetFun of loc * bang_var * (annot_arg, loc * var) Base.Either.t non_empty * exp * exp
-  | LetRecFun of loc * var * annot_arg * (annot_arg, loc * var) Base.Either.t list * lin * exp * exp
+  | LetRecFun of loc * bang_var * annot_arg * (annot_arg, loc * var) Base.Either.t list * lin * exp * exp
   | LetMat of loc * bang_var * loc * mat_exp * exp
 [@@deriving sexp_of]
 val ds_exp : exp -> (Ast.exp, string) result

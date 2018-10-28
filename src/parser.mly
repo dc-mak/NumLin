@@ -292,9 +292,9 @@ index:
 
 (* formal parameters *)
 fun_args:
-    | destruct=destruct                                                  { mk_let destruct          }
-    | REC str=ID L_PAREN arg=annot_arg R_PAREN binds=bind* COLON lin=lin { mk_rec str arg binds lin }
-    | str=bang_var binds=bind+                                           { mk_fun str binds         }
+    | destruct=destruct                                                        { mk_let destruct          }
+    | REC str=bang_var L_PAREN arg=annot_arg R_PAREN binds=bind* COLON lin=lin { mk_rec str arg binds lin }
+    | str=bang_var binds=bind+                                                 { mk_fun str binds         }
 
 (* pattern-matching/destructing and binding *)
 binds:

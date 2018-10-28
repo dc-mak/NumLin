@@ -4,10 +4,18 @@
 low-level linear algebra libraries (such as BLAS/LAPACK) safely and explicitly.
 It does so by combining linear types, fractional permissions, runtime errors
 and recursion into a small, easily understandable, yet expressive set of core
-constructs. \lang\ allows a novice to understand and work with complicated
-linear algebra library APIs; as well as point out subtle aliasing bugs and
-reduce memory usage in existing programs. In addition to this, \lang's
-implementation supports several syntactic conveniences as well as a
+constructs.
+
+\lang\ allows a novice to understand and work with complicated linear algebra
+library APIs, as well as point out subtle aliasing bugs and reduce memory usage
+in existing programs. In fact, we were able to use \lang\ to find linearity and
+aliasing bugs in a linear algebra program that was \emph{generated} by another
+program \emph{specifically designed to translate matrix expressions into an
+efficient sequence of calls linear algebra routines}. We were also able to
+reduce the number of temporaries used by the same program, using \lang's type
+system to guide us.
+
+\lang's implementation supports several syntactic conveniences as well as a
 \emph{usable} integration with real OCaml libraries.
 
 \subsection{Contributions}
@@ -23,6 +31,12 @@ In this paper
         parametric polymorphism), demonstrating an alternative approach to
         dataflow analysis \cite{bierhoff}
     \item we describe an implementation that is both compatible with and usable
-        from existing code.
+        from existing code
+    \item we show an example of how using \lang\ helped highlight linearity
+        and aliasing bugs, and reduce the memory usage of a \emph{generated}
+        linear algebra program
+    \item we show that using \lang, we can achieve parity with C for linear
+        algebra routines, whilst having much better static guarantees about the
+        linearity and aliasing behaviour of our programs.
 \end{itemize}
 

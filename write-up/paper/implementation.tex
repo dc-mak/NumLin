@@ -48,12 +48,12 @@ benchmarking program and test-suite use code written in \lang.
 \subsubsection{Desugaring, Matrix Expressions and Type Checking}\label{subsubsec:initial}
 
 Desugaring is conventional, outlined in Figure~\ref{fig:lang_desugar}.  Matrix
-expression are translated into BLAS/ LAPACK calls via pattern-matching,
-outlined in Figure~\ref{fig:lang_matexp}. Type checking is mostly standard for
-a linearly typed language, with the exception of fractional permission
-inference.  Because all functions must have their argument types explicitly
-annotated, inferring the correct fraction at a call-site is simply a matter of
-unification.
+expression are translated into BLAS/ LAPACK calls via purely syntactic
+pattern-matching, outlined in Figure~\ref{fig:lang_matexp}. Type checking is
+mostly standard for a linearly typed language, with the exception of fractional
+permission inference.  Because all functions must have their argument types
+explicitly annotated, inferring the correct fraction at a call-site is simply a
+matter of unification.
 
 \textsc{What more can/should we say here?}
 
@@ -187,12 +187,16 @@ unification.
         \ \beta\ Y\ \mathbf{in\ } e
 \end{align*}
 
-\caption{Pattern-matching on matrix expressions.}\label{fig:lang_matexp}
+\caption{Purely syntactic pattern-matching translations of
+    matrix expressions.}\label{fig:lang_matexp}
 \end{figure}
 
-\subsubsection{Code Generation}
+\subsubsection{Code Generation} is a straightforward mapping from \lang's core
+constructs to high-level OCaml ones. We embed \lang's type- and term-
+constructors into OCaml as a sanity check on the output
+(Figure~\ref{fig:type_grammar}).
 
-\begin{figure}[tp]
+\begin{figure}[t]
     \centering
     \begin{minipage}{.3\textwidth}
         \centering
@@ -257,6 +261,25 @@ type 'a bang =
     \caption{\lang's type grammar (left) and its embedding into OCaml
         (right).}\label{fig:type_grammar}
 \end{figure}
+
+This is also useful when using \lang\ from within OCaml; for example, we can
+use existing tools to inspect the type of the function we are using
+(Figure~\ref{fig:build}). It is worth reiterating that only the type- and term-
+constructors are translated into OCaml, \lang's precise control over linearity
+and aliasing are not brought over.
+
+We actually use this fact to our advantage to clean up the output code by
+removing what would otherwise be redundant re-bindings in the output OCaml.
+Combined with a code-formatter, the resulting code is not obviously correct and
+exactly what a programmer would intend to write by hand, but now with the
+guarantees and safety of \lang\ behind it.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{impl_build}
+    \caption{Using \lang\ functions from OCaml.}\label{fig:build}
+\end{figure}
+
 A few examples?
 
 \subsection{Performance Metrics}

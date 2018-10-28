@@ -45,6 +45,7 @@ PAPER := intro.tex \
          formal_system.tex \
          implementation.tex \
          discussion.tex \
+         ourbib.bib \
          llncs.cls \
          fig1.eps \
          splncs04.bst

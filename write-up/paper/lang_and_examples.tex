@@ -95,7 +95,7 @@ linear values from its environment).
 
 The only argument is \highl{!x : !int}. The ! annotation on \texttt{x} is a
 syntactic convenience for declaring the value to used intuitionistically, its
-full and precise meaning is described in Section~\ref{subsubsec:desugaring}.
+full and precise meaning is described in Section~\ref{subsubsec:initial}.
 
 The condition for an \highl{if} may or may not use linear values (here, with
 \highl{x < 0 || x = 0}, it does not). Any linear values used by the condition
@@ -292,6 +292,12 @@ input matrices \texttt{(x,y)}.
 
 \subsubsection{L1-Norm Minimisation on Manifolds}
 
+L1-Norm minimisation is often used in optimisation problems, as a
+\emph{regularisation} term for reducing the influence of outliers.  Although
+the below formuation\cite{bronstein} is intended to be used with \emph{sparse}
+computations, \lang's current implementation only implements dense ones.
+However, it still serves as a useful example of explaining \lang's features.
+
 \begin{figure}[t]
     \centering
     \inputminted[fontsize=\small]{ocaml}{../../test/examples/l1_norm_min.lt}
@@ -318,6 +324,13 @@ refer to the same piece of memory, logically they represent different values
 throughout the computation.
 
 \subsubsection{Kalman Filter}
+
+A \emph{Kalman Filter}\cite{kalman} is a an algorithm for combining prior
+knowledge of a state, a statistical model and measurements from (noisy) sensors
+to produce an estimate a more reliable estimated of the current state.  It has
+various applications (navigation, signal-processing, econometrics) and is
+relevant here because it is usually presented as a series of complex matrix
+equations.
 
 \begin{figure}[t]
     \centering

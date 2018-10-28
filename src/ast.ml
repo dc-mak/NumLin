@@ -525,6 +525,7 @@ let pp_exp ?(comments=false) ppf =
       fprintf ppf "@[@[<2>let %s =@ %a in@]@ %a@]" var1 pp_exp exp pp_exp body
 
     (* readability *)
+    (* TODO Add case for Fix *)
     | Bang_E (_, var, Bang_I(_, exp), body) ->
       fprintf ppf !"@[@[<2>let %s =@ %a in@]@ %a@]"
         var pp_exp exp pp_exp body

@@ -76,9 +76,9 @@
 
         \step{}{By definition of $\C{k}{\cdot}$ and \pfref{split}, we
             instantiate with $j$ and $\sigma_r = \sigma_{e'}$ to conclude that
-            $\langle \varsigma , \theta(\delta(\gamma(e))) \rangle$ either takes $j$
+            $\langle \theta(\sigma) , \theta(\delta(\gamma(e))) \rangle$ either takes $j$
             steps to $\ottkw{err}$ or another heap-and-expression $\langle
-            \sigma_f, \theta(\delta(\gamma(e_f))) \rangle$.}
+            \sigma_f, e_f \rangle$.}
 
         \step{}{\case{$j$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
             the whole expression reduces to $\ottkw{err}$ in $j < k$ steps.}}
@@ -266,7 +266,7 @@
         \step{}{By that and \pfref{splitP}, $(\varsigma_1, \theta(\delta(\gamma_1(e_1)))) =
             (\varsigma_1, \theta(\delta(\gamma(e_1)))) \in \den{C}{k}{\theta(t)}$.}
 
-        \step{}{So, $\langle \sigma_1 + \sigma_2, \theta(\delta(\gamma_1(e_1))) \rangle$ either takes $j$
+        \step{}{So, $\langle \theta(\sigma_1 + \sigma_2), \theta(\delta(\gamma_1(e_1))) \rangle$ either takes $j$
             steps to $\ottkw{err}$ or a heap-and-expression $\langle \sigma_{1f}, e_{1f} \rangle$.}
 
         \step{}{\case{$j$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
@@ -289,7 +289,7 @@
 
         \step{}{Instantiate the second IH with $k, \theta, \delta, \gamma_2, \sigma_2$.}
 
-        \step{}{So, $\langle \sigma_{1f} \star \sigma_2, \theta(\delta(\gamma_2(e_2))) \rangle$
+        \step{}{So, $\langle \theta(\sigma_{1f} + \sigma_2), \theta(\delta(\gamma_2(e_2))) \rangle$
             either takes $j$ steps to $\ottkw{err}$ or a heap-and-expression
             $\langle \sigma_{2f}, e_{2f} \rangle$.}
 
@@ -377,7 +377,7 @@
             $(\varsigma_e, \theta(\delta(\gamma_e(e)))) \in \C{k}{\theta(t') \multimap \theta(t)}$.}
 
         \step{}{Instantiate \emph{this} with $j$ and $\sigma_{e'}$ and use \pfref{splitA} to conclude
-            $\langle \sigma_e + \sigma_{e'}, \theta(\delta(\gamma(e))) \rangle$ \\ either takes $j$
+            $\langle \theta(\sigma_e + \sigma_{e'}), \theta(\delta(\gamma(e))) \rangle$ \\ either takes $j$
             steps to $\ottkw{err}$ or a heap-and-expression $\langle \sigma_f + \sigma_{e'}, e_f \rangle$.}
 
         \step{}{\case{$j$ steps to $\ottkw{err}$}{By \textsc{Op\_Context\_Err},
@@ -406,7 +406,7 @@
             \C{k-i_e}{\theta(t')}$.}
 
         \step{}{Instantiate \emph{this} with $j - i_e$ and $\sigma_f$ to conclude
-            $\langle \sigma_f + \sigma_{e'}, \theta(\delta(\gamma_{e'}(e'))) \rangle$ \\
+            $\langle \theta(\sigma_f + \sigma_{e'}), \theta(\delta(\gamma_{e'}(e'))) \rangle$ \\
             either takes $j-i_e$ steps to $\ottkw{err}$ or $\langle \sigma_f +
             \sigma_f', e_f' \rangle$.}
 
@@ -447,7 +447,7 @@
             (for all $f$, by \ref{fracPermSub}).}
 
         \step{}{Instantiate \emph{this} with $j$ and $\empH$ to conclude
-            $\langle \sigma, \theta' (\gamma(\delta(e))) \rangle$ \\
+            $\langle \theta(\sigma), \theta' (\gamma(\delta(e))) \rangle$ \\
             either takes $j$ steps to $\ottkw{err}$ or a heap-and-expression
             $\langle \sigma', e' \rangle$ (for all $f$, by \ref{fracPermSub}).}
 
@@ -496,7 +496,7 @@
             $(\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{\theta(\forall fc.\ t})$.}
 
         \step{}{Instantiate \emph{this} with $j$ and $\empH$ and to conclude
-            $\langle \sigma, \theta(\delta(\gamma(e))) \rangle$ \\
+            $\langle \theta(\sigma), \theta(\delta(\gamma(e))) \rangle$ \\
             either takes $j$ steps to $\ottkw{err}$ or a heap-and-expression
             $\langle \sigma_f, e_f \rangle$.}
 

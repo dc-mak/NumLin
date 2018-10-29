@@ -96,7 +96,7 @@ variables to values, and values are closed under substitution.
     \Rightarrow (\varsigma, e) \in \C{k+1}{t}
 $}\label{stepInC}
 
-(Here, $\theta$ is the empty substitution for $\varsigma = \den{H}{}{\sigma}\theta$.)
+In the lemma, and for the rest of its proof, $\varsigma = \den{H}{}{\sigma}$.
 
 \begin{proof}
 
@@ -117,6 +117,7 @@ $}\label{stepInC}
 
 \subsection{$j \leq k \Rightarrow \den{\_\ }{k}{\cdot} \subseteq \den{\_\ }{j}{\cdot}$}\label{subsetKJ}
 
+For the rest of this proof, $\varsigma = \den{H}{}{\sigma}$.\\
 Lemma~\ref{stepInC} is the inductive step for this lemma for the $\C{}{}$ case.\\
 Need to prove for $\V{}{}$, by induction on $t$ and then index.
 
@@ -161,15 +162,15 @@ Need to prove for $\V{}{}$, by induction on $t$ and then index.
 \pf~By induction on $\Gamma'$.
 
 \subsection{$\forall e, \sigma, e', \sigma', \theta.\
-    \langle e, \sigma \rangle \rightarrow \langle e' , \sigma' \rangle
-    \Rightarrow \langle \theta(e), \theta(\sigma)
-    \rangle \rightarrow \langle \theta(e') , \theta(\sigma') \rangle$}\label{fracPermSub}
+    \langle \sigma, e \rangle \rightarrow \langle \sigma',  e' \rangle
+    \Rightarrow \langle \theta(\sigma), \theta(e) \rangle \rightarrow
+    \langle \theta(\sigma') , \theta(e') \rangle$}\label{fracPermSub}
 
 \pf~By induction on $\rightarrow$.
 \begin{proof}
 
     \step{}{\assume{Arbitrary $e, \sigma, e', \sigma', \theta$ such that 
-        $\langle e, \sigma \rangle \rightarrow \langle e' , \sigma' \rangle$.}}
+        $\langle \sigma, e \rangle \rightarrow \langle \sigma', e' \rangle$.}}
 
     \step{}{\suffices{To consider only the following rules which mention
         fractional permission variables.}
@@ -177,19 +178,20 @@ Need to prove for $\V{}{}$, by induction on $t$ and then index.
         and \textsc{Op\_Gemm\_(Mis)Match}.}
 
     \step{}{\case{\textsc{Op\_Frac\_Perm.}}{Because substitution avoids capture,
-        \\ $\langle \theta((\ottkw{fun} fc \rightarrow v) \, [f]),
-        \theta(\sigma) \rangle \rightarrow \langle \theta(v\, [fc/f]),
-        \theta(\sigma'\, [fc/f]) \rangle$.}}
+        \\ $\langle \theta(\sigma), \theta((\ottkw{fun} fc \rightarrow v) \, [f])
+         \rangle \rightarrow \langle \theta(\sigma'\, [fc/f]),
+        \theta(v\, [fc/f]) \rangle$.}}
 
     \step{}{The rest of the cases are parametric in their use of fractional
         permission variables and so will take the same step ater any substitution.}
 
     \step{}{\textsc{Corollary:}
-        If $\langle e\, [fc/f_1], \sigma \, [fc/f_1] \rangle \rightarrow^n
-        \langle v_2, \sigma_2 \rangle$ and
-        $\langle e\, [fc/f_2], \sigma \, [fc/f_2] \rangle \rightarrow^n
-        \langle v_2, \sigma_2 \rangle$, then
-        $\exists\,v, \sigma.\ v_1 = v\,[fc/f_1] \wedge v_2 = v\,[fc/f_2]
-        \sigma_1 = \sigma\,[fc/f_1] \wedge \sigma_2 = \sigma\,[fc/f_2]$.}
+        If $\langle \sigma \, [fc/f_1], e\, [fc/f_1] \rangle \rightarrow^n
+        \langle \sigma_2, e'_2 \rangle$ and
+        $\langle \sigma\, [fc/f_2], e \, [fc/f_2] \rangle \rightarrow^n
+        \langle \sigma_2, e'_2 \rangle$, then
+        $\exists\,\sigma, e'.\ \sigma_1 = \sigma\,[fc/f_1] \wedge
+        \sigma_2 = \sigma\,[fc/f_2] \wedge
+        e'_1 = e'\,[fc/f_1] \wedge e'_2 = e'\,[fc/f_2]$.}
 
 \end{proof}

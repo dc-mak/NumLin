@@ -23,8 +23,8 @@ Define its \emph{interpretation} to be $\emph{Loc} \rightharpoonup
 Commutativity and associativity of $\star$ follows from that of $+$.\\
 $\varsigma_1 \star \varsigma_2$ is \emph{defined} if it is for all $l \in
 \dom(\varsigma_1) \cup \dom(\varsigma_2)$.\\
-\textbf{Implicitly denote}, $\varsigma \equiv \den{H}{}{\sigma}\theta \equiv
-\bigstar_{(l,f,m) \in \sigma} [ l \mapsto_{\theta(f)} m ]$.\\
+Define $\den{H}{}{\sigma} = \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]$
+and \textbf{implicitly denote} $\varsigma \equiv \den{H}{}{\theta(\sigma)}$.\\
 \\
 The $n-$fold iteration for the $\rightarrow$ (functional) relation, is also a (functional) relation:
 \begin{align*}
@@ -74,8 +74,10 @@ heap-and-value.
 \\
     \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\varsigma \star \varsigma_x, \gamma[x \mapsto v_x ]) \mid (\varsigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\varsigma_x, v_x) \in \V{k}{\theta(t)} \} \\
 \\
-    \varsigma \equiv \den{H}{}{\sigma}\theta &\equiv \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_{\theta(f)} m ]\\
+    \den{H}{}{\sigma} &= \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]
+\\
+    \varsigma &\equiv \den{H}{}{\theta(\sigma)} \\
 \\
 \den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, \delta, \gamma, \sigma.\ \Theta = \dom(\theta) \wedge (\varsigma, \gamma) \in \den{L}{k}{ \Gamma }\theta \wedge \delta \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
-                                                 & \qquad \qquad (\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{ \theta(t) }
+                                                     & \qquad \qquad (\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{ \theta(t) }
 \end{align*}

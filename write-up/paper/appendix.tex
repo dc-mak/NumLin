@@ -55,11 +55,16 @@
     \mathbf{let\ Many}\ f = \mathbf{Many}\ (\mathbf{fun}\ {\langle arg_{1 .. n} \rangle}
     \rightarrow e_1)\ \mathbf{in}\ e_2
 \\
+    \mathrm{fixpoint} & \equiv & \mathbf{fix}\ (f, x : t, \mathbf{fun}
+    \ {\langle arg_{1 .. n} \rangle} \rightarrow e_1 : {t'} )
+\\
     \mathbf{let\ rec}\ f\ (x : t)\ {\langle arg_{1 .. n} \rangle} : {t'} = e_1\ \mathbf{in}\ e_2 &
     \Rightarrow &
-    \specialcell[t]{l}{\mathrm{fixpoint} \equiv \mathbf{fix}\ (f, x : t,
-        \mathbf{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1 : {t'} ) \\
-    \mathbf{let\ Many}\ f = \mathbf{Many}\ \mathrm{fixpoint}\ \mathbf{in}\ e_2}
+    \mathbf{let}\ f = \mathrm{fixpoint}\ \mathbf{in}\ e_2
+\\
+    \mathbf{let\ rec}\ !f\ (x : t)\ {\langle arg_{1 .. n} \rangle} : {t'} = e_1\ \mathbf{in}\ e_2 &
+    \Rightarrow &
+    \mathbf{let\ Many}\ f = \mathbf{Many}\ \mathrm{fixpoint}\ \mathbf{in}\ e_2
     \end{array}
 \]
 \end{center}

@@ -29,7 +29,7 @@
   
 \newcommand{\ottmetavars}{
 \ottmetavartabular{
- $ \mathit{fc} $ & \ottcom{fractional capability variable} \\
+ $ \mathit{fc} $ & \ottcom{fractional permission variable} \\
  $ \mathit{x} ,\, \mathit{g} ,\, \mathit{a} ,\, \mathit{b} $ & \ottcom{expression variable} \\
  $ \mathit{k} $ & \ottcom{integer variable} \\
  $ \mathit{el} $ & \ottcom{array-element variable} \\
@@ -45,9 +45,9 @@
 \ottprodline{|}{\ottsym{(}  \ottnt{m}  \ottsym{)}} {\textsf{S}}{}{}{}}
 
 \newcommand{\ottf}{
-\ottrulehead{\ottnt{f}}{::=}{\ottcom{fractional capability}}\ottprodnewline
+\ottrulehead{\ottnt{f}}{::=}{\ottcom{fractional permission}}\ottprodnewline
 \ottfirstprodline{|}{\mathit{fc}}{}{}{}{\ottcom{variable}}\ottprodnewline
-\ottprodline{|}{ 1 }{}{}{}{\ottcom{whole capability}}\ottprodnewline
+\ottprodline{|}{ 1 }{}{}{}{\ottcom{whole permission}}\ottprodnewline
 \ottprodline{|}{ { \frac{1}{2}  \ottnt{f}  } }{}{}{}{}}
 
 \newcommand{\ottt}{
@@ -59,7 +59,7 @@
 \ottprodline{|}{\ottnt{f} \, \ottkw{arr}}{}{}{}{\ottcom{arrays}}\ottprodnewline
 \ottprodline{|}{\ottnt{f} \, \ottkw{mat}}{}{}{}{\ottcom{matrices}}\ottprodnewline
 \ottprodline{|}{\: !  \ottnt{t}}{}{}{}{\ottcom{multiple-use type}}\ottprodnewline
-\ottprodline{|}{\forall \, \mathit{fc}  \ottsym{.}  \ottnt{t}}{}{\textsf{bind}\; \mathit{fc}\; \textsf{in}\; \ottnt{t}}{}{\ottcom{frac. cap. generalisation}}\ottprodnewline
+\ottprodline{|}{\forall \, \mathit{fc}  \ottsym{.}  \ottnt{t}}{}{\textsf{bind}\; \mathit{fc}\; \textsf{in}\; \ottnt{t}}{}{\ottcom{frac. perm. generalisation}}\ottprodnewline
 \ottprodline{|}{\ottnt{t} \, \otimes \, \ottnt{t'}}{}{}{}{\ottcom{pair}}\ottprodnewline
 \ottprodline{|}{\ottnt{t}  \multimap  \ottnt{t'}}{}{}{}{\ottcom{linear function}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{t}  \ottsym{)}} {\textsf{S}}{}{}{\ottcom{parentheses}}}
@@ -121,8 +121,8 @@
 \ottprodline{|}{\mathit{l}}{}{}{}{\ottcom{heap location}}\ottprodnewline
 \ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, \ottnt{v}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
-\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}}{}{}{}{\ottcom{frac. cap. abstraction}}\ottprodnewline
-\ottprodline{|}{\ottnt{v}  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. cap. specialisation}}\ottprodnewline
+\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}}{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
+\ottprodline{|}{\ottnt{v}  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. perm. specialisation}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{v}  \ottsym{,}  \ottnt{v'}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}}{}{\textsf{bind}\; \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{abstraction}}\ottprodnewline
 \ottprodline{|}{\ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}}{}{\textsf{bind}\; \mathit{g} \cup  \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{fixpoint}}\ottprodnewline
@@ -143,8 +143,8 @@
 \ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, \ottnt{e}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{}{}{\ottcom{!-elimination}}\ottprodnewline
-\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{e}}{}{}{}{\ottcom{frac. cap. abstraction}}\ottprodnewline
-\ottprodline{|}{\ottnt{e}  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. cap. specialisation}}\ottprodnewline
+\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{e}}{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
+\ottprodline{|}{\ottnt{e}  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. perm. specialisation}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{e}  \ottsym{,}  \ottnt{e'}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottsym{(}  \mathit{a}  \ottsym{,}  \mathit{b}  \ottsym{)}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{\textsf{bind}\; \mathit{a} \cup  \mathit{b}\; \textsf{in}\; \ottnt{e'}}{}{\ottcom{pair elimination}}\ottprodnewline
 \ottprodline{|}{\ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}}{}{\textsf{bind}\; \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{abstraction}}\ottprodnewline
@@ -159,8 +159,8 @@
 \ottprodline{|}{\ottkw{if} \, [ - ] \, \ottkw{then} \, \ottnt{e_{{\mathrm{1}}}} \, \ottkw{else} \, \ottnt{e_{{\mathrm{2}}}}}{}{}{}{\ottcom{if}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, [ - ]}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  [ - ] \, \ottkw{in} \, \ottnt{e}}{}{}{}{\ottcom{!-elimination}}\ottprodnewline
-\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  [ - ]}{}{}{}{\ottcom{frac. cap. abstraction}}\ottprodnewline
-\ottprodline{|}{[ - ]  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. cap. specialisation}}\ottprodnewline
+\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  [ - ]}{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
+\ottprodline{|}{[ - ]  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. perm. specialisation}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  [ - ]  \ottsym{,}  \ottnt{e}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{v}  \ottsym{,}  [ - ]  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottsym{(}  \mathit{a}  \ottsym{,}  \mathit{b}  \ottsym{)}  \ottsym{=}  [ - ] \, \ottkw{in} \, \ottnt{e}}{}{\textsf{bind}\; \mathit{a} \cup  \mathit{b}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{pair elimination}}\ottprodnewline
@@ -168,7 +168,7 @@
 \ottprodline{|}{\ottnt{v}  [ - ]}{}{}{}{\ottcom{application}}}
 
 \newcommand{\ottT}{
-\ottrulehead{\Theta}{::=}{\ottcom{fractional capability environment}}\ottprodnewline
+\ottrulehead{\Theta}{::=}{\ottcom{fractional permission environment}}\ottprodnewline
 \ottfirstprodline{|}{ \cdot }{}{}{}{}\ottprodnewline
 \ottprodline{|}{\Theta  \ottsym{,}  \mathit{fc}}{}{}{}{}}
 
@@ -188,8 +188,8 @@
 \ottfirstprodline{|}{ \{ \} }{}{}{}{\ottcom{empty heap}}\ottprodnewline
 \ottprodline{|}{ \sigma   +  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \} }{}{}{}{\ottcom{location $\mathit{l}$ points to matrix $\ottnt{m}$}}}
 
-\newcommand{\ottStepsTo}{
-\ottrulehead{\ottnt{StepsTo}}{::=}{\ottcom{result of small step}}\ottprodnewline
+\newcommand{\ottConfig}{
+\ottrulehead{\ottnt{Config}}{::=}{\ottcom{result of small step}}\ottprodnewline
 \ottfirstprodline{|}{\langle  \sigma  \ottsym{,}  \ottnt{e}  \rangle}{}{}{}{\ottcom{heap and expression}}\ottprodnewline
 \ottprodline{|}{\textbf{err}}{}{}{}{\ottcom{error}}}
 
@@ -205,38 +205,38 @@
 \ottG\ottinterrule
 \ottD\ottinterrule
 \ottH\ottinterrule
-\ottStepsTo\ottafterlastrule
+\ottConfig\ottafterlastrule
 }}
 
 % defnss
 % defns Well_Formed
-%% defn Cap_
-\newcommand{\ottdruleWFXXCapXXVar}[1]{\ottdrule[#1]{%
+%% defn Perm_
+\newcommand{\ottdruleWFXXPermXXVar}[1]{\ottdrule[#1]{%
 \ottpremise{\mathit{fc} \, \in \, \Theta}%
 }{
-\Theta  \vdash  \mathit{fc} \, \textsf{Cap}}{%
-{\ottdrulename{WF\_Cap\_Var}}{}%
+\Theta  \vdash  \mathit{fc} \, \textsf{Perm}}{%
+{\ottdrulename{WF\_Perm\_Var}}{}%
 }}
 
 
-\newcommand{\ottdruleWFXXCapXXZero}[1]{\ottdrule[#1]{%
+\newcommand{\ottdruleWFXXPermXXZero}[1]{\ottdrule[#1]{%
 }{
-\Theta  \vdash   1  \, \textsf{Cap}}{%
-{\ottdrulename{WF\_Cap\_Zero}}{}%
+\Theta  \vdash   1  \, \textsf{Perm}}{%
+{\ottdrulename{WF\_Perm\_Zero}}{}%
 }}
 
 
-\newcommand{\ottdruleWFXXCapXXSucc}[1]{\ottdrule[#1]{%
-\ottpremise{\Theta  \vdash  \ottnt{f} \, \textsf{Cap}}%
+\newcommand{\ottdruleWFXXPermXXSucc}[1]{\ottdrule[#1]{%
+\ottpremise{\Theta  \vdash  \ottnt{f} \, \textsf{Perm}}%
 }{
-\Theta  \vdash   { \frac{1}{2}  \ottnt{f}  }  \, \textsf{Cap}}{%
-{\ottdrulename{WF\_Cap\_Succ}}{}%
+\Theta  \vdash   { \frac{1}{2}  \ottnt{f}  }  \, \textsf{Perm}}{%
+{\ottdrulename{WF\_Perm\_Succ}}{}%
 }}
 
-\newcommand{\ottdefnWFXXCapXX}[1]{\begin{ottdefnblock}[#1]{$\Theta  \vdash  \ottnt{f} \, \textsf{Cap}$}{\ottcom{Well-formed fractional capabilities}}
-\ottusedrule{\ottdruleWFXXCapXXVar{}}
-\ottusedrule{\ottdruleWFXXCapXXZero{}}
-\ottusedrule{\ottdruleWFXXCapXXSucc{}}
+\newcommand{\ottdefnWFXXPermXX}[1]{\begin{ottdefnblock}[#1]{$\Theta  \vdash  \ottnt{f} \, \textsf{Perm}$}{\ottcom{Well-formed fractional permissions}}
+\ottusedrule{\ottdruleWFXXPermXXVar{}}
+\ottusedrule{\ottdruleWFXXPermXXZero{}}
+\ottusedrule{\ottdruleWFXXPermXXSucc{}}
 \end{ottdefnblock}}
 
 %% defn Type_
@@ -269,7 +269,7 @@
 
 
 \newcommand{\ottdruleWFXXTypeXXArray}[1]{\ottdrule[#1]{%
-\ottpremise{\Theta  \vdash  \ottnt{f} \, \textsf{Cap}}%
+\ottpremise{\Theta  \vdash  \ottnt{f} \, \textsf{Perm}}%
 }{
 \Theta  \vdash  \ottnt{f} \, \ottkw{arr} \, \textsf{Type}}{%
 {\ottdrulename{WF\_Type\_Array}}{}%
@@ -323,7 +323,7 @@
 
 
 \newcommand{\ottdefnsWellXXFormed}{
-\ottdefnWFXXCapXX{}\ottdefnWFXXTypeXX{}}
+\ottdefnWFXXPermXX{}\ottdefnWFXXTypeXX{}}
 
 % defns Types
 %% defn Type_
@@ -468,7 +468,7 @@
 
 
 \newcommand{\ottdruleTyXXSpc}[1]{\ottdrule[#1]{%
-\ottpremise{\Theta  \vdash  \ottnt{f} \, \textsf{Cap}}%
+\ottpremise{\Theta  \vdash  \ottnt{f} \, \textsf{Perm}}%
 \ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \forall \, \mathit{fc}  \ottsym{.}  \ottnt{t}}%
 }{
 \Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{[}  \ottnt{f}  \ottsym{]}  \ottsym{:}  \ottnt{t}  \ottsym{[}  \ottnt{f}  \ottsym{/}  \mathit{fc}  \ottsym{]}}{%
@@ -553,10 +553,10 @@
 }}
 
 
-\newcommand{\ottdruleOpXXFracXXCap}[1]{\ottdrule[#1]{%
+\newcommand{\ottdruleOpXXFracXXPerm}[1]{\ottdrule[#1]{%
 }{
-\langle  \sigma  \ottsym{,}  \ottsym{(}  \ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}  \ottsym{)}  \ottsym{[}  \ottnt{f}  \ottsym{]}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{v}  \ottsym{[}  \mathit{fc}  \ottsym{/}  \ottnt{f}  \ottsym{]}  \rangle}{%
-{\ottdrulename{Op\_Frac\_Cap}}{}%
+\langle  \sigma  \ottsym{,}  \ottsym{(}  \ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}  \ottsym{)}  \ottsym{[}  \ottnt{f}  \ottsym{]}  \rangle  \rightarrow  \langle  \sigma  \ottsym{[}  \mathit{fc}  \ottsym{/}  \ottnt{f}  \ottsym{]}  \ottsym{,}  \ottnt{v}  \ottsym{[}  \mathit{fc}  \ottsym{/}  \ottnt{f}  \ottsym{]}  \rangle}{%
+{\ottdrulename{Op\_Frac\_Perm}}{}%
 }}
 
 
@@ -577,7 +577,7 @@
 \newcommand{\ottdruleOpXXContext}[1]{\ottdrule[#1]{%
 \ottpremise{\langle  \sigma  \ottsym{,}  \ottnt{e}  \rangle  \rightarrow  \langle  \sigma'  \ottsym{,}  \ottnt{e'}  \rangle}%
 }{
-\langle  \sigma  \ottsym{,}  \ottnt{C}  \ottsym{[}  \ottnt{e}  \ottsym{]}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{C}  \ottsym{[}  \ottnt{e'}  \ottsym{]}  \rangle}{%
+\langle  \sigma  \ottsym{,}  \ottnt{C}  \ottsym{[}  \ottnt{e}  \ottsym{]}  \rangle  \rightarrow  \langle  \sigma'  \ottsym{,}  \ottnt{C}  \ottsym{[}  \ottnt{e'}  \ottsym{]}  \rangle}{%
 {\ottdrulename{Op\_Context}}{}%
 }}
 
@@ -614,7 +614,6 @@
 
 
 \newcommand{\ottdruleOpXXUnshareXXEq}[1]{\ottdrule[#1]{%
-\ottpremise{ \ottnt{f}  \leq 1 }%
 }{
 \langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{unshare}  \ottsym{[}  \ottnt{f}  \ottsym{]} \, \mathit{l} \, \mathit{l}  \rangle  \rightarrow  \langle   \sigma   +  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \mathit{l}  \rangle}{%
 {\ottdrulename{Op\_Unshare\_Eq}}{}%
@@ -647,14 +646,14 @@
 {\ottdrulename{Op\_Gemm\_Mismatch}}{}%
 }}
 
-\newcommand{\ottdefnOpXXOpXX}[1]{\begin{ottdefnblock}[#1]{$\langle  \sigma  \ottsym{,}  \ottnt{e}  \rangle  \rightarrow  \ottnt{StepsTo}$}{\ottcom{operational semantics}}
+\newcommand{\ottdefnOpXXOpXX}[1]{\begin{ottdefnblock}[#1]{$\langle  \sigma  \ottsym{,}  \ottnt{e}  \rangle  \rightarrow  \ottnt{Config}$}{\ottcom{operational semantics}}
 \ottusedrule{\ottdruleOpXXLetXXUnit{}}
 \ottusedrule{\ottdruleOpXXLetXXVar{}}
 \ottusedrule{\ottdruleOpXXIfXXTrue{}}
 \ottusedrule{\ottdruleOpXXIfXXFalse{}}
 \ottusedrule{\ottdruleOpXXLetXXMany{}}
 \ottusedrule{\ottdruleOpXXLetXXPair{}}
-\ottusedrule{\ottdruleOpXXFracXXCap{}}
+\ottusedrule{\ottdruleOpXXFracXXPerm{}}
 \ottusedrule{\ottdruleOpXXAppXXFix{}}
 \ottusedrule{\ottdruleOpXXAppXXLambda{}}
 \ottusedrule{\ottdruleOpXXContext{}}

@@ -4,7 +4,7 @@ embed
   }}
 
 metavar fc ::=
-  {{ tex \mathit{[[fc]]} }} {{ com fractional capability variable }}
+  {{ tex \mathit{[[fc]]} }} {{ com fractional permission variable }}
 
 
 metavar x, g, a, b ::=
@@ -35,7 +35,7 @@ grammar
     | |-    ::  :: turnstile {{ tex \vdash        }}
     | mem   ::  :: member    {{ tex \in           }}
     | all   ::  :: all       {{ tex \forall       }}
-    | Cap   ::  :: cap       {{ tex \textsf{Cap}  }}
+    | Perm   ::  :: perm       {{ tex \textsf{Perm}  }}
     | Type  ::  :: type      {{ tex \textsf{Type} }}
     | !     ::  :: bang      {{ tex \: !          }}
     | ->    ::  :: arrow     {{ tex \rightarrow   }}
@@ -61,10 +61,10 @@ grammar
 
 grammar
 
-  f :: 'f_' ::=       {{ com fractional capability }}
+  f :: 'f_' ::=       {{ com fractional permission }}
     | fc  ::  :: Var  {{ com variable              }}
     | Z   ::  :: Zero {{ tex 1                     }}
-                      {{ com whole capability      }}
+                      {{ com whole permission      }}
     | S f ::  :: Succ {{ tex { \frac{1}{2} [[f]] } }}
 
 
@@ -77,7 +77,7 @@ grammar
     | f mat        ::   :: Matrix  {{ com matrices                  }}
     | ! t          ::   :: Bang    {{ com multiple-use type         }}
     | all fc . t   ::   :: Gen     (+ bind fc in t                  +)
-                                   {{ com frac. cap. generalisation }}
+                                   {{ com frac. perm. generalisation }}
     | t ox t'      ::   :: Pair    {{ com pair                      }}
     | t --o t'     ::   :: Lolly   {{ com linear function           }}
     | t [ f / fc ] :: M :: Sub     {{ com substitution              }}
@@ -145,8 +145,8 @@ grammar
     | l                           ::   :: Location    {{ com heap location             }}
     | el                          ::   :: Elt_Intro   {{ com array element             }}
     | Many v                      ::   :: Bang_Intro  {{ com !-introduction            }}
-    | fun fc -> v                 ::   :: Gen         {{ com frac. cap. abstraction    }}
-    | v [ f ]                     ::   :: Spc         {{ com frac. cap. specialisation }}
+    | fun fc -> v                 ::   :: Gen         {{ com frac. perm. abstraction    }}
+    | v [ f ]                     ::   :: Spc         {{ com frac. perm. specialisation }}
     | ( v , v' )                  ::   :: Pair_Intro  {{ com pair introduction         }}
     | fun x : t -> e              ::   :: Lambda      (+ bind x in e                   +)
                                                       {{ com abstraction               }}
@@ -171,8 +171,8 @@ grammar
     | el                          ::   :: Elt_Intro   {{ com array element             }}
     | Many e                      ::   :: Bang_Intro  {{ com !-introduction            }}
     | let Many x = e in e'        ::   :: Bang_Elim   {{ com !-elimination             }}
-    | fun fc -> e                 ::   :: Gen         {{ com frac. cap. abstraction    }}
-    | e [ f ]                     ::   :: Spc         {{ com frac. cap. specialisation }}
+    | fun fc -> e                 ::   :: Gen         {{ com frac. perm. abstraction    }}
+    | e [ f ]                     ::   :: Spc         {{ com frac. perm. specialisation }}
     | ( e , e' )                  ::   :: Pair_Intro  {{ com pair introduction         }}
     | let ( a , b ) = e in e'     ::   :: Pair_Elim   (+ bind a union b in e'          +)
                                                       {{ com pair elimination          }}
@@ -193,8 +193,8 @@ grammar
     | if __ then e1 else e2       ::   :: Bool_Elim  {{ com if                        }}
     | Many __                     ::   :: Bang_Intro {{ com !-introduction            }}
     | let Many x = __ in e        ::   :: Bang_Elim  {{ com !-elimination             }}
-    | fun fc -> __                ::   :: Gen        {{ com frac. cap. abstraction    }}
-    | __ [ f ]                    ::   :: Spc        {{ com frac. cap. specialisation }}
+    | fun fc -> __                ::   :: Gen        {{ com frac. perm. abstraction    }}
+    | __ [ f ]                    ::   :: Spc        {{ com frac. perm. specialisation }}
     | ( __ , e )                  ::   :: Pair_Fst   {{ com pair introduction         }}
     | ( v , __ )                  ::   :: Pair_Snd   {{ com pair introduction         }}
     | let ( a , b ) = __ in e     ::   :: Pair_Elim  (+ bind a union b in e           +)
@@ -214,7 +214,7 @@ contextrules
 
 grammar
 
-  T {{ tex \Theta }} :: 'T_' ::= {{ com fractional capability environment }}
+  T {{ tex \Theta }} :: 'T_' ::= {{ com fractional permission environment }}
     | nil    ::   :: Nil {{ tex \cdot }}
     | T , fc ::   :: Ext
 
@@ -235,21 +235,21 @@ defns
 
 
   defn
-  T |- f Cap :: ::Cap_:: 'Cap_' {{ com Well-formed fractional capabilities }} by
+  T |- f Perm :: ::Perm_:: 'Perm_' {{ com Well-formed fractional permissions }} by
 
 
     fc mem T
     ----------- :: Var
-    T |- fc Cap
+    T |- fc Perm
 
 
     ---------- :: Zero
-    T |- Z Cap
+    T |- Z Perm
 
 
-    T |- f Cap
+    T |- f Perm
     ------------ :: Succ
-    T |- S f Cap
+    T |- S f Perm
 
 
   defn
@@ -272,7 +272,7 @@ defns
     T |- elt Type
 
 
-    T |- f Cap
+    T |- f Perm
     --------------- :: Array
     T |- f arr Type
 
@@ -396,7 +396,7 @@ defns
     T ; D ; G |- fun fc -> e : all fc . t
 
 
-    T |- f Cap
+    T |- f Perm
     T ; D ; G |- e : all fc . t
     ----------------------------------- :: Spc
     T ; D ; G |- e [ f ] : t [ f / fc ]
@@ -414,9 +414,11 @@ grammar
     | H and { l |-> f , m k1 k2 } :: :: Ext 
     {{ tex [[H]] [[and]] \{ [[l]] [[|->]]_[[f]] [[m]]_{[[k1]], [[k2]]} \} }}
     {{ com location [[l]] points to matrix [[m]] }}
+    | H [ fc / f  ]               :: M :: Sub_fc
+    {{ com substitution }}
 
 
-  StepsTo :: 'StepsTo_' ::= {{ com result of small step }}
+  Config :: 'Config_' ::= {{ com result of small step }}
     | < H , e > :: :: Ok    {{ com heap and expression  }}
     | err       :: :: Error {{ com error                }}
 
@@ -426,7 +428,7 @@ defns
   Op_Sem :: 'Op_' ::=
 
   defn
-  < H , e > -> StepsTo :: ::Op_:: '' {{ com operational semantics }} by
+  < H , e > -> Config :: ::Op_:: '' {{ com operational semantics }} by
 
 
     --------------------------------------- :: Let_Unit
@@ -453,8 +455,8 @@ defns
     < H , let ( a , b ) = ( v1 , v2 ) in e > -> < H , e [ a / v1 ] [ b / v2 ] >
 
 
-    ---------------------------------------------------- :: Frac_Cap
-    < H , ( fun fc -> v ) [ f ] > -> < H , v [ fc / f ] >
+    ---------------------------------------------------------------- :: Frac_Perm
+    < H , ( fun fc -> v ) [ f ] > -> < H [ fc / f ] , v [ fc / f ] >
 
 
     ---------------------------------------------------------------------------------------------- :: App_Fix
@@ -466,8 +468,8 @@ defns
 
 
     < H , e >  -> < H' , e' >
-    ----------------------------------- :: Context
-    < H , C [ e ] > -> < H , C [ e' ] >
+    ------------------------------------ :: Context
+    < H , C [ e ] > -> < H' , C [ e' ] >
 
 
     < H , e >  -> err
@@ -489,7 +491,6 @@ defns
     < H and { l |-> f , m k1 k2 } , share [f] l > -> < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , ( l , l ) >
 
 
-    f <= 1
     ---------------------------------------------------------------------------------------------------------------------- :: Unshare_Eq
     < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , unshare [f] l l > -> < H and { l |-> f , m k1 k2 } , l >
 
@@ -522,7 +523,6 @@ grammar
     | e <> e'      ::  :: eNeq
     | l <> l'      ::  :: lNeq
     | 0 <= k1 , k2 ::  :: posDim {{ tex [[0]] \leq [[k1]], [[k2]]  }}
-    | f <= 1       ::  :: fracBound {{ tex [[f]] \leq 1  }}
     | H' == H      ::  :: storeEq
     | l fresh      ::  :: freshL {{ tex [[l]] \textrm{ fresh } }}
 

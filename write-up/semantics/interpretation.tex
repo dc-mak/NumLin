@@ -54,7 +54,7 @@ heap-and-value.
     \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{t} \} \\
 \\
 % Using substitution here directly helps avoid routing (fun fc -> v) [f] in C_k[[..]]
-    \V{k}{ \forall fc.\  t } &= \{ (\varsigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\varsigma, v [ fc / f ]) \in \V{k-1}{ t [ fc / f ] } \} \\
+    \V{k}{ \forall fc.\  t } &= \{ (\varsigma, \ottkw{fun}\, fc \rightarrow \, v) \mid \forall f.\ (\varsigma [ fc / f ], v [ fc / f ]) \in \V{k-1}{ t [ fc / f ] } \} \\
 \\
     \V{k}{ t_1 \otimes t_2 } &= \{ (\varsigma_1 \star \varsigma_2, ( v_1, v_2 )) \mid (\varsigma_1, v_1) \in \V{k}{t_1} \wedge (\varsigma_2, v_2) \in \V{k}{t_2} \} \\
 \\

@@ -444,12 +444,12 @@
         \step{}{\pflet{ $f$ be arbitrary; $\theta' \equiv \theta[fc \mapsto f]$.}
             Instantiate induction hypothesis with $k-1, \theta', \delta, \gamma, \sigma$,
             \\ to conclude $(\varsigma, \theta'(\gamma(\delta(e)))) \in \C{k-1}{\theta'(t)}$
-            (for all $f$).}
+            (for all $f$, by \ref{fracPermSub}).}
 
         \step{}{Instantiate \emph{this} with $j$ and $\empH$ to conclude
             $\langle \sigma, \theta' (\gamma(\delta(e))) \rangle$ \\
             either takes $j$ steps to $\ottkw{err}$ or a heap-and-expression
-            $\langle \sigma', e' \rangle$ (for all $f$).}
+            $\langle \sigma', e' \rangle$ (for all $f$, by \ref{fracPermSub}).}
 
         \step{}{\case{$j$ steps to $\ottkw{err}$.}{By
             \textsc{Op\_Context\_Err}, whole expression reduces to
@@ -465,8 +465,9 @@
         % _{k-i} <_ k - j
 
         \step{}{If it is, then $\exists i_e \leq j.\  (\varsigma', e') \in
-            \V{k-1-i_e}{\theta'(t)} \subseteq \V{k-1-j}{\ldots}$ by \ref{valueSub} and
-            \ref{subsetKJ} (for all $f$).}\pflabel{valueAllF}
+            \V{k-1-i_e}{\theta'(t)} \subseteq \V{k-1-j}{\ldots}$ \\
+            by \ref{valueSub} and \ref{subsetKJ} (for all $f$, by
+            \ref{fracPermSub}).}\pflabel{valueAllF}
 
         \step{}{So, \textsc{Op\_Context} runs $i_e$ times, and then we have the
             following.  \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma', \ottkw{fun}

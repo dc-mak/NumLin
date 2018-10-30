@@ -2,7 +2,38 @@
 
 \subsection{Finding Bugs in SymPy's Output}
 
-% Copy from dissertation
+Prior to this project, we had little experience with linear algebra libraries
+or the problem of matrix expression compilation. As such, we based our initial
+\lang\ implementation of a Kalman filter using BLAS and LAPACK, on a popular
+GitHub gist of a Fortran implementation, one that was \emph{automatically
+generated} from SymPy's matrix expression compiler~\cite{rocklin_thesis}.
+
+Once we translated the implementation from Fortran to \lang, we attempted to
+compile it and found that (to our surprise) it did not type-check. This was
+because the original implementation contained incorrect aliasing, unused and
+unnecessary temporaries, and did not adhere to Fortran's read/write permissions
+(with respect to \texttt{intent} annotations \texttt{in}, \texttt{out} and
+\texttt{inout}) all of which were now highlighted by \lang's type system.
+
+The original implementation used 6 temporaries, one of which was immediately
+spotted as never being used due to linearity. It also contained two variables
+which were marked as \texttt{intent(in)} but would have been written over by
+calls to `gemm', spotted by the fractional-capabilities feature. Furthermore,
+it used a matrix \emph{twice} in a call to `symm', once with a read permission
+but once with a \emph{write} permission.  Fortran assumes that any parameter
+being written to is not aliased and so this call was not only incorrect, but
+illegal according to the standard, both aspects of which were captured by
+linearity and fractional-capabilities.
+
+Lastly, it contained another unnecessary temporary, however one that was not
+obvious without linear types. To spot it, we first performed live-range
+splitting (checked by linearity) by hoisting calls to \highl{freeM} and then
+annotated the freed matrices with their dimensions.  After doing so and
+spotting two disjoint live-ranges of the same size, we replaced a call to
+\highl{freeM} followed by allocating call to \highl{copy} with one, in-place
+call to \highl{copyM_to}. We believe the ability to boldly refactor code which
+manages memory is good evidence of the usefulness of linearity as a tool for
+programming.
 
 \subsection{Related Work}
 
@@ -17,5 +48,29 @@ is an ``obvious'' idea, but is surprisingly under-explored.
 \item Bernardy and Sveningsson
 \item L3
 \item Boyland fractional permissions
+\item Disadvantage of graph-based approaches to matrix expression generation
+\item multi-stage: once dimensions known, they are fixed?
 \end{itemize}
 
+\subsection{Simplicity and Further Work}
+
+We are pleasantly surprised at how simple the overall design and implementation
+of \lang\ is, given its expressive power and usability. Indeed, the focus on
+getting a working prototype early on (so that we could test it with real
+BLAS/LAPACK routines as soon as possible) meant that we only added features to
+the type system when it was clear that they were absolutely necessary: these
+features were !-types and value-restriction for the \highl{Many} constructor.
+Although we considered parametric polymorphism, size-types and tracking pointer
+identities at the type-level\cite{morrisett} (all of which would certainly be
+useful and are potential avenues for further work) it turns out these features
+are not necessary.
+
+We believe we have stumbled across a particularly nice problem-solution fit:
+the idea of linear types for linear algebra -- one that used to just be
+commonly believed folklore -- actually has some merit and is worth exploring.
+We also think that this concept (and the general design of its implementation)
+need not be limited to linear algebra: we could conceivably `backport' this
+idea to other contexts that need linearity (concurrency, single-use
+continuations, zero-copy buffer, streaming I/O) or combine it with dependent
+types to achieve even more expressive power to split up a single block of
+memory into multiple regions in an arbitrary manner\cite{space_monads}.

@@ -2,9 +2,8 @@
 % LLNCS macro package for Springer Computer Science proceedings;
 % Version 2.20 of 2017/10/04
 %
-\documentclass[runningheads]{llncs}
+\documentclass[runningheads,dvipsnames,usenames]{llncs}
 %
-\usepackage{graphicx}
 % Used for displaying a sample figure. If possible, figure files should
 % be included in EPS format.
 %
@@ -50,8 +49,23 @@
 \newcommand{\alsocell}[3][c]{%
   \begin{tabular}[#1]{@{}#2@{}}#3\end{tabular}}
 
+% Ott Rules
+\usepackage{supertabular}%
+\usepackage{geometry}%
+\usepackage{ifthen}%
+\usepackage{alltt}%hack%
+\geometry{a4paper,dvips,twoside,left=22.5mm,right=22.5mm,top=20mm,bottom=30mm}%
+
+\input{../semantics/semantics_def}%
+\usepackage{ottlayout}%
+\renewcommand{\ottpremise}[1]{\premiseSTY{#1}}%
+\renewcommand{\ottusedrule}[1]{\usedruleSTY{#1}}%
+\renewcommand{\ottdrule}[4][]{\druleSTY[#1]{#2}{#3}{#4}}%
+\renewenvironment{ottdefnblock}[3][]{\defnblockSTY[#1]{#2}{#3}}{\enddefnblockSTY}%
+
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
 \usepackage{lscape}
-\RequirePackage[dvipsnames]{xcolor}
 \usepackage{pgfplots}
 
 \begin{document}

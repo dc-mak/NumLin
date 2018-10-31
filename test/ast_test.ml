@@ -57,9 +57,10 @@ let pretty msg x =
   Stdio.printf !"%s:\t%{sexp: Ast.lin}\t%s\n" msg x Ast.(string_of_pp pp_lin x)
 ;;
 
-let both lin ~var ~replace = 
-  pretty "Normal" @@ Ast.substitute_in lin ~var ~replace;
-  pretty "Unify" @@ Ast.substitute_unify lin ~var ~replace;
+let both lin ~var ~replace =
+  let sub = Either.First (var, replace) in
+  pretty "Normal" @@ Ast.substitute_in lin sub;
+  pretty "Unify" @@ Ast.substitute_unify lin sub;
 ;;
 
 let%expect_test "substitute_{in,unify}" =
@@ -136,7 +137,7 @@ let%expect_test "substitute_{in,unify}" =
 
 (* same_lin *)
 let pretty =
-  Stdio.printf !"%{sexp: (Ast.var * Ast.fc) list Or_error.t}"
+  Stdio.printf !"%{sexp: (Ast.var * Ast.fc, Ast.var * Ast.lin) Either.t list Or_error.t}"
 ;;
 
 let%expect_test "same_lin" =
@@ -245,7 +246,7 @@ let%expect_test "same_lin" =
   same_lin [] (Arr (U one)) (Arr (S Z))
   |> pretty;
   [%expect {|
-    (Ok ((one (S Z)))) |}]
+    (Ok ((First (one (S Z))))) |}]
 ;;
 
 let%expect_test "same_lin" =
@@ -272,5 +273,5 @@ let%expect_test "same_lin" =
     (Pair (All (one, Arr (U two)), Unit))
   |> pretty;
   [%expect {|
-        (Ok ((two (S (U one))))) |}]
+        (Ok ((First (two (S (U one)))))) |}]
 ;;

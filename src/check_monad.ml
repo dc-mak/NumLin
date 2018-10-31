@@ -153,7 +153,7 @@ let same_lin (WFL expected) (WFL actual) =
 ;;
 
 let apply subs (WFL lin) =
-  WFL (List.fold subs ~init:lin ~f:(fun lin (var, fc) -> Ast.substitute_unify lin ~var ~replace:fc))
+  WFL (List.fold subs ~init:lin ~f:Ast.substitute_unify)
 ;;
 
 let with_var var wf_lin result =
@@ -315,7 +315,7 @@ let wf_lin ~fmt ~arg ~loc:pos lt =
   let open Let_syntax in
   let open Ast in
   let rec wf bindings = function
-    | Unit | Int | Bool | Elt as e ->
+    | Unit | Int | Bool | Elt | Unk _ as e ->
       return e
 
     | Arr fc ->
@@ -363,8 +363,8 @@ let if_wf fc ~then_ ~else_ =
     else_ fc
 ;;
 
-let wf_substitute_in (WFL lin) (WFV var) (WFC fc) =
-  WFL (Ast.substitute_in lin ~var ~replace:fc)
+let wf_substitute_fc (WFL lin) (WFV var) (WFC fc) =
+  WFL (Ast.substitute_in lin (Either.First (var, fc)))
 ;;
 
 let split_wf_Pair wfl ~if_pair ~not_pair =

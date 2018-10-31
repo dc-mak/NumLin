@@ -48,9 +48,9 @@ let string_of_fc fc =
   String.concat ~sep:" " @@ count [] fc
 ;;
 
-let rec occurs_unify var = function
+let rec occurs_fc var = function
   | Z -> false
-  | S fc -> occurs_unify var fc
+  | S fc -> occurs_fc var fc
   | V _ -> false
   | U var' -> String.(var = var')
 ;;
@@ -80,7 +80,7 @@ let rec same_fc equiv fc1 fc2 =
 
   | S _ as fc, U var
   | U var, (S _ as fc) ->
-    if occurs_unify var fc then
+    if occurs_fc var fc then
       Result.failf "Occurs check failed: ?%s found in %a.\n" var (Fn.const string_of_fc) fc
     else
       return [(var, fc)]
@@ -116,6 +116,7 @@ type lin =
   | Bool
   | Int
   | Elt
+  | Unk of var
   | Arr of fc
   | Mat of fc
   | Pair of lin * lin
@@ -141,9 +142,12 @@ let pp_lin ppf =
     | Elt ->
       fprintf ppf "float"
 
+    | Unk var ->
+      fprintf ppf "%s" var
+
     | Bang lin ->
       let l, r = match lin with
-        | Unit | Bool | Int | Elt | Bang _ -> "", ""
+        | Unit | Bool | Int | Elt | Unk _ | Bang _ -> "", ""
         | Pair _ | Arr _ | Mat _ | Fun _ | All _ -> "( ", " )" in
       fprintf ppf "!%s%a%s" l pp_lin lin r
 
@@ -155,22 +159,22 @@ let pp_lin ppf =
 
     | Pair (fst, snd) ->
       let fl, fr = match fst with
-        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Mat _ -> "", ""
+        | Unit | Bool | Int | Elt | Unk _ | Bang _ | Arr _ | Mat _ -> "", ""
         | Pair _ | Fun _ | All _ -> "( ", " )"
       and sl, sr = match snd with
-        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Mat _ -> "", ""
+        | Unit | Bool | Int | Elt | Unk _ | Bang _ | Arr _ | Mat _ -> "", ""
         | Pair _ | Fun _ | All _ -> "( ", " )" in
       fprintf ppf "@[%s%a%s@ @[* %s%a%s@]@]" fl pp_lin fst fr sl pp_lin snd sr
 
     | Fun (arg, (Fun _ as res)) ->
       let al, ar = match arg with
-        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Mat _ | Pair _-> "",""
+        | Unit | Bool | Int | Elt | Unk _ | Bang _ | Arr _ | Mat _ | Pair _-> "",""
         | Fun _ | All _ -> "( ", " )" in
       fprintf ppf "@[%s%a%s --o@ %a@]" al pp_lin arg ar pp_lin res
 
     | Fun (arg, res) ->
       let al, ar = match arg with
-        | Unit | Bool | Int | Elt | Bang _ | Arr _ | Mat _ | Pair _-> "",""
+        | Unit | Bool | Int | Elt | Unk _ | Bang _ | Arr _ | Mat _ | Pair _-> "",""
         | Fun _ | All _ -> "( ", " )" in
       fprintf ppf "%s%a%s@ --o@ %a" al pp_lin arg ar pp_lin res
 
@@ -183,37 +187,70 @@ let pp_lin ppf =
   fprintf ppf "@[%a@]@?" pp_lin
 ;;
 
-let rec substitute_in lin ~unify ~var ~replace =
+let rec substitute_fc lin ~unify ~var ~replace =
   let rec loop = function
     | Z -> Z
     | S fc -> S (loop fc)
     | U var' | V var' as fc -> if var = var' then replace else fc in
   match lin with
-  | Unit | Bool | Int | Elt as lin -> lin
+  | Unit | Bool | Int | Elt | Unk _ as lin -> lin
   | Arr fc -> Arr (loop fc)
   | Mat fc -> Mat (loop fc)
 
   | Pair (fst, snd) ->
-    Pair (substitute_in fst ~unify ~var ~replace,
-          substitute_in snd ~unify ~var ~replace)
+    Pair (substitute_fc fst ~unify ~var ~replace,
+          substitute_fc snd ~unify ~var ~replace)
 
   | Bang lin ->
-    Bang (substitute_in lin ~unify ~var ~replace)
+    Bang (substitute_fc lin ~unify ~var ~replace)
 
   | Fun (arg, res) ->
-    Fun (substitute_in arg ~unify ~var ~replace,
-         substitute_in res ~unify ~var ~replace)
+    Fun (substitute_fc arg ~unify ~var ~replace,
+         substitute_fc res ~unify ~var ~replace)
 
   | All (var', rest) as lin ->
-    if not unify && var = var' then lin else All (var', substitute_in rest ~unify ~var ~replace)
+    if not unify && var = var' then
+      lin
+    else
+      All (var', substitute_fc rest ~unify ~var ~replace)
 ;;
 
-let substitute_unify lin ~var ~replace =
-  substitute_in lin ~unify:true ~var ~replace
+let rec substitute_lin lin ~var ~replace =
+  match lin with
+  | Unk var' as lin ->
+    if var = var' then replace else lin
+
+  | Unit | Bool | Int | Elt | Arr _ | Mat _ as lin -> lin
+
+  | Pair (fst, snd) ->
+    Pair (substitute_lin fst ~var ~replace,
+          substitute_lin snd ~var ~replace)
+
+  | Bang lin ->
+    Bang (substitute_lin lin ~var ~replace)
+
+  | All (var', lin) ->
+    All (var', substitute_lin lin ~var ~replace)
+
+  | Fun (arg, res) ->
+    Fun (substitute_lin arg ~var ~replace,
+         substitute_lin res ~var ~replace)
 ;;
 
-let substitute_in lin ~var ~replace =
-  substitute_in lin ~unify:false ~var ~replace
+
+let substitute_in lin ~unify = function
+  | Either.First (var, replace) ->
+    substitute_fc lin ~unify ~var ~replace
+  | Either.Second (var, replace) ->
+    substitute_lin lin ~var ~replace
+;;
+
+let substitute_unify lin =
+  substitute_in lin ~unify:true
+;;
+
+let substitute_in lin =
+  substitute_in lin ~unify:false
 ;;
 
 (* Alpha-equivalence sucks *)
@@ -243,11 +280,29 @@ let add (x,y) equiv =
     if phys_equal msg msg' then equiv else raise exn
 ;;
 
+let rec occurs_lin var = function
+  | Unk var' -> var = var'
+
+  | Unit | Bool | Int | Elt | Arr _ | Mat _ -> false
+
+  | Pair (fst, snd) ->
+    occurs_lin var fst ||  occurs_lin var snd
+
+  | Bang lin ->
+    occurs_lin var lin
+
+  | All (_, lin) ->
+    occurs_lin var lin
+
+  | Fun (arg, res) ->
+    occurs_lin var arg || occurs_lin var res
+;;
+
 (* Same lin UP TO alpha-equivalence *)
 let rec same_lin equiv lin1 lin2 =
   let open Result.Let_syntax in
   let apply subs lin =
-    List.fold subs ~init:lin ~f:(fun lin (var, fc) -> substitute_unify lin ~var ~replace:fc) in
+    List.fold subs ~init:lin ~f:(substitute_unify) in
   let to_string = string_of_pp pp_lin in
 
   match lin1, lin2 with
@@ -262,7 +317,8 @@ let rec same_lin equiv lin1 lin2 =
 
   | Arr fc1, Arr fc2
   | Mat fc1, Mat fc2 ->
-    same_fc equiv fc1 fc2
+    Result.map ~f:(List.map ~f:(fun x -> Either.First x))
+    @@ same_fc equiv fc1 fc2
 
   | Pair (fst1, snd1) , Pair(fst2,snd2) ->
     let%bind subs1 = same_lin equiv fst1 fst2 in
@@ -277,6 +333,14 @@ let rec same_lin equiv lin1 lin2 =
   | All (var1,lin1), All (var2,lin2) ->
     same_lin (add (var1, var2) equiv) lin1 lin2
 
+  | Unk var, lin
+  | lin, Unk var ->
+    if occurs_lin var lin then
+      Result.failf "Occurs check failed: ?%s found in %a.\n"
+        var (Fn.const @@ string_of_pp pp_lin) lin
+    else
+      return [Either.Second (var, lin)]
+
   | _, _ ->
     let pp () x =
       to_string x
@@ -287,7 +351,7 @@ let rec same_lin equiv lin1 lin2 =
       pp lin1 pp lin2
 ;;
 
-let same_lin equiv x y : (var * fc) list Or_error.t =
+let same_lin equiv x y : ((var * fc), (var * lin)) Either.t list Or_error.t =
   Result.map_error
     (same_lin equiv x y)
     ~f:(fun err ->

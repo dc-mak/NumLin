@@ -18,6 +18,7 @@ type lin =
   | Bool
   | Int
   | Elt
+  | Unk of var
   | Arr of fc
   | Mat of fc
   | Pair of lin * lin
@@ -26,11 +27,12 @@ type lin =
   | All of var * lin
 [@@deriving sexp_of]
 val pp_lin : Caml.Format.formatter -> lin -> unit
-val substitute_in : lin -> var:var -> replace:fc -> lin
-val substitute_unify : lin -> var:var -> replace:fc -> lin
+val substitute_in : lin -> (var * fc, var * lin) Base.Either.t -> lin
+val substitute_unify : lin -> (var * fc, var * lin) Base.Either.t -> lin
 (** [same_lin] [ (x,x) | x is a free-variable] t1 t2 determines whether two
     types are the same up to alpha-equivalence. *)
-val same_lin : (var * var) list -> lin -> lin -> (var * fc) list Base.Or_error.t
+val same_lin : (var * var) list -> lin -> lin ->
+  (var * fc, var * lin) Base.Either.t list Base.Or_error.t
 
 (** Arithmetic expressions *)
 type arith = Add | Sub | Mul | Div | Eq | Lt

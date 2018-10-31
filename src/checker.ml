@@ -143,7 +143,7 @@ let rec check =
       ~if_all:
         (fun var lin ->
            if_wf fc
-             ~then_:(fun fc -> return @@ wf_substitute_in lin var fc)
+             ~then_:(fun fc -> return @@ wf_substitute_fc lin var fc)
              ~else_:(fun fc -> failf !"Spc: %{sexp:fc} not found in environment.\
                                        \n%{string_of_loc}\n" fc loc))
       ~not_all:

@@ -49,11 +49,21 @@ benchmarking program and test-suite use code written in \lang.
 
 Desugaring is conventional, outlined in Figure~\ref{fig:lang_desugar}.  Matrix
 expression are translated into BLAS/ LAPACK calls via purely syntactic
-pattern-matching, outlined in Figure~\ref{fig:lang_matexp}. Type checking is
-mostly standard for a linearly typed language, with the exception of fractional
-permission inference.  Because all functions must have their argument types
-explicitly annotated, inferring the correct fraction at a call-site is simply a
-matter of unification.
+pattern-matching, outlined in Figure~\ref{fig:lang_matexp}.
+
+\subsubsection{Type checking} is mostly standard for a linearly typed language,
+with the exception of fractional permission inference. Because all functions
+must have their argument types explicitly annotated, inferring the correct
+fraction at a call-site is simply a matter of unification.
+
+There are a few differences between the type system as presented in
+\ref{subsec:semantics} and how we implemented it: the environment
+\emph{changes} as a result of type checking an expression (the standard
+transformation to avoid a non-deterministic split of the environment for
+checking pairs); variables are \emph{marked as used} rather than removed for
+better error messages; variables are \emph{tagged} as linear or intuitionistic
+in \emph{one} environment as opposed to being stored in \emph{two} separate
+ones (this allows scoping/variable look-up to be handled uniformly).
 
 \textsc{What more can/should we say here?}
 

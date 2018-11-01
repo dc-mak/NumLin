@@ -21,7 +21,7 @@ type not_used
 [@@deriving sexp_of]
 
 (** A type is either used, not used, or intuitionistic. *)
-type tagged = private Not_used of not_used | Used of Ast.loc | Intuition of wf_lin
+type tagged = private Not_used of not_used | Used of Ast.loc * wf_lin | Intuition of wf_lin
 [@@deriving sexp_of]
 
 (** Type checker state *)
@@ -70,8 +70,10 @@ val lookup : Ast.var -> tagged option t
 val use_var : Ast.loc -> not_used -> wf_lin t
 val same_lin : wf_lin -> wf_lin ->
   (string * Ast.fc, string * Ast.lin) Base.Either.t list Base.Or_error.t t
-val apply : (string * Ast.fc, string * Ast.lin) Base.Either.t list -> wf_lin -> wf_lin
+val apply : (string * Ast.fc, string * Ast.lin) Base.Either.t list -> wf_lin -> wf_lin t
+val return_lin : Ast.var -> wf_lin -> 'a t -> ('a * wf_lin) t
 val with_lin : Ast.var -> wf_lin -> 'a t -> 'a t
+val return_int : Ast.var -> wf_lin -> 'a t -> ('a * wf_lin) t
 val with_int : Ast.var -> wf_lin -> 'a t -> 'a t
 val with_fc : Ast.var -> 'a t -> 'a t
 val run : wf_lin t -> counter:int -> Ast.lin Base.Or_error.t

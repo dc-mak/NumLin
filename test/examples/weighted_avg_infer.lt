@@ -1,3 +1,4 @@
+(* This one too for type inference *)
 let rec simp_oned_conv
         (!i : !int) (!n : !int) (!x0 : !elt)
         (write : z arr) ('x) (weights : 'x arr)

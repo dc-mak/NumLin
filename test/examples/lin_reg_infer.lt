@@ -1,0 +1,10 @@
+let !lin_reg (x)
+             (y) =
+  let (x, (!_n, !m)) = sizeM _ x in
+  let xy <- new (m, 1) [| x^T * y |] in
+  let x_T_x <- new (m, m) [| x^T * x |] in
+  let (to_del, answer) = posv x_T_x xy in
+  let () = freeM to_del in
+  ((x, y), answer) in
+lin_reg
+;;

@@ -33,6 +33,7 @@ type lin =
   | Bool
   | Int
   | Elt
+  | Unk of var
   | Arr of fc
   | Mat of fc
   | Pair of lin * lin
@@ -40,19 +41,6 @@ type lin =
   | Fun of lin * lin
   | All of var * lin
 [@@deriving sexp_of]
-;;
-
-let rec ds_lin : lin -> Ast.lin = function
-  | Unit -> Unit
-  | Bool -> Bool
-  | Int -> Int
-  | Elt -> Elt
-  | Arr fc -> Arr (ds_fc fc)
-  | Mat fc -> Mat (ds_fc fc)
-  | Pair (a, b) -> Pair (ds_lin a, ds_lin b)
-  | Bang lin -> Bang (ds_lin lin)
-  | Fun (func, arg) -> Fun (ds_lin func, ds_lin arg)
-  | All (var, lin) -> All (var, ds_lin lin)
 ;;
 
 type prim =
@@ -199,8 +187,26 @@ let fresh name =
   Printf.sprintf "__%s%d" name (inc())
 ;;
 
-let unify_var () =
-  fresh "unify"
+let lin_var () =
+  fresh "lin"
+;;
+
+let rec ds_lin : lin -> Ast.lin = function
+  | Unit -> Unit
+  | Bool -> Bool
+  | Int -> Int
+  | Elt -> Elt
+  | Unk _ -> Unk (lin_var())
+  | Arr fc -> Arr (ds_fc fc)
+  | Mat fc -> Mat (ds_fc fc)
+  | Pair (a, b) -> Pair (ds_lin a, ds_lin b)
+  | Bang lin -> Bang (ds_lin lin)
+  | Fun (func, arg) -> Fun (ds_lin func, ds_lin arg)
+  | All (var, lin) -> All (var, ds_lin lin)
+;;
+
+let fc_var () =
+  fresh "fc"
 ;;
 
 let rec ds_pat pat (body : Ast.exp) : loc * Ast.var * Ast.exp =
@@ -283,7 +289,7 @@ let rec ds_exp : exp -> Ast.exp = function
 
     List.fold (arg :: args) ~init:(ds_exp func)
       ~f:(fun acc -> function
-        | Underscore loc -> Spc(loc, acc, U (unify_var()))
+        | Underscore loc -> Spc(loc, acc, U (fc_var()))
         | Fc (loc, fc) -> Spc (loc, acc, ds_fc fc)
         | Exp exp-> let exp = ds_exp exp in App (Ast.loc exp, acc, exp))
 
@@ -304,7 +310,7 @@ let rec ds_exp : exp -> Ast.exp = function
     let one get : Ast.exp =
       let fst = ds_exp fst in
       App (Ast.loc fst, App (loc, Spc (loc,
-        Prim (prim_loc, get), U (unify_var ())), Var (loc, var)), fst) in
+        Prim (prim_loc, get), U (fc_var ())), Var (loc, var)), fst) in
 
     begin match snd with
     | None -> one Get
@@ -537,14 +543,14 @@ let rec ds_exp : exp -> Ast.exp = function
     | ArrIndex _ -> assert false
 
     | Copy_mat (reb_loc, rebound) ->
-      let unify = unify_var () in
+      let unify = fc_var () in
       Pair_E (new_loc, rebound, new_var,
               App (reb_loc, Spc (reb_loc, Prim (prim_loc, Copy_mat), U unify),
                    Var (reb_loc, rebound)),
               ds_exp body)
 
     | Copy_mat_to (reb_loc, rebound) ->
-      let unify = unify_var () in
+      let unify = fc_var () in
       Pair_E (new_loc, rebound, new_var,
               App (new_loc, App(reb_loc, Spc (reb_loc, Prim (prim_loc, Copy_mat_to), U unify),
                     Var (reb_loc, rebound)), Var (new_loc, new_var)),

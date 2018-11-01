@@ -91,7 +91,7 @@ let rec check =
       ~arg:prim
       ~loc
 
-  | Unit_I _ -> return @@ (* wf_Bang ?? *) wf_Unit
+  | Unit_I _ -> return @@ wf_Unit
   | True _ -> return @@ wf_Bang wf_Bool
   | False _ -> return @@ wf_Bang wf_Bool
   | Var (loc, var) ->
@@ -102,7 +102,7 @@ let rec check =
       return lin
     | Some (Intuition lin) ->
       return lin
-    | Some (Used used) ->
+    | Some (Used (used, _)) ->
       failf !"Variable %s (first used %{Ast.line_col}) used again.\n%{string_of_loc}\n" var used loc
     | None ->
       failf !"Unbound variable %s (not found in enviornment)\n%{string_of_loc}\n" var loc
@@ -127,11 +127,11 @@ let rec check =
     split_wf_Fun (wf_lin ~fmt ~arg ~loc arg)
       ~if_fun:
         (fun tx res ->
-           let%bind actual =
-             in_empty (check body |> with_lin x tx |> with_int f (wf_Fun tx res)) in
+           let%bind (actual, fun_t) =
+             in_empty (check body |> with_lin x tx |> return_int f (wf_Fun tx res)) in
            match%bind same_lin res actual with
            | Ok subs ->
-             return @@ apply subs @@ wf_Fun tx res
+             apply subs fun_t
            | Error err ->
              failf !"%{Error.to_string_hum}%{string_of_loc}\n" err loc)
 
@@ -156,7 +156,7 @@ let rec check =
            let%bind actual = check arg in
            match%bind same_lin expected actual with
            | Ok subs ->
-             return @@ apply subs body_t
+             apply subs body_t
            | Error err ->
              failf !"%{Error.to_string_hum}%{string_of_loc}\n" err loc)
       ~not_fun:
@@ -165,6 +165,8 @@ let rec check =
   | Unit_E (loc, exp, body) ->
     begin match%bind check exp with
     | WFL Unit -> check body
+    | WFL (Unk var) ->
+      apply [Either.Second (var, Ast.Unit)] wf_Unit
     | WFL inferred -> error loc ~expected:"Unit_E: expect Unit" inferred
     end
 
@@ -193,7 +195,7 @@ let rec check =
           (check false_, Ast.loc false_) in
       begin match%bind same_lin t f with
       | Ok subs ->
-        return @@ apply subs t
+        apply subs t
       | Error err ->
         failf !"%{Error.to_string_hum}%{string_of_loc}\n" err loc
       end
@@ -209,7 +211,7 @@ let rec check =
   | Lambda (loc, var, t, body) ->
     let fmt, arg = !"Type is not well-formed:\n%{sexp:lin}\n%{string_of_loc}\n", t in
     let%bind t = wf_lin ~fmt ~arg ~loc t in
-    let%bind body_t = check body |> with_lin var t in
+    let%bind (body_t, t) = check body |> return_lin var t in
     return @@ wf_Fun t body_t
 
   | Let (_, var, exp, body) ->
@@ -218,8 +220,147 @@ let rec check =
 
 ;;
 
-let check_expr expr =
-  Check_monad.run (check expr)
+let rec free_vars : Ast.lin -> _ =
+
+  let rec free_fc : Ast.fc -> _ = function
+    | Z -> []
+    | U var
+    | V var -> [var]
+    | S fc -> free_fc fc in
+
+  function
+  | Arr fc | Mat fc ->
+    free_fc fc
+
+  | Unit | Bool | Int | Elt | Unk _ -> []
+
+  | Pair (fst, snd) ->
+    List.fold_right ~init:(free_vars snd) ~f:(fun x rest ->
+      if List.mem rest ~equal:[%compare.equal: Ast.var] x then rest else x :: rest) (free_vars fst)
+
+  | Bang lin ->
+    free_vars lin
+
+  | All (var', lin) ->
+    List.filter ~f:(fun var -> not ([%compare.equal: Ast.var] var var')) @@ free_vars lin
+
+  | Fun (arg, res) ->
+    List.fold_right ~init:(free_vars res) ~f:(fun x rest ->
+      if List.mem rest ~equal:[%compare.equal: Ast.var] x then rest else x :: rest) (free_vars arg)
+;;
+
+let rec inside_fc free_var : Ast.fc -> _ = function
+  | Z -> false
+  | U var
+  | V var -> [%compare.equal: Ast.var] free_var var
+  | S fc -> inside_fc free_var fc
+;;
+
+let rec inside free_var : Ast.lin -> _ =
+
+  function
+  | Arr fc | Mat fc ->
+    inside_fc free_var fc
+
+  | Unit | Bool | Int | Elt | Unk _ -> false
+
+  | Pair (fst, snd) ->
+    inside free_var fst || inside free_var snd
+
+  | Bang lin ->
+    inside free_var lin
+
+  | All (var', lin) ->
+    not ([%compare.equal: Ast.var] free_var var') && inside free_var lin
+
+  | Fun (arg, res) ->
+    inside free_var arg || inside free_var res
+;;
+
+let rec push free_var : Ast.lin -> Ast.lin = function
+
+  | Arr fc | Mat fc as lin ->
+    if inside_fc free_var fc then
+      All (free_var, lin)
+    else
+      lin
+
+  | Unit | Bool | Int | Elt | Unk _ as lin ->
+    lin
+
+  | Pair (fst, snd) as lin ->
+    begin match inside free_var fst, inside free_var snd with
+    | true, true ->
+      All (free_var, lin)
+    | true, false ->
+      Pair (push free_var fst, snd)
+    | false, true ->
+      Pair (fst, push free_var snd)
+    | false, false ->
+      lin
+    end
+
+  | Bang lin ->
+    if inside free_var lin then
+      Bang (push free_var lin)
+    else
+      Bang lin
+
+  | All (var', lin) ->
+    (* variable is guaranteed to be free *)
+    All (var', push free_var lin)
+
+  | Fun (arg, res) as lin ->
+    begin match inside free_var arg, inside free_var res with
+    | true, true ->
+      All (free_var, lin)
+    | true, false ->
+      Fun (push free_var arg, res)
+    | false, true ->
+      Fun (arg, push free_var res)
+    | false, false ->
+      lin
+    end
+;;
+
+let rec substitute_fc (var, replace) (lin : Ast.lin) =
+  let rec loop : Ast.fc -> Ast.fc = function
+    | Z -> Z
+    | S fc -> S (loop fc)
+    | U var' | V var' as fc -> if [%compare.equal: Ast.var] var var' then V replace else fc in
+
+  match lin  with
+  | Unit | Bool | Int | Elt | Unk _ as lin -> lin
+  | Arr fc -> Arr (loop fc)
+  | Mat fc -> Mat (loop fc)
+
+  | Pair (fst, snd) ->
+    Pair (substitute_fc (var, replace) fst,
+          substitute_fc (var, replace) snd)
+
+  | Bang lin ->
+    Bang (substitute_fc (var, replace) lin)
+
+  | Fun (arg, res) ->
+    Fun (substitute_fc (var, replace) arg,
+         substitute_fc (var, replace) res)
+
+  | All (var', rest) ->
+    All ((if [%compare.equal: Ast.var] var var' then replace else var'),
+         substitute_fc (var, replace) rest)
+;;
+
+let fixup t =
+  let fv = free_vars t in
+  let t = List.fold_right ~init:t ~f:push fv in
+  let start = Char.to_int 'a' in
+  (* Assuming fewer than 26 free vars *)
+  let fv = List.mapi ~f:(fun i x -> (x, String.of_char @@ Char.of_int_exn (i + start))) fv in
+  List.fold_right ~init:t ~f:substitute_fc fv
+;;
+
+let check_expr expr ~counter =
+  Result.map (Check_monad.run (check expr) ~counter) ~f:fixup
 ;;
 
 let%test_module "Test" =

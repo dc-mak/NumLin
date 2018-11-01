@@ -10,6 +10,7 @@ type lin =
   | Bool
   | Int
   | Elt
+  | Unk of var
   | Arr of fc
   | Mat of fc
   | Pair of lin * lin

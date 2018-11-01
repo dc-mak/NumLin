@@ -65,7 +65,7 @@ type not_used =
 
 type tagged =
   | Not_used of not_used
-  | Used of Ast.loc
+  | Used of Ast.loc * wf_lin
   | Intuition of wf_lin
 [@@deriving sexp_of]
 ;;
@@ -93,8 +93,8 @@ include State_or_error.Make (struct type t = state end)
 let create_fresh ?(name="gen") () =
   let open Let_syntax in
   let%bind {counter=id;_} as state = get in
-  let%bind () =  put {state with counter=id+1} in
-  return @@ name ^ "_" ^ Int.to_string id
+  let%bind () = put {state with counter=id+1} in
+  return @@ "__" ^ name ^ Int.to_string id
 ;;
 
 (* Environment manipulation. Invariants:                   *)
@@ -129,7 +129,7 @@ let mark_used loc var env used_vars =
     let rec loop rest = function
       | [] -> rest
       | x :: xs -> loop (x :: rest) xs in
-    let env = loop ((var, Used loc) :: rest) rev_front in
+    let env = loop ((var, Used (loc, t)) :: rest) rev_front in
     let used_vars = Map.set used_vars ~key:var ~data:loc in
     Result.return (t, env, used_vars)
 ;;
@@ -152,8 +152,24 @@ let same_lin (WFL expected) (WFL actual) =
   return @@ Ast.same_lin fc_vars expected actual
 ;;
 
-let apply subs (WFL lin) =
-  WFL (List.fold subs ~init:lin ~f:Ast.substitute_unify)
+let apply_env subs =
+  let open Let_syntax in
+  let sub_into init = List.fold subs ~init ~f:Ast.substitute_unify in
+  let%bind {env; _} as state = get in
+  put { state with env = List.map env ~f:(function
+    | (var, Not_used ({t=WFL lin; _} as not_used)) ->
+      (var, Not_used {not_used with t = WFL (sub_into lin)})
+    | (var, Used (loc, WFL lin)) ->
+      (var, Used (loc, WFL (sub_into lin)))
+    | (var, Intuition (WFL lin)) ->
+      (var, Intuition (WFL (sub_into lin)))
+  ) }
+;;
+
+let apply subs (WFL init) =
+  let open Let_syntax in
+  let%bind () = apply_env subs in
+  return @@ WFL (List.fold subs ~init ~f:Ast.substitute_unify)
 ;;
 
 let with_var var wf_lin result =
@@ -171,27 +187,37 @@ let with_var var wf_lin result =
   let%bind result = result in
 
   (* THEN pop the variable off *)
-  let%bind () =
+  let%bind lin =
     let%bind {env; used_vars; _} as state = get in
     match env with
-    | (_, Intuition _) :: env ->
-      put { state with env }
-    | (_, Used _) :: env ->
+    | (_, Intuition lin) :: env ->
+      let%bind () = put { state with env } in
+      return lin
+    | (_, Used (_, lin)) :: env ->
       (* Variable names are not unique *)
       let used_vars = if not @@ Map.mem prev var then Map.remove used_vars var else used_vars in
-      put { state with env; used_vars }
+      let%bind () = put { state with env; used_vars } in
+      return lin
     | (_, Not_used _) :: _ -> failf !"Variable %s not used.\n" var
     | [] -> failf !"INTERNAL ERROR: %{sexp:Ast.var} NOT FOUND IN vars\n" var in
 
-  return result
+  return (result, lin)
 ;;
 
-let with_lin var wf_lin result =
+let return_lin var wf_lin result =
   with_var var (Either.First wf_lin) result
 ;;
 
-let with_int var wf_lin result =
+let with_lin var wf_lin result =
+  map ~f:fst @@ return_lin var wf_lin result
+;;
+
+let return_int var wf_lin result =
   with_var var (Either.Second wf_lin) result
+;;
+
+let with_int var wf_lin result =
+  map ~f:fst @@ return_int var wf_lin result
 ;;
 
 let with_fc var lin =
@@ -368,27 +394,63 @@ let wf_substitute_fc (WFL lin) (WFV var) (WFC fc) =
 ;;
 
 let split_wf_Pair wfl ~if_pair ~not_pair =
+
   let open Let_syntax in
   match%bind wfl with
-  | WFL (Pair (t1, t2)) -> if_pair (WFL t1) (WFL t2)
+  | WFL (Pair (t1, t2)) ->
+    if_pair (WFL t1) (WFL t2)
+
+  | WFL (Unk lin) ->
+    let%bind t1 = map ~f:(fun x -> Ast.Unk x) @@ create_fresh () in
+    let%bind t2 = map ~f:(fun x -> Ast.Unk x) @@ create_fresh () in
+    let%bind () = apply_env [Either.Second (lin, Ast.Pair (t1, t2))] in
+    if_pair (WFL t1) (WFL t2)
+
   | WFL inferred -> not_pair inferred
 
-let split_wf_Bang wfl ~if_bang ~not_bang =
+and split_wf_Bang wfl ~if_bang ~not_bang =
+
   let open Let_syntax in
   match%bind wfl with
-  | WFL (Bang t) -> if_bang @@ WFL t
+  | WFL (Bang t) ->
+    if_bang @@ WFL t
+
+  | WFL (Unk lin) ->
+    let%bind t = map ~f:(fun x -> Ast.Unk x) @@ create_fresh () in
+    let%bind () = apply_env [Either.Second (lin, Ast.Bang t)] in
+    if_bang @@ WFL t
+
   | WFL inferred -> not_bang inferred
 
 and split_wf_All wfl ~if_all ~not_all =
+
   let open Let_syntax in
   match%bind wfl with
-  | WFL (All (var, t2)) -> if_all (WFV var) (WFL t2)
+  | WFL (All (var, t2)) ->
+    if_all (WFV var) (WFL t2)
+
+  (* Not sure about this *)
+  | WFL (Unk lin) ->
+    let%bind v = create_fresh () in
+    let%bind t = map ~f:(fun x -> Ast.Unk x) @@ create_fresh () in
+    let%bind () = apply_env [Either.Second (lin, Ast.All (v, t))] in
+    if_all (WFV v) (WFL t)
+
   | WFL inferred -> not_all inferred
 
 and split_wf_Fun wfl ~if_fun ~not_fun =
+
   let open Let_syntax in
   match%bind wfl with
-  | WFL (Fun (t1, t2)) -> if_fun (WFL t1) (WFL t2)
+  | WFL (Fun (t1, t2)) ->
+    if_fun (WFL t1) (WFL t2)
+
+  | WFL (Unk lin) ->
+    let%bind t1 = map ~f:(fun x -> Ast.Unk x) @@ create_fresh () in
+    let%bind t2 = map ~f:(fun x -> Ast.Unk x) @@ create_fresh () in
+    let%bind () = apply_env [Either.Second (lin, Ast.Fun (t1, t2))] in
+    if_fun (WFL t1) (WFL t2)
+
   | WFL inferred -> not_fun inferred
 ;;
 
@@ -404,7 +466,7 @@ let%test_module "Test" =
     ;;
 
     let env =
-      [ (six, Used Ast.dummy)
+      [ (six, Used (Ast.dummy, WFL Unit))
       ; (two, Not_used {var=two;t=WFL(Fun (Unit, Unit))})
       ; (six, Not_used {var=six;t=WFL(Bang(Unit))})
       ; (three, Intuition (WFL (Bang Int)))
@@ -414,7 +476,7 @@ let%test_module "Test" =
     (* ignore irrelevant location information for these tests *)
     type nonrec tagged = tagged =
       | Not_used of not_used
-      | Used of Ast.loc sexp_opaque
+      | Used of Ast.loc sexp_opaque * wf_lin
       | Intuition of wf_lin
     [@@deriving sexp_of]
     ;;
@@ -443,7 +505,7 @@ let%test_module "Test" =
       end;
       [%expect {|
         Result: (Fun Unit Unit)
-        Env: ((six (Used <opaque>)) (two (Used <opaque>))
+        Env: ((six (Used <opaque> (WFL Unit))) (two (Used <opaque> (WFL (Fun Unit Unit))))
          (six (Not_used ((var six) (t (WFL (Bang Unit))))))
          (three (Intuition (WFL (Bang Int)))))
         Used: ((two <opaque>)) |}]

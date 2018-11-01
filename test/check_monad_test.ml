@@ -44,8 +44,8 @@ let%expect_test "create_fresh" =
   end
   |> run ~counter:1719 |> ignore;
   [%expect {|
-    gen_1719
-    test_1720 |}]
+    __gen1719
+    __test1720 |}]
 ;;
 
 (* with_fc *)

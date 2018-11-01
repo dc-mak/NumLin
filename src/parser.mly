@@ -63,6 +63,10 @@ let ensure this str =
     if Base.String.(this = str) then str else raise Error
 ;;
 
+let unk =
+  Sugar.Unk ""
+;;
+
 type destruct =
   (Sugar.bang_var * Sugar.lin, Sugar.pat) either
 ;;
@@ -294,6 +298,7 @@ index:
 fun_args:
     | destruct=destruct                                                        { mk_let destruct          }
     | REC str=bang_var L_PAREN arg=annot_arg R_PAREN binds=bind* COLON lin=lin { mk_rec str arg binds lin }
+    | REC str=bang_var L_PAREN arg=annot_arg R_PAREN binds=bind*               { mk_rec str arg binds unk }
     | str=bang_var binds=bind+                                                 { mk_fun str binds         }
 
 (* pattern-matching/destructing and binding *)
@@ -307,7 +312,8 @@ bind:
     | L_PAREN str=fc_var R_PAREN    { Second ($symbolstartpos, str) }
 
 annot_arg:
-    | pat=pat COLON lin=lin { Sugar.({pat;lin}) }
+    | pat=pat COLON lin=lin { Sugar.({pat;lin})     }
+    | pat=pat               { Sugar.({pat;lin=unk}) }
 
 destruct:
     | str=bang_var COLON lin=lin { First (str, lin) }

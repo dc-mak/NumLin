@@ -1,3 +1,4 @@
+(* This needs example needs to be fixed for type inference *)
 let rec sum_array (!i : !int) (!n : !int) (!x0 : !elt)
                   ('x) (row : 'x arr) : 'x arr * !elt =
     if i = n then

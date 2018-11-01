@@ -5,6 +5,35 @@
 open Base
 ;;
 
+let rec free_vars : Ast.lin -> _ =
+
+  let rec free_fc : Ast.fc -> _ = function
+    | Z -> []
+    | U var
+    | V var -> [var]
+    | S fc -> free_fc fc in
+
+  function
+  | Arr fc | Mat fc ->
+    free_fc fc
+
+  | Unit | Bool | Int | Elt | Unk _ -> []
+
+  | Pair (fst, snd) ->
+    List.fold_right ~init:(free_vars snd) ~f:(fun x rest ->
+      if List.mem rest ~equal:[%compare.equal: Ast.var] x then rest else x :: rest) (free_vars fst)
+
+  | Bang lin ->
+    free_vars lin
+
+  | All (var', lin) ->
+    List.filter ~f:(fun var -> not ([%compare.equal: Ast.var] var var')) @@ free_vars lin
+
+  | Fun (arg, res) ->
+    List.fold_right ~init:(free_vars res) ~f:(fun x rest ->
+      if List.mem rest ~equal:[%compare.equal: Ast.var] x then rest else x :: rest) (free_vars arg)
+;;
+
 (* For simplicity in these types, I'm always assuming that (1) lengths `n` can
    be retrieved at runtime and (2) incx = incy = 1. *)
 
@@ -127,12 +156,15 @@ let rec check =
     split_wf_Fun (wf_lin ~fmt ~arg ~loc arg)
       ~if_fun:
         (fun tx res ->
-           let%bind (actual, fun_t) =
-             (* TODO Generalise free frac. cap. vars for t here *)
+           let%bind (actual, (WFL t' as fun_t)) =
              in_empty (check body |> with_lin x tx |> return_int f (wf_Fun tx res)) in
            match%bind same_lin res actual with
            | Ok subs ->
-             apply subs fun_t
+             List.fold_right (free_vars t') ~init:(apply subs fun_t)
+               ~f:(fun var t ->
+                 if_wf (V var)
+                   ~then_:(fun _ -> t)
+                   ~else_:(fun _ -> let%bind t = t in return @@ wf_All var t))
            | Error err ->
              failf !"%{Error.to_string_hum}%{string_of_loc}\n" err loc)
 
@@ -212,25 +244,12 @@ let rec check =
   | Lambda (loc, var, t, body) ->
     let fmt, arg = !"Type is not well-formed:\n%{sexp:lin}\n%{string_of_loc}\n", t in
     let%bind t = wf_lin ~fmt ~arg ~loc t in
-    let%bind (body_t, t) = check body |> return_lin var t in
-    (* Generalise any free frac. cap. vars of the argument here *)
-    let%bind t =
-      begin match t with
-      | WFL (Arr fc) | WFL (Mat fc) ->
-        let rec free_var = function
-          | Z -> return None
-          | (U var | V var) as fc ->
-            if_wf fc
-              ~then_:(fun _ -> return None)
-              ~else_:(fun _ -> return @@ Some var)
-          | S fc -> free_var fc in
-        begin match%bind free_var fc with
-        | None -> return t
-        | Some var -> return @@ wf_All var t
-        end
-      | t -> return t
-      end in
-    return @@ wf_Fun t body_t
+    let%bind (body_t, (WFL t' as t)) = check body |> return_lin var t in
+    List.fold_right (free_vars t') ~init:(return @@ wf_Fun t body_t)
+      ~f:(fun var t ->
+        if_wf (V var)
+          ~then_:(fun _ -> t)
+          ~else_:(fun _ -> let%bind t = t in return @@ wf_All var t))
 
   | Let (_, var, exp, body) ->
     let%bind lin = check exp in

@@ -54,7 +54,11 @@ pattern-matching, outlined in Figure~\ref{fig:lang_matexp}.
 \subsubsection{Type checking} is mostly standard for a linearly typed language,
 with the exception of fractional permission inference. Because all functions
 must have their argument types explicitly annotated, inferring the correct
-fraction at a call-site is simply a matter of unification.
+fraction at a call-site is simply a matter of unification. We strongly suspect
+that \emph{full-inference of fractional permissions is similarly just matter of
+unification} (thanks to an experimental implementation of just this feature),
+even though the formal system we present here is for an explicitly-typed
+language.
 
 There are a few differences between the type system as presented in
 \ref{subsec:semantics} and how we implemented it: the environment

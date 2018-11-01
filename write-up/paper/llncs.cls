@@ -381,9 +381,9 @@ You should not use \verb|\subparagraph| with this class.\vskip0.5cm}
 \fi
 
 \def\squareforqed{\hbox{\rlap{$\sqcap$}$\sqcup$}}
-\def\qed{\ifmmode\squareforqed\else{\unskip\nobreak\hfil
-\penalty50\hskip1em\null\nobreak\hfil\squareforqed
-\parfillskip=0pt\finalhyphendemerits=0\endgraf}\fi}
+% \def\qed{\ifmmode\squareforqed\else{\unskip\nobreak\hfil
+% \penalty50\hskip1em\null\nobreak\hfil\squareforqed
+% \parfillskip=0pt\finalhyphendemerits=0\endgraf}\fi}
 
 \def\getsto{\mathrel{\mathchoice {\vcenter{\offinterlineskip
 \halign{\hfil
@@ -1125,7 +1125,7 @@ to0pt{\kern0.55\wd0\vrule height0.45\ht0\hss}\box0}}}}
 
 %definition of divers theorem environments
 \spnewtheorem*{claim}{Claim}{\itshape}{\rmfamily}
-\spnewtheorem*{proof}{Proof}{\itshape}{\rmfamily}
+% \spnewtheorem*{proof}{Proof}{\itshape}{\rmfamily}
 \if@envcntsame % alle Umgebungen wie Theorem.
    \def\spn@wtheorem#1#2#3#4{\@spothm{#1}[theorem]{#2}{#3}{#4}}
 \else % alle Umgebungen mit eigenem Zaehler
@@ -1141,7 +1141,7 @@ to0pt{\kern0.55\wd0\vrule height0.45\ht0\hss}\box0}}}}
       \fi
    \fi
 \fi
-\spn@wtheorem{case}{Case}{\itshape}{\rmfamily}
+% \spn@wtheorem{case}{Case}{\itshape}{\rmfamily}
 \spn@wtheorem{conjecture}{Conjecture}{\itshape}{\rmfamily}
 \spn@wtheorem{corollary}{Corollary}{\bfseries}{\itshape}
 \spn@wtheorem{definition}{Definition}{\bfseries}{\itshape}

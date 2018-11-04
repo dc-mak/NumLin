@@ -125,6 +125,7 @@ type destruct =
 %token GEMM
 %token GESV
 %token POSV
+%token POSV_FLIP
 %token POTRS
 %token SYRK
 
@@ -368,6 +369,7 @@ prim:
     | GEMM      { Sugar.Gemm        }
     | GESV      { Sugar.Gesv        }
     | POSV      { Sugar.Posv        }
+    | POSV_FLIP { Sugar.Posv_Flip   }
     | POTRS     { Sugar.Potrs       }
     | SYRK      { Sugar.Syrk        }
 

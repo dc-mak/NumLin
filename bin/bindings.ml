@@ -20,12 +20,7 @@ struct
 
   let test = foreign "test" C.(int @-> returning double)
 
-  let result : [`result] C.structure C.typ = C.structure "result"
-  let new_sigma = C.(field result "new_sigma" (ptr double))
-  let new_mu = C.(field result "new_mu" (ptr double))
-  let () = C.seal result
-
-  let results = foreign "results"
+  let result = foreign "result"
              C.(int @->          (* n *)
                 int @->          (* k *)
                 ptr double @->   (* sigma *)
@@ -33,6 +28,6 @@ struct
                 ptr double @->   (* mu *)
                 ptr double @->   (* r *)
                 ptr double @->   (* data *)
-                returning result)
+                returning (ptr double))
 
 end

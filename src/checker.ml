@@ -60,6 +60,7 @@ let check_prim =
   (* FIXME: This is a lie because of IPIV parameter *)
   | Gesv -> Fun (Mat Z, Fun (Mat Z, Pair (Mat Z, Mat Z)))
   | Posv -> Fun (Mat Z, Fun (Mat Z, Pair (Mat Z, Mat Z)))
+  | Posv_Flip -> Fun (Mat Z, Fun (Mat Z, Pair (Mat Z, Mat Z)))
   | Potrs -> All (x, Fun (Mat (V x), Fun (Mat Z, Pair (Mat (V x), Mat Z))))
   | Syrk -> Fun (bool, Fun (elt, All (x, Fun (Mat (V x), Fun (elt, Fun (Mat Z, Pair (Mat (V x), Mat Z)))))))
 ;;

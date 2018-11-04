@@ -17,6 +17,6 @@
     (modules (stubs bind))
     (c_names (kalman_c_stubs))
     ; -llopenblas -llapacke are not needed?
-    (c_flags (:standard -I.. -Wall -Wextra))
+    (c_flags (:standard -I.. -O3 -g -Wall -Wextra))
     (libraries (bindings ctypes.stubs ctypes))
 ))

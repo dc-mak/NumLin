@@ -64,6 +64,7 @@ sig
              z mat -> ('a mat * 'b mat) * z mat
   val gesv : z mat -> z mat -> z mat * z mat
   val posv : z mat -> z mat -> z mat * z mat
+  val posv_flip : z mat -> z mat -> z mat * z mat
   val potrs : 'a mat -> z mat -> 'a mat * z mat
   val syrk : bool bang -> float bang -> 'a mat -> float bang -> z mat ->
            'a mat * z mat

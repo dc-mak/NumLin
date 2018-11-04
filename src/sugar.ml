@@ -89,6 +89,7 @@ type prim =
   | Gemm
   | Gesv
   | Posv
+  | Posv_Flip
   | Potrs
   | Syrk
 [@@deriving sexp_of]
@@ -266,6 +267,7 @@ let rec ds_exp : exp -> Ast.exp = function
       | Gemm -> Gemm
       | Gesv -> Gesv
       | Posv -> Posv
+      | Posv_Flip -> Posv_Flip
       | Potrs -> Potrs
       | Syrk -> Syrk
     end)

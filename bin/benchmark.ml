@@ -72,27 +72,26 @@ let get_micro ~n ~k { sigma; h; mu; r; data } (F.W fun_) =
   let name = F.(name @@ W fun_) in
   let open Core_bench.Bench in
   match fun_ with
-  | F.Chol ->
-    Test.create ~name (fun () -> f ~sigma ~h ~mu ~r ~data)
 
   | F.Owl ->
     Test.create ~name (fun () -> f ~sigma ~h ~mu ~r ~data)
 
   | F.LT4LA ->
-    (* [r] and [data] are overrwritten *)
-    let r, data = Mat.copy r, Mat.copy data in
-    Test.create ~name (fun () -> f.f ~sigma ~h ~mu ~r ~data)
-
-  | F.TRANSP ->
-    (* [r] and [data] are overrwritten *)
-    let r, data = Mat.copy r, Mat.copy data in
-    Test.create ~name (fun () -> f.f ~sigma ~h ~mu ~r ~data)
+    (* [mu], [r] and [data] are overrwritten *)
+    Test.create_with_initialization ~name (fun `init ->
+      let () = assert (Linalg.D.is_posdef r) in
+      let () = assert (Linalg.D.is_symmetric r) in
+      let () = assert (Linalg.D.is_posdef sigma) in
+      let () = assert (Linalg.D.is_symmetric sigma) in
+      let mu, r, data = Mat.copy mu, Mat.copy r, Mat.copy data in
+      fun () -> ignore @@ f.f ~sigma ~h ~mu ~r ~data)
 
   | F.CBLAS ->
     (* Not super valid because of marshalling overhead *)
-    (* [r] and [data] are overrwritten *)
-    let r, data = Mat.copy r, Mat.copy data in
-    Test.create ~name (fun () -> f ~n ~k ~sigma ~h ~mu ~r ~data)
+    (* [mu], [r] and [data] are overrwritten *)
+    Test.create_with_initialization ~name (fun `init ->
+      let mu, r, data = Mat.copy mu, Mat.copy r, Mat.copy data in
+      fun () -> ignore @@ f ~n ~k ~sigma ~h ~mu ~r ~data)
 ;;
 
 let micro_exn ~sec ~n ~k input tests =
@@ -138,6 +137,7 @@ let micro_exn ~sec ~n ~k input tests =
 let macro ~f ~runs { sigma; h; mu; r; data } =
   assert (runs >= 1);
   Array.init runs ~f:(fun _ ->
+    let f = f `init in
     let () = Caml.Gc.full_major () in
     let {Unix.tms_utime=start;_} = Unix.times () in
     let _  = f ~sigma ~h ~mu ~r ~data in
@@ -149,28 +149,28 @@ let macro ~f ~runs { sigma; h; mu; r; data } =
 let get_macro ~n ~k ~runs input (F.W fun_) =
   let f = F.get fun_ in
   match fun_ with
-  | F.Chol ->
-    macro ~f ~runs input
-
   | F.Owl ->
-    macro ~f ~runs input
+    macro ~f:(fun `init -> f) ~runs input
 
   | F.LT4LA ->
-    (* [r] and [data] are overrwritten *)
-    macro ~f:f.f ~runs
-      { input with r = Mat.copy input.r; data = Mat.copy input.data }
-
-  | F.TRANSP ->
-    (* [r] and [data] are overrwritten *)
-    macro ~f:f.f ~runs
-      { input with r = Mat.copy input.r; data = Mat.copy input.data }
+    let mu' = Owl.Mat.copy input.mu 
+    and r' = Owl.Mat.copy input.r
+    and data' = Owl.Mat.copy input.data in
+    (* [mu], [r] and [data] are overrwritten *)
+    macro input ~runs ~f:(fun `init ->
+      let { sigma; h; mu; r; data } = input in
+      Owl.Mat.copy_ mu' ~out:mu;
+      Owl.Mat.copy_ r' ~out:r;
+      Owl.Mat.copy_ data' ~out:data;
+      f.f
+    )
 
   | F.CBLAS ->
     (* Not super valid because of marshalling overhead *)
-    (* [r] and [data] are overrwritten *)
-    let { sigma; h; mu; r; data } =
-      { input with r = Mat.copy input.r; data = Mat.copy input.data } in
+    (* [mu], [r] and [data] are overrwritten *)
+    let { sigma; h; mu; r; data } = input in
     Array.init runs ~f:(fun _ ->
+      let mu, r, data = Mat.copy mu, Mat.copy r, Mat.copy data in
       Time.Span.of_us @@ f ~n ~k ~sigma ~h ~mu ~r ~data)
 ;;
 
@@ -385,10 +385,8 @@ let run_with_params ~analyse ~start ~limit ~tests ~micro_quota ~macro_runs =
 let alg =
   Core.Command.Arg_type.create
     (function
-      | "chol" -> [F.W Chol]
       | "owl" ->  [F.W Owl]
       | "lt4la" -> [F.W LT4LA]
-      | "transp" -> [F.W TRANSP]
       | "cblas" -> [F.W CBLAS]
       | "all" -> F.all
       | "none" -> []

@@ -65,6 +65,7 @@ let keywords =
     ; ("gemm", GEMM)
     ; ("gesv", GESV)
     ; ("posv", POSV)
+    ; ("posvFlip", POSV_FLIP)
     ; ("potrs", POTRS)
     ; ("syrk", SYRK)
     (* expressions *)

@@ -305,6 +305,27 @@ struct
     (M a, M b)
   ;;
 
+  (* Compute X = B A^-1 using A'X' = B' / X = (A'^-1 B')'
+     But make it so transposing is just a Row/Column order flipping *)
+  let posv_flip (M a : z mat) (M b : z mat) =
+    let (n,_) = Owl.Mat.shape a in
+    let (k, n') = Owl.Mat.shape b in
+    let () = assert (n = n') in
+    let lda = n in
+    let ldb = n and nrhs = k in
+    let layout = 102 (* Interpret as Fortran layout *) in
+    let conv = Ctypes.bigarray_start  Ctypes_static.Genarray in
+    let ret = Owl_lapacke_generated.dposv ~layout ~uplo:'U'
+                    ~n ~nrhs ~a:(conv a) ~lda ~b:(conv b) ~ldb in
+    let () =
+      if ret < 0 then
+        raise @@ Invalid_argument (Printf.sprintf "posv_flip: parameter %d illegal value" (-ret))
+      else if ret > 0 then
+        raise @@ Invalid_argument (Printf.sprintf "posv_flip: leading minor order %d not pos. def." ret)
+    in
+    (M a, M b)
+  ;;
+
   let potrs (type a) (M a : a mat) (M b : z mat) =
     let b' = Owl_lapacke.(potrs ~uplo:'U' ~a ~b) in
     let () = assert (Base.phys_equal b b') in

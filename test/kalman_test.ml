@@ -75,23 +75,6 @@ let reset () =
   ]
 ;;
 
-let potrs ~uplo a b =
-  let b = Owl.Mat.copy b in
-  Owl.Lapacke.potrs ~uplo ~a ~b
-;;
-
-let chol_kalman ~sigma ~h ~mu ~r ~data =
-  let open Owl.Mat in
-  let ( * ) = dot in
-  let h' = transpose h in
-  let sigma_h' = sigma * h' in
-  let chol = Owl.Linalg.D.chol (r + h * sigma_h') in
-  let sigma_h'_inv rest = sigma_h' * potrs ~uplo:'U' chol rest in
-  let new_sigma = sigma - sigma_h'_inv (h * sigma) in
-  let new_mu = mu + sigma_h'_inv (h * mu - data) in
-  ((sigma, (h, (mu, (r, data)))), (new_mu, new_sigma))
-;;
-
 let owl_kalman ~sigma ~h ~mu ~r ~data =
   let open Owl.Mat in
   let ( * ) = dot in
@@ -100,15 +83,11 @@ let owl_kalman ~sigma ~h ~mu ~r ~data =
   let x = sigma_h' * (inv @@ r + h * sigma_h') in
   let new_mu = mu + x * (h * mu - data) in
   let new_sigma = sigma - x * h * sigma in
-  ((sigma, (h, (mu, (r, data)))), (new_mu, new_sigma))
+  new_sigma, new_mu
 ;;
 
 let lt4la_kalman ~sigma ~h ~mu ~r ~data =
-    Examples.Kalman.it (M sigma) (M h) (M mu) (M r) (M data)
-;;
-
-let transp_kalman ~sigma ~h ~mu ~r ~data =
-    Examples.Kalman_t.it (M sigma) (M h) (M mu) (M r) (M data)
+  Examples.Kalman.it (M sigma) (M h) (M mu) (M r) (M data)
 ;;
 
 let cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data =
@@ -116,55 +95,37 @@ let cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data =
   let module Bind = Kalman_c_ffi.Bind in
   let gen, f64 = Ctypes_static.Genarray, Bigarray.float64 in
   let f x = bigarray_start gen x [@@ocaml.inline] in
-  let returned = Bind.results n k (f sigma) (f h) (f mu) (f r) (f data) in
-  let new_sigma =  getf returned Bind.new_sigma
-  and new_mu = getf returned Bind.new_mu in
-  let new_sigma = bigarray_of_ptr gen [| n; n |]  f64 new_sigma
-  and new_mu = bigarray_of_ptr gen [| n; 1 |]  f64 new_mu in
-  new_mu, new_sigma
+let new_sigma = Bind.result n k (f sigma) (f h) (f mu) (f r) (f data) in
+let new_sigma = bigarray_of_ptr gen [| n; n |]  f64 new_sigma in
+new_sigma
 ;;
 
 let%expect_test "Kalman" =
 
-  let (_, (chol_mu, chol_sigma)) =
-    reset ();
-    (* Stdio.printf "\nChol\n---\n"; *)
-    chol_kalman ~sigma ~h ~mu ~r ~data in
-
-  let (_, (owl_mu, owl_sigma)) =
-    reset ();
-    (* Stdio.printf "\nOwl\n---\n"; *)
-    owl_kalman ~sigma ~h ~mu ~r ~data in
-
   let same x = if x then "same" else " NOT" in
 
-  let (_, (M lt4la_mu, M lt4la_sigma)) =
+  let lt4la_sigma, lt4la_mu =
     reset ();
-    (* Stdio.printf "\nLT4LA\n---\n"; *)
-    lt4la_kalman ~sigma ~h ~mu ~r ~data in
-  let () = Owl.Mat.(Stdio.printf !"LT4LA - sigma? %{same} | h? %{same} | mu? %{same}\n"
-                      (sigma = sigma_copy) (h = h_copy) (mu = mu_copy)) in
+    let (_, (M lt4la_sigma, (M lt4la_mu, _))) =
+      lt4la_kalman ~sigma ~h ~mu ~r ~data in
+    lt4la_sigma, Owl.Mat.copy lt4la_mu in
+  let () = Owl.Mat.(Stdio.printf !"LT4LA - sigma? %{same} | h? %{same}\n"
+                      (sigma = sigma_copy) (h = h_copy)) in
 
-
-  let (_, (M transp_mu, M transp_sigma)) =
+  let owl_sigma, owl_mu =
     reset ();
-    (* Stdio.printf "\nTRANSP\n---\n"; *)
-    transp_kalman ~sigma ~h ~mu ~r ~data in
-  let () = Owl.Mat.(Stdio.printf !"TRANSP - sigma? %{same} | h? %{same} | mu? %{same}\n"
-                      (sigma = sigma_copy) (h = h_copy) (mu = mu_copy)) in
+    owl_kalman ~sigma ~h ~mu ~r ~data in
 
-  let cblas_mu, cblas_sigma =
+  let cblas_sigma, cblas_mu =
     reset ();
-    (* Stdio.printf "\nCBLAS\n---\n"; *)
-    cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data in
-  let () = Owl.Mat.(Stdio.printf !"CBLAS - sigma? %{same} | h? %{same} | mu? %{same}\n"
-                      (sigma = sigma_copy) (h = h_copy) (mu = mu_copy)) in
+    let cblas_sigma = cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data in
+    cblas_sigma, Owl.Mat.copy mu in
+  let () = Owl.Mat.(Stdio.printf !"CBLAS - sigma? %{same} | h? %{same}\n"
+                      (sigma = sigma_copy) (h = h_copy)) in
 
   let results = [
-    ("Chol", chol_mu, chol_sigma);
     ("Owl", owl_mu, owl_sigma);
     ("LT4LA", lt4la_mu, lt4la_sigma);
-    ("TRANSP", transp_mu, transp_sigma);
     ("CBLAS", cblas_mu, cblas_sigma);
   ] in
 
@@ -177,23 +138,15 @@ let%expect_test "Kalman" =
     let mu_res = Owl.Mat.(mu_a =~ mu_b) and sigma_res = Owl.Mat.(sigma_a =~ sigma_b) in
     Stdio.printf !"%5s and %5s: Mu (%{same}) Sigma (%{same})\n" a b mu_res sigma_res) in
 
-  Owl.Mat.print ~header:false chol_sigma;
-  Owl.Mat.print ~header:false chol_mu;
+  Owl.Mat.print ~header:false cblas_sigma;
+  Owl.Mat.print ~header:false cblas_mu;
 
   [%expect {|
-    LT4LA - sigma? same | h? same | mu? same
-    TRANSP - sigma? same | h? same | mu? same
-    CBLAS - sigma? same | h? same | mu? same
-    CBLAS and TRANSP: Mu (same) Sigma (same)
+    LT4LA - sigma? same | h? same
+    CBLAS - sigma? same | h? same
     CBLAS and LT4LA: Mu (same) Sigma (same)
     CBLAS and   Owl: Mu (same) Sigma (same)
-    CBLAS and  Chol: Mu (same) Sigma (same)
-    TRANSP and LT4LA: Mu (same) Sigma (same)
-    TRANSP and   Owl: Mu (same) Sigma (same)
-    TRANSP and  Chol: Mu (same) Sigma (same)
     LT4LA and   Owl: Mu (same) Sigma (same)
-    LT4LA and  Chol: Mu (same) Sigma (same)
-      Owl and  Chol: Mu (same) Sigma (same)
 
        0.541272 -0.00852694    0.133997   0.234808   0.0897324
     -0.00852694     0.17944  -0.0357339  0.0665866    0.078525
@@ -223,34 +176,34 @@ let lazy_kalman =
   and data = var_arr "data"
   in
   fun ~sigma:sigma_ ~h:h_ ~mu:mu_ ~r:r_ ~data:data_ ->
-  let ( := ) = assign_arr in
-  sigma := sigma_;
-  h := h_ ;
-  h' := Owl.Mat.transpose h_;
-  mu := mu_;
-  r := r_;
-  data := data_;
-  let ( * ) = dot and ( + ) = add and ( - ) = sub in
-  let sigma_h' = sigma * h' in
-  let x = sigma_h' * (inv @@ r + h * sigma_h') in
-  let new_mu = mu + x * (h * mu - data) in
-  let new_sigma = sigma - x * h * sigma in
-  let graph =
-    let input = Array.map ~f:arr_to_node [| sigma; h; h'; mu; r; data |] in
-    let output = Array.map ~f:arr_to_node [| new_mu; new_sigma |] in
-    make_graph ~input ~output "lazy_kalman" in
-  Owl_io.write_file "lazy_kalman.dot" @@ graph_to_dot graph;
-  eval_graph graph;
-  ((sigma_, (h_, (mu_, (r_, data_)))), (unpack_arr new_mu, unpack_arr new_sigma))
+    let ( := ) = assign_arr in
+    sigma := sigma_;
+    h := h_ ;
+    h' := Owl.Mat.transpose h_;
+    mu := mu_;
+    r := r_;
+    data := data_;
+    let ( * ) = dot and ( + ) = add and ( - ) = sub in
+    let sigma_h' = sigma * h' in
+    let x = sigma_h' * (inv @@ r + h * sigma_h') in
+    let new_mu = mu + x * (h * mu - data) in
+    let new_sigma = sigma - x * h * sigma in
+    let graph =
+      let input = Array.map ~f:arr_to_node [| sigma; h; h'; mu; r; data |] in
+      let output = Array.map ~f:arr_to_node [| new_mu; new_sigma |] in
+      make_graph ~input ~output "lazy_kalman" in
+    Owl_io.write_file "lazy_kalman.dot" @@ graph_to_dot graph;
+    eval_graph graph;
+    (unpack_arr new_sigma, unpack_arr new_mu)
 ;;
 
 let%expect_test "lazy kalman" =
 
-  let (_, (new_mu, new_sigma)) =
+  let lazy_sigma, lazy_mu =
     reset (); lazy_kalman ~sigma ~h ~mu ~r ~data in
 
-  Owl.Mat.print ~header:false new_sigma;
-  Owl.Mat.print ~header:false new_mu;
+  Owl.Mat.print ~header:false lazy_sigma;
+  Owl.Mat.print ~header:false lazy_mu;
 
   [%expect {|
        0.541272 -0.00852694    0.133997   0.234808   0.0897324

@@ -178,20 +178,20 @@ Need to prove for $\V{}{}$, by induction on $t$ and then index.
         and \textsc{Op\_Gemm\_(Mis)Match}.}
 
     \step{}{\case{\textsc{Op\_Frac\_Perm.}}{Because substitution avoids capture,
-        \\ $\langle \theta(\sigma), \theta((\ottkw{fun} fc \rightarrow v) \, [f])
-         \rangle \rightarrow \langle \theta(\sigma'\, [fc/f]),
-        \theta(v\, [fc/f]) \rangle$.}}
+        \\ $\langle \theta(\sigma), \theta((\ottkw{fun} f\!c \rightarrow v) \, [f])
+         \rangle \rightarrow \langle \theta(\sigma'\, [f\!c/f]),
+        \theta(v\, [f\!c/f]) \rangle$.}}
 
     \step{}{The rest of the cases are parametric in their use of fractional
         permission variables and so will take the same step ater any substitution.}
 
     \step{}{\textsc{Corollary:}
-        If $\langle \sigma \, [fc/f_1], e\, [fc/f_1] \rangle \rightarrow^n
+        If $\langle \sigma \, [f\!c/f_1], e\, [f\!c/f_1] \rangle \rightarrow^n
         \langle \sigma_2, e'_2 \rangle$ and
-        $\langle \sigma\, [fc/f_2], e \, [fc/f_2] \rangle \rightarrow^n
+        $\langle \sigma\, [f\!c/f_2], e \, [f\!c/f_2] \rangle \rightarrow^n
         \langle \sigma_2, e'_2 \rangle$, then
-        $\exists\,\sigma, e'.\ \sigma_1 = \sigma\,[fc/f_1] \wedge
-        \sigma_2 = \sigma\,[fc/f_2] \wedge
-        e'_1 = e'\,[fc/f_1] \wedge e'_2 = e'\,[fc/f_2]$.}
+        $\exists\,\sigma, e'.\ \sigma_1 = \sigma\,[f\!c/f_1] \wedge
+        \sigma_2 = \sigma\,[f\!c/f_2] \wedge
+        e'_1 = e'\,[f\!c/f_1] \wedge e'_2 = e'\,[f\!c/f_2]$.}
 
 \end{proof}

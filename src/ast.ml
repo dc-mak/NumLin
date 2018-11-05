@@ -444,8 +444,8 @@ let prec = function
 
 let rec is_value = function
   | Prim _ | Unit_I _ | True _ | False _ | Int_I _ | Elt_I _ | Var _ | Fix _ | Lambda _ -> true
-  | App _ | Let _ | Unit_E _ | Bang_E _ | Pair_E _ | If _ -> false
-  | Gen (_, _, exp) | Spc (_, exp, _) | Bang_I (_, exp) -> is_value exp
+  | App _ | Spc _ | Let _ | Unit_E _ | Bang_E _ | Pair_E _ | If _ -> false
+  | Gen (_, _, exp) | Bang_I (_, exp) -> is_value exp
   | Pair_I (_, fst, snd) -> is_value fst && is_value snd
 ;;
 

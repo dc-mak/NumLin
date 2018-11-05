@@ -146,7 +146,6 @@ grammar
     | el                          ::   :: Elt_Intro   {{ com array element             }}
     | Many v                      ::   :: Bang_Intro  {{ com !-introduction            }}
     | fun fc -> v                 ::   :: Gen         {{ com frac. perm. abstraction    }}
-    | v [ f ]                     ::   :: Spc         {{ com frac. perm. specialisation }}
     | ( v , v' )                  ::   :: Pair_Intro  {{ com pair introduction         }}
     | fun x : t -> e              ::   :: Lambda      (+ bind x in e                   +)
                                                       {{ com abstraction               }}
@@ -428,7 +427,7 @@ defns
   Op_Sem :: 'Op_' ::=
 
   defn
-  < H , e > -> Config :: ::Op_:: '' {{ com operational semantics }} by
+  < H , e > -> Config :: ::Op_:: '' {{ com Operational semantics }} by
 
 
     --------------------------------------- :: Let_Unit
@@ -483,6 +482,11 @@ defns
     < H , matrix k1 k2 > -> < H and { l |-> Z ,  M k1 k2 } , l >
 
 
+    k1 < 0 or k2 < 0
+    --------------------------- :: Matrix_Neg
+    < H , matrix k1 k2 > -> err
+
+
     ------------------------------------------------------- :: Free
     < H and { l |-> Z , m k1 k2 } , free l > -> < H , ( ) >
 
@@ -523,6 +527,7 @@ grammar
     | e <> e'      ::  :: eNeq
     | l <> l'      ::  :: lNeq
     | 0 <= k1 , k2 ::  :: posDim {{ tex [[0]] \leq [[k1]], [[k2]]  }}
+    | k1 < 0 or k2 < 0 :: :: negDim {{ tex [[k1]] < [[0]] \textrm{ or } [[k2]] < [[0]] }}
     | H' == H      ::  :: storeEq
     | l fresh      ::  :: freshL {{ tex [[l]] \textrm{ fresh } }}
 

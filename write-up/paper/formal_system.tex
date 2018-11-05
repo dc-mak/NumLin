@@ -3,18 +3,249 @@
 \subsection{Core Type Theory}
 
 The full typing rules are in Appendix \ref{subsec:static_sem}, but the key
-ideas are: \textsf{Perm}, \textsf{Type}, $\Theta, \Delta, \Gamma$,
-value restriction, lambda, Gen/Spc, and Fix.
+ideas are as follow.
+
+A typing judgement consists of $ \Theta; \Delta; \Gamma
+\vdash e : t$.
+
+$\Theta$ is the environment that tracks which fractional permission variables
+in scope. Fractional permissions (the \textsf{Perm} judgement) and types (the
+\textsf{Type} judgement) are \emph{well-formed} if all of their free fractional
+variables are in $\Theta$.
+
+$\Delta$ is the environment storing non-linearly or \emph{inuitionistically}
+typed variables.
+
+$\Gamma$ is the environment storing linearly typed variables.  Note that rules
+for typing $()$, booleans, integers and elements are typed with respect to an
+\emph{empty} linear environment: this means no linear values are needed to
+produce a value of those types.
+
+\[
+    \ottdruleTyXXUnitXXIntro{}
+\]
+
+Conversely, whenever two or more subexpressions need to be typed, they must
+consume a disjoint set of linear values (pairs, let-expressions).  In the case
+of if-expressions, both branches must consume the same set of linear values
+(disjoint to the ones used to evaluate the condition).
+
+\[
+    \ottdruleTyXXBoolXXElim{}
+\]
+
+The \highl{Many} introduction and elimination rules are very important.
+Producing !-type values may only be done if the expression inside is a
+syntactic value which is not a location. This allows all safely duplicable
+resources, including functions which capture non-linear resources from their
+environments, but prevents producing aliases of (pointers to) arrays and
+matrices. This is exactly the same as value-restriction from the world of
+parametric polymorphism.
+
+\[
+    \ottdruleTyXXBangXXIntro{}
+\]
+
+Consuming a !-type value \emph{moves it} from the linear environment $\Gamma$
+and \emph{into} the intuitionistic environment $\Delta$. This is exactly why
+$\mathbf{let}\ !x = e_1\ \mathbf{in}\ e_2$ desugars to $\mathbf{let\ Many}\ x =
+e_1\ \mathbf{in\ } \mathbf{let\ Many}\ x = \mathbf{Many}\ (\mathbf{Many}\ x)\
+\mathbf{in}\ e_2$.
+
+\[
+    \ottdruleTyXXBangXXElim{}
+\]
+
+Rules \textsc{Ty\_Gen} and \textsc{Ty\_Spc} are for fractional permission
+generalisation and specialisation respectively. They allow the definition and
+use of functions that are polymorphic in the fractional permission index of
+their results and one or more of their arguments.
+
+\[
+    \ottdruleTyXXGen{} \qquad\qquad \ottdruleTyXXSpc{}
+\]
+
+Rule \textsc{Ty\_Fix} shows how recursive functions are typed. Even though
+recursive functions are fully annotated, type checking them is interesting for
+two reasons: to type check the body of the fixpoint, the type of the recusive
+function is in the \emph{intuitionistic} environment $\Delta$ (without this,
+you would not be able to write a base case) whilst the argument and its type
+are the \emph{only things in the linear environment} $\Gamma$. The latter means
+that recursive functions can be type checked in an empty environment (thus be
+wrapped in \highl{Many} and used zero or multiple times).
+
+\[
+    \ottdruleTyXXFix{}
+\]
+
+Lastly, types of almost all \lang\ primitives, as embedded in OCaml's type
+system, are shown in Appendix \ref{subsec:primitives}, with some similar ones
+(like those for binary arithmetic operators) omitted for brevity. The
+main difference between the OCaml type of a primitive like \highl{gemm} and its
+\lang\ counterpart is the inclusion of explicit `$\forall$'s.  So,
+\highl{float bang -> ('a mat * bool bang) -> ('b mat * bool bang) -> float
+bang -> z mat -> ('a mat * 'b mat) * z mat}
+will correspond to \\
+$!\ottkw{elt} \multimap \forall\, x.\ x \ \ottkw{mat} \ \otimes \ !\ottkw{bool}
+\multimap \forall\, y.\  y \ \ottkw{mat} \ \otimes \ !\ottkw{bool} \multimap
+\ !\ottkw{elt} \multimap z\ \ottkw{mat} \multimap ( x \ \ottkw{mat} \ \otimes y
+\ \ottkw{mat} ) \ \otimes z\ \ottkw{mat}$
 
 \subsection{Dynamic Semantics}\label{subsec:semantics}
 
-and operational semantics here
+The full, small-step transition relation is in Appendix \ref{subsec:dyn_sem},
+but the key ideas are as follow.
+
+Heaps ($\sigma$) are multisets containing triples of an abstract location $l$,
+a fractional permission $f$ and sized matrices $m_{n,k}$. The notation $l
+\mapsto_f m_{k_1, k_2}$ should be read as ``location $l$ represents $f$
+ownership over matrix $m$ (of size $k_1 \times k_2$)''.  Each heap-and-expression
+either steps to another heap-and-expression or a runtime error $\mathbf{err}$.
+In the full grammar definition we see a definition of values and contexts in
+the language.
+
+We draw the reader's attention to the definitions relating to fractional
+permissions. Specifically, unlike a lambda, the body of a $\ottkw{fun}\, f\!c
+\rightarrow \_$ must be a syntactic value. The context $\ottkw{fun}\, f\!c
+\rightarrow [-]$ means expressions can be reduced inside a fractional
+permission generalisation. This is to emphasize that fractions are merely
+\emph{compile-time constructs} and do not affect runtime behaviour. Correct
+usage of fractions is enforced by the type system, so programs do not get
+stuck. Fractional permissions are specialised using substitution over both the
+heap and an expression (\textsc{Op\_Frac\_Perm}).
+\[
+    \ottdruleOpXXFracXXPerm{}
+\]
+
+Like with the static semantics, the interesting rules in the dynamic semantics
+are those relating to primitives. Creating a matrix ($\ottkw{matrix}\ k_1\
+k_2$) successfully (\textsc{Op\_Matrix}) requires non-negative dimensions and
+returns a (fresh) location of a matrix of those dimensions, extending the heap
+to reflect that $l$ represents a complete ownership over the new matrix.
+\[
+    \ottdruleOpXXMatrix{}
+\]
+
+Dually, \textsc{Op\_Free}, requires a location represent complete ownership
+before removing it and the matrix it points to from the heap.
+\[
+    \ottdruleOpXXFree{}
+\]
+
+Choosing a multiset representation as opposed to a set allows for two
+convenient invariants: multiplicity of a triple $l \mapsto_f m_{k_1, k_2}$ in
+the heap corresponds to the number of aliases of $l$ in the expression with
+type $f\ \ottkw{mat}$ and the sum of all the fractions for $l$ will always be
+$1$ (for a closed, well-typed expression). With this in mind, the rules
+\textsc{Op\_Share} and \textsc{Op\_Unshare\_Eq} are fairly natural.
+\[
+    \ottdruleOpXXShare{} \\
+\]
+\[
+    \ottdruleOpXXUnshareXXEq{}
+\]
+
+Combining all of these features, we see that \textsc{Op\_Gemm\_Match} requires
+that the location being updated ($l_3$) has complete ownership of over matrix
+$m_3$ and can thus change what value it stores to $m_1 m_2 + m_3$. In
+particular, this places no restriction on $l_2$ and $l_3$: they could be
+$\ottkw{share}$d aliases of the same matrix. Transition rules for other
+primitives (omitted) follow the same structure: $\mapsto_1$ for any locations
+that are written to and $\mapsto_{f\!c}$ for anything else.
+\[
+    \ottdruleOpXXGemmXXMatch{}
+\]
 
 \subsection{Logical Relation}
 
-Describe the step-indexed logical relation and its main properties 
+First, we define an interpretation of heaps with fractional permissions in the
+style of Bornat et. al~\cite{bornat} (interpreting the multiset as a partial
+map from locations to the sum of all its associated fractions and a matrix) as
+well as the n-fold iteration of $\rightarrow$.
+\[
+    \den{H}{}{\sigma} = \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]
+\]
+where
+\[
+    (\varsigma_1 \star \varsigma_2)(l) \equiv
+    \begin{cases}
+        \varsigma_1(l) & \textrm{if } l \in \dom(\varsigma_1) \wedge l \notin \dom(\varsigma_2) \\
+        \varsigma_2(l) & \textrm{if } l \in \dom(\varsigma_2) \wedge l \notin \dom(\varsigma_1) \\
+        (f_1 + f_2, m) & \textrm{if } (f_1, m) = \varsigma_1(l) \wedge (f_2, m) = \varsigma_2(l) \wedge f_1 + f_2 \leq 1 \\
+        \textrm{undefined} & \textrm{otherwise}
+    \end{cases}
+\]
+
+We then define a step-indexed logical relation in the style of Morrisett et.
+al~\cite{morrisett}. $(\varsigma, v) \in \V{k}{t}$ means it takes a heap with
+exactly $\varsigma$ resources to produce a value $v$ of type $t$ in at most $k$
+steps. So, something like a $\ottkw{unit}$ or a $!t$ need no resources, whereas
+a $f\, \ottkw{mat}$ needs exactly $f$ ownership of a some matrix and a pair
+needs a $\star$ combination of the heaps required for each component.
+\begin{align*}
+  \V{k}{ \Unit } &= \{ (\empH, \ast) \} \\
+  \V{k}{ f \, \Mat } &= \{ (\{ l \mapsto_{2^{-f}} \_ \} , l) \} \\
+  \V{k}{ \Bang t } &= \{ (\empH, \Many\, v) \mid (\empH, v) \in \V{k}{t} \} \\
+  \V{k}{ t_1 \otimes t_2 } &= \{ (\varsigma_1 \star \varsigma_2, ( v_1, v_2 )) \mid (\varsigma_1, v_1) \in \V{k}{t_1} \wedge (\varsigma_2, v_2) \in \V{k}{t_2} \}
+\end{align*}
+
+The definition of $\V{k}{\forall f\!c.\ t}$ says a value and heap
+must be the same regardless of what fraction is substituted into both; the
+$k-1$ is to take into account fraction specialisation takes ones step
+(\textsc{Op\_Spc}).
+\[
+    \V{k}{ \forall f\!c.\  t } = \{ (\varsigma, \ottkw{fun}\, f\!c \rightarrow \, v) \mid \forall f.\ (\varsigma [ f\!c / f ], v [ f\!c / f ]) \in \V{k-1}{ t [ f\!c / f ] } \}
+\]
+
+To understand the definition of $\V{k}{t' \multimap t}$, we must first look at
+$\C{k}{t}$, the computational interpretation of types. Intuitively, it is a
+combination of a frame rule on heaps (no interference), type-preservation and
+termination (in $j < k$ steps) to either an error or a heap-and-expression,
+with the further condition that if the expression is a syntactic value then it
+is also one semantically.
+\begin{align*}
+    \C{k}{ t } &= \{ (\varsigma_s, e_s) \mid \forall \, j < k, \sigma_r.\ \varsigma_s \star \varsigma_r \textrm{ defined } \Rightarrow \langle \sigma_s + \sigma_r, e_s \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e_f.\\
+               & \qquad \qquad \langle \sigma_s + \sigma_r, e_s \rangle \rightarrow^j \langle \sigma_f + \sigma_r, e_f \rangle \wedge ( e_f \textrm { is a value } \Rightarrow ( \varsigma_f \star \varsigma_r, e_f ) \in \V{k-j}{t} ) \}
+\end{align*}
+
+In this light, $\V{k}{t' \multimap t}$ simply says
+that $v$ is a function and that evaluating the application of it to any
+argument (of the correct type, requiring its own set of resources, bounded by
+$k$ steps) satisfies all the aforementioned properties.
+\begin{align*}
+    \V{k}{ t' \multimap t } &= \{ (\varsigma_v, v ) \mid ( v \equiv \ottkw{fun}\, x : t' \rightarrow e \vee v \equiv \ottkw{fix} (g, x : t' , e : t) ) \, \wedge\\
+                            & \qquad \qquad \forall j \leq k, (\varsigma_{v'}, v') \in \V{j}{ t' }.\ \varsigma_v \star \varsigma_v' \textrm{ defined } \Rightarrow (\varsigma_v \star \varsigma_v', v\, v') \in \C{j}{t} \}
+\end{align*}
+
+The interpretation of typing environments $\Delta$ and $\Gamma$ are with
+respect to an arbitrary substitution of fractional permissions $\theta$. Note
+that only the interpretation of $\Gamma$ involves a non-empty heap.
+\begin{align*}
+    \den{I}{k}{ \Delta, x : t } \theta &= \{ \delta[x \mapsto v_x ] \mid \delta \in \den{I}{k}{\Delta}\theta \wedge (\empH, v_x) \in \V{k}{\theta(t)} \} \\
+    \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\varsigma \star \varsigma_x, \gamma[x \mapsto v_x ]) \mid (\varsigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\varsigma_x, v_x) \in \V{k}{\theta(t)} \}
+\end{align*}
+
+And so the final semantic interpretation of a typing judgement simply
+quantifies over all possible fractional permission substitutions $\theta$,
+linear value substitutions $\gamma$, intuitionistic value substitutions
+$\delta$ and heaps $\sigma$.  Note that, $\varsigma \equiv \den{H}{}{\theta(\sigma)}$.
+\begin{align*}
+\den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t } &= \forall \theta, \delta, \gamma, \sigma.\ \Theta = \dom(\theta) \wedge (\varsigma, \gamma) \in \den{L}{k}{ \Gamma }\theta \wedge \delta \in \den{I}{k}{ \Delta }\theta \Rightarrow \\
+                                                     & \qquad \qquad (\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{ \theta(t) }
+\end{align*}
 
 \subsection{Soundness Theorem}
 
-State the fundamental lemma, and sketch the proof a little
+\[
+    \forall \Theta, \Delta, \Gamma, e, t.\ \Theta; \Delta ; \Gamma \vdash e : t \Rightarrow
+    \forall k.\ \den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t }
+\]
 
+To prove the above theorem, we need several lemmas; the interesting ones are:
+\ref{frame} (a proof of the frame rule), \ref{subsetKJ} (monotonicity for the
+step-index), \ref{restriction} (splitting up environments corresponds to
+splitting up heaps) and \ref{fracPermSub} (a heap-and-expression take the same
+steps of evaluation under any substitution of their free fractional
+permissions).
+
+The proof proceeds by induction on the typing judgement.

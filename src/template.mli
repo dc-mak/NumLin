@@ -58,10 +58,13 @@ sig
   val size_mat : 'a mat -> 'a mat * (int bang * int bang)
   val transpose : 'a mat -> 'a mat * z mat
   (* Level 3 BLAS/LAPACK *)
-  val gemm : float bang -> ('a mat * bool bang) -> ('b mat * bool bang) -> float bang -> z mat -> ('a mat * 'b mat) * z mat
-  val symm : bool bang -> float bang -> 'a mat -> 'b mat -> float bang -> z mat -> ('a mat * 'b mat) * z mat
+  val gemm : float bang -> ('a mat * bool bang) -> ('b mat * bool bang) ->
+             float bang -> z mat -> ('a mat * 'b mat) * z mat
+  val symm : bool bang -> float bang -> 'a mat -> 'b mat -> float bang ->
+             z mat -> ('a mat * 'b mat) * z mat
   val gesv : z mat -> z mat -> z mat * z mat
   val posv : z mat -> z mat -> z mat * z mat
   val potrs : 'a mat -> z mat -> 'a mat * z mat
-  val syrk : bool bang -> float bang -> 'a mat -> float bang -> z mat -> 'a mat * z mat
+  val syrk : bool bang -> float bang -> 'a mat -> float bang -> z mat ->
+           'a mat * z mat
 end

@@ -1,103 +1,4 @@
-\section{Kalman Filters from \lang\ and C}
-
-\begin{figure}[tb]
-    \centering
-    \begin{minted}[fontsize=\footnotesize]{ocaml}
-let kalman sigma h mu r_1 data_1 =
-  let h, _p_k_n_p_ = Prim.size_mat h in
-  let k, n = _p_k_n_p_ in
-  let sigma_h = Prim.matrix k n in
-  let (sigma, h), sigma_h =
-    Prim.symm (Many true) (Many 1.) sigma h (Many 0.) sigma_h
-  in
-  let (sigma_h, h), r_2 =
-    Prim.gemm (Many 1.) (sigma_h, Many false) (h, Many true) (Many 1.) r_1
-  in
-  let (h, mu), data_2 =
-    Prim.gemm (Many 1.) (h, Many false) (mu, Many false) (Many (-1.)) data_1
-  in
-  let h, new_h = Prim.copy_mat_to h sigma_h in
-  let r_2, new_r = Prim.copy_mat r_2 in
-  let chol_r, sol_h = Prim.posv new_r new_h in
-  let chol_r, sol_data = Prim.potrs chol_r data_2 in
-  let () = Prim.free_mat chol_r in
-  let h_sol_h = Prim.matrix n n in
-  let (h, sol_h), h_sol_h =
-    Prim.gemm (Many 1.) (h, Many true) (sol_h, Many false) (Many 0.) h_sol_h
-  in
-  let () = Prim.free_mat sol_h in
-  let h_sol_data = Prim.matrix n (Many 1) in
-  let (h, sol_data), h_sol_data =
-    Prim.gemm (Many 1.) (h, Many true) (sol_data, Many false) (Many 0.) h_sol_data
-  in
-  let mu, mu_copy = Prim.copy_mat mu in
-  let (sigma, h_sol_data), new_mu =
-    Prim.symm (Many false) (Many 1.) sigma h_sol_data (Many 1.) mu_copy
-  in
-  let () = Prim.free_mat h_sol_data in
-  let h_sol_h_sigma = Prim.matrix n n in
-  let (sigma, h_sol_h), h_sol_h_sigma =
-    Prim.symm (Many true) (Many 1.) sigma h_sol_h (Many 0.) h_sol_h_sigma
-  in
-  let sigma, sigma_copy = Prim.copy_mat_to sigma h_sol_h in
-  let (sigma, h_sol_h_sigma), new_sigma =
-    Prim.symm (Many false) (Many (-1.)) sigma h_sol_h_sigma (Many 1.) sigma_copy
-  in
-  let () = Prim.free_mat h_sol_h_sigma in
-  ((sigma, (h, (mu, (r_2, sol_data)))), (new_mu, new_sigma)) )
-in
-kalman
-    \end{minted}
-    \caption{OCaml code for a Kalman filter, generated (at \emph{compile time})
-        from the code in Figure~\ref{fig:lang_kalman}, passed through
-        \texttt{ocamlformat} for presentation.}\label{fig:ocaml_kalman}
-
-\end{figure}
-
-\begin{landscape}
-\begin{figure}[p]
-    \centering
-    \begin{minted}[fontsize=\footnotesize]{c}
-static void kalman( const int n,               const int k,                const double *sigma, /* n,n */
-                    const double *h, /* k,n */ const double *mu, /* n,1 */ double *r,           /* k,k */
-                    double *data,    /* k,1 */ double **ret_mu,  /* k,1 */ double **ret_sigma   /* n,n */ ) {
-        double* k_by_n = (double *) malloc(k * n * sizeof(double));
-/*16*/  cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, k, n, 1., sigma, n, h, n, 0., k_by_n, n);
-/*17*/  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, k, k, n, 1., k_by_n, n, h, n, 1., r, k);
-/*18*/  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, k, 1, n, 1., h, n, mu, 1, -1., data, 1);
-/*19*/  cblas_dcopy(k * n, h, 1, k_by_n, 1);
-        double* k_by_k = (double *) malloc(k * k * sizeof(double));
-/*20*/  cblas_dcopy(k * k, r, 1, k_by_k, 1);
-/*21*/  LAPACKE_dposv(LAPACK_ROW_MAJOR, 'U', k, n, k_by_k, k, k_by_n, n);
-/*23*/  LAPACKE_dpotrs(LAPACK_ROW_MAJOR, 'U', k, 1, k_by_k, k, data, 1);
-        free(k_by_k);
-        double* n_by_n = (double *) malloc(n * n * sizeof(double));
-/*24*/  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, n, n, k, 1., h, n, k_by_n, n, 0., n_by_n, n);
-        free(k_by_n);
-        double* n_by_1 = (double *) malloc(n * sizeof(double));
-/*25*/  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, n, 1, k, 1., h, n, data, 1, 0., n_by_1, 1);
-        double* new_mu = (double *) malloc(n * sizeof(double));
-/*26*/  cblas_dcopy(n, mu, 1, new_mu, 1);
-/*27*/  cblas_dsymm(CblasRowMajor, CblasLeft, CblasUpper, n, 1, 1., sigma, n, n_by_1, 1, 1., new_mu, 1);
-        free(n_by_1);
-        double* n_by_n2 = (double *) malloc(n * n * sizeof(double));
-/*28*/  cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, n, n, 1., sigma, n, n_by_n, n, 0., n_by_n2, n);
-/*29*/  cblas_dcopy(n*n, sigma, 1, n_by_n, 1);
-/*30*/  cblas_dsymm(CblasRowMajor, CblasLeft, CblasUpper, n, n, -1., sigma, n, n_by_n2, n, 1., n_by_n, n);
-        free(n_by_n2);
-        *ret_sigma = n_by_n;
-        *ret_mu = new_mu; }
-    \end{minted}
-    \caption{CBLAS/LAPACKE implementation of a Kalman filter. I used C instead
-        of Fortran because it is what Owl uses under the hood and OCaml FFI
-        support for C is better and easier to use than that for Fortran. A distinct
-        `measure\_kalman' function that sandwiches a call to this function with
-        \texttt{getrusage} is omitted for brevity.}\label{fig:cblas_kalman}
-
-\end{figure}
-\end{landscape}
-
-\section{Specification}
+\section{\lang\ Specification}
 
 \ottstyledefaults{premiselayout=justify}%
 \subsection{Static Semantics}\label{subsec:static_sem}
@@ -112,15 +13,14 @@ static void kalman( const int n,               const int k,                const
 
 \input{../semantics/soundness}
 
-\section{Well-formed types}
+\subsection{Well-formed types}
 \ottdefnsWellXXFormed%
 
-\section{Grammar Definition}
+\section{\lang\ Grammar}\label{sec:grammar_def}
 \ottgrammar%
 
-\section{Desugaring \lang}
+\section{Desugaring \lang}\label{sec:lang_desugar}
 
-\begin{figure}
 \begin{center}
 \[\def\arraystretch{1.3}
     \begin{array}{rcl}
@@ -188,6 +88,164 @@ static void kalman( const int n,               const int k,                const
     \end{array}
 \]
 \end{center}
-\caption{Desugaring from \lang\ concrete syntax to core constructs.}\label{fig:lang_desugar}
-\end{figure}
 
+\clearpage
+\section{Primitives}\label{subsec:primitives}
+
+\vspace*{\fill}
+\begin{center}
+\begin{minted}[fontsize=\small]{ocaml}
+module Arr = Owl.Dense.Ndarray.D
+type z = Z
+type 'a s = Succ
+type 'a arr = A of Arr.arr [@@unboxed]
+type 'a mat = M of Arr.arr [@@unboxed]
+type 'a bang = Many of 'a [@@unboxed]
+module Prim :
+sig
+  val extract : 'a bang -> 'a
+  (** Boolean *)
+  val not_ : bool bang -> bool bang
+  (** Arithmetic, many omitted for brevity *)
+  val addI : int bang -> int bang -> int bang
+  val eqI : int bang -> int bang -> bool bang
+  (** Arrays *)
+  val set : z arr -> int bang -> float bang -> z arr
+  val get : 'a arr -> int bang -> 'a arr * float bang
+  val share : 'a arr -> 'a s arr * 'a s arr
+  val unshare : 'a s arr -> 'a s arr -> 'a arr
+  val free : z arr -> unit
+  (** Owl *)
+  val array : int bang -> z arr
+  val copy : 'a arr -> 'a arr * z arr
+  val sin : z arr -> z arr
+  val hypot : z arr -> 'a arr -> 'a arr * z arr
+  (** Level 1 BLAS *)
+  val asum : 'a arr -> 'a arr * float bang
+  val axpy : float bang -> 'a arr -> z arr -> 'a arr * z arr
+  val dot : 'a arr -> 'b arr -> ('a arr * 'b arr) * float bang
+  val scal : float bang -> z arr -> z arr
+  val amax : 'a arr -> 'a arr * int bang
+  (* Matrix, some omitted for brevity *)
+  val matrix : int bang -> int bang -> z mat
+  val eye : int bang -> z mat
+  val copy_mat : 'a mat -> 'a mat * z mat
+  val copy_mat_to : 'a mat -> z mat -> 'a mat * z mat
+  val size_mat : 'a mat -> 'a mat * (int bang * int bang)
+  val transpose : 'a mat -> 'a mat * z mat
+  (* Level 3 BLAS/LAPACK *)
+  val gemm : float bang -> ('a mat * bool bang) -> ('b mat * bool bang) ->
+             float bang -> z mat -> ('a mat * 'b mat) * z mat
+  val symm : bool bang -> float bang -> 'a mat -> 'b mat -> float bang ->
+             z mat -> ('a mat * 'b mat) * z mat
+  val gesv : z mat -> z mat -> z mat * z mat
+  val posv : z mat -> z mat -> z mat * z mat
+  val potrs : 'a mat -> z mat -> 'a mat * z mat
+  val syrk : bool bang -> float bang -> 'a mat -> float bang -> z mat ->
+           'a mat * z mat
+end
+\end{minted}
+\end{center}
+\vfill
+
+\clearpage
+\section{Kalman Filters from \lang\ and C}
+
+\vspace*{\fill}
+\begin{figure}[h]
+\begin{center}
+    \begin{minted}[fontsize=\footnotesize]{ocaml}
+let kalman sigma h mu r_1 data_1 =
+  let h, _p_k_n_p_ = Prim.size_mat h in
+  let k, n = _p_k_n_p_ in
+  let h_sigma = Prim.matrix k n in
+  let (sigma, h), h_sigma =
+    Prim.symm (Many true) (Many 1.) sigma h (Many 0.) h_sigma
+  in
+  let (h_sigma, h), r_2 =
+    Prim.gemm (Many 1.) (h_sigma, Many false) (h, Many true) (Many 1.) r_1
+  in
+  let (h, mu), data_2 =
+    Prim.gemm (Many 1.) (h, Many false) (mu, Many false) (Many (-1.)) data_1
+  in
+  let h, new_h = Prim.copy_mat_to h h_sigma in
+  let r_2, new_r = Prim.copy_mat r_2 in
+  let chol_r, sol_h = Prim.posv new_r new_h in
+  let chol_r, sol_data = Prim.potrs chol_r data_2 in
+  let () = Prim.free_mat chol_r in
+  let h_sol_h = Prim.matrix n n in
+  let (h, sol_h), h_sol_h =
+    Prim.gemm (Many 1.) (h, Many true) (sol_h, Many false) (Many 0.) h_sol_h
+  in
+  let () = Prim.free_mat sol_h in
+  let h_sol_data = Prim.matrix n (Many 1) in
+  let (h, sol_data), h_sol_data =
+    Prim.gemm (Many 1.) (h, Many true) (sol_data, Many false) (Many 0.) h_sol_data
+  in
+  let mu, mu_copy = Prim.copy_mat mu in
+  let (sigma, h_sol_data), new_mu =
+    Prim.symm (Many false) (Many 1.) sigma h_sol_data (Many 1.) mu_copy
+  in
+  let () = Prim.free_mat h_sol_data in
+  let h_sol_h_sigma = Prim.matrix n n in
+  let (sigma, h_sol_h), h_sol_h_sigma =
+    Prim.symm (Many true) (Many 1.) sigma h_sol_h (Many 0.) h_sol_h_sigma
+  in
+  let sigma, sigma_copy = Prim.copy_mat_to sigma h_sol_h in
+  let (sigma, h_sol_h_sigma), new_sigma =
+    Prim.symm (Many false) (Many (-1.)) sigma h_sol_h_sigma (Many 1.) sigma_copy
+  in
+  let () = Prim.free_mat h_sol_h_sigma in
+  ((sigma, (h, (mu, (r_2, sol_data)))), (new_mu, new_sigma)) )
+in
+kalman
+    \end{minted}
+    \caption{OCaml code for a Kalman filter, generated (at \emph{compile time})
+        from the code in Figure~\ref{fig:lang_kalman}, passed through
+        \texttt{ocamlformat} for presentation.}\label{fig:ocaml_kalman}
+\end{center}
+\end{figure}
+\vfill
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \begin{minted}[fontsize=\footnotesize]{c}
+static void kalman( const int n,               const int k,                const double *sigma, /* n,n */
+                    const double *h, /* k,n */ const double *mu, /* n,1 */ double *r,           /* k,k */
+                    double *data,    /* k,1 */ double **ret_mu,  /* k,1 */ double **ret_sigma   /* n,n */ ) {
+        double* k_by_n = (double *) malloc(k * n * sizeof(double));
+/*16*/  cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, k, n, 1., sigma, n, h, n, 0., k_by_n, n);
+/*17*/  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, k, k, n, 1., k_by_n, n, h, n, 1., r, k);
+/*18*/  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, k, 1, n, 1., h, n, mu, 1, -1., data, 1);
+/*19*/  cblas_dcopy(k * n, h, 1, k_by_n, 1);
+        double* k_by_k = (double *) malloc(k * k * sizeof(double));
+/*20*/  cblas_dcopy(k * k, r, 1, k_by_k, 1);
+/*21*/  LAPACKE_dposv(LAPACK_ROW_MAJOR, 'U', k, n, k_by_k, k, k_by_n, n);
+/*23*/  LAPACKE_dpotrs(LAPACK_ROW_MAJOR, 'U', k, 1, k_by_k, k, data, 1);
+        free(k_by_k);
+        double* n_by_n = (double *) malloc(n * n * sizeof(double));
+/*24*/  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, n, n, k, 1., h, n, k_by_n, n, 0., n_by_n, n);
+        free(k_by_n);
+        double* n_by_1 = (double *) malloc(n * sizeof(double));
+/*25*/  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, n, 1, k, 1., h, n, data, 1, 0., n_by_1, 1);
+        double* new_mu = (double *) malloc(n * sizeof(double));
+/*26*/  cblas_dcopy(n, mu, 1, new_mu, 1);
+/*27*/  cblas_dsymm(CblasRowMajor, CblasLeft, CblasUpper, n, 1, 1., sigma, n, n_by_1, 1, 1., new_mu, 1);
+        free(n_by_1);
+        double* n_by_n2 = (double *) malloc(n * n * sizeof(double));
+/*28*/  cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, n, n, 1., sigma, n, n_by_n, n, 0., n_by_n2, n);
+/*29*/  cblas_dcopy(n*n, sigma, 1, n_by_n, 1);
+/*30*/  cblas_dsymm(CblasRowMajor, CblasLeft, CblasUpper, n, n, -1., sigma, n, n_by_n2, n, 1., n_by_n, n);
+        free(n_by_n2);
+        *ret_sigma = n_by_n;
+        *ret_mu = new_mu; }
+    \end{minted}
+    \caption{CBLAS/LAPACKE implementation of a Kalman filter. I used C instead
+        of Fortran because it is what Owl uses under the hood and OCaml FFI
+        support for C is better and easier to use than that for Fortran. A distinct
+        `measure\_kalman' function that sandwiches a call to this function with
+        \texttt{getrusage} is omitted for brevity.}\label{fig:cblas_kalman}
+
+\end{figure}
+\end{landscape}

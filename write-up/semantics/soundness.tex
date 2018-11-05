@@ -75,7 +75,7 @@
             $(\varsigma_e, \theta(\delta(\gamma(e)))) \in \C{k}{\theta(t)}$.}
 
         \step{}{By definition of $\C{k}{\cdot}$ and \pfref{split}, we
-            instantiate with $j$ and $\sigma_r = \sigma_{e'}$ to conclude that
+            instantiate with $j$ and $\sigma_r = \sigma_{e'}$ to conclude that \\
             $\langle \theta(\sigma) , \theta(\delta(\gamma(e))) \rangle$ either takes $j$
             steps to $\ottkw{err}$ or another heap-and-expression $\langle
             \sigma_f, e_f \rangle$.}
@@ -438,10 +438,10 @@
 
     \begin{proof}
 
-        \step{}{By induction, $\forall k.\ \den{}{k}{\Theta, fc; \Delta; \Gamma
+        \step{}{By induction, $\forall k.\ \den{}{k}{\Theta, f\!c; \Delta; \Gamma
             \vdash e : t}$.}
 
-        \step{}{\pflet{ $f$ be arbitrary; $\theta' \equiv \theta[fc \mapsto f]$.}
+        \step{}{\pflet{ $f$ be arbitrary; $\theta' \equiv \theta[f\!c \mapsto f]$.}
             Instantiate induction hypothesis with $k-1, \theta', \delta, \gamma, \sigma$,
             \\ to conclude $(\varsigma, \theta'(\gamma(\delta(e)))) \in \C{k-1}{\theta'(t)}$
             (for all $f$, by \ref{fracPermSub}).}
@@ -453,10 +453,10 @@
 
         \step{}{\case{$j$ steps to $\ottkw{err}$.}{By
             \textsc{Op\_Context\_Err}, whole expression reduces to
-            $\ottkw{err}$ in $j < k-1$ steps (for $f=fc$).}}
+            $\ottkw{err}$ in $j < k-1$ steps (for $f=f\!c$).}}
 
         \step{}{\case{$j$ steps to another heap-and-expression.} If it is not a
-            value, then for $f=fc$, \textsc{Op\_Context} runs $j$ times and we
+            value, then for $f=f\!c$, \textsc{Op\_Context} runs $j$ times and we
             are done.}
 
         % i <= j < k
@@ -471,12 +471,12 @@
 
         \step{}{So, \textsc{Op\_Context} runs $i_e$ times, and then we have the
             following.  \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma', \ottkw{fun}
-            fc \rightarrow e' ) \in \V{k-i_e}{\theta(\forall fc.\ t)}$ (for $f=fc$).}}
+            f\!c \rightarrow e' ) \in \V{k-i_e}{\theta(\forall f\!c.\ t)}$ (for $f=f\!c$).}}
 
-        \step{}{\assume{Arbitrary $f'$.} \suffices{$(\varsigma', e' [fc / f'] )
-            \in \V{k-1-i_e}{\theta(t)[fc/f']}$ (for $f=fc$).}}
+        \step{}{\assume{Arbitrary $f'$.} \suffices{$(\varsigma', e' [f\!c / f'] )
+            \in \V{k-1-i_e}{\theta(t)[f\!c/f']}$ (for $f=f\!c$).}}
 
-        \step{}{This is true by instantiate \pfref{valueAllF} with $f=f'$.}
+        \step{}{This is true by instantiating \pfref{valueAllF} with $f=f'$.}
 
     \end{proof}
 
@@ -490,10 +490,10 @@
     \begin{proof}
 
         \step{}{By induction, $\forall k.\ \den{}{k}{\Theta; \Delta; \Gamma
-            \vdash e : \forall fc.\ t }$.}
+            \vdash e : \forall f\!c.\ t }$.}
 
         \step{}{Instantiate with $k, \theta, \delta, \gamma, \sigma$ to conclude
-            $(\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{\theta(\forall fc.\ t})$.}
+            $(\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{\theta(\forall f\!c.\ t})$.}
 
         \step{}{Instantiate \emph{this} with $j$ and $\empH$ and to conclude
             $\langle \theta(\sigma), \theta(\delta(\gamma(e))) \rangle$ \\
@@ -512,15 +512,15 @@
         % _{k-i} <_ k - j
 
         \step{}{If it is, then $\exists i_e \leq j.\  (\varsigma_f, e_f) \in
-            \V{k-i_e}{\theta(\forall fc. t)} \subseteq \V{k-j}{\ldots}$ by
+            \V{k-i_e}{\theta(\forall f\!c. t)} \subseteq \V{k-j}{\ldots}$ by
             \ref{valueSub} and \ref{subsetKJ}.\\
-            So $e_f \equiv \ottkw{fun} fc \rightarrow v$ for some $v$.}\pflabel{valueAllF2}
+            So $e_f \equiv \ottkw{fun} f\!c \rightarrow v$ for some $v$.}\pflabel{valueAllF2}
 
         \step{}{So, \textsc{Op\_Context} runs $i_e$ times, and then we have the following.
             \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma_f,
-            (\ottkw{fun} fc \rightarrow v)\, [f] ) \in \C{k-i_e}{\theta(t[fc/f])}$.}
-            \suffices{By \ref{stepInC} once more, $(\varsigma_f, v [fc / f]) \in
-            \C{k-i_e-1}{\theta(t[fc/f])}$.}}
+            (\ottkw{fun} f\!c \rightarrow v)\, [f] ) \in \C{k-i_e}{\theta(t[f\!c/f])}$.}
+            \suffices{By \ref{stepInC} once more, $(\varsigma_f, v [f\!c / f]) \in
+            \C{k-i_e-1}{\theta(t[f\!c/f])}$.}}
 
         \step{}{This is true by instantiating \pfref{valueAllF2} with $f$ and \ref{subsetVC}.}
 

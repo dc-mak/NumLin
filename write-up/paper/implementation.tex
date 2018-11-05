@@ -26,7 +26,7 @@ and a test suite are included in the artifacts accompanying this paper.
         checker to be simpler to specify and easier to implement.
 
     \item \textbf{Matrix Expressions} are also desugared into the abstract
-        syntax tree through some simple pattern-matching.
+        syntax tree through pattern-matching.
 
     \item \textbf{Type checking}. The abstract syntax tree is explicitly typed,
         with some inference to make writing typical programs more convenient.
@@ -34,7 +34,7 @@ and a test suite are included in the artifacts accompanying this paper.
     \item \textbf{Code Generation}. The abstract syntax tree is translated into
         OCaml, with a few `optimisations' to produce more readable code. This
         process is type-preserving: \lang's type system is embedded into
-        OCaml's (Figure~\ref{fig:type_grammar}), and so the OCaml type checker
+        OCaml's (Figure~\ref{fig:type_grammar}), so the OCaml type checker
         acts as a sanity check on the generated code.
 
 \end{enumerate}
@@ -47,18 +47,24 @@ benchmarking program and test-suite use code written in \lang.
 
 \subsubsection{Desugaring, Matrix Expressions and Type Checking}\label{subsubsec:initial}
 
-Desugaring is conventional, outlined in Figure~\ref{fig:lang_desugar}.  Matrix
+Desugaring is conventional, outlined in Appendix~\ref{sec:lang_desugar}.  Matrix
 expression are translated into BLAS/ LAPACK calls via purely syntactic
 pattern-matching, outlined in Figure~\ref{fig:lang_matexp}.
 
 \subsubsection{Type checking} is mostly standard for a linearly typed language,
-with the exception of fractional permission inference. Because all functions
-must have their argument types explicitly annotated, inferring the correct
-fraction at a call-site is simply a matter of unification. We strongly suspect
-that \emph{full-inference of fractional permissions is similarly just matter of
-unification} (thanks to an experimental implementation of just this feature),
-even though the formal system we present here is for an explicitly-typed
-language.
+with the exception of fractional permission inference. By restricting fractions
+to be non-positive integer powers of two, we only need to keep track of the
+logarithm of the fractions used. Explicit sharing and unsharing removes the
+need for performing dataflow analysis. As a result, all fractional arithmetic
+can be solved with unification, and in doing so, fractions become directly
+usable in \lang's type-system as opposed to a convenient theoretical tool.
+
+Because all functions must have their argument types explicitly annotated,
+inferring the correct fraction at a call-site is simply a matter of
+unification. We strongly suspect that \emph{full-inference of fractional
+permissions is similarly just matter of unification} (thanks to an
+experimental implementation of just this feature), even though the formal
+system we present here is for an explicitly-typed language.
 
 There are a few differences between the type system as presented in
 \ref{subsec:semantics} and how we implemented it: the environment
@@ -68,8 +74,6 @@ checking pairs); variables are \emph{marked as used} rather than removed for
 better error messages; variables are \emph{tagged} as linear or intuitionistic
 in \emph{one} environment as opposed to being stored in \emph{two} separate
 ones (this allows scoping/variable look-up to be handled uniformly).
-
-\textsc{What more can/should we say here?}
 
 \begin{figure}[t]
 \begin{center}
@@ -247,7 +251,7 @@ Figure~\ref{fig:ocaml_kalman}.
         \highl{let rec f x = <exp> in <body>}
     \end{tabular}
 \end{center}
-\caption{Removing redundant re-bindings during tranlation to OCaml.}\label{fig:lang_optimise}
+\caption{Removing redundant re-bindings during translation to OCaml.}\label{fig:lang_optimise}
 \end{figure}
 
 \begin{figure}[tp]

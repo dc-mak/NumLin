@@ -122,7 +122,6 @@
 \ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, \ottnt{v}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}}{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
-\ottprodline{|}{\ottnt{v}  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. perm. specialisation}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{v}  \ottsym{,}  \ottnt{v'}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}}{}{\textsf{bind}\; \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{abstraction}}\ottprodnewline
 \ottprodline{|}{\ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}}{}{\textsf{bind}\; \mathit{g} \cup  \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{fixpoint}}\ottprodnewline
@@ -599,6 +598,14 @@
 }}
 
 
+\newcommand{\ottdruleOpXXMatrixXXNeg}[1]{\ottdrule[#1]{%
+\ottpremise{ \mathit{k_{{\mathrm{1}}}}  <  \ottsym{0}  \textrm{ or }  \mathit{k_{{\mathrm{2}}}}  <  \ottsym{0} }%
+}{
+\langle  \sigma  \ottsym{,}  \ottkw{matrix} \, \mathit{k_{{\mathrm{1}}}} \, \mathit{k_{{\mathrm{2}}}}  \rangle  \rightarrow  \textbf{err}}{%
+{\ottdrulename{Op\_Matrix\_Neg}}{}%
+}}
+
+
 \newcommand{\ottdruleOpXXFree}[1]{\ottdrule[#1]{%
 }{
 \langle   \sigma   +  \{  \mathit{l}   \mapsto _  1    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{free} \, \mathit{l}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottsym{(}  \ottsym{)}  \rangle}{%
@@ -646,7 +653,7 @@
 {\ottdrulename{Op\_Gemm\_Mismatch}}{}%
 }}
 
-\newcommand{\ottdefnOpXXOpXX}[1]{\begin{ottdefnblock}[#1]{$\langle  \sigma  \ottsym{,}  \ottnt{e}  \rangle  \rightarrow  \ottnt{Config}$}{\ottcom{operational semantics}}
+\newcommand{\ottdefnOpXXOpXX}[1]{\begin{ottdefnblock}[#1]{$\langle  \sigma  \ottsym{,}  \ottnt{e}  \rangle  \rightarrow  \ottnt{Config}$}{\ottcom{Operational semantics}}
 \ottusedrule{\ottdruleOpXXLetXXUnit{}}
 \ottusedrule{\ottdruleOpXXLetXXVar{}}
 \ottusedrule{\ottdruleOpXXIfXXTrue{}}
@@ -659,6 +666,7 @@
 \ottusedrule{\ottdruleOpXXContext{}}
 \ottusedrule{\ottdruleOpXXContextXXErr{}}
 \ottusedrule{\ottdruleOpXXMatrix{}}
+\ottusedrule{\ottdruleOpXXMatrixXXNeg{}}
 \ottusedrule{\ottdruleOpXXFree{}}
 \ottusedrule{\ottdruleOpXXShare{}}
 \ottusedrule{\ottdruleOpXXUnshareXXEq{}}

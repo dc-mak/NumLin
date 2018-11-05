@@ -10,10 +10,11 @@ generated} from SymPy's matrix expression compiler~\cite{rocklin_thesis}.
 
 Once we translated the implementation from Fortran to \lang, we attempted to
 compile it and found that (to our surprise) it did not type-check. This was
-because the original implementation contained incorrect aliasing, unused and
-unnecessary temporaries, and did not adhere to Fortran's read/write permissions
-(with respect to \texttt{intent} annotations \texttt{in}, \texttt{out} and
-\texttt{inout}) all of which were now highlighted by \lang's type system.
+because the original implementation contained incorrect aliasing, unused
+variables and unnecessary temporaries, and did not adhere to Fortran's
+read/write permissions (with respect to \texttt{intent} annotations
+\texttt{in}, \texttt{out} and \texttt{inout}) all of which were now highlighted
+by \lang's type system.
 
 The original implementation used 6 temporaries, one of which was immediately
 spotted as never being used due to linearity. It also contained two variables

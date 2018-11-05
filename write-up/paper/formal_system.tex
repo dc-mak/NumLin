@@ -219,7 +219,7 @@ $k$ steps) satisfies all the aforementioned properties.
 
 The interpretation of typing environments $\Delta$ and $\Gamma$ are with
 respect to an arbitrary substitution of fractional permissions $\theta$. Note
-that only the interpretation of $\Gamma$ involves a non-empty heap.
+that only the interpretation of $\Gamma$ involves a (potentially) non-empty heap.
 \begin{align*}
     \den{I}{k}{ \Delta, x : t } \theta &= \{ \delta[x \mapsto v_x ] \mid \delta \in \den{I}{k}{\Delta}\theta \wedge (\empH, v_x) \in \V{k}{\theta(t)} \} \\
     \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\varsigma \star \varsigma_x, \gamma[x \mapsto v_x ]) \mid (\varsigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\varsigma_x, v_x) \in \V{k}{\theta(t)} \}
@@ -242,10 +242,53 @@ $\delta$ and heaps $\sigma$.  Note that, $\varsigma \equiv \den{H}{}{\theta(\sig
 \]
 
 To prove the above theorem, we need several lemmas; the interesting ones are:
-\ref{frame} (a proof of the frame rule), \ref{subsetKJ} (monotonicity for the
-step-index), \ref{restriction} (splitting up environments corresponds to
-splitting up heaps) and \ref{fracPermSub} (a heap-and-expression take the same
-steps of evaluation under any substitution of their free fractional
-permissions).
+the moral equivalent of the frame rule (\ref{frame}), monotonicity for the
+step-index (\ref{subsetKJ}), splitting up environments corresponds to splitting
+up heaps (\ref{restriction}) and heap-and-expressions take the same steps of
+evaluation under any substitution of their free fractional permissions
+(\ref{fracPermSub}).
 
-The proof proceeds by induction on the typing judgement.
+The proof proceeds by induction on the typing judgement.  The case for
+\textsc{Ty\_Fix} is the reason we quantify over the step-index $k$ in the
+\emph{conclusion} of the soundness theorem. It allows us to then induct over
+the step-index and assume exactly the thing we need to prove at a smaller index.
+
+The case for \textsc{Ty\_Gen} follows a similar pattern, but has the extra
+complication of reducing an expression with an arbitrary fractional permission
+variable in it, and then instantiating it at the last momemnt to conclude,
+which is where \ref{fracPermSub} (heap-and-expressions take the same steps of
+evaluation under any substitution of their free fractional permissions) is
+used.
+
+The rest of the cases are either very simple base cases (variables, unit,
+boolean, integer or element literals) or follow very similar patterns; for
+these, only \textsc{Ty\_Let} is presented in full and other similar cases
+simply highlight exactly what would be different.  The general idea is to split
+up the linear substitution and heap along the same split of $\Gamma/\Gamma'$,
+then (by induction) use $\C{k}{-}$ and one `half' of the  linear substitution
+and heap to conclude the `first' sub-expression either takes $j< k$ steps to
+$\ottkw{err}$ or another heap-and-expression.
+
+In the first case, you use \textsc{Op\_Context\_Err} to conclude the whole
+let-expression does the same. Similarly we use \textsc{Op\_Context} $j$ times
+in the second case. However, a small book-keeping wrinkle needs to be taken
+care of in the case that the heap-and-expression turns into a value in $i \leq
+j$ steps: \textsc{Op\_Context} is not functorial for the n-fold iteration of
+$\rightarrow$.  Basically, the following is not quite true:
+\[
+\ottdrule{%
+    \ottpremise{\langle  \sigma  \ottsym{,}  \ottnt{e}  \rangle  \rightarrow^j  \langle  \sigma'  \ottsym{,}  \ottnt{e'}  \rangle}%
+    }{
+    \langle  \sigma  \ottsym{,}  \ottnt{C}  \ottsym{[}  \ottnt{e}  \ottsym{]}  \rangle  \rightarrow^j  \langle  \sigma'  \ottsym{,}  \ottnt{C}  \ottsym{[}  \ottnt{e'}  \ottsym{]}  \rangle}{%
+    {\ottdrulename{Op\_Context}}{}%
+}
+\]
+because after the $i$ steps, we need to invoke \textsc{Op\_Let\_Var} to proceed
+evalution for any remaining $j-i$ steps. After that, it suffices to use the
+induction hypothesis on the second sub-expression to finish the proof.  To do
+so, we need to construct a valid linear substitution and heap (i.e., one in
+$\den{L}{k}{\Gamma', x : t}\theta$). We take the other `half' of the linear
+substitution and heap (from the inital split at the start) and extend it with
+$[x \mapsto v]$, (where $x$ is the variable bound in the let-expression and $v$
+is the value we assume the first sub-expression evaluated to in $i$ steps).
+

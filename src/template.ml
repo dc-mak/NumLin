@@ -21,7 +21,7 @@ type 'a s =
     Succ
 ;;
 
-type 'a arr = 
+type 'a arr =
     A of Arr.arr
 [@@ocaml.unboxed]
 ;;
@@ -99,7 +99,7 @@ struct
   ;;
 
   (* Array operations *)
-  let set (A arr : z arr) (Many i) (Many v) = 
+  let set (A arr : z arr) (Many i) (Many v) =
     Arr.set arr [|i|] v;
     A arr
   ;;
@@ -167,7 +167,7 @@ struct
     (A read, A write)
   ;;
 
-  let dot (type a b) (A fst : a arr) (A snd : b arr) = 
+  let dot (type a b) (A fst : a arr) (A snd : b arr) =
     let n = same_dim_exn fst snd in
     let result = Cblas.dot n (conv fst) 1 (conv snd) 1 in
     ((A fst, A snd), Many result)
@@ -200,7 +200,7 @@ struct
     (M mat, Many (Arr.get mat [| i ; j |]))
   ;;
 
-  let set_mat (M mat : z mat) (Many i) (Many j) (Many v)  : z mat = 
+  let set_mat (M mat : z mat) (Many i) (Many j) (Many v)  : z mat =
     Arr.set mat [| i ; j |] v;
     M mat
   ;;
@@ -305,6 +305,16 @@ struct
     (M a, M b)
   ;;
 
+  let check_ret ret =
+    if ret = 0 then () else
+      let msg =
+        if ret < 0 then
+          Printf.sprintf "posv_flip: parameter %d illegal value" (-ret)
+        else
+          Printf.sprintf "posv_flip: leading minor order %d not pos. def." ret in
+      raise @@ Invalid_argument msg
+  ;;
+
   (* Compute X = B A^-1 using A'X' = B' / X = (A'^-1 B')'
      But make it so transposing is just a Row/Column order flipping *)
   let posv_flip (M a : z mat) (M b : z mat) =
@@ -317,12 +327,7 @@ struct
     let conv = Ctypes.bigarray_start  Ctypes_static.Genarray in
     let ret = Owl_lapacke_generated.dposv ~layout ~uplo:'U'
                     ~n ~nrhs ~a:(conv a) ~lda ~b:(conv b) ~ldb in
-    let () =
-      if ret < 0 then
-        raise @@ Invalid_argument (Printf.sprintf "posv_flip: parameter %d illegal value" (-ret))
-      else if ret > 0 then
-        raise @@ Invalid_argument (Printf.sprintf "posv_flip: leading minor order %d not pos. def." ret)
-    in
+    check_ret ret;
     (M a, M b)
   ;;
 

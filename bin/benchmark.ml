@@ -1,6 +1,3 @@
-open Owl
-;;
-
 open Base
 ;;
 
@@ -55,11 +52,12 @@ let run_with_params ~analyse ~start ~limit ~tests ~micro_quota ~macro_runs =
 let alg =
   Core.Command.Arg_type.create
     (function
+      | "none" -> []
       | "owl" ->  [F.W Owl]
       | "lt4la" -> [F.W LT4LA]
       | "cblas" -> [F.W CBLAS]
+      | "numpy" -> [F.W NumPy]
       | "all" -> F.all
-      | "none" -> []
       | x ->
         Stdio.eprintf "'%s' not a supported implementation" x;
         Caml.exit 1)

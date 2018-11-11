@@ -4,6 +4,79 @@ open Base
 open Lt4la.Template
 ;;
 
+let owl_kalman ~sigma ~h ~mu ~r ~data =
+  let open Owl.Mat in
+  let ( * ) = dot in
+  let h' = transpose h in
+  let sigma_h' = sigma * h' in
+  let x = sigma_h' * (inv @@ r + h * sigma_h') in
+  let new_mu = mu + x * (h * mu - data) in
+  let new_sigma = sigma - x * h * sigma in
+  new_sigma, new_mu
+;;
+
+let numpy_kalman, numpy_measure =
+  let () = Py.initialize ~version:3 () in
+  let () = Stdio.(Out_channel.with_file "kalman.py" ~f:(fun chan ->
+    Out_channel.output_string chan "
+import gc
+import resource
+import numpy as np
+from numpy.linalg import inv
+
+def kalman(sigma, h, mu, r, data):
+    sigma_hT = np.dot(sigma, h.T)
+    x = np.dot(sigma_hT, inv(r + np.dot(h, sigma_hT)))
+    new_mu = mu + np.dot(x, np.dot(h, mu) - data)
+    new_sigma = sigma - np.dot(np.dot(x,h), sigma)
+    return (new_sigma, new_mu)
+
+def measure(sigma, h, mu, r, data):
+    gc.collect()
+    start = resource.getrusage(resource.RUSAGE_SELF).ru_utime
+    (new_sigma, new_mu) = kalman(sigma, h, mu, r, data)
+    end = resource.getrusage(resource.RUSAGE_SELF).ru_utime
+    return ((end - start) * 1000000.0)
+")) in
+  let kalman = Py.import "kalman" in
+  let measure = Py.Module.get_function kalman "measure" in
+  let kalman = Py.Module.get_function kalman "kalman" in
+  kalman, measure
+;;
+
+let numpy_kalman ~sigma ~h ~mu ~r ~data =
+  let [| new_sigma; new_mu |] =
+    [| sigma; h; mu; r; data |]
+    |> Array.map ~f:Numpy.of_bigarray
+    |> numpy_kalman
+    |> Py.Tuple.to_array
+    |> Array.map ~f:(Numpy.to_bigarray Bigarray.float64 Bigarray.c_layout)
+  [@@ocaml.warning "-8" (* inexhaustive pattern match *) ] in
+  (new_sigma, new_mu)
+;;
+
+let numpy_measure ~sigma ~h ~mu ~r ~data =
+  [| sigma; h; mu; r; data |]
+  |> Array.map ~f:Numpy.of_bigarray
+  |> numpy_measure
+  |> Py.Float.to_float
+;;
+
+let lt4la_kalman ~sigma ~h ~mu ~r ~data =
+  Examples.Kalman.it (M sigma) (M h) (M mu) (M r) (M data)
+;;
+
+let cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data =
+  let open Kalman_c_ffi.Bind.C in
+  let module Bind = Kalman_c_ffi.Bind in
+  let gen, f64 = Ctypes_static.Genarray, Bigarray.float64 in
+  let f x = bigarray_start gen x [@@ocaml.inline] in
+  let new_sigma = Bind.result n k (f sigma) (f h) (f mu) (f r) (f data) in
+  let new_sigma = bigarray_of_ptr gen [| n; n |]  f64 new_sigma in
+  new_sigma
+;;
+
+(* Test set-up *)
 let n, k =
   5, 3
 ;;
@@ -75,31 +148,6 @@ let reset () =
   ]
 ;;
 
-let owl_kalman ~sigma ~h ~mu ~r ~data =
-  let open Owl.Mat in
-  let ( * ) = dot in
-  let h' = transpose h in
-  let sigma_h' = sigma * h' in
-  let x = sigma_h' * (inv @@ r + h * sigma_h') in
-  let new_mu = mu + x * (h * mu - data) in
-  let new_sigma = sigma - x * h * sigma in
-  new_sigma, new_mu
-;;
-
-let lt4la_kalman ~sigma ~h ~mu ~r ~data =
-  Examples.Kalman.it (M sigma) (M h) (M mu) (M r) (M data)
-;;
-
-let cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data =
-  let open Kalman_c_ffi.Bind.C in
-  let module Bind = Kalman_c_ffi.Bind in
-  let gen, f64 = Ctypes_static.Genarray, Bigarray.float64 in
-  let f x = bigarray_start gen x [@@ocaml.inline] in
-let new_sigma = Bind.result n k (f sigma) (f h) (f mu) (f r) (f data) in
-let new_sigma = bigarray_of_ptr gen [| n; n |]  f64 new_sigma in
-new_sigma
-;;
-
 let%expect_test "Kalman" =
 
   let same x = if x then "same" else " NOT" in
@@ -116,6 +164,13 @@ let%expect_test "Kalman" =
     reset ();
     owl_kalman ~sigma ~h ~mu ~r ~data in
 
+  let numpy_sigma, numpy_mu =
+    reset ();
+    numpy_kalman ~sigma ~h ~mu ~r ~data in
+
+  let () = Owl.Mat.(Stdio.printf !"NumPy - sigma? %{same} | h? %{same}\n"
+                      (sigma = sigma_copy) (h = h_copy)) in
+
   let cblas_sigma, cblas_mu =
     reset ();
     let cblas_sigma = cblas_kalman ~n ~k ~sigma ~h ~mu ~r ~data in
@@ -124,6 +179,7 @@ let%expect_test "Kalman" =
                       (sigma = sigma_copy) (h = h_copy)) in
 
   let results = [
+    ("NumPy", numpy_mu, numpy_sigma);
     ("Owl", owl_mu, owl_sigma);
     ("LT4LA", lt4la_mu, lt4la_sigma);
     ("CBLAS", cblas_mu, cblas_sigma);
@@ -143,10 +199,14 @@ let%expect_test "Kalman" =
 
   [%expect {|
     LT4LA - sigma? same | h? same
+    NumPy - sigma? same | h? same
     CBLAS - sigma? same | h? same
     CBLAS and LT4LA: Mu (same) Sigma (same)
     CBLAS and   Owl: Mu (same) Sigma (same)
+    CBLAS and NumPy: Mu (same) Sigma (same)
     LT4LA and   Owl: Mu (same) Sigma (same)
+    LT4LA and NumPy: Mu (same) Sigma (same)
+      Owl and NumPy: Mu (same) Sigma (same)
 
        0.541272 -0.00852694    0.133997   0.234808   0.0897324
     -0.00852694     0.17944  -0.0357339  0.0665866    0.078525

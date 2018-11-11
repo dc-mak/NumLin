@@ -18,14 +18,14 @@ type lt4la =
            (l_z l_mat * (l_z l_mat * (l_z l_mat * l_z l_mat)))) }
 ;;
 
+type 'a numpy =
+  sigma:o_mat -> h:o_mat -> mu:o_mat -> r:o_mat -> data:o_mat -> 'a
+;;
+
 type _ t =
-  | Owl : (sigma:o_mat -> h:o_mat -> mu:o_mat ->
-           r:o_mat -> data:o_mat ->
-           (o_mat * o_mat)) t
-  | CBLAS :
-      (n:int -> k:int ->
-       sigma:o_mat -> h:o_mat -> mu:o_mat ->
-       r:o_mat -> data:o_mat -> float) t
+  | NumPy : (float numpy * (o_mat * o_mat) numpy) t
+  | Owl : (sigma:o_mat -> h:o_mat -> mu:o_mat -> r:o_mat -> data:o_mat -> (o_mat * o_mat)) t
+  | CBLAS : (n:int -> k:int -> sigma:o_mat -> h:o_mat -> mu:o_mat -> r:o_mat -> data:o_mat -> float) t
   | LT4LA : lt4la t
 ;;
 
@@ -36,6 +36,7 @@ type wrap =
 
 (* t to benchmark *)
 let get : type a . a t -> a = function
+  | NumPy -> Test.(numpy_measure, numpy_kalman)
   | Owl -> Test.owl_kalman
   | LT4LA -> { f = Test.lt4la_kalman }
   | CBLAS ->
@@ -46,13 +47,13 @@ let get : type a . a t -> a = function
 ;;
 
 let name : wrap -> string = function
+  | W NumPy -> "NumPy"
   | W Owl -> "Owl"
   | W LT4LA -> "LT4LA"
   | W CBLAS -> "CBLAS"
 ;;
 
-
 let all =
-  [W CBLAS; W LT4LA; W Owl]
+  [W CBLAS; W LT4LA; W Owl; W NumPy]
 ;;
 

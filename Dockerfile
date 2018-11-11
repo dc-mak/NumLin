@@ -17,7 +17,11 @@ RUN sudo apt-get update        \
         libplplot-dev   \
         libopenblas-dev \
         liblapacke-dev  \
-        libpcre3-dev    # LT4LA
+        # LT4LA         \
+        libpcre3-dev    \
+        python3         \
+        python3-pip     \
+   && sudo pip3 install numpy
 
 # Permissions - recursive takes waaaay too long
 RUN chown opam:opam $HOME $HOME/*
@@ -60,6 +64,7 @@ RUN opam install -y           \
         ppx_jane              \
         ppx_traverse          \
         ppx_traverse_builtins \
+        pyml                  \
     && opam env
 
 # Environment variables

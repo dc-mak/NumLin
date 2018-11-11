@@ -73,8 +73,16 @@ let get_micro ~n ~k { sigma; h; mu; r; data } (F.W fun_) =
   let open Core_bench.Bench in
   match fun_ with
 
+  | F.NumPy ->
+    (* Not super valid because of marshalling overhead *)
+    (* For consistency with others *)
+    let f = snd f in
+    Test.create ~name (fun () ->
+      let mu, r, data = Mat.copy mu, Mat.copy r, Mat.copy data in
+      f ~sigma ~h ~mu ~r ~data)
+
   | F.Owl ->
-    (* For consitency with others *)
+    (* For consistency with others *)
     Test.create ~name (fun () ->
       let mu, r, data = Mat.copy mu, Mat.copy r, Mat.copy data in
       f ~sigma ~h ~mu ~r ~data)
@@ -92,11 +100,11 @@ let get_micro ~n ~k { sigma; h; mu; r; data } (F.W fun_) =
     (* Adds overhead because of copying during test but oh well *)
     Test.create ~name (fun () ->
       let mu, r, data = Mat.copy mu, Mat.copy r, Mat.copy data in
-      f ~sigma ~h ~mu ~r ~data)
+      f ~n ~k ~sigma ~h ~mu ~r ~data)
 ;;
 
 let micro_exn ~sec ~n ~k input tests =
-  assert (n >= 1 && k >= 1 && sec >= 1);
+  assert (n >= 1 && sec >= 1);
   let open Core_bench.Bench in
   (* Trying to emulate options: -ci-absolute -quota 10 -clear-columns +time samples speedup *)
   let run_config =
@@ -135,14 +143,14 @@ let micro_exn ~sec ~n ~k input tests =
 ;;
 
 (* Step 3: big matrices *)
-let macro ~f ~runs { sigma; h; mu; r; data } =
+let macro ~f ?(clean=(fun () -> ())) ~runs { sigma; h; mu; r; data } =
   assert (runs >= 1);
   Array.init runs ~f:(fun _ ->
-    let f = f `init in
     let () = Caml.Gc.full_major () in
     let {Unix.tms_utime=start;_} = Unix.times () in
     let _  = f ~sigma ~h ~mu ~r ~data in
     let {Unix.tms_utime=end_;_} = Unix.times () in
+    let () = clean () in
     Time.Span.(of_sec end_ - of_sec start)
   )
 ;;
@@ -150,29 +158,42 @@ let macro ~f ~runs { sigma; h; mu; r; data } =
 let get_macro ~n ~k ~runs input (F.W fun_) =
   let f = F.get fun_ in
   match fun_ with
+
+  | F.NumPy ->
+    let { sigma; h; mu; r; data } = input in
+    let f = fst f in
+    Array.init runs ~f:(fun _ ->
+      Time.Span.of_us @@ f ~sigma ~h ~mu ~r ~data)
+
   | F.Owl ->
-    macro ~f:(fun `init -> f) ~runs input
+    macro ~f ~runs input
 
   | F.LT4LA ->
-    let mu' = Owl.Mat.copy input.mu
-    and r' = Owl.Mat.copy input.r
-    and data' = Owl.Mat.copy input.data in
+    let { sigma=_; h=_; mu; r; data } = input in
+    let mu' = Owl.Mat.copy mu
+    and r' = Owl.Mat.copy r
+    and data' = Owl.Mat.copy data in
     (* [mu], [r] and [data] are overrwritten *)
-    macro input ~runs ~f:(fun `init ->
-      let { sigma; h; mu; r; data } = input in
+    let clean () =
       Owl.Mat.copy_ mu' ~out:mu;
       Owl.Mat.copy_ r' ~out:r;
-      Owl.Mat.copy_ data' ~out:data;
-      f.f
-    )
+      Owl.Mat.copy_ data' ~out:data; in
+    macro input ~runs ~f:f.f ~clean
 
   | F.CBLAS ->
     (* Not super valid because of marshalling overhead *)
-    (* [mu], [r] and [data] are overrwritten *)
     let { sigma; h; mu; r; data } = input in
+    let mu' = Owl.Mat.copy mu
+    and r' = Owl.Mat.copy r
+    and data' = Owl.Mat.copy data in
+    (* [mu], [r] and [data] are overrwritten *)
+    let clean () =
+      Owl.Mat.copy_ mu' ~out:mu;
+      Owl.Mat.copy_ r' ~out:r;
+      Owl.Mat.copy_ data' ~out:data; in
     Array.init runs ~f:(fun _ ->
-      let mu, r, data = Mat.copy mu, Mat.copy r, Mat.copy data in
-      Time.Span.of_us @@ f ~n ~k ~sigma ~h ~mu ~r ~data)
+      let t = Time.Span.of_us @@ f ~n ~k ~sigma ~h ~mu ~r ~data in
+      clean (); t)
 ;;
 
 let macro ~runs ~n ~k input tests =

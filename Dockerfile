@@ -48,6 +48,7 @@ RUN opam install -y           \
         "ocamlmod=0.0.9"      \
         plplot                \
         utop                  \
+        sexplib               \
         # LT4LA               \
         base                  \
         lambda-term           \

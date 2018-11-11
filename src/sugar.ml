@@ -89,7 +89,7 @@ type prim =
   | Gemm
   | Gesv
   | Posv
-  | Posv_Flip
+  | Posv_flip
   | Potrs
   | Syrk
 [@@deriving sexp_of]
@@ -267,7 +267,7 @@ let rec ds_exp : exp -> Ast.exp = function
       | Gemm -> Gemm
       | Gesv -> Gesv
       | Posv -> Posv
-      | Posv_Flip -> Posv_Flip
+      | Posv_flip -> Posv_flip
       | Potrs -> Potrs
       | Syrk -> Syrk
     end)
@@ -514,7 +514,7 @@ let rec ds_exp : exp -> Ast.exp = function
 
         and tmp_var = "_p_" ^ a ^ "_" ^ "_p_" in
         let exp = ds_exp @@ AppLike (Prim (prim_loc, Symm), {first; rest}) in
-        Pair_E (new_loc, tmp_var, new_var, exp,  
+        Pair_E (new_loc, tmp_var, new_var, exp,
                 (* using prim_loc is arbitrary here *)
                 Pair_E (prim_loc, a, b, Var (prim_loc, tmp_var), ds_exp body))
 

@@ -78,11 +78,12 @@ type prim =
   | Gemm
   | Gesv
   | Posv
-  | Posv_Flip
+  | Posv_flip
   | Potrs
   | Syrk
 [@@deriving sexp_of]
 val string_of_prim : prim -> string
+val prims : prim list
 
 (** Locations *)
 type loc =

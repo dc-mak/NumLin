@@ -259,6 +259,8 @@ struct
     Bigarray.reshape_1 x (m * n)
   ;;
 
+  (* For something like sym (x) * y^T, do Row -> Col layout, flip ->
+     not flipped, call symm and then do an in-place matrix tranposition *)
   let symm (Many flip) (Many alpha) (M a) (M b) (Many beta) (M c) =
     let side, m, n, lda, ldb, ldc =
       if flip then
@@ -268,7 +270,7 @@ struct
       else
         let m, k, n = mult_dims (a, false) (b, false) c in
         let () = assert (m = k) (* fst/a is square *) in
-        Cblas.CblasLeft,  m, n, k, n, n in
+        Cblas.CblasLeft, m, n, k, n, n in
     let () = Cblas.(symm CblasRowMajor side CblasUpper
                       m n
                       alpha (conv a) lda (conv b) ldb

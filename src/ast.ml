@@ -310,6 +310,16 @@ type arith =
 [@@deriving sexp_of]
 ;;
 
+let ariths =
+  [ Add
+  ; Sub
+  ; Mul
+  ; Div
+  ; Eq
+  ; Lt
+  ]
+;;
+
 type prim =
   (* Boolean *)
   | Not_
@@ -351,10 +361,57 @@ type prim =
   | Gemm
   | Gesv
   | Posv
-  | Posv_Flip
+  | Posv_flip
   | Potrs
   | Syrk
 [@@deriving sexp_of]
+;;
+
+let prims =
+  (** Boolean *)
+  [ Not_ ] @
+  (** Arithmetic *)
+  List.map ~f:(fun x -> IntOp x) ariths @
+  List.map ~f:(fun x -> EltOp x) ariths @
+  (* Arrays *)
+  [ Set
+  ; Get
+  ; Share
+  ; Unshare
+  ; Free
+  (* Owl - no polymorphism so no Mapi :'( *)
+  ; Array
+  ; Copy
+  ; Sin
+  ; Hypot
+  (* Level 1 BLAS *)
+  ; Asum
+  ; Axpy
+  ; Dot
+  ; Rotmg
+  ; Scal
+  ; Amax
+  (* Matrix *)
+  ; Get_mat
+  ; Set_mat
+  ; Share_mat
+  ; Unshare_mat
+  ; Free_mat
+  ; Matrix
+  ; Eye
+  ; Copy_mat
+  ; Copy_mat_to
+  ; Size_mat
+  ; Transpose
+  (* Level 3 BLAS/LAPACK *)
+  ; Symm
+  ; Gemm
+  ; Gesv
+  ; Posv
+  ; Posv_flip
+  ; Potrs
+  ; Syrk
+  ]
 ;;
 
 let string_of_prim x =

@@ -369,7 +369,7 @@ prim:
     | GEMM      { Sugar.Gemm        }
     | GESV      { Sugar.Gesv        }
     | POSV      { Sugar.Posv        }
-    | POSV_FLIP { Sugar.Posv_Flip   }
+    | POSV_FLIP { Sugar.Posv_flip   }
     | POTRS     { Sugar.Potrs       }
     | SYRK      { Sugar.Syrk        }
 

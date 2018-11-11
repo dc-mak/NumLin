@@ -199,66 +199,6 @@ let%expect_test "Let" =
   [%expect {| (Ok unit) |}]
 ;;
 
-let arith : Ast.arith list =
-  [ Add
-  ; Sub
-  ; Mul
-  ; Div
-  ; Eq
-  ; Lt
-  ]
-;;
-
-let ops =
-  List.concat_map ~f:(fun x -> Ast.[IntOp x; EltOp x]) arith
-;;
-
-let prims =
-  (** Boolean *)
-  [ Ast.Not_ ] @
-  (** Arithmetic *)
-  List.map ~f:(fun x -> Ast.IntOp x) arith @
-  List.map ~f:(fun x -> Ast.EltOp x) arith @
-  (** Arrays *)
-  [ Set
-  ; Get
-  ; Share
-  ; Unshare
-  ; Free
-  (** Owl - no polymorphism so no Mapi :'( *)
-  ; Array
-  ; Copy
-  ; Sin
-  ; Hypot
-  (** Level 1 BLAS *)
-  ; Asum
-  ; Axpy
-  ; Dot
-  ; Rotmg
-  ; Scal
-  ; Amax
-  (** Matrix *)
-  ; Get_mat
-  ; Set_mat
-  ; Share_mat
-  ; Unshare_mat
-  ; Free_mat
-  ; Matrix
-  ; Eye
-  ; Copy_mat
-  ; Copy_mat_to
-  ; Size_mat
-  ; Transpose
-  (** Level 3 BLAS/LAPACK *)
-  ; Symm
-  ; Gemm
-  ; Gesv
-  ; Posv
-  ; Potrs
-  ; Syrk
-  ]
-;;
-
 let pretty (x,t) =
   Stdio.printf "%s: %s\n"
     Ast.(string_of_prim x)
@@ -266,7 +206,7 @@ let pretty (x,t) =
 ;;
 
 let%expect_test "check_array_elim" =
-  List.map ~f:(fun x -> x, check_expr (Prim (Ast.dummy, x))) prims
+  List.map ~f:(fun x -> x, check_expr (Prim (Ast.dummy, x))) Ast.prims
   |> List.iter ~f:pretty;
   [%expect {|
     not_: !bool --o !bool
@@ -316,6 +256,7 @@ let%expect_test "check_array_elim" =
         'y mat * !bool --o !float --o z mat --o ( 'x mat * 'y mat ) * z mat
     gesv: z mat --o z mat --o z mat * z mat
     posv: z mat --o z mat --o z mat * z mat
+    posv_flip: z mat --o z mat --o z mat * z mat
     potrs: 'x. 'x mat --o z mat --o 'x mat * z mat
     syrk: !bool --o !float --o 'x. 'x mat --o !float --o z mat --o 'x mat * z mat |}]
 ;;

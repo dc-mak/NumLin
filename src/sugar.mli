@@ -47,7 +47,7 @@ type prim =
   | Gemm
   | Gesv
   | Posv
-  | Posv_Flip
+  | Posv_flip
   | Potrs
   | Syrk
 [@@deriving sexp_of]

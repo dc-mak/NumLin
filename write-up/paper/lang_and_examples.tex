@@ -370,17 +370,14 @@ are used in this implementation:
 
     \item \highl{let new_r <- new [| r_2 |]} creates a copy of \texttt{r\_2}
 
-    \item \texttt{potrs \_ chol\_r data\_2} uses a pre-computed Cholesky decomposition
-        to multiply \texttt{data\_2} $ = H \mu - \textrm{data}$ by
-        \texttt{r\_2} $= (R + H \Sigma H^T)^{-1}$
+    \item \texttt{posvFlip} is like \texttt{posv} except for solving $XA = B$
 
     \item a lot of memory re-use; the following sets of identifiers alias each other:
         \begin{itemize}
-            \item \texttt{r\_1} and \texttt{r\_2}
-            \item \texttt{data\_1}, \texttt{data\_2} and \texttt{sol\_data}
-            \item \texttt{new\_h} and \texttt{sol\_h}
-            \item \texttt{h\_sol\_h}, \texttt{sigma\_copy} and \texttt{new\_sigma}
-            \item \texttt{mu\_copy} and \texttt{new\_mu}.
+            \item \texttt{r\_1}, \texttt{r\_2} and \texttt{k\_by\_k}
+            \item \texttt{data\_1} and \texttt{data\_2}
+            \item \texttt{mu} and \texttt{new\_mu}
+            \item \texttt{sigma\_hT} and \texttt{x}
         \end{itemize}
 
 \end{itemize}

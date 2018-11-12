@@ -9,11 +9,11 @@ constructs.
 \lang\ allows a novice to understand and work with complicated linear algebra
 library APIs, as well as point out subtle aliasing bugs and reduce memory usage
 in existing programs. In fact, we were able to use \lang\ to find linearity and
-aliasing bugs in a linear algebra program that was \emph{generated} by another
-program \emph{specifically designed to translate matrix expressions into an
-efficient sequence of calls to linear algebra routines}. We were also able to
-reduce the number of temporaries used by the same program, using \lang's type
-system to guide us.
+aliasing bugs in a linear algebra algorithm that was \emph{generated} by
+another program \emph{specifically designed to translate matrix expressions
+into an efficient sequence of calls to linear algebra routines}. We were also
+able to reduce the number of temporaries used by the same algorithm, using
+\lang's type system to guide us.
 
 \lang's implementation supports several syntactic conveniences as well as a
 \emph{usable} integration with real OCaml libraries.

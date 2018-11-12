@@ -61,10 +61,10 @@ usable in \lang's type-system as opposed to a convenient theoretical tool.
 
 Because all functions must have their argument types explicitly annotated,
 inferring the correct fraction at a call-site is simply a matter of
-unification. We strongly suspect that \emph{full-inference of fractional
-permissions is similarly just matter of unification} (thanks to an
-experimental implementation of just this feature), even though the formal
-system we present here is for an explicitly-typed language.
+unification. We believe \emph{full-inference of fractional permissions is
+similarly just matter of unification} (thanks to an experimental implementation
+of just this feature), even though the formal system we present here is for an
+explicitly-typed language.
 
 There are a few differences between the type system as presented in
 \ref{subsec:semantics} and how we implemented it: the environment
@@ -272,9 +272,38 @@ f
 
 \subsection{Performance Metrics}
 
-Here, evaluate the performance of the examples from the second
-section.  Compare with your C implementations, and perhaps as well as
-the straightforward math transcribed into (Matlab/R/Numpy?).
+% Here, evaluate the performance of the examples from the second
+% section. Compare with your C implementations, and perhaps as well as
+% the straightforward math transcribed into (Matlab/R/Numpy?).
+
+We think that using \lang has two primary benefits: safety and performance. We
+discuss safety in \ref{subsec:finding_bugs}, where we describe how we used
+\lang\ to find linearity and aliasing bugs in a linear algebra algorithm that
+was \emph{generated} by another program.
+
+For performance, we measured the execution four of three equivalent
+implementations of a Kalman filter: in C (using \textsc{Cblas}), \lang\ (using
+\textsc{Owl}'s low-level \textsc{Cblas} bindings), OCaml (using \textsc{Owl}'s
+intended, safe/copying-by-default interface), and Python (using
+\textsc{NumPy}).  Measurements were made in in micro-seconds, against an
+exponentially (powers of 5) increasing scaling factor for matrix size
+parameters $n=5$ and $k=3$. The results in Figure~\ref{fig:timings} are as we
+expected: C is the fastest, followed by \lang, with OCaml and Python last.
+
+We expected the C implementation to be faster than the \lang\ one because the
+latter has the additional (but relatively low) overhead of dimension checks and
+crossing the OCaml/C FFI for each call to a \textsc{Cblas} routine, even though
+the calls and their order are exactly the same. We expected the OCaml and
+Python implementations to be slower because of the unnecessary temporaries they
+allocate.
+
+% Need to re-run timings
+Differences is timings are quite pronounced at small matrix sizes, but are
+still significant at larger ones: for $n=625$, \textsc{Cblas} took $112 \pm
+35\, ms$, \lang\ took $105 \pm 25 \, ms$, \textsc{Owl} took $124 \pm 38\, ms$
+and \textsc{NumPy} took $112 \pm 12\, ms$;  for $n=3125$, \textsc{Cblas} took
+$10.8 \pm 0.7\, s$, \lang\ took $12.0 \pm 1.2 \, s$, \textsc{Owl} took $13.3
+\pm 0.2\, s$ and \textsc{NumPy} took $12.7 \pm 0.6\, s$.
 
 \begin{figure}[t]
     \centering
@@ -286,3 +315,6 @@ the straightforward math transcribed into (Matlab/R/Numpy?).
         \highl{Gc.full_major} for the OCaml implementations.}\label{fig:timings}
 \end{figure}
 
+% Talk about memory and temporaries here
+
+% Caveats - set-up problems

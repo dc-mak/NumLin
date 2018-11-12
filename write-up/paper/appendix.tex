@@ -158,47 +158,25 @@ end
 let kalman sigma h mu r_1 data_1 =
   let h, _p_k_n_p_ = Prim.size_mat h in
   let k, n = _p_k_n_p_ in
-  let h_sigma = Prim.matrix k n in
-  let (sigma, h), h_sigma =
-    Prim.symm (Many true) (Many 1.) sigma h (Many 0.) h_sigma
-  in
-  let (h_sigma, h), r_2 =
-    Prim.gemm (Many 1.) (h_sigma, Many false) (h, Many true) (Many 1.) r_1
-  in
+  let sigma_hT = Prim.matrix n k in
+  let (sigma, h), sigma_hT =
+    Prim.gemm (Many 1.) (sigma, Many false) (h, Many true) (Many 0.) sigma_hT in
+  let (h, sigma_hT), r_2 =
+    Prim.gemm (Many 1.) (h, Many false) (sigma_hT, Many false) (Many 1.) r_1 in
+  let k_by_k, x = Prim.posv_flip r_2 sigma_hT in
   let (h, mu), data_2 =
-    Prim.gemm (Many 1.) (h, Many false) (mu, Many false) (Many (-1.)) data_1
-  in
-  let h, new_h = Prim.copy_mat_to h h_sigma in
-  let r_2, new_r = Prim.copy_mat r_2 in
-  let chol_r, sol_h = Prim.posv new_r new_h in
-  let chol_r, sol_data = Prim.potrs chol_r data_2 in
-  let () = Prim.free_mat chol_r in
-  let h_sol_h = Prim.matrix n n in
-  let (h, sol_h), h_sol_h =
-    Prim.gemm (Many 1.) (h, Many true) (sol_h, Many false) (Many 0.) h_sol_h
-  in
-  let () = Prim.free_mat sol_h in
-  let h_sol_data = Prim.matrix n (Many 1) in
-  let (h, sol_data), h_sol_data =
-    Prim.gemm (Many 1.) (h, Many true) (sol_data, Many false) (Many 0.) h_sol_data
-  in
-  let mu, mu_copy = Prim.copy_mat mu in
-  let (sigma, h_sol_data), new_mu =
-    Prim.symm (Many false) (Many 1.) sigma h_sol_data (Many 1.) mu_copy
-  in
-  let () = Prim.free_mat h_sol_data in
-  let h_sol_h_sigma = Prim.matrix n n in
-  let (sigma, h_sol_h), h_sol_h_sigma =
-    Prim.symm (Many true) (Many 1.) sigma h_sol_h (Many 0.) h_sol_h_sigma
-  in
-  let sigma, sigma_copy = Prim.copy_mat_to sigma h_sol_h in
-  let (sigma, h_sol_h_sigma), new_sigma =
-    Prim.symm (Many false) (Many (-1.)) sigma h_sol_h_sigma (Many 1.) sigma_copy
-  in
-  let () = Prim.free_mat h_sol_h_sigma in
-  ((sigma, (h, (mu, (r_2, sol_data)))), (new_mu, new_sigma)) )
-in
-kalman
+    Prim.gemm (Many 1.) (h, Many false) (mu, Many false) (Many (-1.)) data_1 in
+  let (x, data_2), new_mu =
+    Prim.gemm (Many 1.) (x, Many false) (data_2, Many false) (Many 1.) mu in
+  let x_h = Prim.matrix n n in
+  let (x, h), x_h =
+    Prim.gemm (Many 1.) (x, Many false) (h, Many false) (Many 0.) x_h in
+  let () = Prim.free_mat x in
+  let sigma, sigma2 = Prim.copy_mat sigma in
+  let (sigma, x_h), new_sigma =
+    Prim.symm (Many true) (Many (-1.)) sigma x_h (Many 1.) sigma2 in
+  let () = Prim.free_mat x_h in
+  ((sigma, h), (new_sigma, (new_mu, (k_by_k, data_2))))
     \end{minted}
     \caption{OCaml code for a Kalman filter, generated (at \emph{compile time})
         from the code in Figure~\ref{fig:lang_kalman}, passed through
@@ -212,34 +190,22 @@ kalman
     \centering
     \begin{minted}[fontsize=\footnotesize]{c}
 static void kalman( const int n,               const int k,                const double *sigma, /* n,n */
-                    const double *h, /* k,n */ const double *mu, /* n,1 */ double *r,           /* k,k */
-                    double *data,    /* k,1 */ double **ret_mu,  /* k,1 */ double **ret_sigma   /* n,n */ ) {
-        double* k_by_n = (double *) malloc(k * n * sizeof(double));
-/*16*/  cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, k, n, 1., sigma, n, h, n, 0., k_by_n, n);
-/*17*/  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, k, k, n, 1., k_by_n, n, h, n, 1., r, k);
-/*18*/  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, k, 1, n, 1., h, n, mu, 1, -1., data, 1);
-/*19*/  cblas_dcopy(k * n, h, 1, k_by_n, 1);
-        double* k_by_k = (double *) malloc(k * k * sizeof(double));
-/*20*/  cblas_dcopy(k * k, r, 1, k_by_k, 1);
-/*21*/  LAPACKE_dposv(LAPACK_ROW_MAJOR, 'U', k, n, k_by_k, k, k_by_n, n);
-/*23*/  LAPACKE_dpotrs(LAPACK_ROW_MAJOR, 'U', k, 1, k_by_k, k, data, 1);
-        free(k_by_k);
-        double* n_by_n = (double *) malloc(n * n * sizeof(double));
-/*24*/  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, n, n, k, 1., h, n, k_by_n, n, 0., n_by_n, n);
-        free(k_by_n);
-        double* n_by_1 = (double *) malloc(n * sizeof(double));
-/*25*/  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, n, 1, k, 1., h, n, data, 1, 0., n_by_1, 1);
-        double* new_mu = (double *) malloc(n * sizeof(double));
-/*26*/  cblas_dcopy(n, mu, 1, new_mu, 1);
-/*27*/  cblas_dsymm(CblasRowMajor, CblasLeft, CblasUpper, n, 1, 1., sigma, n, n_by_1, 1, 1., new_mu, 1);
-        free(n_by_1);
-        double* n_by_n2 = (double *) malloc(n * n * sizeof(double));
-/*28*/  cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, n, n, 1., sigma, n, n_by_n, n, 0., n_by_n2, n);
-/*29*/  cblas_dcopy(n*n, sigma, 1, n_by_n, 1);
-/*30*/  cblas_dsymm(CblasRowMajor, CblasLeft, CblasUpper, n, n, -1., sigma, n, n_by_n2, n, 1., n_by_n, n);
-        free(n_by_n2);
-        *ret_sigma = n_by_n;
-        *ret_mu = new_mu; }
+                    const double *h, /* k,n */ const double *mu,  /* n,1 */ double *r,           /* k,k */
+                    double *data,    /* k,1 */ double **ret_sigma /* n,n */ ) {
+    double* n_by_k = (double *) malloc(n * k * sizeof(double));
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, n, k, n, 1., sigma, n, h, n, 0., n_by_k, k);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, k, k, n, 1., h, n, n_by_k, k, 1., r, k);
+    LAPACKE_dposv(LAPACK_COL_MAJOR, 'U', k, n, r, k, n_by_k, k);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, k, 1, n, 1., h, n, mu, 1, -1., data, 1);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, 1, k, 1., n_by_k, k, data, 1, 1., mu, 1);
+    double* n_by_n = (double *) malloc(n * n * sizeof(double));
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, k, 1., n_by_k, k, h, n, 0., n_by_n, n);
+    free(n_by_k);
+    double* n_by_n2 = (double *) malloc(n * n * sizeof(double));
+    cblas_dcopy(n*n, sigma, 1, n_by_n2, 1);
+    cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, n, n, -1., sigma, n, n_by_n, n, 1., n_by_n2, n);
+    free(n_by_n);
+    *ret_sigma = n_by_n2; }
     \end{minted}
     \caption{CBLAS/LAPACKE implementation of a Kalman filter. I used C instead
         of Fortran because it is what Owl uses under the hood and OCaml FFI

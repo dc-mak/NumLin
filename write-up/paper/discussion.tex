@@ -38,20 +38,41 @@ programming.
 
 \subsection{Related Work}
 
-The main point we want to make is that using linear types for BLAS
-is an ``obvious'' idea, but is surprisingly under-explored. 
+% The main point we want to make is that using linear types for BLAS
+% is an ``obvious'' idea, but is surprisingly under-explored. 
+
+Using linear types for BLAS routines is a particularly good domain fit (given
+the implicit restrictions on aliasing arguments), but is under-explored in the
+academic literature. Linear algebra libraries written in Rust take advantage of
+the distinction that Rust's type system offers between mutable views/references
+to arrays, offering a \emph{seemingly} different approach to the
+fractional-permissions based one we took in this paper.  However, recent
+research\cite{weiss} suggests that Rust's borrow-checker could be explained in
+simpler terms using \emph{fractional-permissions}; in this light, our paper
+neatly bridges the gap by demonstrating the theoretical and practical
+simplicity of this way of thinking.
+
+ATS\cite{cui2005ats} is a language which combines dependent and linear types;
+although it provides BLAS bindings, the main focus in the API provided there is
+for statically enforcing dimensions related constraints of the arguments,
+rather than aliasing restrictions as shown here.
 
 \begin{itemize}
-\item Rust
-\item ATS
-\item Single-assignment C 
-\item Linear Haskell
-\item Bernardy and Sveningsson
-\item L3
+\item Single-assignment C: for hardware, doesn't allow higher-order fun.
+\item Linear Haskell: linearity on the arrows.
+\item Bernardy and Sveningsson: very theoretical, no implementation.
+\item L3: can use existential types to statically track pointer identities to
+    prevent that source of runtime errors.
 \item Boyland fractional permissions
-\item Disadvantage of graph-based approaches to matrix expression generation
-\item multi-stage: once dimensions known, they are fixed?
+\item Disadvantage of graph-based approaches to matrix expression generation:
+    buggy, like SymPy.
+\item multi-stage: once dimensions known, they are fixed, so we can take
+    dimension checking one-step further and implement a matrix chaining alg.
 \end{itemize}
+
+% Dimensions: easy enough to integrate, even w/o ATS/dep types
+% generative phantom types
+% \cite{abe2015simple}
 
 \subsection{Simplicity and Further Work}
 

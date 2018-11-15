@@ -272,38 +272,62 @@ f
 
 \subsection{Performance Metrics}
 
-% Here, evaluate the performance of the examples from the second
-% section. Compare with your C implementations, and perhaps as well as
-% the straightforward math transcribed into (Matlab/R/Numpy?).
-
-We think that using \lang has two primary benefits: safety and performance. We
+We think that using \lang\ has two primary benefits: safety and performance. We
 discuss safety in \ref{subsec:finding_bugs}, where we describe how we used
 \lang\ to find linearity and aliasing bugs in a linear algebra algorithm that
 was \emph{generated} by another program.
 
-For performance, we measured the execution four of three equivalent
+\subsubsection{Setup}
+
+For performance, we measured the execution of four equivalent
 implementations of a Kalman filter: in C (using \textsc{Cblas}), \lang\ (using
 \textsc{Owl}'s low-level \textsc{Cblas} bindings), OCaml (using \textsc{Owl}'s
-intended, safe/copying-by-default interface), and Python (using
-\textsc{NumPy}).  Measurements were made in in micro-seconds, against an
-exponentially (powers of 5) increasing scaling factor for matrix size
-parameters $n=5$ and $k=3$. The results in Figure~\ref{fig:timings} are as we
-expected: C is the fastest, followed by \lang, with OCaml and Python last.
+intended, safe/copying-by-default interface), and Python (using \textsc{NumPy},
+with the interpreter started and functions interpreted). We measured execution
+time in micro-seconds, against an exponentially (powers of 5) increasing
+scaling factor for matrix size parameters $n=5$ and $k=3$.
+
+For large scaling factors ($n = 5^4, 5^5$), we triggered a full
+garbage-collection before measuring the execution time of a single call of a
+function. However, due to the limitations of the micro-benchmarking library we
+used, for smaller scaling factors ($n = 5^1, 5^2, 5^3$), we measured the
+execution time of \emph{multiple} calls to a function in a loop, thus including
+potential garbage-collection effects.
+
+\subsubsection{Hypothesis}
 
 We expected the C implementation to be faster than the \lang\ one because the
 latter has the additional (but relatively low) overhead of dimension checks and
 crossing the OCaml/C FFI for each call to a \textsc{Cblas} routine, even though
 the calls and their order are exactly the same. We expected the OCaml and
-Python implementations to be slower because of the unnecessary temporaries they
-allocate.
+Python implementations to be slower because they allocate more temporaries (so
+possibly less cache-friendly) and carry out more floating-point operations --
+the \textsc{Cblas} and \lang\ implementations use ternary kernels (coalescing
+steps), a Cholesky decomposition (of a symmetric matrix, which is more
+efficient than the LU decomposition used for inverting a matrix in \textsc{Owl}
+and \textsc{NumPy}) and \texttt{symm} (symmetric matrix multiplication, halving
+the number of floating-point multiplications required).
+
+\subsubsection{Results}
 
 % Need to re-run timings
-Differences is timings are quite pronounced at small matrix sizes, but are
-still significant at larger ones: for $n=625$, \textsc{Cblas} took $112 \pm
-35\, ms$, \lang\ took $105 \pm 25 \, ms$, \textsc{Owl} took $124 \pm 38\, ms$
-and \textsc{NumPy} took $112 \pm 12\, ms$;  for $n=3125$, \textsc{Cblas} took
-$10.8 \pm 0.7\, s$, \lang\ took $12.0 \pm 1.2 \, s$, \textsc{Owl} took $13.3
-\pm 0.2\, s$ and \textsc{NumPy} took $12.7 \pm 0.6\, s$.
+
+The results in Figure~\ref{fig:timings} are as we expected: C is the fastest,
+followed by \lang, with OCaml and Python last.  Differences in timings are
+quite pronounced at small matrix sizes, but are still significant at larger
+ones: for $n=625$, \textsc{Cblas} took $112 \pm 35\, ms$, \lang\ took $105 \pm
+25 \, ms$, \textsc{Owl} took $124 \pm 38\, ms$ and \textsc{NumPy} took $112
+\pm 12\, ms$;  for $n=3125$, \textsc{Cblas} took $10.8 \pm 0.7\, s$, \lang\
+took $12.0 \pm 1.2 \, s$, \textsc{Owl} took $13.3 \pm 0.2\, s$ and
+\textsc{NumPy} took $12.7 \pm 0.6\, s$.
+
+Worth highlighting here is the other major advantage of using \lang\ is reduced
+memory usage.  Whilst the \textsc{Owl} and \textsc{NumPy} use 11 temporary
+matrices (\emph{excluding} the 2 matrices which store the results), using $n +
+n^2 + 4nk + 3k^2 + 2k \approx 4n^2$ (for $k = 3n/5$) words of memory,
+\textsc{Cblas} and \lang\ use only \emph{2} temporary m`atrices (excluding the
+\emph{one} matrix which stores one of the results), using only $n^2 + nk \leq
+2n^2$ words of memory.
 
 \begin{figure}[t]
     \centering
@@ -315,6 +339,14 @@ $10.8 \pm 0.7\, s$, \lang\ took $12.0 \pm 1.2 \, s$, \textsc{Owl} took $13.3
         \highl{Gc.full_major} for the OCaml implementations.}\label{fig:timings}
 \end{figure}
 
-% Talk about memory and temporaries here
+\subsubsection{Analysis}
 
-% Caveats - set-up problems
+As matrix sizes increase, assuming sufficient memory, the difference in the
+number of floating-point operations ($O(n^3))$ dominates execution times.
+However for small matrix sizes, since $n$ is small and the measurements were
+over multiple calls to a function in a loop, the large number of temporaries
+show the adverse effect of not re-using memory at even quite small matrix
+sizes: creating pressure on the garbage collector.
+
+% Other examples impl
+% Sampled linear reg example

@@ -189,7 +189,7 @@ let kalman sigma h mu r_1 data_1 =
 \begin{figure}[p]
     \centering
     \begin{minted}[fontsize=\footnotesize]{c}
-static void kalman( const int n,               const int k,                const double *sigma, /* n,n */
+static void kalman( const int n,               const int k,                 const double *sigma, /* n,n */
                     const double *h, /* k,n */ const double *mu,  /* n,1 */ double *r,           /* k,k */
                     double *data,    /* k,1 */ double **ret_sigma /* n,n */ ) {
     double* n_by_k = (double *) malloc(n * k * sizeof(double));

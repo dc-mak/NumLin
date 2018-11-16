@@ -1,9 +1,5 @@
 \section{Implementation}\label{sec:implementation}
 
-Talk about how you implemented \lang\ and the general
-architecture. Talk about how simple everything is, and also
-about how implementing inference for fractions is.
-
 \subsection{Implementation Strategy}
 
 \lang\ transpiles to OCaml and its implementation follows the structure of a
@@ -237,18 +233,18 @@ Figure~\ref{fig:ocaml_kalman}.
         $\Rightarrow$ &
         \highl{<exp>}
     \\ \\
-        \alsocell[c]{l}{\highl{let Many x = <exp> in} \\
-            \highl{let Many x = Many (Many x) in <body>} \\
-            \textbf{OR} \highl{let Many x = Many <exp> in <body>} \\
-            \textbf{OR} \highl{(fun x : t -> <body>) <exp>}} &
-        $\Rightarrow$ &
-        \highl{let x = <exp> in <body>}
-    \\ \\
         \alsocell[c]{l}{\highl{(* fixp = fix (f, x:t, <exp> : t') *)} \\
-            \highl{let Many f = Many fixp in <body>} \\
-            \textbf{OR} \highl{let f = fixp in <body>} } &
+            \highl{(*1*) let Many f = Many fixp in <body>} \\
+            \highl{(*2*) let f = fixp in <body>} } &
         $\Rightarrow$ &
         \highl{let rec f x = <exp> in <body>}
+    \\ \\
+    \alsocell[c]{l}{\highl{(*1*) let Many x = <exp> in} \\
+            \highl{(*-*) let Many x = Many (Many x) in <body>} \\
+            \highl{(*2*) let Many x = Many <exp> in <body>} \\
+            \highl{(*3*) (fun x : t -> <body>) <exp>}} &
+        $\Rightarrow$ &
+        \highl{let x = <exp> in <body>}
     \end{tabular}
 \end{center}
 \caption{Removing redundant re-bindings during translation to OCaml.}\label{fig:lang_optimise}

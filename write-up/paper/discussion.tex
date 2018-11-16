@@ -38,9 +38,6 @@ programming.
 
 \subsection{Related Work}
 
-% The main point we want to make is that using linear types for BLAS
-% is an ``obvious'' idea, but is surprisingly under-explored. 
-
 Using linear types for BLAS routines is a particularly good domain fit (given
 the implicit restrictions on aliasing arguments), but is under-explored in the
 academic literature. Linear algebra libraries written in Rust take advantage of
@@ -52,44 +49,55 @@ simpler terms using \emph{fractional-permissions}; in this light, our paper
 neatly bridges the gap by demonstrating the theoretical and practical
 simplicity of this way of thinking.
 
-ATS\cite{cui2005ats} is a language which combines dependent and linear types;
-although it provides BLAS bindings, the main focus in the API provided there is
-for statically enforcing dimensions related constraints of the arguments,
-rather than aliasing restrictions as shown here.
+Linear Haskell\cite{bernardy2017linear}, takes a slightly different definition
+of linearity, that is one on \emph{arrows} as opposed to \emph{kinds}: for $f :
+a \multimap b$, if $f u$ is used exactly once \emph{then} $u$ is used exactly
+once. Whilst this has the advantage of being backwards-compatible, \lang's
+approach of compile-time code-generation enables using linearity \emph{as a
+library}, whilst the use of fractions gives extra control over aliasing not
+available in Linear Haskell.
 
-\begin{itemize}
-\item Single-assignment C: for hardware, doesn't allow higher-order fun.
-\item Linear Haskell: linearity on the arrows.
-\item Bernardy and Sveningsson: very theoretical, no implementation.
-\item L3: can use existential types to statically track pointer identities to
-    prevent that source of runtime errors.
-\item Boyland fractional permissions
-\item Disadvantage of graph-based approaches to matrix expression generation:
-    buggy, like SymPy.
-\item multi-stage: once dimensions known, they are fixed, so we can take
-    dimension checking one-step further and implement a matrix chaining alg.
-\end{itemize}
-
-% Dimensions: easy enough to integrate, even w/o ATS/dep types
-% generative phantom types
-% \cite{abe2015simple}
+In general, using substructural types to express array computations is not
+particularly new\cite{scholz,henriksen,bernardy2016}, but these approaches
+limit recursion and higher-order functions, and have special constructs to
+enable \emph{implementation} of efficient BLAS-like libraries rather than
+enforcing correct \emph{usage}.
 
 \subsection{Simplicity and Further Work}
 
 We are pleasantly surprised at how simple the overall design and implementation
-of \lang\ is, given its expressive power and usability. Indeed, the focus on
-getting a working prototype early on (so that we could test it with real
-BLAS/LAPACK routines as soon as possible) meant that we only added features to
-the type system when it was clear that they were absolutely necessary: these
-features were !-types and value-restriction for the \highl{Many} constructor.
-Although we considered parametric polymorphism, size-types and tracking pointer
-identities at the type-level\cite{morrisett} (all of which would certainly be
-useful and are potential avenues for further work) it turns out these features
-are not necessary.
+of \lang\ is, given its expressive power and usability.  So simple in fact,
+that fractions, a convenient theoretical abstraction until this point, could be
+implemented by restricting division and multiplication to be by 2 only
+\cite{boyland2003}, thus turning any required arithmetic into unification.
 
-We believe we have stumbled across a particularly nice problem-solution fit:
-the idea of linear types for linear algebra -- one that used to just be
-commonly believed folklore -- actually has some merit and is worth exploring.
+Indeed, the focus on getting a working prototype early on (so that we could
+test it with real BLAS/LAPACK routines as soon as possible) meant that we only
+added features to the type system when it was clear that they were absolutely
+necessary: these features were !-types and value-restriction for the
+\highl{Many} constructor. 
+
+Going forwards, one may wish to eliminate even more runtime errors from \lang,
+by extending its type system. For example, we could have used existential types
+to statically track pointer identities\cite{morrisett}, or parametric
+polymorphism.
+
+We could also attempt to catch mismatched dimensions at compile time as well.
+While this could be done with generative phantom types\cite{abe2015simple},
+using dependent types may offer more flexibility in \emph{partitioning}
+regions\cite{space_monads} or statically enforcing dimensions related
+constraints of the arguments at compile-time.  ATS\cite{cui2005ats} is just
+such a language which combines dependent and linear types; although it provides
+BLAS bindings, it does not aim to provide aliasing restrictions as demonstrated
+in this paper.
+
+Taking this idea one step even further, since matrix dimensions are typically
+fixed at runtime, we could \emph{stage} \lang\ programs and compile matrix
+expressions using more sophisticated algorithms\cite{barthels}. However, it is
+worth noting that without care, such algorithms\cite{rocklin_thesis}, usually
+based on graph-based, ad-hoc dataflow analysis, can produce erroneous output
+which would not get past a linear type system with fractions.
+
 We also think that this concept (and the general design of its implementation)
 need not be limited to linear algebra: we could conceivably `backport' this
 idea to other contexts that need linearity (concurrency, single-use

@@ -13,5 +13,5 @@ sig
     cols:int ->
     exp:int ->
     wrap list ->
-    int * string Benchmark_utils.data list
+    int * string Data.t list
 end

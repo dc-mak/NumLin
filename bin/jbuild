@@ -14,7 +14,7 @@
         benchmark
         utils
         kalman_utils
-        benchmark_utils
+        data
         array_io
     ))
     (libraries (

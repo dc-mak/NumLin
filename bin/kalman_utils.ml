@@ -119,7 +119,7 @@ let micro_exn ~sec ~n ~k input tests =
       let ci95 = Option.value_exn (Coefficient.ci95 coeff) in
       let mean_ns = Coefficient.estimate coeff in
       let (minus_err, plus_err) = Ci95.ci95_abs_err ci95 ~estimate:mean_ns in
-      Benchmark_utils.{
+      Data.{
         ind_var = name result;
         mean = Time.Span.of_ns mean_ns;
         plus_err = Time.Span.of_ns plus_err;
@@ -197,7 +197,7 @@ let macro ~runs ~n ~k input tests =
       let std = Stats.std ~mean times in
       Time.Span.(of_us mean, of_us std)
     in
-    Benchmark_utils.{
+    Data.{
       ind_var = F.name fun_;
       mean = mean;
       plus_err = std;

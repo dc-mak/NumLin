@@ -20,8 +20,8 @@ let run_with_params ?(analyse=true) ~start ~limit ~tests ~micro_quota ~macro_run
       F.runtest_exn files ~micro_quota ~macro_runs ~base ~cols ~exp:(start+exp) F.tests)
     in
     if analyse then (
-      List.iter collected ~f:Benchmark_utils.by_size;
-      List.iter (Benchmark_utils.transpose collected) ~f:Benchmark_utils.by_alg;
+      List.iter collected ~f:Data.by_size;
+      List.iter (Data.transpose collected) ~f:Data.by_alg;
     )
 ;;
 

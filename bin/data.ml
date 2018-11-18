@@ -5,7 +5,7 @@ module Time =
   Core_kernel.Time
 ;;
 
-type 'a data = {
+type 'a t = {
   ind_var: 'a;
   mean: Time.Span.t;
   plus_err: Time.Span.t;

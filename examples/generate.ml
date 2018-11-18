@@ -5,7 +5,7 @@ let transpile chan file =
   match String.chop_suffix file ~suffix:".lt" with
   | None -> ()
   | Some file ->
-    let from_name = ("examples/" ^ file ^ ".lt") in
+    let from_name = file ^ ".lt" in
     Stdio.In_channel.with_file from_name ~f:(fun from ->
       Stdio.Out_channel.output_string chan
       @@ Printf.sprintf "module %s =\nstruct\n"
@@ -20,7 +20,7 @@ let transpile chan file =
 ;;
 
 let () =
-  Stdio.Out_channel.with_file "examples.ml" ~f:(fun chan ->
-    Array.iter ~f:(transpile chan) @@ Caml.Sys.(readdir @@ getcwd () ^ "/examples"))
+  Stdio.Out_channel.with_file "gen.ml" ~f:(fun chan ->
+    Array.iter ~f:(transpile chan) @@ Caml.Sys.(readdir @@ getcwd ()))
 ;;
 

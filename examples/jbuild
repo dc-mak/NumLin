@@ -1,0 +1,37 @@
+(jbuild_version 1)
+
+(library (
+    (name examples)
+    (synopsis "All examples")
+    (flags (:standard -short-paths))
+    (modules (kalman gen l1_norm_min lin_reg))
+    (libraries (
+        kalman_c_ffi
+        lt4la
+        pyml
+        owl
+    ))
+))
+
+(executable (
+    (name generate)
+    (flags (:standard -short-paths))
+    (modules (generate))
+    (libraries (
+        lt4la
+    ))
+))
+
+(rule (
+    (targets (gen.ml))
+    (deps (generate.exe (glob_files *.lt)))
+    (action (run ${<}))
+))
+
+(library (
+    (name bindings)
+    (modules (bindings))
+    (libraries (ctypes.stubs ctypes))
+    ; HACK to generate .merlin file with PPX rewriters
+    (preprocess (pps (ppx_jane lwt_ppx ppx_driver.runner)))
+))

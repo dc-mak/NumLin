@@ -10,17 +10,21 @@
 
 (executable (
     (name benchmark)
-    (modules (benchmark benchmark_utils array_io functions))
-    (libraries (owl kalman_c_ffi test base core core_bench))
+    (modules (
+        benchmark
+        utils
+        kalman_utils
+        benchmark_utils
+        array_io
+    ))
+    (libraries (
+        owl
+        examples
+        base
+        core
+        core_bench
+    ))
     (flags (:standard -short-paths))
     (ocamlopt_flags (:standard -p))
     (preprocess (pps (ppx_jane)))
-))
-
-(library (
-    (name bindings)
-    (modules (bindings))
-    (libraries (ctypes.stubs ctypes))
-    ; HACK to generate .merlin file with PPX rewriters
-    (preprocess (pps (ppx_jane lwt_ppx ppx_driver.runner)))
 ))

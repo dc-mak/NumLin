@@ -1,8 +1,3 @@
-(*
-open Base
-;;
-*)
-
 open Lt4la.Template
 ;;
 
@@ -39,22 +34,10 @@ let i =
   Owl.Mat.eye k
 ;;
 
-let owl_l1_norm_min ~q ~u =
-  let open Owl.Mat in
-  let ( * ) = dot in
-  let u' = transpose u in
-  let q_inv_u = inv q * u in
-  q_inv_u * inv ( i +  u' * q_inv_u ) * u'
-;;
-
-let lt4la_l1_norm_min ~q ~u =
-  Examples.L1_norm_min.it (M q) (M u)
-;;
-
 let%expect_test "l1_norm_min" =
 
-  let owl = owl_l1_norm_min ~q ~u in
-  let M lt4la = lt4la_l1_norm_min ~q ~u in
+  let owl = Examples.L1_norm_min.owl ~q ~u in
+  let M lt4la = Examples.L1_norm_min.lt4la ~q ~u in
   if not Owl.Mat.(owl =~ lt4la) then Stdio.printf "NOT SAME!\n";
   Owl.Mat.print ~header:false owl;
   Owl.Mat.print ~header:false lt4la;
@@ -73,3 +56,5 @@ let%expect_test "l1_norm_min" =
     -0.421418 0.00261993 0.0966232   0.51514  0.291141
     -0.584246  -0.609541 -0.733115 -0.505515  -0.35633 |}]
 ;;
+(*
+*)

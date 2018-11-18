@@ -9,26 +9,19 @@ module Command =
   Core.Command
 ;;
 
-module F =
-  Functions
-;;
-
-module Utils =
-  Benchmark_utils
-;;
-
 let run_with_params ?(analyse=true) ~start ~limit ~tests ~micro_quota ~macro_runs =
   let base, cols = 5, 3 in
-  if base >= 1 && cols >= 1 && macro_runs >= 1 then
+  if base >= 1 && cols >= 1 then
     let n = limit - start + 1 in
-    let files = Utils.files ~base ~cols in
-    let () = Utils.generate_exn files ~base ~start ~limit in
+    let module F = (val tests : Utils.Intf) in
+    let files = F.files ~base ~cols in
+    let () = F.generate_exn files ~base ~start ~limit in
     let collected = List.init n ~f:(fun exp ->
-      Utils.runtest_exn files ~micro_quota ~macro_runs ~base ~cols ~exp:(start+exp) tests)
+      F.runtest_exn files ~micro_quota ~macro_runs ~base ~cols ~exp:(start+exp) F.tests)
     in
     if analyse then (
-      List.iter collected ~f:Utils.by_size;
-      List.iter (Utils.transpose collected) ~f:Utils.by_alg;
+      List.iter collected ~f:Benchmark_utils.by_size;
+      List.iter (Benchmark_utils.transpose collected) ~f:Benchmark_utils.by_alg;
     )
 ;;
 
@@ -50,17 +43,25 @@ let run_with_params ~analyse ~start ~limit ~tests ~micro_quota ~macro_runs =
 ;;
 
 let alg =
+  let open Examples.Kalman in
   Core.Command.Arg_type.create
-    (function
-      | "none" -> []
-      | "owl" ->  [F.W Owl]
-      | "lt4la" -> [F.W LT4LA]
-      | "cblas" -> [F.W CBLAS]
-      | "numpy" -> [F.W NumPy]
-      | "all" -> F.all
-      | x ->
-        Stdio.eprintf "'%s' not a supported implementation" x;
-        Caml.exit 1)
+    (let return x =
+       (module
+         struct
+           include Examples.Kalman
+           include Kalman_utils
+           let tests = x
+         end : Utils.Intf) in
+     function
+     | "none" -> return []
+     | "owl" ->  return [W Owl]
+     | "lt4la" -> return [W LT4LA]
+     | "cblas" -> return [W CBLAS]
+     | "numpy" -> return [W NumPy]
+     | "all" -> return all
+     | x ->
+       Stdio.eprintf "'%s' not a supported implementation" x;
+       Caml.exit 1)
 ;;
 
 let command =

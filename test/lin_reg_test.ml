@@ -1,6 +1,3 @@
-open Base [@@warning "-33"]
-;;
-
 open Lt4la.Template
 ;;
 
@@ -36,26 +33,11 @@ let y, y_copy =
   y, Owl.Mat.copy y
 ;;
 
-let naive_lin_reg ~x ~y =
-  let open Owl.Mat in
-  let ( * ) = dot in
-  let x' = transpose x in
-  inv (x' * x) * x' * y
-;;
+let%expect_test "lin_reg" =
 
-let owl_lin_reg ~x ~y =
-  Owl.Regression.D.ols x y
-;;
-
-let lt4la_lin_reg ~x ~y =
-  Examples.Lin_reg.it (M x) (M y)
-;;
-
-let%expect_test "l1_norm_min" =
-
-  let naive = naive_lin_reg ~x ~y in
-  let [| owl |] = owl_lin_reg ~x ~y [@@warning "-8"] in
-  let (_, M lt4la) = lt4la_lin_reg ~x ~y in
+  let naive = Examples.Lin_reg.naive ~x ~y in
+  let [| owl |] = Examples.Lin_reg.owl ~x ~y [@@warning "-8"] in
+  let (_, M lt4la) = Examples.Lin_reg.lt4la ~x ~y in
   let () = assert Owl.Mat.(x = x_copy && y = y_copy) in
   let (=) = Owl.Mat.(=~) in
   Stdio.printf "Naive and Owl: %b\n\
@@ -74,3 +56,5 @@ let%expect_test "l1_norm_min" =
     0.3
     0.5 |}]
 ;;
+(*
+*)

@@ -5,7 +5,7 @@ open Lt4la.Template
 ;;
 
 let%expect_test "factorial" =
-  let fact = Examples.Factorial.it in
+  let fact = Examples.Gen.Factorial.it in
   for i = -2 to 10 do
     Stdio.printf "%d\n" @@ Prim.extract @@ fact (Many i);
   done;
@@ -26,7 +26,7 @@ let%expect_test "factorial" =
 ;;
 
 let%expect_test "sum_array" =
-  let sum_array = Examples.Sum_array.it in
+  let sum_array = Examples.Gen.Sum_array.it in
   let n = 20 in
   let row : z arr = A Owl.Arr.(mapi (fun x _ -> Int.to_float x) (empty [| n |])) in
   let (_, Many sum) = sum_array (Many 0) (Many n) (Many 0.) row in
@@ -41,7 +41,7 @@ let make_arr () =
 
 (* It's not quite but close enough... *)
 let%expect_test "one_d_conv" =
-  let one_d_conv = Examples.Weighted_avg.it in
+  let one_d_conv = Examples.Gen.Weighted_avg.it in
   let (A row) : z arr = make_arr () in
   let n = Owl.Arr.numel row in
   let weights : z arr = A (Owl.Arr.(init [| n |] (fun _ -> 1. /. 3.))) in
@@ -52,7 +52,7 @@ let%expect_test "one_d_conv" =
 
 (* With inferred fractional capabilities *)
 let%expect_test "one_d_conv" =
-  let one_d_conv = Examples.Weighted_avg_infer.it in
+  let one_d_conv = Examples.Gen.Weighted_avg_infer.it in
   let (A row) : z arr = make_arr () in
   let n = Owl.Arr.numel row in
   let weights : z arr = A (Owl.Arr.(init [| n |] (fun _ -> 1. /. 3.))) in
@@ -62,7 +62,7 @@ let%expect_test "one_d_conv" =
 ;;
 
 let%expect_test "sugar" =
-  let (f, g) = Examples.Sugar.it in
+  let (f, g) = Examples.Gen.Sugar.it in
   let row : _ arr = A Owl.Arr.(ones [| 3 |]) in
   let (A row, Many x) = f row (Many 1, Many (Many 2)) in
   let Many y = g (Many (Many 4)) (Many 1) in
@@ -71,7 +71,7 @@ let%expect_test "sugar" =
 ;;
 
 let%test "square" =
-  let square = Examples.Square.it in
+  let square = Examples.Gen.Square.it in
   let rand = Owl.Mat.uniform 5 5 in
   let (_, M answer) = square (M rand) in
   let answer2 = Owl.Mat.dot rand rand in

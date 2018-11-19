@@ -1,12 +1,9 @@
 module type Intf =
 sig
-  type mat_info
   type wrap
-  val tests: wrap list
-  val files: base:int -> cols:int -> mat_info list
-  val generate_exn: mat_info list -> base:int -> start:int -> limit:int -> unit
+  val files: base:int -> cols:int -> Collect.mat_info list
   val runtest_exn:
-    mat_info list ->
+    Collect.mat_info list ->
     macro_runs:int ->
     micro_quota:int option ->
     base:int ->
@@ -14,4 +11,10 @@ sig
     exp:int ->
     wrap list ->
     int * string Data.t list
+end
+
+module type With_algs =
+sig
+  include Intf
+  val algs: wrap list
 end

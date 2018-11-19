@@ -1,23 +1,15 @@
 open Base
 ;;
 
-module Time =
-  Core_kernel.Time
-;;
-
-module Command =
-  Core.Command
-;;
-
 let run_with_params ?(analyse=true) ~start ~limit ~tests ~micro_quota ~macro_runs =
   let base, cols = 5, 3 in
   if base >= 1 && cols >= 1 then
     let n = limit - start + 1 in
-    let module F = (val tests : Utils.Intf) in
+    let module F = (val tests : Utils.With_algs) in
     let files = F.files ~base ~cols in
-    let () = F.generate_exn files ~base ~start ~limit in
+    let () = Collect.generate_exn files ~base ~start ~limit in
     let collected = List.init n ~f:(fun exp ->
-      F.runtest_exn files ~micro_quota ~macro_runs ~base ~cols ~exp:(start+exp) F.tests)
+      F.runtest_exn files ~micro_quota ~macro_runs ~base ~cols ~exp:(start+exp) F.algs)
     in
     if analyse then (
       List.iter collected ~f:Data.by_size;
@@ -44,24 +36,27 @@ let run_with_params ~analyse ~start ~limit ~tests ~micro_quota ~macro_runs =
 
 let alg =
   let open Examples.Kalman in
-  Core.Command.Arg_type.create
-    (let return x =
-       (module
-         struct
-           include Examples.Kalman
-           include Kalman_utils
-           let tests = x
-         end : Utils.Intf) in
-     function
-     | "none" -> return []
-     | "owl" ->  return [W Owl]
-     | "lt4la" -> return [W LT4LA]
-     | "cblas" -> return [W CBLAS]
-     | "numpy" -> return [W NumPy]
-     | "all" -> return all
-     | x ->
-       Stdio.eprintf "'%s' not a supported implementation" x;
-       Caml.exit 1)
+  Core.Command.Arg_type.create @@
+  let kalman algs =
+    (module struct
+      include Kalman_utils
+      let algs = algs
+    end : Utils.With_algs) in
+  function
+  | "none" -> kalman []
+  | "owl" ->  kalman [W Owl]
+  | "lt4la" -> kalman [W LT4LA]
+  | "cblas" -> kalman [W CBLAS]
+  | "numpy" -> kalman [W NumPy]
+  | "kalman" -> kalman all
+  | "l1_norm_min" ->
+    (module struct
+      include L1_norm_min_utils
+      let algs = Examples.L1_norm_min.all
+    end : Utils.With_algs)
+  | x ->
+    Stdio.eprintf "'%s' not a supported implementation" x;
+    Caml.exit 1
 ;;
 
 let command =

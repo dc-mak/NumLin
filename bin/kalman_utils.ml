@@ -1,27 +1,15 @@
-open Owl
+open Base
 ;;
 
-open Base
+module Mat =
+  Owl.Mat
 ;;
 
 module Time =
   Core_kernel.Time
 ;;
 
-module Command =
-  Core.Command
-;;
-
-(* Lots of types *)
-type mat_info = {
-  name : string;
-  dim : int -> int * int;
-  make : scale:int -> Mat.mat;
-  valid: Mat.mat -> bool;
-}
-;;
-
-type kalman_input = {
+type input = {
   sigma : Mat.mat;
   h: Mat.mat;
   mu: Mat.mat;
@@ -34,29 +22,11 @@ module F =
   Examples.Kalman
 ;;
 
-(* Step 0: Platform and sanity checks. *)
-module IO =
-  Array_io.Make (struct let dir = "arrays" end)
+type wrap =
+  F.wrap
 ;;
 
-(* Step 1: Generate some data. Saved to disk for the sake of consistency. *)
-let generate_exn files ~base ~start ~limit =
-  assert (base >= 1 && start >= 1 && limit >= 1 && limit >= start);
-  for i = start to limit do
-    let scale = Int.pow base (i-1) in
-    List.iter files ~f:(fun { name; dim; make; valid } ->
-      let n, k = dim scale in
-      let file = IO.filename name ~n ~k in
-      if not @@ Caml.Sys.file_exists file then (
-        let x = make ~scale in
-        if not @@ valid x then failwith ("Matrix " ^ file ^ " not valid.");
-        IO.output_exn file x;
-      ))
-  done
-;;
-
-(* Step 2: Small matrices *)
-let get_micro ~n ~k { sigma; h; mu; r; data } (F.W fun_) =
+let make_microbench_tests ~n ~k { sigma; h; mu; r; data } (F.W fun_) =
   let f = F.get fun_ in
   let name = F.(name @@ W fun_) in
   let open Core_bench.Bench in
@@ -93,46 +63,6 @@ let get_micro ~n ~k { sigma; h; mu; r; data } (F.W fun_) =
       f ~n ~k ~sigma ~h ~mu ~r ~data)
 ;;
 
-let micro_exn ~sec ~n ~k input tests =
-  assert (n >= 1 && sec >= 1);
-  let open Core_bench.Bench in
-  (* Trying to emulate options: -ci-absolute -quota 10 -clear-columns +time samples speedup *)
-  let run_config =
-    Run_config.create
-      ~verbosity:(Core_bench.Verbosity.Quiet)
-      ~time_quota:(Core_kernel.Time.Span.create ~sec ()) () in
-  (* Ensures we have one (and only one) regression (Array.get _ 0) *)
-  (* Ensures we have r_square AND a 95% CI (Option.value_exn)      *)
-  let analysis_configs =
-    Analysis_config.(List.map [nanos_vs_runs] ~f:(with_error_estimation)) in
-  let data =
-    tests
-    |> List.map ~f:(get_micro ~n ~k input)
-    |> measure ~run_config
-    |> List.map ~f:(analyze ~analysis_configs)
-    |> Or_error.combine_errors
-    |> Or_error.ok_exn
-    |> List.map ~f:(fun result ->
-      let open Core_bench.Analysis_result in
-      let regr = (regressions result).(0) in
-      let coeff = (Regression.coefficients regr).(0) in
-      let ci95 = Option.value_exn (Coefficient.ci95 coeff) in
-      let mean_ns = Coefficient.estimate coeff in
-      let (minus_err, plus_err) = Ci95.ci95_abs_err ci95 ~estimate:mean_ns in
-      Data.{
-        ind_var = name result;
-        mean = Time.Span.of_ns mean_ns;
-        plus_err = Time.Span.of_ns plus_err;
-        minus_err = Time.Span.of_ns minus_err;
-        r_sq = Regression.r_square regr;
-        sample = sample_count result;
-      }
-    )
-  in
-  (n, data)
-;;
-
-(* Step 3: big matrices *)
 let macro ~f ?(clean=(fun () -> ())) ~runs { sigma; h; mu; r; data } =
   assert (runs >= 1);
   Array.init runs ~f:(fun _ ->
@@ -145,7 +75,7 @@ let macro ~f ?(clean=(fun () -> ())) ~runs { sigma; h; mu; r; data } =
   )
 ;;
 
-let get_macro ~n ~k ~runs input (F.W fun_) =
+let make_macro_timing_array ~n ~k ~runs input (F.W fun_) =
   let f = F.get fun_ in
   match fun_ with
 
@@ -160,53 +90,31 @@ let get_macro ~n ~k ~runs input (F.W fun_) =
 
   | F.LT4LA ->
     let { sigma=_; h=_; mu; r; data } = input in
-    let mu' = Owl.Mat.copy mu
-    and r' = Owl.Mat.copy r
-    and data' = Owl.Mat.copy data in
+    let mu' = Mat.copy mu
+    and r' = Mat.copy r
+    and data' = Mat.copy data in
     (* [mu], [r] and [data] are overrwritten *)
     let clean () =
-      Owl.Mat.copy_ mu' ~out:mu;
-      Owl.Mat.copy_ r' ~out:r;
-      Owl.Mat.copy_ data' ~out:data; in
+      Mat.copy_ mu' ~out:mu;
+      Mat.copy_ r' ~out:r;
+      Mat.copy_ data' ~out:data; in
     macro input ~runs ~f:f.f ~clean
 
   | F.CBLAS ->
     (* Not super valid because of marshalling overhead *)
     let { sigma; h; mu; r; data } = input in
-    let mu' = Owl.Mat.copy mu
-    and r' = Owl.Mat.copy r
-    and data' = Owl.Mat.copy data in
+    let mu' = Mat.copy mu
+    and r' = Mat.copy r
+    and data' = Mat.copy data in
     (* [mu], [r] and [data] are overrwritten *)
     let clean () =
-      Owl.Mat.copy_ mu' ~out:mu;
-      Owl.Mat.copy_ r' ~out:r;
-      Owl.Mat.copy_ data' ~out:data; in
+      Mat.copy_ mu' ~out:mu;
+      Mat.copy_ r' ~out:r;
+      Mat.copy_ data' ~out:data; in
     let f = fst f in
     Array.init runs ~f:(fun _ ->
       let t = Time.Span.of_us @@ f ~n ~k ~sigma ~h ~mu ~r ~data in
       clean (); t)
-;;
-
-let macro ~runs ~n ~k input tests =
-  assert (runs >= 1 && n >= 1 && k >= 1);
-  let f fun_ =
-    let times = get_macro ~n ~k ~runs input fun_ in
-    let mean, std =
-      let times = Array.map times ~f:(Time.Span.to_us) in
-      let mean = Stats.mean times in
-      let std = Stats.std ~mean times in
-      Time.Span.(of_us mean, of_us std)
-    in
-    Data.{
-      ind_var = F.name fun_;
-      mean = mean;
-      plus_err = std;
-      minus_err = Time.Span.neg std;
-      r_sq = None;
-      sample = runs;
-    }
-  in
-  (n, List.map ~f tests)
 ;;
 
 let check_dims ~n ~k {sigma; h; mu; r; data} =
@@ -221,17 +129,8 @@ let check_dims ~n ~k {sigma; h; mu; r; data} =
 
 (* Step 4: Select appropriate test and gather data. *)
 let runtest_exn files ~macro_runs:runs ~micro_quota:sec ~base:n' ~cols:k' ~exp:i tests =
-  assert (runs >= 1 && (Option.(is_none sec || value_exn sec >= 1)) && n' >= 1 && k' >= 1 && i >= 1);
   let scale = Int.pow n' (i-1) in
-  match List.fold_right files ~init:[] ~f:(fun { name; dim; make=_; valid } args ->
-    let n, k = dim scale in
-    let file = IO.filename name ~n ~k in
-    let y = IO.input_exn file ~n ~k in
-    if valid y then
-      y :: args
-    else
-      failwith ("File " ^ file ^ " failed validation")
-  ) with
+  match Collect.read_in_exn ~scale files with
   | [sigma; h; mu; r; data] ->
     let input = { sigma; h; mu; r; data } in
     let n, k = scale * n', scale * k' in
@@ -239,11 +138,11 @@ let runtest_exn files ~macro_runs:runs ~micro_quota:sec ~base:n' ~cols:k' ~exp:i
     begin match sec with
     | Some sec ->
       if i <= 3 (* micro-benchmark for small values only *) then
-        micro_exn ~sec ~n ~k input tests
+        Collect.micro_exn ~sec ~n ~k make_microbench_tests input tests
       else
-        macro ~runs ~n ~k input tests
+        Collect.macro ~runs ~n ~k F.name make_macro_timing_array input tests
     | None ->
-      macro ~runs ~n ~k input tests
+      Collect.macro ~runs ~n ~k F.name make_macro_timing_array input tests
     end
   | _ -> assert false
 ;;
@@ -263,10 +162,10 @@ let semidef n =
 let files ~base:n' ~cols:k' =
   (* Mat.semidef doesn't produce exactly symmetric matrices for size 61 or greater ..?
      Thankfully, results not relevant to measurement, only consistency and computation. *)
-  let pos_def_sym x = Linalg.D.(is_posdef x && is_symmetric x)
+  let pos_def_sym x = Owl.Linalg.D.(is_posdef x && is_symmetric x)
   and uniform = Mat.for_all (fun x -> Float.(0. <= x && x <= 1.))
   in
-  [
+  Collect.[
     {
       name ="sigma";
       dim = (fun x -> n'*x , n'*x);

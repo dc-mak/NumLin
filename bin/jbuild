@@ -12,8 +12,10 @@
     (name benchmark)
     (modules (
         benchmark
+        collect
         utils
         kalman_utils
+        l1_norm_min_utils
         data
         array_io
     ))

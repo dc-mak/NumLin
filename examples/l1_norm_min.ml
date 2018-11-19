@@ -8,5 +8,34 @@ let owl ~q ~u =
 ;;
 
 let lt4la ~q ~u =
-  Gen.L1_norm_min.it (M q) (M u)
+  let Lt4la.Template.M x = Gen.L1_norm_min.it (M q) (M u) in
+  x
+;;
+
+type o_mat =
+  Owl.Mat.mat
+;;
+
+type _ t =
+  | Owl : (q:o_mat -> u:o_mat -> o_mat) t
+  | LT4LA : (q:o_mat -> u:o_mat -> o_mat) t
+;;
+
+type wrap =
+  | W : _ t -> wrap
+[@@ocaml.unboxed]
+;;
+
+let get : type a . a t -> a = function
+  | Owl -> owl
+  | LT4LA -> lt4la
+;;
+
+let name : wrap -> string = function
+  | W Owl -> "Owl"
+  | W LT4LA -> "LT4LA"
+;;
+
+let all =
+  [W Owl; W LT4LA]
 ;;

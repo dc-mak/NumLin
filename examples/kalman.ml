@@ -13,9 +13,8 @@ let owl ~sigma ~h ~mu ~r ~data =
 ;;
 
 let numpy, numpy_measure =
-  let () = Py.initialize ~version:3 () in
-  let () = Stdio.(Out_channel.with_file "kalman.py" ~f:(fun chan ->
-    Out_channel.output_string chan "
+  let kalman_bytecode =
+    Python_compile.f `Exec ~optimize:`Normal ~filename:"kalman.py" ~source:"
 import gc
 import resource
 import numpy as np
@@ -34,10 +33,10 @@ def measure(sigma, h, mu, r, data):
     (new_sigma, new_mu) = kalman(sigma, h, mu, r, data)
     end = resource.getrusage(resource.RUSAGE_SELF).ru_utime
     return ((end - start) * 1000000.0)
-")) in
-  let kalman = Py.import "kalman" in
-  let measure = Py.Module.get_function kalman "measure" in
-  let kalman = Py.Module.get_function kalman "kalman" in
+" in
+  let kalman_module = Py.Import.exec_code_module "kalman" kalman_bytecode in
+  let measure = Py.Module.get_function kalman_module "measure" in
+  let kalman = Py.Module.get_function kalman_module "kalman" in
   kalman, measure
 ;;
 

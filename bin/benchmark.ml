@@ -76,7 +76,7 @@ let command =
 
       and tests =
         flag "--alg" (required alg)
-          ~doc:"alg Implementation to test\n(chol, owl, lt4la, cblas, transp, all, none)"
+          ~doc:"alg Implementation to test\n(chol, owl, lt4la, cblas, transp, kalman, l1_norm_min, none)"
 
       and no_analyse =
         flag "--no-analyse" no_arg

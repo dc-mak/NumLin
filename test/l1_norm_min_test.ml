@@ -1,6 +1,3 @@
-open Lt4la.Template
-;;
-
 let n, k =
   5, 3
 ;;
@@ -36,10 +33,15 @@ let i =
 
 let%expect_test "l1_norm_min" =
 
+  let numpy = Examples.L1_norm_min.numpy ~q ~u in
   let owl = Examples.L1_norm_min.owl ~q ~u in
-  let M lt4la = Examples.L1_norm_min.lt4la ~q ~u in
-  if not Owl.Mat.(owl =~ lt4la) then Stdio.printf "NOT SAME!\n";
-  Owl.Mat.print ~header:false owl;
+  (* run last *)
+  let lt4la = Examples.L1_norm_min.lt4la ~q ~u in
+
+  if not Owl.Mat.(owl =~ lt4la) then Stdio.printf "Owl/LT4LA: NOT SAME!\n";
+  if not Owl.Mat.(owl =~ numpy) then Stdio.printf "Owl/NumPy: NOT SAME!\n";
+  if not Owl.Mat.(lt4la =~ numpy) then Stdio.printf "LT4LA/NumPy: NOT SAME!\n";
+  Owl.Mat.print ~header:false numpy;
   Owl.Mat.print ~header:false lt4la;
 
   [%expect {|

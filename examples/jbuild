@@ -4,7 +4,13 @@
     (name examples)
     (synopsis "All examples")
     (flags (:standard -short-paths))
-    (modules (kalman gen l1_norm_min lin_reg))
+    (modules (
+        kalman
+        gen
+        python_compile
+        l1_norm_min
+        lin_reg
+    ))
     (libraries (
         kalman_c_ffi
         lt4la

@@ -5,10 +5,6 @@ module Mat =
   Owl.Mat
 ;;
 
-module Time =
-  Core_kernel.Time
-;;
-
 type input = {
   q : Mat.mat;
   u : Mat.mat;
@@ -23,7 +19,7 @@ type wrap =
   F.wrap
 ;;
 
-let make_microbench_tests ~n ~k {q; u} (F.W fun_) =
+let make_microbench_tests ~n:_ ~k:_ {q; u} (F.W fun_) =
   let f = F.get fun_ in
   let name = F.(name @@ W fun_) in
   let open Core_bench.Bench in
@@ -31,6 +27,11 @@ let make_microbench_tests ~n ~k {q; u} (F.W fun_) =
 
   | F.Owl ->
     (* For consistency with others *)
+    Test.create ~name (fun () ->
+      let q, u = Mat.(copy q, copy u) in f ~q ~u)
+
+  | F.NumPy ->
+    let f = snd f in
     Test.create ~name (fun () ->
       let q, u = Mat.(copy q, copy u) in f ~q ~u)
 
@@ -49,16 +50,22 @@ let macro ~f ?(clean=(fun () -> ())) ~runs {q; u} =
     let _  = f ~q ~u in
     let {Unix.tms_utime=end_;_} = Unix.times () in
     let () = clean () in
-    Time.Span.(of_sec end_ - of_sec start)
+    Core_kernel.Time.Span.(of_sec end_ - of_sec start)
   )
 ;;
 
-let make_macro_timing_array ~n ~k ~runs input (F.W fun_) =
+let make_macro_timing_array ~n:_ ~k:_ ~runs input (F.W fun_) =
   let f = F.get fun_ in
   match fun_ with
 
   | F.Owl ->
     macro ~f ~runs input
+
+  | F.NumPy ->
+    let {q; u} = input in
+    let f = fst f in
+    Array.init runs ~f:(fun _ ->
+      Core.Time.Span.of_us @@ f ~q ~u)
 
   | F.LT4LA ->
     let {q; u} = input in
@@ -97,8 +104,6 @@ let runtest_exn files ~macro_runs:runs ~micro_quota:sec ~base:n' ~cols:k' ~exp:i
 ;;
 
 let files ~base:n' ~cols:k' =
-  (* Mat.semidef doesn't produce exactly symmetric matrices for size 61 or greater ..?
-     Thankfully, results not relevant to measurement, only consistency and computation. *)
   let uniform = Mat.for_all (fun x -> Float.(0. <= x && x <= 1.)) in
   Collect.[
 

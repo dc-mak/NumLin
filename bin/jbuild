@@ -16,6 +16,7 @@
         utils
         kalman_utils
         l1_norm_min_utils
+        lin_reg_utils
         data
         array_io
     ))

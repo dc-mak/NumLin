@@ -55,6 +55,7 @@ let lt4la ~q ~u =
   x
 ;;
 
+(* Uniform interface *)
 type o_mat =
   Owl.Mat.mat
 ;;

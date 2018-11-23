@@ -54,6 +54,11 @@ let alg =
       include L1_norm_min_utils
       let algs = Examples.L1_norm_min.all
     end : Utils.With_algs)
+  | "lin_reg" ->
+    (module struct
+      include Lin_reg_utils
+      let algs = Examples.Lin_reg.all
+    end : Utils.With_algs)
   | x ->
     Stdio.eprintf "'%s' not a supported implementation" x;
     Caml.exit 1

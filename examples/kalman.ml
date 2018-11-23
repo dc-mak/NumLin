@@ -110,6 +110,7 @@ let lazy_ =
     (unpack_arr new_sigma, unpack_arr new_mu)
 ;;
 
+(* Uniform interface *)
 type o_mat =
   Owl.Mat.mat
 ;;

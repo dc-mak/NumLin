@@ -10,13 +10,12 @@ import numpy as np
 from numpy.linalg import inv, lstsq
 
 def lin_reg(x, y):
-    res, residuals, rank, sv = lstsq(x,y,rcond=None)
-    return res
+    return np.dot(np.dot(inv(np.dot(x.T, x)), x.T), y)
 
 def measure(x, y):
     gc.collect()
     start = resource.getrusage(resource.RUSAGE_SELF).ru_utime
-    result = lstsq(x, y)
+    result = lin_reg(x, y)
     end = resource.getrusage(resource.RUSAGE_SELF).ru_utime
     return ((end - start) * 1000000.0)
 " in
@@ -40,15 +39,11 @@ let numpy_measure ~x ~y =
   |> Py.Float.to_float
 ;;
 
-let naive ~x ~y =
+let owl ~x ~y =
   let open Owl.Mat in
   let ( * ) = dot in
   let x' = transpose x in
   inv (x' * x) * x' * y
-;;
-
-let owl ~x ~y =
-  Owl.Regression.D.ols x y
 ;;
 
 let lt4la ~x ~y =
@@ -77,7 +72,7 @@ type lt4la =
 ;;
 
 type _ t =
-  | Owl : o_mat array from_input t
+  | Owl : o_mat from_input t
   | LT4LA : lt4la t
   | NumPy : (float from_input * o_mat from_input) t
 ;;

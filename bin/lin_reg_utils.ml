@@ -96,21 +96,27 @@ let runtest_exn files ~macro_runs:runs ~micro_quota:sec ~base:n' ~cols:k' ~exp:i
 ;;
 
 let files ~base:n' ~cols:k' =
-  let uniform = Mat.for_all (fun x -> Float.(0. <= x && x <= 1.)) in
+
+  (* Memory leak! *)
+  let make_x =
+    let x_table = Hashtbl.create (module Int) in fun x ->
+    Hashtbl.find_or_add x_table x ~default:(fun () -> Mat.uniform (n' * x) (k' * x)) in
+
+  let valid = Mat.for_all (fun x -> Float.(0. <= x && x <= 1.)) in
   Collect.[
 
     {
       name ="x";
       dim = (fun x -> n'*x , k'*x);
-      make = (fun ~scale:x -> Mat.uniform (n' *x) (k' * x));
-      valid = uniform;
+      make = (fun ~scale:x -> make_x x);
+      valid;
     };
 
     {
       name = "y";
       dim = (fun x -> n'*x , 1);
-      make = (fun ~scale:x -> Mat.uniform (n'*x) 1);
-      valid = uniform;
+      make = (fun ~scale:x -> Mat.(make_x x *@ uniform ~a:1. Int.(k' * x) 1));
+      valid = (fun _ -> true);
     };
 
   ]

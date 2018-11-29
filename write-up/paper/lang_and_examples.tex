@@ -111,7 +111,7 @@ same way as a boolean-valued \highl{if}-expression.
 
 \begin{figure}[t]
     \centering
-    \inputminted[fontsize=\small, linenos]{ocaml}{../../test/examples/factorial.lt}
+    \inputminted[fontsize=\small, linenos]{ocaml}{../../examples/factorial.lt}
     \caption{Factorial function in \lang.}\label{fig:lang_factorial}
 \end{figure}
 
@@ -125,7 +125,7 @@ point).
 
 \begin{figure}[t]
     \centering
-    \inputminted[fontsize=\small]{ocaml}{../../test/examples/sum_array.lt}
+    \inputminted[fontsize=\small]{ocaml}{../../examples/sum_array.lt}
     \caption{Summing over an array in \lang.}\label{fig:lang_sumarray}
 \end{figure}
 
@@ -146,7 +146,7 @@ let row = row[i] := x1 in (* or *) let () = free row in
 (*                                                                 *)
 (* Var 'x is universally quantified                                *)
 (* Are you trying to write to/free/unshare an array you don't own? *)
-(* In test/examples/sum_array.lt, at line: 7 and column: 19        *)
+(* In examples/sum_array.lt, at line: 7 and column: 19        *)
     \end{minted}
     \caption{Attempting to write to or free a read only array in
     \lang.}\label{fig:lang_errormsg}
@@ -170,7 +170,7 @@ takes advantage of this convenience.
 
 \begin{figure}[t]
     \centering
-    \inputminted[fontsize=\small]{ocaml}{../../test/examples/weighted_avg_infer.lt}
+    \inputminted[fontsize=\small]{ocaml}{../../examples/weighted_avg_infer.lt}
     \caption{\emph{Simplified} one-dimensional convolution.}\label{fig:lang_oned_conv}
 \end{figure}
 
@@ -211,7 +211,7 @@ permission based on the given arguments.
 
 \begin{figure}[t]
     \centering
-    \inputminted[fontsize=\small]{ocaml}{../../test/examples/square.lt}
+    \inputminted[fontsize=\small]{ocaml}{../../examples/square.lt}
     \caption{Linear regression (OLS): $\hat\beta =
         \mathbf{(X^T X)^{-1} X^T y}$}\label{fig:lang_square}
 \end{figure}
@@ -261,7 +261,7 @@ By using some simple pattern-matching and syntactic sugar, we can:
 
 \begin{figure}[t]
     \centering
-    \inputminted[fontsize=\small]{ocaml}{../../test/examples/lin_reg.lt}
+    \inputminted[fontsize=\small]{ocaml}{../../examples/lin_reg.lt}
     \caption{Linear regression (OLS): $\hat\beta =
         \mathbf{(X^T X)^{-1} X^T y}$}\label{fig:lang_lin_reg}
 \end{figure}
@@ -300,7 +300,7 @@ However, it still serves as a useful example of explaining \lang's features.
 
 \begin{figure}[t]
     \centering
-    \inputminted[fontsize=\small]{ocaml}{../../test/examples/l1_norm_min.lt}
+    \inputminted[fontsize=\small]{ocaml}{../../examples/l1_norm_min.lt}
     \caption{L1-norm minimisation on manifolds:
         $\mathbf{Q^{-1}U(I+U^TQ^{-1}U)^{-1}U^T}$}\label{fig:lang_l1_norm_min}
 \end{figure}
@@ -336,7 +336,7 @@ equations.
     \centering
 %   \begin{minipage}{.4\textwidth}
 %   \centering
-    \inputminted[fontsize=\small]{ocaml}{../../test/examples/kalman.lt}
+    \inputminted[fontsize=\small]{ocaml}{../../examples/kalman.lt}
 %   \end{minipage}
 %   \begin{minipage}{.4\textwidth}
 %   \centering
@@ -362,72 +362,6 @@ equations.
         equations this code implements. Line numbers in comments refer to
         equivalent lines in a C implementation
         (Figure~\ref{fig:cblas_kalman}).}\label{fig:lang_kalman}
-\end{figure}
-
-\begin{figure}[t]
-    \centering
-    \begin{minipage}{.3\textwidth}
-        \centering
-        \begin{grammar}
-            <f> ::= `'
-            \alt <fc>
-            \alt `Z'
-            \alt `S' <f>
-
-            <t> ::= `'
-            \alt `unit'
-            \alt `bool'
-            \alt `int'
-            \alt `elt'
-            \alt <f> `arr'
-            \alt <f> `mat'
-            \alt `!' <t>
-            \alt \synt{$\forall$} <fc.> <t>
-            \alt <t> \lit{$\otimes$} \synt{$t'$}
-            \alt <t> \lit{$\multimap$} \synt{$t'$}
-        \end{grammar}
-    \end{minipage}
-    \begin{minipage}{.3\textwidth}
-        \centering
-        \begin{minted}[fontsize=\small]{ocaml}
-module Arr =
-  Owl.Dense.Ndarray.D
-
-type z = Z
-type 'a s = Succ
-
-type 'a arr =
-  A of Arr.arr
-  [@@unboxed]
-
-type 'a mat =
-  M of Arr.arr
-  [@@unboxed]
-
-type 'a bang =
-  Many of 'a
-  [@@unboxed]
-        \end{minted}
-    \end{minipage}
-    \begin{minipage}{.3\textwidth}
-        \begin{align*}
-            [\![ f\!c ]\!] &= \texttt{'fc} \\
-            [\![ \textbf{Z} ]\!] &= \texttt{z}\\
-            [\![ \textbf{S} \, f ]\!] &= [\![ f ]\!]\, \texttt{s}\\
-            [\![ \textbf{unit} ]\!] &= \texttt{unit}\\
-            [\![ \textbf{bool} ]\!] &= \texttt{bool}\\
-            [\![ \textbf{int} ]\!] &= \texttt{int}\\
-            [\![ \textbf{elt} ]\!] &= \texttt{float}\\
-            [\![ f\, \textbf{arr} ]\!] &= [\![ f ]\!]\, \texttt{arr}\\
-            [\![ f\, \textbf{mat} ]\!] &= [\![ f ]\!]\, \texttt{mat}\\
-            [\![ \textbf{!} \, t ]\!] &= [\![ t ]\!]\, \texttt{bang}\\
-            [\![ \forall f\!c.\, t ]\!] &= [\![ t ]\!]\\
-            [\![ t \otimes t' ]\!] &= [\![ t ]\!] \texttt{*} [\![ t' ]\!]\\
-            [\![ t \multimap t' ]\!] &= [\![ t ]\!] \rightarrow [\![ t' ]\!]
-        \end{align*}
-    \end{minipage}
-    \caption{\lang's type grammar (left) and its embedding into OCaml
-        (right).}\label{fig:type_grammar}
 \end{figure}
 
 \begin{figure}[t]

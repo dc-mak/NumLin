@@ -291,13 +291,13 @@ types.  We can define the factorial function
 
 \begin{figure}[tp]
     \centering
-    \inputminted[fontsize=\small]{ocaml}{../../test/examples/factorial.lt}
+    \inputminted[fontsize=\small]{ocaml}{../../examples/factorial.lt}
     \caption{Factorial function in LT4LA.}\label{fig:ltfla_factorial}
 \end{figure}
 
 \begin{figure}[tp]
     \centering
-    \inputminted[fontsize=\small]{ocaml}{../../test/examples/sum_array.lt}
+    \inputminted[fontsize=\small]{ocaml}{../../examples/sum_array.lt}
     \caption{Summing over an array in LT4LA.}\label{fig:ltfla_sumarray}
 \end{figure}
 
@@ -321,7 +321,7 @@ let row = row[i] := x1 in (* or *) let () = free row in
 (*                                                                 *)
 (* Var 'x is universally quantified                                *)
 (* Are you trying to write to/free/unshare an array you don't own? *)
-(* In test/examples/sum_array.lt, at line: 7 and column: 19        *)
+(* In examples/sum_array.lt, at line: 7 and column: 19        *)
     \end{minted}
     \caption{Attempting to write to or free a read only array in
     LT4LA.}\label{fig:ltfla_univ}

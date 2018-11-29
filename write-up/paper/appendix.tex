@@ -151,7 +151,6 @@ end
 \clearpage
 \section{Kalman Filters from \lang\ and C}
 
-\vspace*{\fill}
 \begin{figure}[h]
 \begin{center}
     \begin{minted}[fontsize=\footnotesize]{ocaml}
@@ -181,29 +180,26 @@ let kalman sigma h mu r_1 data_1 =
     \caption{OCaml code for a Kalman filter, generated (at \emph{compile time})
         from the code in Figure~\ref{fig:lang_kalman}, passed through
         \texttt{ocamlformat} for presentation.}\label{fig:ocaml_kalman}
-\end{center}
-\end{figure}
-\vfill
 
-\begin{landscape}
-\begin{figure}[p]
-    \centering
+\vspace{\baselineskip}
+
     \begin{minted}[fontsize=\footnotesize]{c}
-static void kalman( const int n,               const int k,                 const double *sigma, /* n,n */
-                    const double *h, /* k,n */ const double *mu,  /* n,1 */ double *r,           /* k,k */
-                    double *data,    /* k,1 */ double **ret_sigma /* n,n */ ) {
+static void kalman( const int n,                   const int k,                
+                    const double *sigma, /* n,n */ const double *h,   /* k,n */
+                    const double *mu,    /* n,1 */ double *r,         /* k,k */
+                    double *data,        /* k,1 */ double **ret_sigma /* n,n */ ) {
     double* n_by_k = (double *) malloc(n * k * sizeof(double));
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, n, k, n, 1., sigma, n, h, n, 0., n_by_k, k);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, k, k, n, 1., h, n, n_by_k, k, 1., r, k);
+    cblas_dgemm(RowMajor, NoTrans, Trans, n, k, n, 1., sigma, n, h, n, 0., n_by_k, k);
+    cblas_dgemm(RowMajor, NoTrans, NoTrans, k, k, n, 1., h, n, n_by_k, k, 1., r, k);
     LAPACKE_dposv(LAPACK_COL_MAJOR, 'U', k, n, r, k, n_by_k, k);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, k, 1, n, 1., h, n, mu, 1, -1., data, 1);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, 1, k, 1., n_by_k, k, data, 1, 1., mu, 1);
+    cblas_dgemm(RowMajor, NoTrans, NoTrans, k, 1, n, 1., h, n, mu, 1, -1., data, 1);
+    cblas_dgemm(RowMajor, NoTrans, NoTrans, n, 1, k, 1., n_by_k, k, data, 1, 1., mu, 1);
     double* n_by_n = (double *) malloc(n * n * sizeof(double));
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, k, 1., n_by_k, k, h, n, 0., n_by_n, n);
+    cblas_dgemm(RowMajor, NoTrans, NoTrans, n, n, k, 1., n_by_k, k, h, n, 0., n_by_n, n);
     free(n_by_k);
     double* n_by_n2 = (double *) malloc(n * n * sizeof(double));
     cblas_dcopy(n*n, sigma, 1, n_by_n2, 1);
-    cblas_dsymm(CblasRowMajor, CblasRight, CblasUpper, n, n, -1., sigma, n, n_by_n, n, 1., n_by_n2, n);
+    cblas_dsymm(RowMajor, Right, Upper, n, n, -1., sigma, n, n_by_n, n, 1., n_by_n2, n);
     free(n_by_n);
     *ret_sigma = n_by_n2; }
     \end{minted}
@@ -213,5 +209,6 @@ static void kalman( const int n,               const int k,                 cons
         `measure\_kalman' function that sandwiches a call to this function with
         \texttt{getrusage} is omitted for brevity.}\label{fig:cblas_kalman}
 
+\end{center}
 \end{figure}
-\end{landscape}
+

@@ -46,7 +46,9 @@ PAPER := intro.tex \
          implementation.tex \
          discussion.tex \
          appendix.tex \
-         timings.tex \
+         lin_reg_timings.tex \
+         l1_norm_min_timings.tex \
+         kalman_timings.tex \
          ourbib.bib \
          llncs.cls \
          fig1.eps \

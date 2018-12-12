@@ -1,0 +1,86 @@
+\begin{tikzpicture}[trim axis left]
+\begin{axis}[
+    % width of chart
+    width=\textwidth,
+    height=0.4\textheight,
+    % no box, below chart, horizontal
+    legend style={%
+      draw=none,
+      at={(0.5,-0.15)},
+      anchor=north,
+      legend columns=4,
+      column sep = 1em,
+      cells={align=center},
+    },
+    % log ticks with fixed point,
+    % yticklabel={\pgfmathparse{pow(10,\tick-3)}\pgfmathprintnumber[fixed]{\pgfmathresult}}\,ms, % N ms along y-axis
+    % xticklabel={\pgfmathparse{pow(5,\tick)}\pgfmathprintnumber[fixed]{\pgfmathresult}},
+    xlabel near ticks,
+    xlabel={Matrix size $n$},
+    ylabel near ticks,
+    ylabel={Execution time of one call to L1-norm minimisation ($\mu$s)},
+    xmode = log,
+    log basis x = {5},
+    axis line style={opacity=0}, % hide y axis
+    major tick style={draw=none}, % no ticks
+    ymode=log, % log scale for y
+    log basis y = {10}, % log base 10
+    ymajorgrids, % rows of lines
+    major grid style={gray, line width=1pt},
+]
+
+  % LT4LA
+    \addplot+ [
+        ForestGreen,
+        mark options={fill=ForestGreen},
+        error bars/.cd, y dir=both, y explicit,
+    ] table [
+        y error plus=ey+,
+        y error minus=ey-,
+    ] {
+         x         y     ey+     ey-
+         5        44       1      -1
+        25       146       2      -2
+       125      2357      31     -26
+       625    129910   36616  -36616
+      3125  11206923  272380 -272380
+  };
+
+  % Owl
+    \addplot+ [
+        Blue,
+        mark options={fill=Blue},
+        error bars/.cd, y dir=both, y explicit,
+    ] table [
+        y error plus=ey+,
+        y error minus=ey-,
+    ] {
+         x         y     ey+      ey-
+         5        70        0       -0
+        25       221        3       -3
+       125      3114       58      -52
+       625    163943    16789   -16789
+      3125  16397765  3452667 -3452667
+  };
+
+  % NumPy
+    \addplot+ [
+        red,
+        mark options={fill=red},
+        error bars/.cd, y dir=both, y explicit,
+    ] table [
+        y error plus=ey+,
+        y error minus=ey-,
+    ] {
+         x         y     ey+      ey-
+         5       204       5      -4
+        25       306       6      -6
+       125      3156     127    -146
+       625    146608   29089  -29089
+      3125  12525704  906730 -906730
+  };
+
+  \legend{\lang,\textsc{Owl},\textsc{NumPy}}
+
+\end{axis}
+\end{tikzpicture}

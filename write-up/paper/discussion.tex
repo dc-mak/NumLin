@@ -38,30 +38,78 @@ programming.
 
 \subsection{Related Work}
 
-Using linear types for BLAS routines is a particularly good domain fit (given
-the implicit restrictions on aliasing arguments), but is under-explored in the
-academic literature. Linear algebra libraries written in Rust take advantage of
-the distinction that Rust's type system offers between mutable views/references
-to arrays, offering a \emph{seemingly} different approach to the
-fractional-permissions based one we took in this paper.  However, recent
-research\cite{weiss} suggests that Rust's borrow-checker could be explained in
-simpler terms using \emph{fractional-permissions}; in this light, our paper
-neatly bridges the gap by demonstrating the theoretical and practical
-simplicity of this way of thinking.
+Using linear types for BLAS routines is a particularly good domain fit
+(given the implicit restrictions on aliasing arguments), and as a
+result the idea of using substructural types to express array
+computations is not a particularly new
+one\cite{scholz,henriksen,bernardy2016}.  However, many of these
+designs have been focused on building languages to \emph{implement}
+the kernel linear algebra functions, and as a result, they tend to add
+additional limitations on the language design. Both
+Futhark~\cite{henriksen} and Single Assignment C~\cite{scholz} omit
+higher-order functions facilitating compilation to GPUs. The work of
+\citet{bernardy2016} forbids term-level recursion, in order to ensure
+that all higher-order computations can be statically normalized away
+and thereby maximize opportunities for array fusion.
 
-Linear Haskell\cite{bernardy2017linear}, takes a slightly different definition
-of linearity, that is one on \emph{arrows} as opposed to \emph{kinds}: for $f :
-a \multimap b$, if $f u$ is used exactly once \emph{then} $u$ is used exactly
-once. Whilst this has the advantage of being backwards-compatible, \lang's
-approach of compile-time code-generation enables using linearity \emph{as a
-library}, whilst the use of fractions gives extra control over aliasing not
-available in Linear Haskell.
+In contrast, our approach is to begin with the assumption that we can
+take existing efficient BLAS-like libraries, and then enforce their
+correct \emph{usage} using a linear type discipline with fractional
+permissions. 
 
-In general, using substructural types to express array computations is not
-particularly new\cite{scholz,henriksen,bernardy2016}, but these approaches
-limit recursion and higher-order functions, and have special constructs to
-enable \emph{implementation} of efficient BLAS-like libraries rather than
-enforcing correct \emph{usage}.
+
+This approach is similar to the one taken in linear algebra libraries
+for Rust -- these libraries typically take advantage of the
+distinction that Rust's type system offers between mutable
+views/references to arrays.  The work of \citet{weiss} and
+\citet{rustbelt} suggest that Rust's borrow-checker can be expressed
+in simpler terms using \emph{fractional-permissions}, though to our
+knowledge the programmer-visible lifetime analysis in Rust has never
+been formalized.
+
+Using fractional permissions directly, as we did, rather than relying
+on a complex has two main benefits. First, our type system
+demonstrates that type systems for fractional permissions can be
+\emph{dramatically} simpler than existing state-of-the-art approaches,
+including both industrial languages like Rust, as well as the academic
+languages developed by \citet{bierhoff}.  Their type system, much like
+Rust, build a complex dataflow analysis into the typing rules to infer
+when variables can be shared or not. This allows for very
+natural-looking user programs, but creates the impression that using
+fractional permissions requires a heavy theoretical and engineering
+effort going well beyond that needed for supporting basic linear
+types.
+
+Instead, our approach of requiring sharing to be made explicit means
+that the existing unification machinery already in place for ordinary
+ML-style type inference, can be reused to support fractions. Basically,
+we can view sharing a value as dividing a fraction by two, and after
+taking logarithms all fractions are Peano numbers, whose equality can
+be established with ordinary unification. 
+
+This fact is important because there are major upcoming
+implementations of linear types such as Linear
+Haskell~\cite{bernardy2017linear}, which do not have built-in support
+for fractional permissions. Instead, Linear Haskell takes a slightly
+different definition of linearity, one based on \emph{arrows} as
+opposed to \emph{kinds}: for $f : a \multimap b$, if $f u$ is used
+exactly once \emph{then} $u$ is used exactly once. Whilst this has the
+advantage of being backwards-compatible, it also means that the type
+system has no built-in support for the concurrent reader, exclusive
+writer pattern that fractional permissions enable.
+
+However, since our type system shows demonstrates unification is ``all
+one needs'' for fractions, it should be possible to \emph{encode}
+\lang's approach to fractional permissions in Linear Haskell by adding
+a GADT-style natural number index to array types tracking the
+fraction, which should enable supporting high-performance BLAS
+bindings in Linear Haskell. Actually implementing this is something we
+leave for future work, as there remains an issue which we do not see a
+good encoding for. Namely, only having support for linear functions
+makes it a bit inconvenient to manipulate linear values directly --
+programs end up taking on a CPS-like structure. This seems to remain
+an advantage of a direct implementation of linear types. 
+
 
 \subsection{Simplicity and Further Work}
 

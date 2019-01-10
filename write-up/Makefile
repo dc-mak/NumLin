@@ -50,9 +50,9 @@ PAPER := intro.tex \
          l1_norm_min_timings.tex \
          kalman_timings.tex \
          ourbib.bib \
-         llncs.cls \
+         lipics-v2019.cls \
          fig1.eps \
-         splncs04.bst
+         plainurl.bst
 
 PAPER_DIR := paper
 PAPER := $(addprefix $(PAPER_DIR)/,$(PAPER))

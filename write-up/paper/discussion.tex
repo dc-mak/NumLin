@@ -48,7 +48,7 @@ the kernel linear algebra functions, and as a result, they tend to add
 additional limitations on the language design. Both
 Futhark~\cite{henriksen} and Single Assignment C~\cite{scholz} omit
 higher-order functions facilitating compilation to GPUs. The work of
-\citet{bernardy2016} forbids term-level recursion, in order to ensure
+\cite{bernardy2016} forbids term-level recursion, in order to ensure
 that all higher-order computations can be statically normalized away
 and thereby maximize opportunities for array fusion.
 
@@ -61,8 +61,8 @@ permissions.
 This approach is similar to the one taken in linear algebra libraries
 for Rust -- these libraries typically take advantage of the
 distinction that Rust's type system offers between mutable
-views/references to arrays.  The work of \citet{weiss} and
-\citet{rustbelt} suggest that Rust's borrow-checker can be expressed
+views/references to arrays.  The work of \cite{weiss} and
+\cite{rustbelt} suggest that Rust's borrow-checker can be expressed
 in simpler terms using \emph{fractional-permissions}, though to our
 knowledge the programmer-visible lifetime analysis in Rust has never
 been formalized.
@@ -72,7 +72,7 @@ on a complex has two main benefits. First, our type system
 demonstrates that type systems for fractional permissions can be
 \emph{dramatically} simpler than existing state-of-the-art approaches,
 including both industrial languages like Rust, as well as the academic
-languages developed by \citet{bierhoff}.  Their type system, much like
+languages developed by \cite{bierhoff}.  Their type system, much like
 Rust, build a complex dataflow analysis into the typing rules to infer
 when variables can be shared or not. This allows for very
 natural-looking user programs, but creates the impression that using

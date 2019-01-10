@@ -1,11 +1,46 @@
-\documentclass[runningheads,a4paper,twoside]{llncs}
-\usepackage{hyperref}
-\hypersetup{%
-    colorlinks=true,
-    linkcolor={black},
-    citecolor={black},
-    urlcolor={blue}
-}
+\documentclass[a4paper,UKenglish]{lipics-v2019}
+%This is a template for producing LIPIcs articles. 
+%See lipics-manual.pdf for further information.
+%for A4 paper format use option "a4paper", for US-letter use option "letterpaper"
+%for british hyphenation rules use option "UKenglish", for american hyphenation rules use option "USenglish"
+%for section-numbered lemmas etc., use "numberwithinsect"
+%for enabling cleveref support, use "cleveref"
+%for enabling cleveref support, use "autoref"
+
+\bibliographystyle{plainurl}
+
+\title{NumLin: Linear Types for Linear Algebra}
+
+\author{Dhruv C.~Makwana}{Unaffiliated \url{dhruvmakwana.com} }{dcm41@cam.ac.uk}{[orcid]}{}
+
+\author{Neelakantan R.~Krishnaswami}{Department of Computer Science and Technology, University of Cambridge, United Kingdom}{nk480@cl.cam.ac.uk}{[orcid]}{}
+
+\authorrunning{D.\,C. Makwana and N.\,R. Krishnaswami}
+
+\Copyright{Dhruv C. Makwana and Neelakantan R. Krishnaswami}% LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
+
+\ccsdesc[300]{Theory of computation~Program specifications}
+
+\keywords{numerical, linear, algebra, types, permissions, OCaml}
+
+\supplement{\url{www.github.com/dc-mak/lt4la}}
+
+%\nolinenumbers %uncomment to disable line numbering
+
+%\hideLIPIcs  %uncomment to remove references to LIPIcs series (logo, DOI, ...), e.g. when preparing a pre-final version to be uploaded to arXiv or another public repository
+
+%Editor-only macros:: begin (do not touch as author)%
+\EventEditors{John Q. Open and Joan R. Access}
+\EventNoEds{2}
+\EventLongTitle{42nd Conference on Very Important Topics (CVIT 2016)}
+\EventShortTitle{CVIT 2016}
+\EventAcronym{CVIT}
+\EventYear{2016}
+\EventDate{December 24--27, 2016}
+\EventLocation{Little Whinging, United Kingdom}
+\EventLogo{}
+\SeriesVolume{42}
+\ArticleNo{23}
 
 % Source code highlighting
 \usepackage[outputdir=../build]{minted}
@@ -23,7 +58,7 @@
 
 % Ott Rules
 \usepackage{supertabular}%
-\usepackage[margin=1in]{geometry}%
+% \usepackage{geometry}%
 \usepackage{ifthen}%
 \usepackage{alltt}%hack%
 
@@ -80,28 +115,12 @@
 \renewcommand{\litleft}{\bgroup\ulitleft}
 \renewcommand{\litright}{\ulitright\egroup}
 
-\begin{document}
-
-\title{NumLin: Linear Types for Linear Algebra}
-
-% \titlerunning{NumLin: Linear Types for Linear Algebra}
-% If the paper title is too long for the running head, you can set
-% an abbreviated paper title here
-
+% NumLin
 \newcommand{\lang}{\textsc{NumLin}}
 
-\author{Dhruv C.~Makwana\inst{1}\orcidID{orcidID} \and
-Neelakantan R.~Krishnaswami\inst{2}\orcidID{orcidID}}
-%
-\authorrunning{D.C. Makwana and N.R. Krishnaswami}
+\begin{document}
 
-\institute{\email{dcm41@cam.ac.uk}
-\url{dhruvmakwana.com} \and
-Department of Computer Science, University of Cambridge\\
-\email{nk480@cl.cam.ac.uk}}
-%
-\maketitle
-%
+
 \begin{abstract}
     We present \lang, a functional programming language designed to express
     the APIs of low-level linear algebra libraries (such as BLAS/LAPACK) safely
@@ -112,7 +131,6 @@ Department of Computer Science, University of Cambridge\\
     it to other recent developments in linear types and show that using linear
     types and fractional permissions to express the APIs of low-level linear
     algebra libraries is a simple and effective idea.
-\keywords{numerical, linear, algebra, types, permissions, OCaml}
 \end{abstract}
 
 \input{intro}
@@ -125,8 +143,7 @@ Department of Computer Science, University of Cambridge\\
 
 \input{discussion}
 
-\bibliographystyle{splncs04}
-
+\clearpage
 \bibliography{ourbib}
 
 \clearpage

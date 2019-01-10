@@ -9,18 +9,16 @@ stdenv.mkDerivation {
     buildInputs = [
         (texlive.combine {
             inherit (texlive)
-            ucs
-            ec
-            caption
-            sectsty
-            tocloft
-            titlesec
-            minitoc
-            cm-super
-            scheme-basic
+            amsmath
+            academicons
             booktabs
             bussproofs
+            caption
             charter
+            cleveref
+            cm-super
+            comment
+            ec
             epstopdf
             etoolbox # minted
             fancyvrb # minted
@@ -30,17 +28,29 @@ stdenv.mkDerivation {
             hyperref
             ifplatform # minted
             latexmk
+            lastpage
             lineno # minted
-            ms # pgfplots
-            minted
+            listings
             mdwtools # syntax
+            microtype
+            minitoc
+            minted
+            ms # pgfplots
+            multirow
             parskip
             pgf
             pgfplots
+            scheme-basic
+            sectsty
             setspace
             supertabular
+            soul
             texcount
+            titlesec
+            threeparttable
             tocbibind
+            tocloft
+            ucs
             xcolor
             xstring # minted
             ;

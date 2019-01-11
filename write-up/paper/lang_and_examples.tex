@@ -2,10 +2,19 @@
 
 \subsection{Overview}
 
-Linearity is at the heart of \lang. Linearity allows us to express a
-pure-functional API for numerical library routines that mutate arrays and
-matrices. Linearity also restricts aliasing of (values which represent)
-pointers.
+The core type theory of \lang\ is a nearly off-the-shelf linear type
+theory, supporting familiar features such as linear function spaces
+$A \multimap B$ and tensor products $A \otimes B$. We adopt linearity
+-- the restriction that each program variable be used at most once --
+since it allows us to express purely functional APIs for numerical
+library routines that mutate arrays and matrices~\cite{Wadler90}. Due
+to linearity, values cannot alias and are only used once, which means
+that linearly-typed updates result in no \emph{observable} mutation.
+
+As a result, programmers can reason about \lang\ expressions as if they
+were ordinary mathematical expressions -- as indeed they are! We are
+merely adopting a stricter type discipline than usual to make managing
+memory safe. 
 
 \subsubsection{Intuitionism: ! and \highl{Many}}
 

@@ -1,19 +1,58 @@
 \section{Introduction}
 
-\lang\ is a functional programming language designed to express the APIs of
-low-level linear algebra libraries (such as BLAS/LAPACK) safely and explicitly.
-It does so by combining linear types, fractional permissions, runtime errors
-and recursion into a small, easily understandable, yet expressive set of core
-constructs.
+Programmers writing numerical software often find themselves caught on
+the horns of a dilemma. The foundational, low-level linear algebra
+libraries such as BLAS and LAPACK offer programmers very precise
+control over the memory lifetime and usage of vector and matrix
+values. However, this power comes paired with the responsibility to
+manually manage the memory associated with each array object, and in
+addition to bringing in the familiar difficulties of reasoning about
+lifetimes, aliasing and sharing that plague low-level systems
+programming, this also moves the APIs away from the linear-algebraic,
+mathematical style of thinking that numerical programmers want to use.
 
-\lang\ allows a novice to understand and work with complicated linear algebra
-library APIs, as well as point out subtle aliasing bugs and reduce memory usage
-in existing programs. In fact, we were able to use \lang\ to find linearity and
-aliasing bugs in a linear algebra algorithm that was \emph{generated} by
-another program \emph{specifically designed to translate matrix expressions
-into an efficient sequence of calls to linear algebra routines}. We were also
-able to reduce the number of temporaries used by the same algorithm, using
-\lang's type system to guide us.
+As a result, programmers often turn to higher-level languages such as
+Matlab, R and Numpy, which offer very high level array abstractions
+that can be viewed as ordinary mathematical values. This makes
+programming safer, as well as making prototyping and verification much
+easier, since it lets programmers write programs which bear a closer
+resemblance to the formulas that the mathematicians and statisticians
+designing these algorithms prefer to work with, and ensures that
+program bugs will reflect incorrectly-computed values rather than heap
+corruption.
+
+The intention is that these languages can use libraries BLAS and
+LAPACK, without having to expose programmers to explicit memory
+management. However, this benefit comes at a price: because user
+programs do not worry about aliasing, the language implementations
+cannot in general exploit the underlying features of the low-level
+libraries that let them explicitly manage and reuse memory. As a
+result, programs written in high-level statistical languages can
+be much less memory-efficient than programs that make full use
+of the powers the low-level APIs offer. 
+
+So in practice, programmers face a tradeoff: they can eschew safety
+and exploit the full power of the underlying linear algebra libraries,
+or they can obtain safety at the price of unneeded copies and worse
+memory efficiency. In this work, show that this tradeoff is not a
+fundamental one.
+
+
+\lang\ is a functional programming language designed to express the
+APIs of low-level linear algebra libraries (such as BLAS/LAPACK)
+safely and explicitly.  It does so by combining linear types,
+fractional permissions, runtime errors and recursion into a small,
+easily understandable, yet expressive set of core constructs.
+
+\lang\ allows a novice to understand and work with complicated linear
+algebra library APIs, as well as point out subtle aliasing bugs and
+reduce memory usage in existing programs. In fact, we were able to use
+\lang\ to find linearity and aliasing bugs in a linear algebra
+algorithm that was \emph{generated} by another program
+\emph{specifically designed to translate matrix expressions into an
+  efficient sequence of calls to linear algebra routines}. We were
+also able to reduce the number of temporaries used by the same
+algorithm, using \lang's type system to guide us.
 
 \lang's implementation supports several syntactic conveniences as well as a
 \emph{usable} integration with real OCaml libraries.

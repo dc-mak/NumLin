@@ -152,28 +152,28 @@ type 'a bang =
 To make LT4LA a usable DSL, I needed a way of allowing values to either never
 be used or be used more than once. For this, I added the \mbox{!-constructor}
 at the type-level of the DSL and its corresponding introduction (the
-\ltfla{Many}-constructor) and elimination (the \ltfla{let Many <id> = .. in ..
+\highl{Many}-constructor) and elimination (the \highl{let Many <id> = .. in ..
 } destructor) forms at the term-level of the DSL.  The idea behind the
 \mbox{!-constructor} is that a value of that type uses no `resources'
 (linearly-typed expressions). To start off with, it is enough to say that
 anything which can be passed around by copying, will have a \mbox{!-type}. This
-includes integers, elements and booleans. So \ltfla{3 : !int} and \ltfla{3. +.
+includes integers, elements and booleans. So \highl{3 : !int} and \highl{3. +.
 4. : !elt}. However, all bindings are still linear by default, so to emulate
-intuitionism, I desugar \ltfla{let !x = <exp> in <body>} to \ltfla{let Many x =
+intuitionism, I desugar \highl{let !x = <exp> in <body>} to \highl{let Many x =
 <exp> in let Many x = Many (Many x) in <body>} (similarly for function argument
 bindings). The reader can check (using the rules in
-Appendix~\ref{chap:ott_spec}) that this has the effect of moving \ltfla{x : !t}
-from the linear to the intuitionistic environments, only if \ltfla{<exp> : !t}.
+Appendix~\ref{chap:ott_spec}) that this has the effect of moving \highl{x : !t}
+from the linear to the intuitionistic environments, only if \highl{<exp> : !t}.
 
 However, just that desugaring alone is not enough to prevent a user from taking
 an array or matrix and moving it into the intuitionistic environments. Why?
-There are certain situations in which we \emph{should not} use the \ltfla{Many}
-constructor.  Consider the following code: \ltfla{let Many x = Many (array 5)
-in <body>}; the expression \ltfla{array 5} uses no linearly-typed variables
+There are certain situations in which we \emph{should not} use the \highl{Many}
+constructor.  Consider the following code: \highl{let Many x = Many (array 5)
+in <body>}; the expression \highl{array 5} uses no linearly-typed variables
 from the environment. Although we could just reject types of the form
-\ltfla{!(_ arr)} to fix this simple example, what about pairs \ltfla{let Many
+\highl{!(_ arr)} to fix this simple example, what about pairs \highl{let Many
 xy = Many (3, array 5) in <body>}?  Ad-hoc pattern matching on the type cannot
-account for all possible situations. With the last case, we can use \ltfla{xy}
+account for all possible situations. With the last case, we can use \highl{xy}
 as many times as we would like, destruct the pair to get the second component
 and thus create \emph{distinct} read-write aliases to the same array.  Alas,
 now arrays can be used intuitionistically and all the benefits of linearity are
@@ -182,10 +182,10 @@ lost.  Or are they?
 \subsection{Value-Restriction}
 
 Not quite, but to understand how we can fix this problem, we need to question
-an assumption left implicit up until this point: what does \ltfla{Many} even
+an assumption left implicit up until this point: what does \highl{Many} even
 mean in the DSL? How is it translated to OCaml? What is the OCaml runtime
-behaviour of the DSL's \ltfla{Many}-constructor? One option is to go down the
-C++ route and make \ltfla{Many} behave like a \ltfla{shared_ptr} and act as a
+behaviour of the DSL's \highl{Many}-constructor? One option is to go down the
+C++ route and make \highl{Many} behave like a \highl{shared_ptr} and act as a
 runtime reference-count for arrays. I chose to not go for this option because
 it went against the \emph{explicitness} and \emph{predictability} that C and
 Fortran have. It would make analysing when and what is allocated and freed more
@@ -194,12 +194,12 @@ like the higher-level languages I was trying to move away from.
 My aim is to show linear types are simple to understand and apply, enough so
 that they can be grafted (in a limited way) on to existing languages as a
 \emph{library}. In that spirit, the simplest thing that the DSL's
-\ltfla{Many}-constructor can mean in the OCaml runtime is \emph{nothing}.
-LT4LA's !/\ltfla{Many} constructors are translated into OCaml
-\ltfla{bang}/\ltfla{Many} constructors declared as \ltfla{type 'a bang = Many
+\highl{Many}-constructor can mean in the OCaml runtime is \emph{nothing}.
+LT4LA's !/\highl{Many} constructors are translated into OCaml
+\highl{bang}/\highl{Many} constructors declared as \highl{type 'a bang = Many
 of 'a [@@unboxed]}.  The \emph{unboxed} annotation means that the type and its
 constructor only exist for the purpose of type checking in OCaml; \emph{the
-OCaml runtime representation of values of type \ltfla{'a} and \ltfla{'a bang}
+OCaml runtime representation of values of type \highl{'a} and \highl{'a bang}
 is exactly the same}.
 
 With this understanding, our problem is that arrays and matrices are unlike
@@ -213,7 +213,7 @@ matrices, expressions which can be reduced, such as function application and
 if-expressions) as not being `values'. If this sounds familiar, it is because
 this is the same \emph{value-restriction} `trick' from the world of polymorphic
 types applied to linearity instead. We then have the rule that in LT4LA, we can
-only use \ltfla{Many} on expressions that are defined to be \emph{values} and
+only use \highl{Many} on expressions that are defined to be \emph{values} and
 \emph{use no linear variables}.
 
 \subsection{Fractional-Capabilities and Inference}
@@ -226,22 +226,22 @@ explain how I enforce safe aliasing and read/write permissions.
 Array and matrix types are parameterised by
 \emph{fractional-capabilities}~\cite{boyland}.  A fraction of 1 ($2^0$)
 represents complete ownership of a value. Creating an array gives you ownership
-of it; the function \ltfla{array : !int --o z arr} (where \ltfla{z} represents
-`0').  Once you have ownership of an array, you can free it: \ltfla{free : z
+of it; the function \highl{array : !int --o z arr} (where \highl{z} represents
+`0').  Once you have ownership of an array, you can free it: \highl{free : z
 arr --o unit}.  Importantly, because a linear value may only be used once, the
 array just freed is \emph{out of scope} for following expressions,
 \textbf{preventing use-after-free}.  Ownership also enables you to write to the
-array: \ltfla{set : z arr --o !int --o !elt --o z arr} (the syntax \ltfla{w[i]
-:= j} is just sugar for \ltfla{set w i j}). Here, linearity prevents accessing
+array: \highl{set : z arr --o !int --o !elt --o z arr} (the syntax \highl{w[i]
+:= j} is just sugar for \highl{set w i j}). Here, linearity prevents accessing
 aliases which represented the array \emph{before} the mutation.
 
 Any fraction less than 1 (for simplicity, limited to $2^{-k}$ in this system,
-for a positive integer $k$) represents read-only access. So, the \ltfla{'x}
-represents a natural number (either a zero \ltfla{z}, variable \ltfla{'x} or a
+for a positive integer $k$) represents read-only access. So, the \highl{'x}
+represents a natural number (either a zero \highl{z}, variable \highl{'x} or a
 successor (+1) of a natural number). Hence, you can read from (index) any array
-\ltfla{get : 'x .  'x arr --o !int --o 'x arr * !elt} (the syntax \ltfla{let !v
-<- w[i]} is just sugar for \ltfla{let (w, !v) = get _ w i}). In general, a
-left-arrow \ltfla{<-} signifies transparent rebinding with returned values: it
+\highl{get : 'x .  'x arr --o !int --o 'x arr * !elt} (the syntax \highl{let !v
+<- w[i]} is just sugar for \highl{let (w, !v) = get _ w i}). In general, a
+left-arrow \highl{<-} signifies transparent rebinding with returned values: it
 means a program can \emph{appear} to use a variable multiple times, important
 for keeping LT4LA usable and readable. The underscore is how a programmer tells
 the compiler to automatically \emph{infer} the correct fractional-capability
@@ -251,12 +251,12 @@ arguments, \textbf{this allows fractional-capabilities to be \emph{correctly
 inferred} in \emph{any} LT4LA expression}.
 
 Fractions exist to provide both safe aliasing and read/write permissions, via
-the primitives \ltfla{share : 'x . 'x arr --o ('x s) arr * ('x s) arr} and
-\ltfla{unshare: 'x .  ('x s) arr --o ('x s) arr --o 'x arr}.  For the former,
+the primitives \highl{share : 'x . 'x arr --o ('x s) arr * ('x s) arr} and
+\highl{unshare: 'x .  ('x s) arr --o ('x s) arr --o 'x arr}.  For the former,
 the two arrays returned (which are just aliases of the given array) can now
 only be read from and not written to. If you want to write to this array, you
 must use the latter to combine other read-only aliases until you are left with
-only one value of type \ltfla{z arr}, guaranteeing no other aliases exists.
+only one value of type \highl{z arr}, guaranteeing no other aliases exists.
 
 Given this set-up, a programmer now \emph{statically} has \emph{perfect}
 information about aliasing and ownership of values in the program. They can
@@ -315,11 +315,11 @@ let same_resources (wf_a, loc_a) (wf_b, loc_b) =
 
 A non-recursive function may be used more than once if it does not refer to any
 linear variables from the surrounding scope. So, we can desugar something like
-\ltfla{let x = 3 in let !f (y : !int) = x + y in <body>} to \ltfla{let x = 3 in
+\highl{let x = 3 in let !f (y : !int) = x + y in <body>} to \highl{let x = 3 in
 let Many f =  Many (fun y : !int -> x + y) in  <body>}.  Recursion is slightly
 more complicated: we can desugar the factorial function
-(Figure~\ref{fig:ltfla_factorial}) to \ltfla{let Many f = fix (f, x : !int, if
-(*..*) : !int) in <body> }. However, \ltfla{fix}, like \ltfla{Many}, must also
+(Figure~\ref{fig:ltfla_factorial}) to \highl{let Many f = fix (f, x : !int, if
+(*..*) : !int) in <body> }. However, \highl{fix}, like \highl{Many}, must also
 not use any linear variables from its surrounding scope, because a
 recursive function may evaluate its body multiple times.
 
@@ -417,7 +417,7 @@ let x <- new (m, n) [| a*b |] in .. ==> let c = matrix m n in
     \end{minted}
     \caption{Syntactic translations of matrix expressions to linearly-typed
         matrix functions. Further annotations on the matrix variables
-        (\ltfla{sym} or \ltfla{^T}) determine which BLAS routine is called and
+        (\highl{sym} or \highl{^T}) determine which BLAS routine is called and
         what parameters it is passed.}\label{fig:mat_patterns}
 
 \end{figure}
@@ -455,7 +455,7 @@ instructions emitted.
 \section{Code Generation}
 
 Code generation is a straightforward mapping from core LT4LA constructs to
-OCaml constructs, with the addition of \ltfla{Many} constructors to wrap
+OCaml constructs, with the addition of \highl{Many} constructors to wrap
 integer, element and boolean literals.
 
 To make the code produced readable, I added a few `optimisations', to the
@@ -466,19 +466,19 @@ the form:
 
 \begin{itemize}
 
-    \item \ltfla{let xy, z = <exp> in let x,y = xy in <body>} with
-        \ltfla{let (x,y), z = <exp> in <body>}, 
+    \item \highl{let xy, z = <exp> in let x,y = xy in <body>} with
+        \highl{let (x,y), z = <exp> in <body>}, 
 
-    \item \ltfla{let Many x = x in let Many x = Many (Many x) in <body>} with
-        \ltfla{<body>},
+    \item \highl{let Many x = x in let Many x = Many (Many x) in <body>} with
+        \highl{<body>},
 
-    \item \ltfla{let Many x = <exp> in let Many x = Many (Many x) in <body>} with
-        \ltfla{let x = <exp> in <body>},
+    \item \highl{let Many x = <exp> in let Many x = Many (Many x) in <body>} with
+        \highl{let x = <exp> in <body>},
 
-    \item \ltfla{let Many x = Many <exp> in <body>} with \ltfla{let x = <exp> in <body>},
+    \item \highl{let Many x = Many <exp> in <body>} with \highl{let x = <exp> in <body>},
 
-    \item \ltfla{let Many f = fix (f, x, .., <exp>, ..) in <body>} with
-        \ltfla{let rec f x = <exp> in <body>}.
+    \item \highl{let Many f = fix (f, x, .., <exp>, ..) in <body>} with
+        \highl{let rec f x = <exp> in <body>}.
 
 \end{itemize}
 
@@ -600,7 +600,7 @@ mutating operations on the inside could now be expressed using LT4LA and gain
 \clearpage%
 \section{Summary}
 
-I explained how a few core features -- linearity, the \ltfla{Many}
+I explained how a few core features -- linearity, the \highl{Many}
 constructor, value-restriction, fractional-capabilities with inference,
 if-expressions and recursive functions -- are enough to \emph{statically
 capture and automatically check} aliasing, read/write permissions, memory

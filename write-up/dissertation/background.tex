@@ -302,12 +302,12 @@ types.  We can define the factorial function
 \end{figure}
 
 The syntax is intended to resemble OCaml's, apart from the spurious
-\ltfla{`!'}s found here and there (they are annotations to show that we can
+\highl{`!'}s found here and there (they are annotations to show that we can
 use a value more than once). In Figure~\ref{fig:ltfla_sumarray}, we see
-\ltfla{row} has type (\ltfla{'x arr}). More detailed explanations of
+\highl{row} has type (\highl{'x arr}). More detailed explanations of
 \emph{what and why} will be given in Chapter~\ref{chap:impl}, but for now, it
-is enough to know it means we can only \emph{read} from \ltfla{row}, and not
-write to it. If we did try to write to or free \ltfla{row}, we would get a
+is enough to know it means we can only \emph{read} from \highl{row}, and not
+write to it. If we did try to write to or free \highl{row}, we would get a
 helpful error message, as shown in Figure~\ref{fig:ltfla_univ}.
 
 \begin{figure}[tp]
@@ -329,7 +329,7 @@ let row = row[i] := x1 in (* or *) let () = free row in
 
 Now suppose we are trying to square a matrix, using a `dgemm' like BLAS
 routine (called `simple\_dgemm'\footnote{For the purposes of this example, I
-assume `simple\_dgemm' has type \ltfla{'x . 'x mat --o 'y .  'y mat --o z mat
+assume `simple\_dgemm' has type \highl{'x . 'x mat --o 'y .  'y mat --o z mat
 --o ('x mat * 'y mat) * z mat}.} in Figures~\ref{fig:ltfla_square}
 and~\ref{fig:ltfla_free}) which takes two read-only matrices and a third matrix
 it can write to and performs $C := AB + C$. How would we use such a routine to
@@ -337,11 +337,11 @@ square a matrix, assuming $C=0$ initially?  Surely this would break linearity,
 since $A$ would have to be passed in to the function twice, and we can only 
 use non-!-annotated variables once?
 
-To solve this, we use a special primitive called \ltfla{share} to produce
+To solve this, we use a special primitive called \highl{share} to produce
 (more) read-only \emph{aliases} of any matrix. We then pass these into the
 function, and it works as expected. Once the squared matrix has been obtained,
 we may not want the original anymore, and thus decide to free it. Before we do
-so, we must first \ltfla{unshare} any read-only aliases that exist, to get back
+so, we must first \highl{unshare} any read-only aliases that exist, to get back
 a single, read-write handle.
 
 \begin{figure}[tp]
@@ -352,25 +352,25 @@ let ((a1, a2), c) = simple_dgemm _ a1 _ a2 c in
 let a = unshare _ a1 a2 in
 let () = free a in c
     \end{minted}
-    \caption{Squaring a matrix in LT4LA (assuming \ltfla{c} is initially
+    \caption{Squaring a matrix in LT4LA (assuming \highl{c} is initially
         0).}\label{fig:ltfla_square}
 \end{figure}
 
 If we tried to free one of the read-only aliases before or instead of
-\ltfla{unshare}-ing them, then we would get the error shown in
-Figure~\ref{fig:ltfla_free}. Briefly, a \ltfla{z arr} is a read-write array,
-everything else (\ltfla{'x arr} or \ltfla{_ s arr}) is read-only. The types of
-\ltfla{free}, \ltfla{share} and \ltfla{unshare} (see
+\highl{unshare}-ing them, then we would get the error shown in
+Figure~\ref{fig:ltfla_free}. Briefly, a \highl{z arr} is a read-write array,
+everything else (\highl{'x arr} or \highl{_ s arr}) is read-only. The types of
+\highl{free}, \highl{share} and \highl{unshare} (see
 Appendix~\ref{chap:primitives}) are set up so that you can only free something
 when you have read-write access to it, guaranteed by linearity to be the only
 name in scope with this capability (aliases can only be read-only). Conversely,
-if we \emph{forgot} to \ltfla{free a}, we would also get \texttt{Variable a not
+if we \emph{forgot} to \highl{free a}, we would also get \texttt{Variable a not
 used} error.
 
 Another way in which `simple\_dgemm' may be misused is by instantiating its
 informal description of $C := AB + C$ with $B = C = A$ and so mistakenly
 concluding that it computes $A := A^2 + A$ in-place. However, the type of
-\ltfla{share} prevents this as well -- \ltfla{let (a11, a12) = share _ a1 in
+\highl{share} prevents this as well -- \highl{let (a11, a12) = share _ a1 in
 simple_dgemm _ a11 _ a12 a2} would result in an error similar to the one shown
 in Figure~\ref{fig:ltfla_free}.
 

@@ -58,8 +58,8 @@ I measured execution time, in micro-seconds, against an exponentially (powers
 of 5) increasing scaling factor for matrix size parameters $n=5$ and $k=3$.
 For small scaling factors (1, 5, 25), I used the Core\_bench micro-benchmarking
 library, for larger factors (125 and greater), I used the \texttt{getrusage}
-system call (called \ltfla{Unix.times} in OCaml), sandwiched between calls to
-\ltfla{Gc.full_major} to minimise the effects of garbage-collection.
+system call (called \highl{Unix.times} in OCaml), sandwiched between calls to
+\highl{Gc.full_major} to minimise the effects of garbage-collection.
 Core\_bench performs a linear regression (here, time against batch-size) so
 includes a 95\% confidence-interval with $R^2$. Larger scales have
 errors reported to $\pm \sigma$ (one standard-deviation).
@@ -148,7 +148,7 @@ respectively, $p<.05$ using Welch's t-test).
 
 Having access to primitives which allow a programmer to re-use memory means
 that memory usage for temporaries in LT4LA is on par with that of CBLAS. One
-caveat is that the \ltfla{freeM} primitive is a no-op in LT4LA, so deallocation
+caveat is that the \highl{freeM} primitive is a no-op in LT4LA, so deallocation
 still relies on OCaml's garbage-collector.
 
 For small matrix sizes, LT4LA and CBLAS execution times differ. I suspect this
@@ -267,7 +267,7 @@ small) of \emph{all four} implementations is show in Figure~\ref{fig:timings_all
         small). Small matrices and timings $n \le 5^3$ were micro-benchmarked
         with the Core\_bench library. Larger ones used Unix's
         \texttt{getrusage} functionality, sandwiched between calls to
-        \ltfla{Gc.full_major} for the OCaml implementations.}\label{fig:timings_all}
+        \highl{Gc.full_major} for the OCaml implementations.}\label{fig:timings_all}
 \end{figure}
 
 For $n=25$ and $n=125$, the idiomatic Owl implementation is the \emph{fastest}
@@ -278,7 +278,7 @@ $12.1 \pm 0.47 \, s$, a statistically significant difference with $p<.05$
 using Welch's t-test).
 
 The trend here is that for $n=625$ and $n=3125$ (sizes for which
-\ltfla{Gc.full_major} was called before each measurement), mean execution times
+\highl{Gc.full_major} was called before each measurement), mean execution times
 start to split into two groups: Chol and Owl as one group (similar,
 \emph{faster} times) and LT4LA and CBLAS as another (similar, \emph{slower}
 times). \emph{Although the goals of this thesis have been met}, this is
@@ -376,10 +376,10 @@ illegal according to the standard, both aspects of which were captured by
 linearity and fractional-capabilities. Lastly, it contained another unnecessary
 temporary, however one that was not obvious without linear types. To spot it, I
 first performed live-range splitting (checked by linearity) by hoisting calls
-to \ltfla{freeM} and then annotated the freed matrices with their dimensions.
+to \highl{freeM} and then annotated the freed matrices with their dimensions.
 After doing so and spotting two disjoint live-ranges of the same size, I
-replaced a call to \ltfla{freeM} followed by allocating call to \ltfla{copy}
-with one, in-place call to \ltfla{copyM_to}. I believe the ability to boldly
+replaced a call to \highl{freeM} followed by allocating call to \highl{copy}
+with one, in-place call to \highl{copyM_to}. I believe the ability to boldly
 refactor code which manages memory is good evidence of the usefulness of
 linearity as a tool for programming.
 

@@ -1,6 +1,6 @@
 .SUFFIXES: .pdf .tex .bib $(SUFFIXES)
 
-FLAGS := # -quiet
+FLAGS := -quiet
 
 TARGETS := semantics.pdf \
            proposal.pdf  \

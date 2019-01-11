@@ -936,7 +936,7 @@
 \newlength\@temppflen
 
 
-\newenvironment{proof}{%       BEGIN:
+\renewenvironment{proof}{%       BEGIN:
   \global\@noprooffalse
   \edef\pfLongLevel          % LongLevel :=
    {\ifnum\pfLevelCount>\z@  %    IF LevelCount > 0
@@ -1365,7 +1365,7 @@
 \newcommand{\pick}{\pickPfkwd}
 \newcommand{\pfnew}{\pfnewPfkwd}
 %\newcommand{\qed}{\rule{.4em}{1.75ex}}
-\newcommand{\qed}{\qedPfkwd}
+%\newcommand{\qed}{\qedPfkwd}
 \def\pfdot{.}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

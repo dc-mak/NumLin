@@ -742,40 +742,40 @@
 \def\acknowledgementsHeading{%
  \textcolor{darkgray}{\fontsize{9}{12}\sffamily\bfseries
                       Acknowledgements\enskip}}
-% \RequirePackage{amsthm}
-% \thm@headfont{%
-%   \textcolor{darkgray}{$\blacktriangleright$}\nobreakspace\sffamily\bfseries}
-% \def\th@remark{%
-%   \thm@headfont{%
-%     \textcolor{darkgray}{$\blacktriangleright$}\nobreakspace\sffamily}%
-%   \normalfont % body font
-%   \thm@preskip\topsep \divide\thm@preskip\tw@
-%   \thm@postskip\thm@preskip
-% }
-% \def\@endtheorem{\endtrivlist}%\@endpefalse
-% \renewcommand\qedsymbol{\textcolor{darkgray}{\ensuremath{\blacktriangleleft}}}
-% \renewenvironment{proof}[1][\proofname]{\par
-%   \pushQED{\qed}%
-%   \normalfont \topsep6\p@\@plus6\p@\relax
-%   \trivlist
-%   \item[\hskip\labelsep
-%         \color{darkgray}\sffamily\bfseries
-%     #1\@addpunct{.}]\ignorespaces
-% }{%
-%   \popQED\endtrivlist%\@endpefalse
-% }
-% \newenvironment{claimproof}[1][\proofname]{
-%   \renewcommand\qedsymbol{\textcolor{darkgray}{\ensuremath{\vartriangleleft}}}
-%   \pushQED{\qed}%
-%   \normalfont \topsep6\p@\@plus6\p@\relax
-%   \trivlist
-%   \item[\hskip\labelsep
-%         \color{darkgray}\sffamily
-%     #1\@addpunct{.}]\ignorespaces
-% }{%
-%   \popQED\endtrivlist%\@endpefalse
-%   \renewcommand\qedsymbol{\textcolor{darkgray}{\ensuremath{\blacktriangleleft}}}
-% }
+\RequirePackage{amsthm}
+\thm@headfont{%
+  \textcolor{darkgray}{$\blacktriangleright$}\nobreakspace\sffamily\bfseries}
+\def\th@remark{%
+  \thm@headfont{%
+    \textcolor{darkgray}{$\blacktriangleright$}\nobreakspace\sffamily}%
+  \normalfont % body font
+  \thm@preskip\topsep \divide\thm@preskip\tw@
+  \thm@postskip\thm@preskip
+}
+\def\@endtheorem{\endtrivlist}%\@endpefalse
+\renewcommand\qedsymbol{\textcolor{darkgray}{\ensuremath{\blacktriangleleft}}}
+\renewenvironment{proof}[1][\proofname]{\par
+  \pushQED{\qed}%
+  \normalfont \topsep6\p@\@plus6\p@\relax
+  \trivlist
+  \item[\hskip\labelsep
+        \color{darkgray}\sffamily\bfseries
+    #1\@addpunct{.}]\ignorespaces
+}{%
+  \popQED\endtrivlist%\@endpefalse
+}
+\newenvironment{claimproof}[1][\proofname]{
+  \renewcommand\qedsymbol{\textcolor{darkgray}{\ensuremath{\vartriangleleft}}}
+  \pushQED{\qed}%
+  \normalfont \topsep6\p@\@plus6\p@\relax
+  \trivlist
+  \item[\hskip\labelsep
+        \color{darkgray}\sffamily
+    #1\@addpunct{.}]\ignorespaces
+}{%
+  \popQED\endtrivlist%\@endpefalse
+  \renewcommand\qedsymbol{\textcolor{darkgray}{\ensuremath{\blacktriangleleft}}}
+}
 \AtBeginDocument{
 	\ifx\usecleveref\relax\else
 		\@ifpackageloaded{cleveref}{\ClassWarning{Use document option 'cleveref' instead}{Use document option 'cleveref' instead directly loading package 'cleveref'}}{}
@@ -787,75 +787,75 @@
 \ifx\useautoref\relax
 	\RequirePackage{aliascnt}
 \fi
-% \newtheoremstyle{claimstyle}{\topsep}{\topsep}{}{0pt}{\sffamily}{. }{5pt plus 1pt minus 1pt}%
-%   {$\vartriangleright$ \thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
-% \theoremstyle{plain}
-% \newtheorem{theorem}{Theorem}
-% \ifx\numberwithinsect\relax
-%   \@addtoreset{theorem}{section}
-%   \expandafter\def\expandafter\thetheorem\expandafter{%
-%     \expandafter\thesection\expandafter\@thmcountersep\thetheorem}
-% \fi
-% \ifx\useautoref\relax
-% 	\newaliascnt{lemma}{theorem}
-% 	\newtheorem{lemma}[lemma]{Lemma}
-% 	\aliascntresetthe{lemma}
-% 	\newcommand{\lemmaautorefname}{Lemma}
-% 	\newaliascnt{corollary}{theorem}
-% 	\newtheorem{corollary}[corollary]{Corollary}
-% 	\aliascntresetthe{corollary}
-% 	\newcommand{\corollaryautorefname}{Corollary}
-% 	\newaliascnt{proposition}{theorem}
-% 	\newtheorem{proposition}[proposition]{Proposition}
-% 	\aliascntresetthe{proposition}
-% 	\newcommand{\propositionautorefname}{Proposition}
-% 	\newaliascnt{exercise}{theorem}
-% 	\newtheorem{exercise}[exercise]{Exercise}
-% 	\aliascntresetthe{exercise}
-% 	\newcommand{\exerciseautorefname}{Exercise}
-% 	\newaliascnt{definition}{theorem}
-% 	\newtheorem{definition}[definition]{Definition}
-% 	\aliascntresetthe{definition}
-% 	\newcommand{\definitionautorefname}{Definition}
-% 	\theoremstyle{definition}
-% 	\newaliascnt{example}{theorem}
-% 	\newtheorem{example}[example]{Example}
-% 	\aliascntresetthe{example}
-% 	\newcommand{\exampleautorefname}{Example}
-% 	\theoremstyle{remark}
-% 	\newaliascnt{note}{theorem}
-% 	\newtheorem{note}[note]{Note}
-% 	\aliascntresetthe{note}
-% 	\newcommand{\noteautorefname}{Note}
-% 	\newtheorem*{note*}{Note}
-% 	\newaliascnt{remark}{theorem}
-% 	\newtheorem{remark}[remark]{Remark}
-% 	\aliascntresetthe{remark}
-% 	\newcommand{\remarkautorefname}{Remark}
-% 	\newtheorem*{remark*}{Remark}
-% 	\theoremstyle{claimstyle}
-% 	\newaliascnt{claim}{theorem}
-% 	\newtheorem{claim}[claim]{Claim}
-% 	\aliascntresetthe{claim}
-% 	\newcommand{\claimautorefname}{Claim}
-% 	\newtheorem*{claim*}{Claim}
-% \else
-% 	\newtheorem{lemma}[theorem]{Lemma}
-% 	\newtheorem{corollary}[theorem]{Corollary}
-% 	\newtheorem{proposition}[theorem]{Proposition}
-% 	\newtheorem{exercise}[theorem]{Exercise}
-% 	\newtheorem{definition}[theorem]{Definition}
-% 	\theoremstyle{definition}
-% 	\newtheorem{example}[theorem]{Example}
-% 	\theoremstyle{remark}
-% 	\newtheorem{note}[theorem]{Note}
-% 	\newtheorem*{note*}{Note}
-% 	\newtheorem{remark}[theorem]{Remark}
-% 	\newtheorem*{remark*}{Remark}
-% 	\theoremstyle{claimstyle}
-% 	\newtheorem{claim}[theorem]{Claim}
-% 	\newtheorem*{claim*}{Claim}
-% \fi
+\newtheoremstyle{claimstyle}{\topsep}{\topsep}{}{0pt}{\sffamily}{. }{5pt plus 1pt minus 1pt}%
+  {$\vartriangleright$ \thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\ifx\numberwithinsect\relax
+  \@addtoreset{theorem}{section}
+  \expandafter\def\expandafter\thetheorem\expandafter{%
+    \expandafter\thesection\expandafter\@thmcountersep\thetheorem}
+\fi
+\ifx\useautoref\relax
+	\newaliascnt{lemma}{theorem}
+	\newtheorem{lemma}[lemma]{Lemma}
+	\aliascntresetthe{lemma}
+	\newcommand{\lemmaautorefname}{Lemma}
+	\newaliascnt{corollary}{theorem}
+	\newtheorem{corollary}[corollary]{Corollary}
+	\aliascntresetthe{corollary}
+	\newcommand{\corollaryautorefname}{Corollary}
+	\newaliascnt{proposition}{theorem}
+	\newtheorem{proposition}[proposition]{Proposition}
+	\aliascntresetthe{proposition}
+	\newcommand{\propositionautorefname}{Proposition}
+	\newaliascnt{exercise}{theorem}
+	\newtheorem{exercise}[exercise]{Exercise}
+	\aliascntresetthe{exercise}
+	\newcommand{\exerciseautorefname}{Exercise}
+	\newaliascnt{definition}{theorem}
+	\newtheorem{definition}[definition]{Definition}
+	\aliascntresetthe{definition}
+	\newcommand{\definitionautorefname}{Definition}
+	\theoremstyle{definition}
+	\newaliascnt{example}{theorem}
+	\newtheorem{example}[example]{Example}
+	\aliascntresetthe{example}
+	\newcommand{\exampleautorefname}{Example}
+	\theoremstyle{remark}
+	\newaliascnt{note}{theorem}
+	\newtheorem{note}[note]{Note}
+	\aliascntresetthe{note}
+	\newcommand{\noteautorefname}{Note}
+	\newtheorem*{note*}{Note}
+	\newaliascnt{remark}{theorem}
+	\newtheorem{remark}[remark]{Remark}
+	\aliascntresetthe{remark}
+	\newcommand{\remarkautorefname}{Remark}
+	\newtheorem*{remark*}{Remark}
+	\theoremstyle{claimstyle}
+	\newaliascnt{claim}{theorem}
+	\newtheorem{claim}[claim]{Claim}
+	\aliascntresetthe{claim}
+	\newcommand{\claimautorefname}{Claim}
+	\newtheorem*{claim*}{Claim}
+\else
+	\newtheorem{lemma}[theorem]{Lemma}
+	\newtheorem{corollary}[theorem]{Corollary}
+	\newtheorem{proposition}[theorem]{Proposition}
+	\newtheorem{exercise}[theorem]{Exercise}
+	\newtheorem{definition}[theorem]{Definition}
+	\theoremstyle{definition}
+	\newtheorem{example}[theorem]{Example}
+	\theoremstyle{remark}
+	\newtheorem{note}[theorem]{Note}
+	\newtheorem*{note*}{Note}
+	\newtheorem{remark}[theorem]{Remark}
+	\newtheorem*{remark*}{Remark}
+	\theoremstyle{claimstyle}
+	\newtheorem{claim}[theorem]{Claim}
+	\newtheorem*{claim*}{Claim}
+\fi
 \endinput
 %%
 %% End of file `lipics-v2019.cls'.

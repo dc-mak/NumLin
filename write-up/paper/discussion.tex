@@ -47,7 +47,7 @@ designs have been focused on building languages to \emph{implement}
 the kernel linear algebra functions, and as a result, they tend to add
 additional limitations on the language design. Both
 Futhark~\cite{henriksen} and Single Assignment C~\cite{scholz} omit
-higher-order functions facilitating compilation to GPUs. The work of
+higher-order functions to facilitate compilation to GPUs. The work of
 \cite{bernardy2016} forbids term-level recursion, in order to ensure
 that all higher-order computations can be statically normalized away
 and thereby maximize opportunities for array fusion.
@@ -56,7 +56,6 @@ In contrast, our approach is to begin with the assumption that we can
 take existing efficient BLAS-like libraries, and then enforce their
 correct \emph{usage} using a linear type discipline with fractional
 permissions. 
-
 
 This approach is similar to the one taken in linear algebra libraries
 for Rust -- these libraries typically take advantage of the
@@ -67,25 +66,25 @@ in simpler terms using \emph{fractional-permissions}, though to our
 knowledge the programmer-visible lifetime analysis in Rust has never
 been formalized.
 
-Using fractional permissions directly, as we did, rather than relying
-on a complex has two main benefits. First, our type system
-demonstrates that type systems for fractional permissions can be
-\emph{dramatically} simpler than existing state-of-the-art approaches,
-including both industrial languages like Rust, as well as the academic
-languages developed by \cite{bierhoff}.  Their type system, much like
-Rust, build a complex dataflow analysis into the typing rules to infer
-when variables can be shared or not. This allows for very
-natural-looking user programs, but creates the impression that using
-fractional permissions requires a heavy theoretical and engineering
-effort going well beyond that needed for supporting basic linear
-types.
+Working explicitly with fractional permissions has two main
+benefits. First, our type system demonstrates that type systems for
+fractional permissions can be dramatically simpler than existing
+state-of-the-art approaches, including both industrial languages like
+Rust, as well as academic (such as those developed by
+\cite{bierhoff}).  Bierhoff \emph{et al}'s type system, much like
+Rust's, builds a complex dataflow analysis into the typing rules to
+infer when variables can be shared or not. This allows for more
+natural-looking user programs, but can create the impression that
+using fractional permissions requires a heavy theoretical and
+engineering effort going well beyond that needed for supporting basic
+linear types.
 
-Instead, our approach of requiring sharing to be made explicit means
-that the existing unification machinery already in place for ordinary
-ML-style type inference, can be reused to support fractions. Basically,
-we can view sharing a value as dividing a fraction by two, and after
-taking logarithms all fractions are Peano numbers, whose equality can
-be established with ordinary unification. 
+Instead, our approach, of requiring sharing to be made explicit, lets
+us demonstrate that the existing unification machinery already in
+place for ordinary ML-style type inference can be reused to support
+fractions. Basically, we can view sharing a value as dividing a
+fraction by two, and after taking logarithms all fractions are Peano
+numbers, whose equality can be established with ordinary unification.
 
 This fact is important because there are major upcoming
 implementations of linear types such as Linear
@@ -104,11 +103,12 @@ one needs'' for fractions, it should be possible to \emph{encode}
 a GADT-style natural number index to array types tracking the
 fraction, which should enable supporting high-performance BLAS
 bindings in Linear Haskell. Actually implementing this is something we
-leave for future work, as there remains an issue which we do not see a
-good encoding for. Namely, only having support for linear functions
+leave for future work, as there remains one issue which we do not see
+a good encoding for. Namely, only having support for linear functions
 makes it a bit inconvenient to manipulate linear values directly --
 programs end up taking on a CPS-like structure. This seems to remain
-an advantage of a direct implementation of linear types. 
+an advantage of a direct implementation of linear types over the
+Linear Haskell style.
 
 
 \subsection{Simplicity and Further Work}
@@ -130,14 +130,15 @@ by extending its type system. For example, we could have used existential types
 to statically track pointer identities\cite{morrisett}, or parametric
 polymorphism.
 
-We could also attempt to catch mismatched dimensions at compile time as well.
-While this could be done with generative phantom types\cite{abe2015simple},
-using dependent types may offer more flexibility in \emph{partitioning}
-regions\cite{space_monads} or statically enforcing dimensions related
-constraints of the arguments at compile-time.  ATS\cite{cui2005ats} is just
-such a language which combines dependent and linear types; although it provides
-BLAS bindings, it does not aim to provide aliasing restrictions as demonstrated
-in this paper.
+We could also attempt to catch mismatched dimensions at compile time
+as well.  While this could be done with generative phantom
+types\cite{abe2015simple}, using dependent types may offer more
+flexibility in \emph{partitioning} regions\cite{space_monads} or
+statically enforcing dimensions related constraints of the arguments
+at compile-time.  ATS\cite{cui2005ats} is an example of a language
+which combines linear types with a sophisticated proof layer. But
+although it provides BLAS bindings, it does not aim to provide
+aliasing restrictions as demonstrated in this paper.
 
 Taking this idea one step even further, since matrix dimensions are typically
 fixed at runtime, we could \emph{stage} \lang\ programs and compile matrix

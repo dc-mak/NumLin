@@ -5,21 +5,25 @@
 The full typing rules are in Appendix \ref{subsec:static_sem}, but the key
 ideas are as follow.
 
-A typing judgement consists of $ \Theta; \Delta; \Gamma
-\vdash e : t$.
+\begin{itemize}
 
-$\Theta$ is the environment that tracks which fractional permission variables
-in scope. Fractional permissions (the \textsf{Perm} judgement) and types (the
-\textsf{Type} judgement) are \emph{well-formed} if all of their free fractional
-variables are in $\Theta$.
+    \item A typing judgement consists of $ \Theta; \Delta; \Gamma \vdash e : t$.
 
-$\Delta$ is the environment storing non-linearly or \emph{inuitionistically}
-typed variables.
+    \item $\Theta$ is the environment that tracks which fractional permission variables
+        in scope. Fractional permissions (the \textsf{Perm} judgement) and types (the
+        \textsf{Type} judgement) are \emph{well-formed} if all of their free fractional
+        variables are in $\Theta$.
 
-$\Gamma$ is the environment storing linearly typed variables.  Note that rules
-for typing $()$, booleans, integers and elements are typed with respect to an
-\emph{empty} linear environment: this means no linear values are needed to
-produce a value of those types.
+    \item $\Delta$ is the environment storing non-linearly or \emph{inuitionistically}
+        typed variables.
+
+    \item $\Gamma$ is the environment storing linearly typed variables. 
+
+\end{itemize}
+
+Note that rules for typing $()$, booleans, integers and elements are typed
+with respect to an \emph{empty} linear environment: this means no linear
+values are needed to produce a value of those types.
 
 \[
     \ottdruleTyXXUnitXXIntro{}
@@ -162,6 +166,7 @@ First, we define an interpretation of heaps with fractional permissions in the
 style of Bornat et. al~\cite{bornat} (interpreting the multiset as a partial
 map from locations to the sum of all its associated fractions and a matrix) as
 well as the n-fold iteration of $\rightarrow$.
+
 \[
     \den{H}{}{\sigma} = \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]
 \]
@@ -236,11 +241,13 @@ $\delta$ and heaps $\sigma$.  Note that, $\varsigma \equiv \den{H}{}{\theta(\sig
 
 \subsection{Soundness Theorem}
 
-\textbf{Theorem 1 (The Fundamental Lemma of Logical Relations)}
+\begin{theorem}
+(The Fundamental Lemma of Logical Relations)
 \[
     \forall \Theta, \Delta, \Gamma, e, t.\ \Theta; \Delta ; \Gamma \vdash e : t \Rightarrow
     \forall k.\ \den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t }
 \]
+\end{theorem}
 
 To prove the above theorem, we need several lemmas; the interesting ones are:
 the moral equivalent of the frame rule (\ref{frame}), monotonicity for the

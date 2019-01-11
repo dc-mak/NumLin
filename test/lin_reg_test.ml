@@ -38,12 +38,11 @@ let y, y_copy =
 
 let%expect_test "lin_reg" =
 
-  let naive_res = Examples.Lin_reg.naive ~x ~y in
+  let owl_res = Examples.Lin_reg.owl ~x ~y in
   let results = Examples.Lin_reg.[
-    ("Naive", naive_res);
-    ("NumPy", numpy ~x ~y);
-    ("Owl", (owl ~x ~y).(0));
+    ("Owl", owl_res);
     ("LT4LA", let _, M res = lt4la ~x ~y in res);
+    ("NumPy", numpy ~x ~y);
   ] in
   let () = assert Owl.Mat.(x = x_copy && y = y_copy) in
 
@@ -56,15 +55,12 @@ let%expect_test "lin_reg" =
   let () = List.iter pairs ~f:(fun ((a, res_a), (b, res_b)) ->
     Stdio.printf !"%5s and %5s: (%{same})\n" a b Owl.Mat.(res_a =~ res_b)) in
 
-  Owl.Mat.print ~header:false naive_res;
+  Owl.Mat.print ~header:false owl_res;
 
   [%expect {|
+    NumPy and LT4LA: (same)
+    NumPy and   Owl: (same)
     LT4LA and   Owl: (same)
-    LT4LA and NumPy: (same)
-    LT4LA and Naive: (same)
-      Owl and NumPy: (same)
-      Owl and Naive: (same)
-    NumPy and Naive: (same)
 
 
     0.2

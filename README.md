@@ -1,9 +1,16 @@
-# LT4LA: Linear Types for Linear Algebra
+# NumLin: Linear Types for Linear Algebra
 ---
+## What is NumLin? 
+
+NumLin is a small, experimental programming language I wrote (under the guidance of Stephen
+Dolan and Neel Krishnaswami) to explore the feasiblity and applicability of using linear
+types and fractional-permissions to model the APIs of low-level linear algebra libraries
+such as CBLAS/LAPACKE. It compiles to OCaml and this allows using optimized NumLin alongside
+existing code, as well as integration with tools like Merlin.
 
 Any issues or errors, please let me know! [![Build Status](https://travis-ci.com/dc-mak/lt4la.svg?token=gu5ZosGxNsQr8WuxN7by&branch=master)](https://travis-ci.com/dc-mak/lt4la)
 
-## Installation
+## Try It! Installation
 
 The easy way is to 
   1. [Install Docker](https://docs.docker.com/engine/installation)
@@ -28,15 +35,15 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 
 ## Quickstart
 
-| Command                                             | Meaning                                       |
-| ---                                                 | ----                                          |
+| Command                                         | Meaning                                       |
+| ---                                             | ----                                          |
 | `dune build src/lt4la.a`                        | Build the library (everything inside `src`).  |
 | `pushd src && dune utop && popd`                | As above + launches UTop with library loaded. |
 | `dune build test/test.exe`                      | Build library & tests.                        |
 | `dune runtest`                                  | Build library & tests _and_ run all tests.    |
 | `dune build bin/{repl,benchmark,transpile}.exe` | Build library, REPL and transpiler.           |
 | `dune clean`                                    | Delete `_build` directory of build artifacts. |
-| `_build/default/bin/*.exe`                          | Launch {repl,transpile,benchmark}.exe         |
+| `_build/default/bin/*.exe`                      | Launch {repl,transpile,benchmark}.exe         |
 
 ### Roadmap (in _rough_ order of priority)
 
@@ -187,9 +194,9 @@ correct/what you expect.
 
 ### Benchmarking
 
-Run `dune build bin/benchmark.exe --dev`.
+Run `dune build bin/benchmark.exe`.
 
-Something `_build/default/bin/benchmark.exe --start 1 --limit 4 --alg all
+Something `_build/default/bin/benchmark.exe --start 1 --limit 4 --alg kalman
 --micro-quota 10 --macro-runs 10` maybe a good place to get started. It will
 take at least 150s for just the micro-benchmarks, and more for the
 macro-benchmarks. If you have time `--micro-quota 20` I've found to be more
@@ -216,29 +223,9 @@ For bigger exponents, it's just a bunch of repeated iterations, the number of
 which is specified by `--macro-runs`. Be aware that for limits more than 4,
 this can be pretty slow.
 
-There are (currently) 5 implementations of a Kalman filter:
-
-| Name   | Location                          | Explanation                                                                                                                                                                                  |
-| ---    | ---                               | ---                                                                                                                                                                                          |
-| owl    | `test/examples_test.ml`           | standard maths to code translation                                                                                                                                                           |
-| chol   | `test/examples_test.ml`           | like Owl, but uses the the fact that the matrix to be inverted is PSD to perform a Cholesky decomposition, and then uses `potrs` to perform the 'multiplication' on the right of the inverse |
-| lt4la  | `_build/default/test/examples.ml` | minimises number of temporaries, uses a Cholesky decomposition and symmetric matrix multiplication routines where possible                                                                   |
-| transp | `_build/default/test/examples.ml` | like LT4LA, but with an explicitly calculated transpose                                                                                                                                      |
-| cblas  | `bin/kalman.h`                    | same algorithm as LT4LA, but directly in C                                                                                                                                                   |
-
-I would expect Owl to be slowest (most copies, not taking advantage of the fact
-that the matrix to be inverted is PSD), then Chol, then LT4LA, then CBLAS (like
-LT4LA but without the marshalling overhead between OCaml/C).  There's a trace
-in `write-up/trace.txt` to show what calls to CBLAS/LAPACKE are being made by
-the OCaml implementations.
-
-If you look at `write-up/timings.txt`, you can see the predicted performance
-order is not quite what I expected. I thought that maybe the transpose flags
-was messing up cache locality, so I added that implementation but I think
-there's more to it than just that.  Cachegrind showed about a 1% difference in
-cache miss rates (Owl/Chol had fewer cache misses than LT4LA/CBLAS). I couldn't
-get `-p/gprof` to work, and tried to install
-[gpertools](https://github.com/gperftools/gperftools) to no luck either.
+There are (currently) 4 implementations of a Kalman filter: Python/NumPy,
+OCaml/Owl, OCaml/NumLin, C/CBLAS-LAPACKE. There are also 3 implementation each of
+L1-norm minimisation and "linear regression" in Python/NumPy, OCaml/Owl, and OCaml/NumLin.
 
 ### Continuous Integration
 
@@ -258,39 +245,9 @@ feature. So, in the meantime, say you are in directory `src` and you want to gen
 
 ## History
 
-First, I installed [Owl](https://github.com/ryanrhymes/owl) on a fresh
-ElementaryOS/Ubunutu 16.04 virtual machine (after setting up NeoVim, TMux, SSH,
-Zsh, Git, Tig). To do so, I followed [Owl's
-Dockerfile](https://hub.docker.com/r/ryanrhymes/owl/~/dockerfile) up until
-building eigen. My attempt to install eigen failed (something to do with
-ocamlbuild cmi version for too new a version of OCaml, I tried reinstalling the
-switch/ocamlbuild but to no result), so:
- - I skipped over it
- - Pinned gsl to version 1.20.0 (`opam pin gsl 1.20.0`)
- - Installed eigen from opam
- - Continued with the rest of the Dockerfile instructions.
+This project started off life as "LT4LA", a Part III project for my M.Eng. degree in
+Computer Science from Trinity College, University of Cambridge.
 
-I can't tell if [this Wiki page recommending
-Cairo](https://github.com/ryanrhymes/owl/wiki/Tutorial:-How-to-Plot-in-Owl%3F)
-is important, so I didn't bother.
-
-After a while, I ran into [problems with
-ppx\_deriving](https://github.com/ocaml-ppx/ppx_deriving/issues/153) and
-[ppx\_type\_conv](https://discuss.ocaml.org/t/ppx-deriving-ppx-type-conv-and-jbuilder-things-should-be-better-now/1212)
-and the main point is that I upgraded to 4.06 so I could get [ppx\_type\_conv
-v0.9.1](https://github.com/ocaml/opam-repository/pull/10885).
-
-### Eigen Build Error
-```
-+ ocamlfind ocamlopt unix.cmxa -I /home/dhruv/.opam/4.04.0/lib/ocamlbuild /home/dhruv/.opam/4.04.0/lib/ocamlbuild/ocamlbuildlib.cmxa -linkpkg myocamlbuild.ml /home/dhruv/.opam/4.04.0/lib/ocamlbuild/ocamlbuild.cmx -o myocamlbuild
-File "myocamlbuild.ml", line 1:
-Error: /home/dhruv/.opam/4.04.0/lib/ocamlbuild/ocamlbuild_plugin.cmi
-is not a compiled interface for this version of OCaml.
-It seems to be for a newer version of OCaml.
-Command exited with code 2.
-Compilation unsuccessful after building 1 target (0 cached) in 00:00:00.
-E: Failure("Command ''/home/dhruv/.opam/4.04.0/bin/ocamlbuild' lib/libeigen_stubs.a lib/dlleigen_stubs.so lib/eigen.cma lib/eigen.cmxa lib/eigen.a lib/eigen.cmxs -use-ocamlfind -tag debug' terminated with error code 10")
-Makefile:2: recipe for target 'all' failed
-make: *** [all] Error 1
-```
-
+Like many things in my life, I only got the implementation "right" on the second try,
+so for posterity, the first implementation is kept in the `old` directory if anyone
+wishes to see even humbler origins of this code base.

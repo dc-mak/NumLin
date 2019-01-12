@@ -204,7 +204,7 @@ static void kalman( const int n,                   const int k,
     free(n_by_n);
     *ret_sigma = n_by_n2; }
     \end{minted}
-    \caption{CBLAS/LAPACKE implementation of a Kalman filter. I used C instead
+    \caption{\textsc{Cblas/Lapacke} implementation of a Kalman filter. I used C instead
         of Fortran because it is what Owl uses under the hood and OCaml FFI
         support for C is better and easier to use than that for Fortran. A distinct
         `measure\_kalman' function that sandwiches a call to this function with

@@ -343,34 +343,10 @@ equations.
 
 \begin{figure}[t]
     \centering
-%   \begin{minipage}{.4\textwidth}
-%   \centering
     \inputminted[fontsize=\small]{ocaml}{../../examples/kalman.lt}
-%   \end{minipage}
-%   \begin{minipage}{.4\textwidth}
-%   \centering
-%   \begin{minted}[linenos,fontsize=\small]{ocaml}
-%   let owl_kalman
-%       ~sigma
-%       ~h
-%       ~mu
-%       ~r
-%       ~data =
-%     let open Owl.Mat in
-%     let ( * ) = dot in
-%     let h' = transpose h in
-%     let sigma_h' = sigma * h' in
-%     let x = sigma_h' * (inv @@ r + h * sigma_h') in
-%     let new_mu = mu + x * (h * mu - data) in
-%     let new_sigma = sigma - x * h * sigma in
-%     new_sigma, new_mu
-%   ;;
-%   \end{minted}
-%   \end{minipage}
     \caption{Kalman filter: see Figure~\ref{fig:kalman_eqns} for the
-        equations this code implements. Line numbers in comments refer to
-        equivalent lines in a C implementation
-        (Figure~\ref{fig:cblas_kalman}).}\label{fig:lang_kalman}
+        equations this code implements and Figure~\ref{fig:cblas_kalman}
+        for an equivalent \textsc{Cblas/Lapacke} implementation.}\label{fig:lang_kalman}
 \end{figure}
 
 \begin{figure}[t]

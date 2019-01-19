@@ -8,7 +8,7 @@ types and fractional-permissions to model the APIs of low-level linear algebra l
 such as CBLAS/LAPACKE. It compiles to OCaml and this allows using optimized NumLin alongside
 existing code, as well as integration with tools like Merlin.
 
-Any issues or errors, please let me know! [![Build Status](https://travis-ci.com/dc-mak/lt4la.svg?token=gu5ZosGxNsQr8WuxN7by&branch=master)](https://travis-ci.com/dc-mak/lt4la)
+Any issues or errors, please let me know! [![Build Status](https://travis-ci.com/dc-mak/NumLin.svg?branch=master)](https://travis-ci.com/dc-mak/NumLin)
 
 ## Try It! Installation
 

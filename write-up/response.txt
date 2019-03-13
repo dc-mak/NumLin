@@ -1,7 +1,18 @@
 # Questions:
 
-## Questions common to all the reviews, and big questions
+## Questions common to multiple reviews
 
+1. Reviews A and C both ask how we got the Numlin types for the
+   BLAS/LAPACK routines.
+   
+The documentation records the expected aliasing behaviour of each of
+these routines, and whether or not the routine modifies or consumes
+its argument in any way. We used that to derive the types we ascribed
+to the low-level routines. Since most of these low-level routines are
+very careful not to do any allocation themselves, it was generally
+very easy to give them a Numlin type -- every argument that can
+modify/consume its argument needs a full permission, and all others
+can be fraction-polymorphic.
 
 
 ## Reviewer-specific questions
@@ -15,11 +26,23 @@
   latter, it would be helpful if the paper could point out differences
   to previous type systems, or challenges, if there are any.
 
+We certainly agree that both linear types and fractional permissions
+have been studied before. To our surprise, it did not appear that
+linear types had been much applied to checking linear algebra
+libraries. It was only when we tried to use it, that we realized that
+we needed fractional permissions. 
 
-* I have an additional question: how were the types of the BLAS/LAPACK
-  routines obtained? Did you just annotate the APIs based on
-  assumptions documented somewhere, or where these APIs also
-  type-checked?
+In our view, this explains why it hadn't been used before: many prior
+type systems for fractional permissions (eg, from Boyland's original
+work to Aldrich and his students' work on Plural) are extremely
+complex. This is because these type systems typically encode a complex
+analysis to automatically infer how fractional permissions should be
+split and rejoined.
+
+By requiring sharing and merging to be made explicit, we were able to
+drastically simplify the type system. Our formal system is very close
+to standard presentations of linear logic, and the implementation
+complexity is no worse than HM type inference.
 
 * Finally, the related work focuses almost exclusively on type
   systems. Since ultimately the goal is to provide (memory) safe and
@@ -29,6 +52,11 @@
   Spiral in Scala: Towards the Systematic Construction of Generators
   for Performance Libraries. GPCE ’13
 
+We're happy to discuss this in the related work. However, NumLin is
+more likely to be a consumer of efforts like Spiral than a competitor:
+we want to check whether client code conforms to the aliasing rules
+that low-level libraries (whether from platform libraries like BLAS or
+generated via systems like Spiral) want clients to adhere to.
 
 
 ### Review B 
@@ -37,43 +65,76 @@
   only uses higher-order functions in certain ways, would it be
   possible to generate C code?
 
+There's no technical obstacle to generating C code, but as we had
+local access to the developer of the Owl numerical programming library
+for Ocaml, it made sense to use Ocaml. Eventually we'd like to extend
+Owl with something like Numlin to offer safe access to the low-level
+platform numerics libraries.
+
 * Also, could the aliasing requirements be checked dynamically? I.e.,
   provide the OCaml interface in Appendix G, but with dynamic aliasing
   checks? What overhead would that have?
+
+It might be possible, but we're not sure how. Our system enforces full
+linearity (to support explicit deallocation), and to our knowledge
+contract systems for linearity checking (eg, Tov and Pucella's ESOP
+2010 "Stateful Contracts for Affine Types") only enforce affine usage
+(ie, a dynamic check can enforce at-most-one, but not exactly-once).
 
 * I was confused by the desugaring "let !x = e1 in e2" => `let Many x
   = e1 in let Many x = Many (Many x) in e2`. Can you explain this
   more?
 
-* The statement to line 302 talks about moving values from the linear
-  environment to the intuitionistic one. But only variables live in
-  environments?
+[TODO]
 
 * I was initially confused by the presence (in Figure 11) of the
   seemling useless wrappers around banged values. Is this to make the
   API of the generated OCaml code easier to use correctly?
 
+Yes, this is correct. Ocaml's underlying value representation does not
+allocate anything for unary datatypes, so there is no performance
+penalty for using them like Haskell-style newtypes.
+
+* The statement to line 302 talks about moving values from the linear
+  environment to the intuitionistic one. But only variables live in
+  environments?
+
+[TODO]
+
 * I was confused by the comment on Linear Haskell starting on line
   610. What relevance does a system based on kinds have to NumLin
   (which isn't based on kinds either)?
 
+We were trying to explain that (a) it seems like we can use GADTs with
+natural-number indices to encode fractions a la Numlin in Linear
+Haskell, but (b) we don't see how to support linear values (since
+Linear Haskell only supports a linear arrow). We're happy to tighten
+up the discussion in the final version. 
+
 
 ### Review C 
 
-* How exactly could they incorporate this knowledge of what is
-  legal/illegal wrt Fortran in the Numlin framework? Or was it spotted
-  incidentally when they examined the permissions under which an
-  external routine was attempted to be invoked?
-
 * Compared to the learning curve of Rust (which the authors cite) what
   is the learning curve of Numlin, in the authors' estimation?
+
+The basic intuitions about ownership are similar, so we expect an
+experienced Rust programmer would pick up Numlin pretty
+easily. However, Rust is a much bigger language, supporting a lot more
+features than linear types, so the other direction would be more work!
 
 * Could the authors sketch the evolution of linear types from its
   initial classical introduction (say in Wadler's "Linear types can
   change the world" paper) to its current sophisticated form? Is this
   really an "off the shelf" linear type system?
 
+We'll add this historical discussion to the final paper. Our system is
+indeed fairly close to off-the-shelf, and as we mentioned to reviewer
+A, it was one of the surprising discoveries of this paper that this
+works.
+
 * Can they explain their soundness theorem once in English?
+
+[TODO]
 
 * My biggest comment is concerning concurrency. These sort of routines
   will be used in a setting where multicore concurrency will be
@@ -85,6 +146,18 @@
   the authors feel the need to work out a concurrency extension of
   Numlin?
 
+Numlin's type system enforces a concurrent-reader/exclusive-writer
+pattern through the use of fractions, and our heap model was
+deliberately chosen to be quite similar to the work on fractions from
+separation logic. As a result, we would expect that proving that it
+works in the presence of concurrency would be relatively
+straightforward -- though without doing the work we don't want to say
+that it would definitely work.
+
+That said, developing a variant of separation logic suitable for
+Numlin would be interesting, because it would let us prove things
+about (eg) array bounds without having to throw them into the type
+system.
 
 ---- 
 

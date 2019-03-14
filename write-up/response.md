@@ -123,18 +123,18 @@ contract systems for linearity checking (eg, Tov and Pucella's ESOP
 and the second is *why* that's even necessary. Starting with why, the primary
 motivation for having this was for binary arithmetic operations (of type
 `!int * !int --o !int`). For the sake of ergonomics, we'd like to be able to write
-code like "let x = 5 + 5 in x - x"; this is morally right because integers and
+code like `let x = 5 + 5 in x - x`; this is morally right because integers and
 their operations are !-types but this is non-linear in x. Intuitively, we wish
 for a rule like the following to "just do the right thing" when
 destructuring/evaluating expressions of a !-type; which we can derive as a
 meta-rule using the desugaring in question.
 
-  > ```
-Int; Lin |- e : !t 
-Int, x : !t; Lin' |- e' : t'
- ---------------------------------------
-Int; Lin, Lin' |- let !x = e in e' : t'
-```
+    ```
+    Int; Lin |- e : !t
+    Int, x : !t; Lin' |- e' : t'
+    ---------------------------------------
+    Int; Lin, Lin' |- let !x = e in e' : t'
+    ```
 
    It should be possible to handle this using the Benton/Wadler
 LNL-style presentation of linear types, which uses adjoint modalities
@@ -198,9 +198,8 @@ works.
 final paper. If an expression is syntactically type-checked, then for
 an arbitrary number of steps (k), under *any* substitution of free
 fractional-permission variables, linear variables (with a suitable
-heap) and intuitionistic variables, that suitable heap and substituted
-expression are in the computational interpretation (explained in
-English in the paper) of the (substituted) type of that expression.
+heap) and intuitionistic variables, that suitable heap and expression
+are in the computational interpretation of the type of that expression.
 
     The "computational interpretation" just identifies executions that do
 no un- or ill-defined behaviours (eg, adding a boolean or an integer).

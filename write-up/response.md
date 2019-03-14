@@ -71,9 +71,6 @@ NumLin would be interesting, because it would let us prove things
 about (eg) array bounds without having to throw them into the type
 system.
 
-
-----
-
 ## Reviewer-specific questions
 
 ### Review A

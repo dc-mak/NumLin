@@ -32,7 +32,7 @@ algebra libraries. It was only when we tried to use it, that we
 realized that we needed fractional permissions.
 
     In our view, this explains why it hadn't been used before: many prior
-type systems for fractional permissions (eg, from Boyland's original
+type systems for fractional permissions (e.g. from Boyland's original
 work to Aldrich and his collaborators' work on Plural) are extremely
 complex. This is because these type systems typically encode a complex
 analysis to automatically infer how fractional permissions should be
@@ -68,7 +68,7 @@ would definitely work.
 
     That said, developing a variant of separation logic suitable for
 NumLin would be interesting, because it would let us prove things
-about (eg) array bounds without having to throw them into the type
+about (for example) array bounds without having to throw them into the type
 system.
 
 ## Reviewer-specific questions
@@ -108,7 +108,7 @@ platform numerics libraries.
 
     It might be possible, but we're not sure how. Our system enforces full
 linearity (to support explicit deallocation), and to our knowledge
-contract systems for linearity checking (eg, Tov and Pucella's ESOP
+contract systems for linearity checking (e.g. Tov and Pucella's ESOP
 2010 "Stateful Contracts for Affine Types") only enforce affine usage
 (ie, a dynamic check can enforce at-most-one, but not exactly-once).
 
@@ -145,7 +145,7 @@ goal.
 
     Yes, this is correct, we essentially embed the NumLin type system into the
 OCaml one for a sanity check on the output code, ease of interop with OCaml and
-tooling such as Merlin support.  Annotating with "[@@unboxed]" means OCaml's
+tooling support (eg Merlin).  Annotating with `[@@unboxed]` means OCaml's
 underlying value representation does not allocate anything for unary datatypes,
 so there is no performance penalty for using them like Haskell-style newtypes.
 
@@ -199,7 +199,7 @@ heap) and intuitionistic variables, that suitable heap and expression
 are in the computational interpretation of the type of that expression.
 
     The "computational interpretation" just identifies executions that do
-no un- or ill-defined behaviours (eg, adding a boolean or an integer).
+no un- or ill-defined behaviours (e.g. adding a boolean or an integer).
 Since our operational semantics explicitly models deallocation, we now
 know no well-typed program will ever try to access deallocated memory,
 establishing the correctness of our memory management checking.

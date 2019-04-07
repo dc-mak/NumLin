@@ -1,5 +1,4 @@
 # NumLin: Linear Types for Linear Algebra
----
 
 ## Exploring
 
@@ -24,50 +23,56 @@
 5. Run the transpiler: `_build/default/bin/transpile.exe -i <input-file> -o <output-file>`.
    Transpile a file containing a NumLin expression, terminated by `;;`, into an OCaml file/module.
 
-6. Explore the code itself: `cd src && dune utop && popd`. This will open up an OCaml REPL with
+6. Explore the code itself: `pushd src && dune utop && popd`. This will open up an OCaml REPL with
    the library in `src` loaded in under the module name `Numlin`.
 
 ## Command Reference
 
-| Command                                         | Meaning                                       |
-| ---                                             | ----                                          |
-| `dune build src/numlin.a`                        | Build the library (everything inside `src`).  |
-| `pushd src && dune utop && popd`                | As above + launches UTop with library loaded. |
-| `dune build test/test.exe`                      | Build library & tests.                        |
-| `dune runtest`                                  | Build library & tests _and_ run all tests.    |
-| `dune build bin/{repl,benchmark,transpile}.exe` | Build library, REPL and transpiler.           |
-| `dune clean`                                    | Delete `_build` directory of build artifacts. |
-| `_build/default/bin/*.exe`                      | Launch {repl,transpile,benchmark}.exe         |
+| Command                    | Meaning                                       |
+| ---                        | ----                                          |
+| `dune build src/numlin.a`  | Build the library (everything inside `src`).  |
+| `cd src && dune utop`      | As above + launches UTop with library loaded. |
+| `dune build test/test.exe` | Build library & tests.                        |
+| `dune runtest`             | Build library & tests _and_ run all tests.    |
+| `dune build bin/*.exe`     | Build {repl,benchmark,transpile}.             |
+| `dune clean`               | Delete `_build` directory of build artifacts. |
+| `_build/default/bin/*.exe` | Launch {repl,transpile,benchmark}.exe         |
 
 ## Structure
 
-| Directory  | Purpose                                      |
-| ---        | ---                                          |
-| `src`      | Library being developed.                     |
-| `test`     | Tests for the library.                       |
-| `bin`      | For executables, like the REPL.              |
-| `old`      | First attempt at implementation.             |
-| `write-up` | My dissertation on all of this.              |
+| Directory  | Purpose                          |
+| ---        | ---                              |
+| `src`      | Library being developed.         |
+| `test`     | Tests for the library.           |
+| `bin`      | For executables, like the REPL.  |
+| `old`      | First attempt at implementation. |
+| `write-up` | My dissertation on all of this.  |
 
 To understand this project, consider what happens when you use the REPL:
+
   1. An input string is taken and fed to `Eval.eval`.
+
   2. `bin/eval.ml` in turn uses `src/parse.ml`: this file needs four things to
      run a parser over an input: a lexical-token buffer, a way to handle a
      successful parse, a way to handle an error, and optionally, a way to
      handle a request for a new lexical-buffer. How these are implemented in
      `bin/eval.ml` is not relevant for the big-picture.
+
   3. `src/parse.ml` uses `lexer.mll` and `parser.mly` to drive an incremental
      parser.  Making it incremental allows for using `parser.messages` and
      `error_msg.ml` for better error-messages. Upon success, `src/parse.ml`
      returns a value of type `Ast.exp`, upon failure, a position, to be used by
      handle in showing a useful error-message.
+
   4. `src/ast.ml` defines fractional-capabilities, linear types and expressions,
      as well as pretty-printing code-generation. The code is generated on the
      assumption that it comes after either the contents of the file `template.ml`
      or an `open Numlin.Template` statement.
      - `template.ml[i]` is a full implementation of NumLin's primitives in OCaml.
+
   5. Given a value of type `Ast.exp`, the `accept` function in `bin/eval.ml`
      passes it to `check_expr` in `src/checker.ml`.
+
   6. `src/checker.ml` checks types, linearity and scoping. It uses operations
      defined in `src/check_monad.ml` to implement typing rules.
      - `check_monad.ml[i]` hides implementation details of functions used in
@@ -77,11 +82,13 @@ To understand this project, consider what happens when you use the REPL:
        Similarly, `not_used` is a proof that a variable is not used: it is
        returned only by `lookup` and accepted only by `use_var`: you cannot
        extract the type of a linear variable unless you mark it as used first.
+
   7. Regardless of whether checking is successful or not, `accept` in
      `bin/eval.ml` does two things (1) output OCaml code representing a
      translation of the expression entered (2) output the full AST in
      s-expression form.
      If the checking is successful, then the type is output, otherwise an error.
+
   8. Similarly, `bin/transpile.ml` reads an entire file as input rather than an
      interactive, line-by-line entry. It acts as a thin-wrapper around
      `src/transpile.ml` which can take either `in_channel`/`out_channel` pairs

@@ -1,6 +1,6 @@
 # NumLin: Linear Types for Linear Algebra
 ---
-## What is NumLin? 
+## What is NumLin?
 
 NumLin is a small, experimental programming language I wrote (under the guidance of Stephen
 Dolan and Neel Krishnaswami) to explore the feasiblity and applicability of using linear
@@ -8,28 +8,7 @@ types and fractional-permissions to model the APIs of low-level linear algebra l
 such as CBLAS/LAPACKE. It compiles to OCaml and this allows using optimized NumLin alongside
 existing code, as well as integration with tools like Merlin.
 
-Any issues or errors, please let me know! [![Build Status](https://travis-ci.com/dc-mak/NumLin.svg?branch=master)](https://travis-ci.com/dc-mak/NumLin)
-
-## Try It! Installation
-
-The easy way is to 
-  1. [Install Docker](https://docs.docker.com/engine/installation)
-  2. Clone the repo `git clone https://github.com/dc-mak/lt4la.git`
-  3. `[sudo] docker build -t <tag> <path-to-repo>`
-
-Once it is built type:
-```
-[sudo] docker run -it <tag>
-```
-to fire up an interactive shell.
-
-The difficult way is to basically execute the Dockerfile (or equivalent for your platform)
-by hand. Note, that I'm working from an Ubuntu 16.04 with Opam 2 and OCaml 4.07.1 base image,
-so you'll need that (and all its dependencies) first.
-
-**Note** that `[sudo] docker build -t <tag> <path-to-repo>` _copies_ the files in the current
-directory into the image, so you **must** rebuild if you change the source, not just restart the
-container. Luckily, the image is cached so only the project stuff will be rebuilt, not everything.
+## Exploring
 
 1. Run the tests: `dune runtest`. Not much should happen because all the tests should pass.
    If you wish to see a test fail, then you may change/delete any text inside a
@@ -53,7 +32,7 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 5. Explore the code itself: `cd src && dune utop && popd`. This will open up an OCaml REPL with
    the library in `src` loaded in under the module name `Lt4la`.
 
-## Quickstart
+## Command Reference
 
 | Command                                         | Meaning                                       |
 | ---                                             | ----                                          |
@@ -65,35 +44,7 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 | `dune clean`                                    | Delete `_build` directory of build artifacts. |
 | `_build/default/bin/*.exe`                      | Launch {repl,transpile,benchmark}.exe         |
 
-### Roadmap (in _rough_ order of priority)
-
-**Future:**
- - ?Documentation with [MkDocs](http://www.mkdocs.org/)
- - ?Performance: less pure-functional implementations behind `State_or_error` or `Check_monad`.
- - Combinators interface
- - PPX extension
- - Staging, preferably using [ppx_stage](https://github.com/stedolan/ppx_stage?files=1)
- - Size types
-
-**Done:**
- - Fixed `dune utop` crash
- - Semantics written in Ott
- - Well-formed types
- - (Some) Owl/Level 1 BLAS Primitives
- - Parser/REPL
- - Code generation
- - Scalars and arithmetic expressions
- - Recursion, conditionals and !-types
- - Elaboration/inference
- - Matrices (some Level 3 BLAS/LAPACK primitives)
- - Syntactic sugar/parsing grammar
- - Matrix expression pattern matching
- - Benchmarking
-
-## Development
-
-[Code of conduct is here.](https://github.com/dc-mak/lt4la/blob/master/CODE_OF_CONDUCT.md) 
-Overview of the project structure is in the table below.
+## Structure
 
 | Directory  | Purpose                                      |
 | ---        | ---                                          |
@@ -141,29 +92,6 @@ To understand this project, consider what happens when you use the REPL:
      `src/transpile.ml` which can take either `in_channel`/`out_channel` pairs
      or file names to translate DSL expressions to OCaml.
 
-### Formatting conventions
-I'm sticking to to following conventions (except for `.mli` files and small modules)
- - Max 100 characters line-width
- - Jane Street preset for my Ocp-indent
- - At the top-level: 1 line for binding, 1 or more lines for body/expression, 1
-   line for `;;` (makes for cleaner diffs)
- - Nested match statements: `begin match ...` on top and solo `end` at the bottom.
-
-### Developing with a Container
-
-I'm not very well-versed with Docker, but I think the first step is to _mount_
-the source directory inside Docker to have mutable access to the directory.
-Then, to get your tools you can either
- - append to the Dockerfile get install all your development gear inside it
- - OR create a new image based on the existing one for development
- - OR use existing tools across the container
- 
-I think the last is covered here, in [how to run Merlin from outside of a
-container](https://gist.github.com/pbiggar/cce9b958704c6cadd9597b717bc18c4d).
-See Myths 10-7 [in this
-article](https://derickbailey.com/2017/01/30/10-myths-about-docker-that-stop-developers-cold/)
-for more information.
-
 ### Library
 
 At its core, it's just an Abstract Syntax Tree and a Checker. I use
@@ -181,39 +109,10 @@ They assume/use the functions provided by `src/template.ml`.
 Parsing and lexing are available for convenience in writing expressions (see
 the REPL for details).
 
-### Tests
-
-**Please write tricky tests for the checker in `test/checker_test.ml`.**
-
-There are tests in each module in `src` for white-box/unit testing modules from
-the inside and tests in `test` for black-box/interface/integration testing
-components used together.  Writing a test should be straightforward enough from
-the code already there. **Let me know if it isn't and I will update this
-README.** As an overview, from
-[ppx_inline_test](https://github.com/janestreet/ppx_inline_test/blob/master/README.md):
-
-```ocaml
-let%test "name" = <boolean expr> (* true means ok, false or exn means broken *)
-let%test_unit "name" = <unit expr> (* () means ok, exn means broken *)
-let%test_module "name" = (module <module-expr>)  (* to group tests/share setup *)
-```
-
-and from [ppx_expect](https://github.com/janestreet/ppx_expect):
-
-```ocaml
-let%expect_test "addition" =
-  printf "%d" (1 + 2);
-  [%expect {| 3 |}]
-```
-Almost all types can be printed with `printf !"%{sexp: <type>}" <value>"`. You
-can simply write `[%expect {||}]` when first writing the test, run `dune
-runtest` then `dune promote` to update the test file with the _if_ it is
-correct/what you expect.
-
 ### Benchmarking
 
 Something like `_build/default/bin/benchmark.exe --start 1 --limit 4 --alg kalman
---micro-quota 10 --macro-runs 10` should a good place to get started. It will
+--micro-quota 10 --macro-runs 10` should be a good place to get started. It will
 take at least 150s for just the micro-benchmarks, and more for the
 macro-benchmarks. If you have time `--micro-quota 20` I've found to be more
 than enough; you should increase `--macro-runs` carefully. Please do check that
@@ -243,27 +142,3 @@ There are (currently) 4 implementations of a Kalman filter: Python/NumPy,
 OCaml/Owl, OCaml/NumLin, C/CBLAS-LAPACKE. There are also 3 implementation each of
 L1-norm minimisation and "linear regression" in Python/NumPy, OCaml/Owl, and OCaml/NumLin.
 
-### Continuous Integration
-
-Just a Travis-CI system building the Dockerfile (which includes running tests).
-
-Triggered with every push to the `master` branch.
-
-### `.mli` Files
-There is currently no straightforward way to "generate" `.mli` files from an `.ml`
-file. There are [plans to update Merlin](https://github.com/ocaml/merlin/issues/538) with this
-feature. So, in the meantime, say you are in directory `src` and you want to generate `ast.mli`.
- - `dune clean`
- - `dune build lt4la.a --verbose`
- - Find command ending in `-impl ast.pp.ml` and copy it
- - Replace `-impl` with `-i`
- - At the end of it all, append ` > /path/to/file/ast.mli`.
-
-## History
-
-This project started off life as "LT4LA", a Part III project for my M.Eng. degree in
-Computer Science from Trinity College, University of Cambridge.
-
-Like many things in my life, I only got the implementation "right" on the second try,
-so for posterity, the first implementation is kept in the `old` directory if anyone
-wishes to see even humbler origins of this code base.

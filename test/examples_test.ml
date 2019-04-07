@@ -1,7 +1,7 @@
 open Base
 ;;
 
-open Lt4la.Template
+open Numlin.Template
 ;;
 
 let%expect_test "factorial" =

@@ -1,7 +1,7 @@
 open Base
 ;;
 
-open Lt4la.Template
+open Numlin.Template
 ;;
 
 module Ex =
@@ -84,13 +84,13 @@ let%expect_test "Kalman" =
 
   let same x = if x then "same" else " NOT" in
 
-  (* LT4LA *)
-  let lt4la_sigma, lt4la_mu =
+  (* NumLin *)
+  let numlin_sigma, numlin_mu =
     reset ();
-    let (_, (M lt4la_sigma, (M lt4la_mu, _))) =
-      Ex.lt4la ~sigma ~h ~mu ~r ~data in
-    lt4la_sigma, Owl.Mat.copy lt4la_mu in
-  let () = Owl.Mat.(Stdio.printf !"LT4LA - sigma? %{same} | h? %{same}\n" (sigma = sigma_copy) (h = h_copy)) in
+    let (_, (M numlin_sigma, (M numlin_mu, _))) =
+      Ex.numlin ~sigma ~h ~mu ~r ~data in
+    numlin_sigma, Owl.Mat.copy numlin_mu in
+  let () = Owl.Mat.(Stdio.printf !"NumLin - sigma? %{same} | h? %{same}\n" (sigma = sigma_copy) (h = h_copy)) in
 
   (* Owl *)
   let owl_sigma, owl_mu =
@@ -118,7 +118,7 @@ let%expect_test "Kalman" =
   let results = [
     ("NumPy", numpy_mu, numpy_sigma);
     ("Owl", owl_mu, owl_sigma);
-    ("LT4LA", lt4la_mu, lt4la_sigma);
+    ("NumLin", numlin_mu, numlin_sigma);
     ("CBLAS", cblas_mu, cblas_sigma);
     ("Lazy", lazy_mu, lazy_sigma);
   ] in
@@ -136,18 +136,18 @@ let%expect_test "Kalman" =
   Owl.Mat.print ~header:false cblas_mu;
 
   [%expect {|
-    LT4LA - sigma? same | h? same
+    NumLin - sigma? same | h? same
     NumPy - sigma? same | h? same
     CBLAS - sigma? same | h? same
      Lazy and CBLAS: Mu (same) Sigma (same)
-     Lazy and LT4LA: Mu (same) Sigma (same)
+     Lazy and NumLin: Mu (same) Sigma (same)
      Lazy and   Owl: Mu (same) Sigma (same)
      Lazy and NumPy: Mu (same) Sigma (same)
-    CBLAS and LT4LA: Mu (same) Sigma (same)
+    CBLAS and NumLin: Mu (same) Sigma (same)
     CBLAS and   Owl: Mu (same) Sigma (same)
     CBLAS and NumPy: Mu (same) Sigma (same)
-    LT4LA and   Owl: Mu (same) Sigma (same)
-    LT4LA and NumPy: Mu (same) Sigma (same)
+    NumLin and   Owl: Mu (same) Sigma (same)
+    NumLin and NumPy: Mu (same) Sigma (same)
       Owl and NumPy: Mu (same) Sigma (same)
 
        0.541272 -0.00852694    0.133997   0.234808   0.0897324

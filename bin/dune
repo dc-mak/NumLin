@@ -1,7 +1,7 @@
 (executables
  (names repl transpile)
  (modules eval repl transpile)
- (libraries lt4la lwt lambda-term)
+ (libraries numlin lwt lambda-term)
  (flags :standard -short-paths)
  (preprocess
   (pps lwt_ppx)))

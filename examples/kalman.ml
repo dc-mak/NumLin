@@ -58,7 +58,7 @@ let numpy_measure ~sigma ~h ~mu ~r ~data =
   |> Py.Float.to_float
 ;;
 
-let lt4la ~sigma ~h ~mu ~r ~data =
+let numlin ~sigma ~h ~mu ~r ~data =
   Gen.Kalman.it (M sigma) (M h) (M mu) (M r) (M data)
 ;;
 
@@ -116,18 +116,18 @@ type o_mat =
 ;;
 
 type 'a l_mat =
-  'a Lt4la.Template.mat
+  'a Numlin.Template.mat
 ;;
 
 type l_z =
-  Lt4la.Template.z
+  Numlin.Template.z
 ;;
 
 type 'a from_input =
   sigma:o_mat -> h:o_mat -> mu:o_mat -> r:o_mat -> data:o_mat -> 'a
 ;;
 
-type lt4la =
+type numlin =
   { f : 'a 'b.
           (('a l_mat * 'b l_mat) *
            (l_z l_mat * (l_z l_mat * (l_z l_mat * l_z l_mat)))) from_input }
@@ -137,7 +137,7 @@ type _ t =
   | NumPy : (float from_input * (o_mat * o_mat) from_input) t
   | Owl : ((o_mat * o_mat) from_input) t
   | CBLAS : ((n:int -> k:int -> float from_input) * (n:int -> k:int -> o_mat from_input)) t
-  | LT4LA : lt4la t
+  | NumLin : numlin t
 ;;
 
 type wrap =
@@ -148,18 +148,18 @@ type wrap =
 let get : type a . a t -> a = function
   | NumPy -> (numpy_measure, numpy)
   | Owl -> owl
-  | LT4LA -> { f = lt4la }
+  | NumLin -> { f = numlin }
   | CBLAS -> (cblas_measure, cblas)
 ;;
 
 let name : wrap -> string = function
   | W NumPy -> "NumPy"
   | W Owl -> "Owl"
-  | W LT4LA -> "LT4LA"
+  | W NumLin -> "Numlin"
   | W CBLAS -> "CBLAS"
 ;;
 
 let all =
-  [W CBLAS; W LT4LA; W Owl; W NumPy]
+  [W CBLAS; W NumLin; W Owl; W NumPy]
 ;;
 

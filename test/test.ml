@@ -1,5 +1,5 @@
 (* Dhruv Makwana *)
-(* All LT4LA External Tests *)
+(* All NumLin External Tests *)
 
 let%test_module "Ast_test" =
   (module Ast_test)

@@ -25,13 +25,13 @@ let handler n lexbuf ~msg =
 ;;
 
 let accept n value =
-  let sexp = Sexp.to_string_hum (Lt4la.Ast.sexp_of_exp value) in
-  let pp = Lt4la.Ast.(string_of_pp pp_exp value)
+  let sexp = Sexp.to_string_hum (Numlin.Ast.sexp_of_exp value) in
+  let pp = Numlin.Ast.(string_of_pp pp_exp value)
            |> String.split ~on:'\n'
            |> String.concat ~sep:"\n         " in
   let check =
-    match Lt4la.Checker.check_expr value ~counter:0 with
-    | Ok lin -> Lt4la.Ast.(string_of_pp pp_lin lin) ^ "\n"
+    match Numlin.Checker.check_expr value ~counter:0 with
+    | Ok lin -> Numlin.Ast.(string_of_pp pp_lin lin) ^ "\n"
     | Error err -> Error.to_string_hum err in
   pp ^ "\n" ^ sexp ^ "\n" ^ String.chop_suffix_exn ~suffix:"\n" check
   |> Result.return
@@ -45,6 +45,6 @@ let resume n cont =
 let eval n input =
   let lexbuf = Lexing.from_string input in
   Lexing.(lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = "repl" });
-  Lt4la.Parse.(drive lexbuf {
+  Numlin.Parse.(drive lexbuf {
     handler = handler (n+1); accept  = accept (n+1); resume  = Some (resume n); })
 ;;

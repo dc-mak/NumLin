@@ -35,7 +35,7 @@ let make_microbench_tests ~n:_ ~k:_ {q; u} (F.W fun_) =
     Test.create ~name (fun () ->
       let q, u = Mat.(copy q, copy u) in f ~q ~u)
 
-  | F.LT4LA ->
+  | F.NumLin ->
     (* [q] and [u] are overrwritten *)
     (* Adds overhead because of copying during test but oh well *)
     Test.create ~name (fun () ->
@@ -67,7 +67,7 @@ let make_macro_timing_array ~n:_ ~k:_ ~runs input (F.W fun_) =
     Array.init runs ~f:(fun _ ->
       Core.Time.Span.of_us @@ f ~q ~u)
 
-  | F.LT4LA ->
+  | F.NumLin ->
     let {q; u} = input in
     let q' = Mat.copy q and u' = Mat.copy u in
     let clean () =

@@ -10,7 +10,7 @@ let transpile chan file =
       Stdio.Out_channel.output_string chan
       @@ Printf.sprintf "module %s =\nstruct\n"
       @@ String.capitalize file;
-      begin match Lt4la.Transpile.chans ~in_file:from_name from chan with
+      begin match Numlin.Transpile.chans ~in_file:from_name from chan with
       | Ok () ->
         Stdio.Out_channel.output_string chan @@ "end\n\n";
       | Error str ->

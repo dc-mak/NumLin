@@ -36,13 +36,13 @@ let%expect_test "l1_norm_min" =
   let numpy = Examples.L1_norm_min.numpy ~q ~u in
   let owl = Examples.L1_norm_min.owl ~q ~u in
   (* run last *)
-  let lt4la = Examples.L1_norm_min.lt4la ~q ~u in
+  let numlin = Examples.L1_norm_min.numlin ~q ~u in
 
-  if not Owl.Mat.(owl =~ lt4la) then Stdio.printf "Owl/LT4LA: NOT SAME!\n";
+  if not Owl.Mat.(owl =~ numlin) then Stdio.printf "Owl/NumLin: NOT SAME!\n";
   if not Owl.Mat.(owl =~ numpy) then Stdio.printf "Owl/NumPy: NOT SAME!\n";
-  if not Owl.Mat.(lt4la =~ numpy) then Stdio.printf "LT4LA/NumPy: NOT SAME!\n";
+  if not Owl.Mat.(numlin =~ numpy) then Stdio.printf "NumLin/NumPy: NOT SAME!\n";
   Owl.Mat.print ~header:false numpy;
-  Owl.Mat.print ~header:false lt4la;
+  Owl.Mat.print ~header:false numlin;
 
   [%expect {|
      0.163738 -0.0580065 -0.236211 -0.378285 -0.237876

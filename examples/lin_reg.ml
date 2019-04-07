@@ -46,7 +46,7 @@ let owl ~x ~y =
   inv (x' * x) * x' * y
 ;;
 
-let lt4la ~x ~y =
+let numlin ~x ~y =
   Gen.Lin_reg.it (M x) (M y)
 ;;
 
@@ -56,24 +56,24 @@ type o_mat =
 ;;
 
 type 'a l_mat =
-  'a Lt4la.Template.mat
+  'a Numlin.Template.mat
 ;;
 
 type l_z =
-  Lt4la.Template.z
+  Numlin.Template.z
 ;;
 
 type 'a from_input =
   x:o_mat -> y:o_mat -> 'a
 ;;
 
-type lt4la =
+type numlin =
   { f : 'a 'b.  (('a l_mat * 'b l_mat) * l_z l_mat) from_input }
 ;;
 
 type _ t =
   | Owl : o_mat from_input t
-  | LT4LA : lt4la t
+  | NumLin : numlin t
   | NumPy : (float from_input * o_mat from_input) t
 ;;
 
@@ -84,16 +84,16 @@ type wrap =
 
 let get : type a . a t -> a = function
   | Owl -> owl
-  | LT4LA -> { f = lt4la }
+  | NumLin -> { f = numlin }
   | NumPy -> (numpy_measure, numpy)
 ;;
 
 let name : wrap -> string = function
   | W Owl -> "Owl"
-  | W LT4LA -> "LT4LA"
+  | W NumLin -> "NumLin"
   | W NumPy -> "NumPy"
 ;;
 
 let all =
-  [ W NumPy; W Owl; W LT4LA]
+  [ W NumPy; W Owl; W NumLin]
 ;;

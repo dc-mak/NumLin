@@ -32,7 +32,7 @@ let make_microbench_tests ~n:_ ~k:_ {x; y} (F.W fun_) =
     let f = snd f in
     Test.create ~name (fun () -> f ~x ~y)
 
-  | F.LT4LA ->
+  | F.NumLin ->
     let f = f.f in
     Test.create ~name (fun () -> f ~x ~y)
 ;;
@@ -62,7 +62,7 @@ let make_macro_timing_array ~n:_ ~k:_ ~runs input (F.W fun_) =
     Array.init runs ~f:(fun _ ->
       Core.Time.Span.of_us @@ f ~x ~y)
 
-  | F.LT4LA ->
+  | F.NumLin ->
     let f = f.f in
     macro ~f ~runs input
 

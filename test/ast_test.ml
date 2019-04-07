@@ -5,7 +5,7 @@ open Base
 ;;
 
 module Ast =
-  Lt4la.Ast
+  Numlin.Ast
 ;;
 
 open Vars

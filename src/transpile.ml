@@ -18,7 +18,7 @@ let accept chan value =
 
   | Ok (_ : Ast.lin)  ->
     Out.output_lines chan [
-      "open Lt4la.Template"; ";;"; "";
+      "open Numlin.Template"; ";;"; "";
       "open Ops"; "[@@ocaml.warning \"-33\"]"; ";;"; ""
     ];
     Caml.Format.(fprintf @@ formatter_of_out_channel chan)

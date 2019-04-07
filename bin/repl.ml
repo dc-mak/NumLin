@@ -85,7 +85,7 @@ and step term history command = function
 let main () =
   let%lwt () =  LTerm_inputrc.load () in
   try%lwt
-    let%lwt () = LTerm.printls (eval [S "LT4LA REPL"]) in
+    let%lwt () = LTerm.printls (eval [S "NumLin REPL"]) in
     let%lwt term = Lazy.force LTerm.stdout in
     loop term (LTerm_history.create []) 0
   with

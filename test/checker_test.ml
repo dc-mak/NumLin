@@ -8,11 +8,11 @@ open Vars
 ;;
 
 module Ast =
-  Lt4la.Ast
+  Numlin.Ast
 ;;
 
 let check_expr =
-  Lt4la.Checker.check_expr ~counter:1719
+  Numlin.Checker.check_expr ~counter:1719
 ;;
 
 let pretty x =

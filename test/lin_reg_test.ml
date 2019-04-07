@@ -1,7 +1,7 @@
 open Base
 ;;
 
-open Lt4la.Template
+open Numlin.Template
 ;;
 
 let n, k =
@@ -41,7 +41,7 @@ let%expect_test "lin_reg" =
   let owl_res = Examples.Lin_reg.owl ~x ~y in
   let results = Examples.Lin_reg.[
     ("Owl", owl_res);
-    ("LT4LA", let _, M res = lt4la ~x ~y in res);
+    ("NumLin", let _, M res = numlin ~x ~y in res);
     ("NumPy", numpy ~x ~y);
   ] in
   let () = assert Owl.Mat.(x = x_copy && y = y_copy) in
@@ -58,9 +58,9 @@ let%expect_test "lin_reg" =
   Owl.Mat.print ~header:false owl_res;
 
   [%expect {|
-    NumPy and LT4LA: (same)
+    NumPy and NumLin: (same)
     NumPy and   Owl: (same)
-    LT4LA and   Owl: (same)
+    NumLin and   Owl: (same)
 
 
     0.2

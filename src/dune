@@ -1,6 +1,6 @@
 (library
- (name lt4la)
- (synopsis "Linear Types for Linear Algebra")
+ (name numlin)
+ (synopsis "NumLin: Linear Types for Linear Algebra")
  (flags :standard -short-paths)
  (libraries base ctypes owl menhirLib sexplib0 stdio)
  (inline_tests)

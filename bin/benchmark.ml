@@ -45,7 +45,7 @@ let alg =
   function
   | "none" -> kalman []
   | "owl" ->  kalman [W Owl]
-  | "lt4la" -> kalman [W LT4LA]
+  | "numlin" -> kalman [W NumLin]
   | "cblas" -> kalman [W CBLAS]
   | "numpy" -> kalman [W NumPy]
   | "kalman" -> kalman all
@@ -67,7 +67,7 @@ let alg =
 let command =
   let open Core in
   Command.basic
-    ~summary:"Benchmark different implementations of a Kalman Filter"
+    ~summary:"Basic NumLin benchmarking program"
     Command.Let_syntax.(
       let%map_open
 

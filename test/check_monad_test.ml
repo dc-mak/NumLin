@@ -8,10 +8,10 @@ open Vars
 ;;
 
 module Ast =
-  Lt4la.Ast
+  Numlin.Ast
 ;;
 
-open Lt4la.Check_monad
+open Numlin.Check_monad
 ;;
 
 let execute x =

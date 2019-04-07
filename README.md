@@ -14,7 +14,7 @@ Any issues or errors, please let me know! [![Build Status](https://travis-ci.com
 
 The easy way is to 
   1. [Install Docker](https://docs.docker.com/engine/installation)
-  2. Clone the repo `git clone https://github.com/dc-mak/lt4la.git`
+  2. Clone the repo `git clone https://github.com/dc-mak/NumLin.git`
   3. `[sudo] docker build -t <tag> <path-to-repo>`
 
 Once it is built type:
@@ -51,13 +51,13 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
    Transpile a file containing a NumLin expression, terminated by `;;`, into an OCaml file/module.
 
 5. Explore the code itself: `cd src && dune utop && popd`. This will open up an OCaml REPL with
-   the library in `src` loaded in under the module name `Lt4la`.
+   the library in `src` loaded in under the module name `Numlin`.
 
 ## Quickstart
 
 | Command                                         | Meaning                                       |
 | ---                                             | ----                                          |
-| `dune build src/lt4la.a`                        | Build the library (everything inside `src`).  |
+| `dune build src/numlin.a`                        | Build the library (everything inside `src`).  |
 | `pushd src && dune utop && popd`                | As above + launches UTop with library loaded. |
 | `dune build test/test.exe`                      | Build library & tests.                        |
 | `dune runtest`                                  | Build library & tests _and_ run all tests.    |
@@ -92,7 +92,7 @@ container. Luckily, the image is cached so only the project stuff will be rebuil
 
 ## Development
 
-[Code of conduct is here.](https://github.com/dc-mak/lt4la/blob/master/CODE_OF_CONDUCT.md) 
+[Code of conduct is here.](https://github.com/dc-mak/numlin/blob/master/CODE_OF_CONDUCT.md) 
 Overview of the project structure is in the table below.
 
 | Directory  | Purpose                                      |
@@ -118,8 +118,8 @@ To understand this project, consider what happens when you use the REPL:
   4. `src/ast.ml` defines fractional-capabilities, linear types and expressions,
      as well as pretty-printing code-generation. The code is generated on the
      assumption that it comes after either the contents of the file `template.ml`
-     or an `open Lt4la.Template` statement.
-     - `template.ml[i]` is a full implementation of LT4LA's DSL's primitives in OCaml.
+     or an `open Numlin.Template` statement.
+     - `template.ml[i]` is a full implementation of NumLin's primitives in OCaml.
   5. Given a value of type `Ast.exp`, the `accept` function in `bin/eval.ml`
      passes it to `check_expr` in `src/checker.ml`.
   6. `src/checker.ml` checks types, linearity and scoping. It uses operations
@@ -254,7 +254,7 @@ There is currently no straightforward way to "generate" `.mli` files from an `.m
 file. There are [plans to update Merlin](https://github.com/ocaml/merlin/issues/538) with this
 feature. So, in the meantime, say you are in directory `src` and you want to generate `ast.mli`.
  - `dune clean`
- - `dune build lt4la.a --verbose`
+ - `dune build numlin.a --verbose`
  - Find command ending in `-impl ast.pp.ml` and copy it
  - Replace `-impl` with `-i`
  - At the end of it all, append ` > /path/to/file/ast.mli`.

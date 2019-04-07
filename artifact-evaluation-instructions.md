@@ -1,21 +1,16 @@
 # NumLin: Linear Types for Linear Algebra
 ---
-## What is NumLin?
-
-NumLin is a small, experimental programming language I wrote (under the guidance of Stephen
-Dolan and Neel Krishnaswami) to explore the feasiblity and applicability of using linear
-types and fractional-permissions to model the APIs of low-level linear algebra libraries
-such as CBLAS/LAPACKE. It compiles to OCaml and this allows using optimized NumLin alongside
-existing code, as well as integration with tools like Merlin.
 
 ## Exploring
 
-1. Run the tests: `dune runtest`. Not much should happen because all the tests should pass.
+1. Login (password: osboxes.org), open up a terminal (Activites > Terminal), `cd NumLin`.
+
+2. Run the tests: `dune runtest`. Not much should happen because all the tests should pass.
    If you wish to see a test fail, then you may change/delete any text inside a
    `[%expect {| .. |}]` block and then `dune runtest` will show you the difference between
    the expected output and the actual output.
 
-2. Run the benchmarks: `_build/default/bin/benchmark.exe --start 1 --limit 5
+3. Run the benchmarks: `_build/default/bin/benchmark.exe --start 1 --limit 5
    --alg lin_reg --micro-quota 10 --macro-runs 1`. You may also provide the `-help` flag for
    details about the options.
    * `--start` and `--limit` control the size of square matrices from *5x5* to *5<sup>5</sup> x 5<sup>5</sup>*.
@@ -23,20 +18,20 @@ existing code, as well as integration with tools like Merlin.
    * `--micro-quota` controls how many *seconds* smaller benchmarks (limit <= 3) are run for.
    * `--macro-runs` controls *N*, how many measurements are made for each implement.
 
-3. Run the repl: `_build/default/bin/repl.exe`. Type in a NumLin expression, terminated by `;;` to
+4. Run the repl: `_build/default/bin/repl.exe`. Type in a NumLin expression, terminated by `;;` to
    see its AST and translation to OCaml. Ctrl-D to exit the application.
 
-4. Run the transpiler: `_build/default/bin/transpile.exe -i <input-file> -o <output-file>`.
+5. Run the transpiler: `_build/default/bin/transpile.exe -i <input-file> -o <output-file>`.
    Transpile a file containing a NumLin expression, terminated by `;;`, into an OCaml file/module.
 
-5. Explore the code itself: `cd src && dune utop && popd`. This will open up an OCaml REPL with
-   the library in `src` loaded in under the module name `Lt4la`.
+6. Explore the code itself: `cd src && dune utop && popd`. This will open up an OCaml REPL with
+   the library in `src` loaded in under the module name `Numlin`.
 
 ## Command Reference
 
 | Command                                         | Meaning                                       |
 | ---                                             | ----                                          |
-| `dune build src/lt4la.a`                        | Build the library (everything inside `src`).  |
+| `dune build src/numlin.a`                        | Build the library (everything inside `src`).  |
 | `pushd src && dune utop && popd`                | As above + launches UTop with library loaded. |
 | `dune build test/test.exe`                      | Build library & tests.                        |
 | `dune runtest`                                  | Build library & tests _and_ run all tests.    |
@@ -69,8 +64,8 @@ To understand this project, consider what happens when you use the REPL:
   4. `src/ast.ml` defines fractional-capabilities, linear types and expressions,
      as well as pretty-printing code-generation. The code is generated on the
      assumption that it comes after either the contents of the file `template.ml`
-     or an `open Lt4la.Template` statement.
-     - `template.ml[i]` is a full implementation of LT4LA's DSL's primitives in OCaml.
+     or an `open Numlin.Template` statement.
+     - `template.ml[i]` is a full implementation of NumLin's primitives in OCaml.
   5. Given a value of type `Ast.exp`, the `accept` function in `bin/eval.ml`
      passes it to `check_expr` in `src/checker.ml`.
   6. `src/checker.ml` checks types, linearity and scoping. It uses operations

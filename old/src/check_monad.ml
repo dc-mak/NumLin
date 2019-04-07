@@ -251,7 +251,3 @@ let run well_formed ~counter =
   end
 ;;
 
-let%test_module "Test" =
-  (module struct
-  end)
-;;

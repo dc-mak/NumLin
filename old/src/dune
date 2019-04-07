@@ -1,0 +1,14 @@
+(library
+ (name old)
+ (synopsis "Linear Types for Linear Algebra")
+ (flags :standard -short-paths)
+ (libraries owl menhirLib base ppxlib.traverse_builtins sexplib0 stdio)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane ppx_traverse ppxlib.runner)))
+
+(menhir
+ (modules parser)
+ (flags --table --strict --comment --explain))
+
+(ocamllex lexer)

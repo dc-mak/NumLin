@@ -49,7 +49,3 @@ struct
 
 end
 
-let%test_module "Test" =
-  (module struct
-  end)
-;;

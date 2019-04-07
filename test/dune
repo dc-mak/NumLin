@@ -1,0 +1,7 @@
+(library
+ (name test)
+ (flags :standard -short-paths)
+ (libraries examples lt4la)
+ (preprocess
+  (pps ppx_jane))
+ (inline_tests))

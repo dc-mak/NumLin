@@ -1,0 +1,26 @@
+(rule
+ (targets stubs.ml)
+ (deps
+  (:< ../stubgen/ffi_stubgen.exe))
+ (action
+  (with-stdout-to
+   %{targets}
+   (run %{<} -ml))))
+
+(rule
+ (targets kalman_c_stubs.c)
+ (deps
+  (:< ../stubgen/ffi_stubgen.exe)
+  ../kalman.h)
+ (action
+  (with-stdout-to
+   %{targets}
+   (run %{<} -c))))
+
+(library
+ (name kalman_c_ffi)
+ (modules stubs bind)
+ (c_names kalman_c_stubs)
+ ; -llopenblas -llapacke are not needed?
+ (c_flags :standard -I.. -O3 -g -Wall -Wextra)
+ (libraries bindings ctypes.stubs ctypes))

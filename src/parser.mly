@@ -60,7 +60,7 @@ let mk_mat str_loc str mat_loc mat body =
 (* Use sparingly because it results in uninformative parser errors *)
 (* that can't be improved using the error-message framework.       *)
 let ensure this str =
-    if Base.String.(this = str) then str else raise Error
+    if Base.String.(this = str) then str else failwith "Error"
 ;;
 
 type destruct =
@@ -208,8 +208,8 @@ type destruct =
 %%
 
 prog:
-    | EOF         { raise Error }
-    | exp=exp EOP { exp         }
+    | EOF         { failwith "Error" }
+    | exp=exp EOP { exp              }
 
 exp:
     | simple_exp                                          { $1                                                          }

@@ -222,7 +222,3 @@ let check_expr expr =
   Check_monad.run (check expr)
 ;;
 
-let%test_module "Test" =
-  (module struct
-  end)
-;;

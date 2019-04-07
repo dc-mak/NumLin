@@ -1,6 +1,6 @@
 (** Utilities *)
 val string_of_pp :
-  ?size:int -> (Caml.Format.formatter -> 'a -> unit) -> 'a -> string
+  ?size:int -> (Base.Formatter.t -> 'a -> unit) -> 'a -> string
 
 (** Variables *)
 type var = string
@@ -25,7 +25,7 @@ type lin =
   | Fun of lin * lin
   | All of var * lin
 [@@deriving sexp_of]
-val pp_lin : Caml.Format.formatter -> lin -> unit
+val pp_lin : Base.Formatter.t -> lin -> unit
 val substitute_in : lin -> var:var -> replace:fc -> lin
 val substitute_unify : lin -> var:var -> replace:fc -> lin
 (** [same_lin] [ (x,x) | x is a free-variable] t1 t2 determines whether two
@@ -123,4 +123,4 @@ val loc : exp -> loc
 val is_value : exp -> bool
 val sexp_of_exp : exp -> Base.Sexp.t
 val prec : exp -> int
-val pp_exp : ?comments:bool -> Caml.Format.formatter -> exp -> unit
+val pp_exp : ?comments:bool -> Base.Formatter.t -> exp -> unit

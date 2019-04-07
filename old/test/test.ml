@@ -21,6 +21,6 @@ let%test_module "Combinators" =
   (module Combinators_test)
 ;;
 
-let () =
+let main () =
   Ppx_inline_test_lib.Runtime.exit ()
 ;;

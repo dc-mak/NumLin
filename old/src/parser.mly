@@ -60,7 +60,7 @@ let bind_array a =
 ;;
 
 let bind_pair a b : pat =
-  let () = if Base.String.equal a b then raise Error in
+  let () = if Base.String.equal a b then failwith "Error" in
   let a,b = Ast.({name=a; id=new_id()}, {name=b; id=new_id()}) in
   Pair (a,b)
 ;;

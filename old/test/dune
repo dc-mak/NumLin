@@ -1,0 +1,7 @@
+(library
+ (name oldtest)
+ (flags :standard -short-paths)
+ (libraries old)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane)))

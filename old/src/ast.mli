@@ -3,7 +3,7 @@
 (* -------------------------- *)
 
 (** Make a pretty-printer output a string. *)
-val string_of_pp : ?size:int -> (Caml.Format.formatter -> 'a -> unit) -> 'a -> string
+val string_of_pp : ?size:int -> (Base.Formatter.t -> 'a -> unit) -> 'a -> string
 
 (** Variables have a [name] for pretty-printing and an [id] for uniqueness. *)
 type variable = { id : int; name : string; }
@@ -36,7 +36,7 @@ type linear_t =
   | Array_t of frac_cap
 val sexp_of_linear_t : linear_t -> Base.Sexp.t
 val compare_linear_t : linear_t -> linear_t -> int
-val pp_linear_t : Caml.Format.formatter -> linear_t -> unit
+val pp_linear_t : Base.Formatter.t -> linear_t -> unit
 val substitute_in : linear_t -> var:variable -> replacement:frac_cap -> linear_t Base.Or_error.t
 val same_linear_t : linear_t -> linear_t -> unit Base.Or_error.t
 
@@ -94,7 +94,7 @@ type expression =
 
 val sexp_of_expression : expression -> Base.Sexp.t
 
-val pp_expression : Caml.Format.formatter -> expression -> unit
+val pp_expression : Base.Formatter.t -> expression -> unit
 
 (** [bind_fc_exp var exp] replaces any [Var var' : frac_cap] in [exp] with [Var
     var] if [var.name = var'.name]. *)

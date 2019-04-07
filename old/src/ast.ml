@@ -157,7 +157,7 @@ struct
 
     let sub_fun =
       (object(self)
-        inherit Ppx_traverse_builtins.map
+        inherit Ppxlib_traverse_builtins.map
         inherit map
         method variable var =
           let msg = "INTERNAL ERROR: binding variables are not unique." in

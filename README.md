@@ -24,10 +24,8 @@ Once it is built type:
 to fire up an interactive shell. There, you can launch `utop` and interact with LT4LA.
 
 The difficult way is to basically execute the Dockerfile (or equivalent for your platform)
-by hand. Note, that I'm working from an Ubuntu 16.04 with Opam 2 and OCaml 4.06.0 base image,
-so you'll need that (and all its dependencies) first (see [Owl's
-Dockerfile](https://github.com/ryanrhymes/owl/blob/master/Dockerfile) for
-details).
+by hand. Note, that I'm working from an Ubuntu 16.04 with Opam 2 and OCaml 4.07.1 base image,
+so you'll need that (and all its dependencies) first.
 
 **Note** that `[sudo] docker build -t <tag> <path-to-repo>` _copies_ the files in the current
 directory into the image, so you **must** rebuild if you change the source, not just restart the

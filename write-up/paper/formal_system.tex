@@ -247,7 +247,31 @@ $\delta$ and heaps $\sigma$.  Note that, $\varsigma \equiv \den{H}{}{\theta(\sig
     \forall \Theta, \Delta, \Gamma, e, t.\ \Theta; \Delta ; \Gamma \vdash e : t \Rightarrow
     \forall k.\ \den{}{k}{ \Theta; \Delta ; \Gamma \vdash e : t }
 \]
+
 \end{theorem}
+
+\subsubsection{Explanation}
+
+If an expression is syntactically type-checked, then for an arbitrary number of
+steps $k$, under any substitution $\theta$ of free fractional-permission
+variables, linear variables $\gamma$ (with a suitable heap $\varsigma$) and
+intuitionistic variables $\delta$, that suitable heap and expression
+$(\varsigma, \theta(\delta(\gamma(e))))$ are in the computational
+interpretation of the type of that expression $\C{k}{ \theta(t) }$.
+
+The \emph{computational interpretation} is as defined before: a combination of
+a frame rule on heaps (no interference), type-preservation and termination (in
+$j < k$ steps) to either an error or a heap-and-expression, with the further
+condition that if the expression is a syntactic value then it is also one
+semantically.
+
+It identifies executions that do no un- or ill-defined behaviours (e.g.\ adding
+a boolean and an integer). Since our operational semantics explicitly models
+deallocation, we now know no well-typed program will ever try to access
+deallocated memory, establishing the correctness of our memory management
+checking.
+
+\subsubsection{Proof Sketch}
 
 To prove the above theorem, we need several lemmas; the interesting ones are:
 the moral equivalent of the frame rule (\ref{frame}), monotonicity for the

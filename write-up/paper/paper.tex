@@ -126,15 +126,17 @@
 \maketitle%
 
 \begin{abstract}
-    We present \lang, a functional programming language designed to express
-    the APIs of low-level linear algebra libraries (such as BLAS/LAPACK) safely
-    and explicitly, through a brief description of its key features and several
-    illustrative examples. We show that \lang's type system is sound and that
-    its implementation improves upon na{\"i}ve implementations of linear
-    algebra programs, almost towards C-levels of performance. Lastly, we contrast
-    it to other recent developments in linear types and show that using linear
-    types and fractional permissions to express the APIs of low-level linear
-    algebra libraries is a simple and effective idea.
+    We present \lang, a functional programming language whose type system is
+    designed to enforce the safe usage of the APIs of low-level linear algebra
+    libraries (such as BLAS/LAPACK). We do so through a brief description of
+    its key features and several illustrative examples. We show that \lang's
+    type system is sound and that its implementation improves upon na{\"i}ve
+    implementations of linear algebra programs, almost towards C-levels of
+    performance. By doing so, we demonstrate (a) that linear types are
+    well-suited to expressing the APIs of low-level linear algebra libraries
+    accurately and concisely and (b) that, despite the complexity of prior work
+    on it, fractional permissions can actually be implemented using simple,
+    well-known techniques and be used practically in real programs.
 \end{abstract}
 
 \input{intro}

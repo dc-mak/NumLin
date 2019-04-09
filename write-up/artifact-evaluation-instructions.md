@@ -2,29 +2,36 @@
 
 ## Exploring
 
-1. Login (password: osboxes.org), open up a terminal (Activites > Terminal), `cd NumLin`.
+1. Login (password: osboxes.org), open up a terminal (Activites > Terminal),
+   `cd NumLin`.
 
-2. Run the tests: `dune runtest`. Not much should happen because all the tests should pass.
-   If you wish to see a test fail, then you may change/delete any text inside a
-   `[%expect {| .. |}]` block and then `dune runtest` will show you the difference between
-   the expected output and the actual output.
+2. Run the tests: `dune runtest`. Not much should happen because all the tests
+   should pass.  If you wish to see a test fail, then you may change/delete any
+   text inside a `[%expect {| .. |}]` block and then `dune runtest` will show
+   you the difference between the expected output and the actual output.
 
 3. Run the benchmarks: `_build/default/bin/benchmark.exe --start 1 --limit 5
-   --alg lin_reg --micro-quota 10 --macro-runs 1`. You may also provide the `-help` flag for
-   details about the options.
-   * `--start` and `--limit` control the size of square matrices from *5x5* to *5<sup>5</sup> x 5<sup>5</sup>*.
+   --alg lin_reg --micro-quota 10 --macro-runs 1`. You may also provide the
+   `-help` flag for details about the options.
+   * `--start` and `--limit` control the size of square matrices from
+     *5 &times; 5* to *5<sup>5</sup> &times; 5<sup>5</sup>*.
    * `--alg` chooses the example to run (kalman, l1_norm_min, lin_reg).
-   * `--micro-quota` controls how many *seconds* smaller benchmarks (limit <= 3) are run for.
-   * `--macro-runs` controls *N*, how many measurements are made for each implement.
+   * `--micro-quota` controls how many *seconds* smaller benchmarks (limit
+     &le 3) are run for.
+   * `--macro-runs` controls *N*, how many measurements are made for each
+     implement.
 
-4. Run the repl: `_build/default/bin/repl.exe`. Type in a NumLin expression, terminated by `;;` to
-   see its AST and translation to OCaml. Ctrl-D to exit the application.
+4. Run the repl: `_build/default/bin/repl.exe`. Type in a NumLin expression,
+   terminated by `;;` to see its AST and translation to OCaml. Ctrl-D to exit
+   the application.
 
-5. Run the transpiler: `_build/default/bin/transpile.exe -i <input-file> -o <output-file>`.
-   Transpile a file containing a NumLin expression, terminated by `;;`, into an OCaml file/module.
+5. Run the transpiler: `_build/default/bin/transpile.exe -i <input-file> -o
+   <output-file>`.  Transpile a file containing a NumLin expression, terminated
+   by `;;`, into an OCaml file/module.
 
-6. Explore the code itself: `pushd src && dune utop && popd`. This will open up an OCaml REPL with
-   the library in `src` loaded in under the module name `Numlin`.
+6. Explore the code itself: `pushd src && dune utop && popd`. This will open up
+   an OCaml REPL with the library in `src` loaded in under the module name
+   `Numlin`.
 
 ## Command Reference
 
@@ -115,12 +122,12 @@ the REPL for details).
 
 Something like `_build/default/bin/benchmark.exe --start 1 --limit 4 --alg kalman
 --micro-quota 10 --macro-runs 10` should be a good place to get started. It will
-take at least 150s for just the micro-benchmarks, and more for the
+take at least *150s* for just the micro-benchmarks, and more for the
 macro-benchmarks. If you have time `--micro-quota 20` I've found to be more
 than enough; you should increase `--macro-runs` carefully. Please do check that
-R^2, when given, is usally 1 or very close (0.95 or above), otherwise it means
-something not quite right with this set of measurements/regressions performed
-by Core_bench.
+*R<sup>2</sup>*, when given, is usally 1 or very close (0.95 or above),
+otherwise it means something not quite right with this set of
+measurements/regressions performed by Core_bench.
 
 For profiling, I advise `--no-analyse` to skip data analysis/printing and just
 run the algorithm.  Something like `--alg none --micro-quota 1 --macro-runs 1`
@@ -128,19 +135,20 @@ for equal `--start` and `--limit` will help in getting a baseline without
 running any of the tests themselves.
 
 Full usage is given by `-help`.  The benchmarks loads (or generates if they
-don't exist) matrices for a size depending on `--start` and `--limit`. For n=5,
-k=3, matrix sizes grow exponentially from n^start to n^limit (inclusive) with k
-= 3n^(i-1).
+don't exist) matrices for a size depending on `--start` and `--limit`. For *n=5*,
+*k=3*, matrix sizes grow exponentially from *n<sup>start</sup>* to
+*n<sup>limit</sup>* (inclusive) with *k = 3n<sup>i-1</sup>*.
 
-For small exponents (i <= 3), Jane Street's Core_bench runs the benchmark for
-`--micro-quota` seconds each (so for `--alg all` and `--micro-quota 10` it will
-take 10 * 5 algorithms = 50 s + data processing time) to run.
+For small exponents (i &le; 3), Jane Street's Core_bench runs the benchmark
+for `--micro-quota` seconds each (so for `--alg all` and `--micro-quota 10` it
+will take *10 &times; 5 algorithms = 50 s + data processing time*) to run.
 
 For bigger exponents, it's just a bunch of repeated iterations, the number of
 which is specified by `--macro-runs`. Be aware that for limits more than 4,
 this can be pretty slow.
 
 There are (currently) 4 implementations of a Kalman filter: Python/NumPy,
-OCaml/Owl, OCaml/NumLin, C/CBLAS-LAPACKE. There are also 3 implementation each of
-L1-norm minimisation and "linear regression" in Python/NumPy, OCaml/Owl, and OCaml/NumLin.
+OCaml/Owl, OCaml/NumLin, C/CBLAS-LAPACKE. There are also 3 implementation each
+of L1-norm minimisation and "linear regression" in Python/NumPy, OCaml/Owl, and
+OCaml/NumLin.
 

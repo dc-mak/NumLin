@@ -17,7 +17,7 @@
      *5 &times; 5* to *5<sup>5</sup> &times; 5<sup>5</sup>*.
    * `--alg` chooses the example to run (kalman, l1_norm_min, lin_reg).
    * `--micro-quota` controls how many *seconds* smaller benchmarks (limit
-     &le 3) are run for.
+     &le; 3) are run for.
    * `--macro-runs` controls *N*, how many measurements are made for each
      implement.
 

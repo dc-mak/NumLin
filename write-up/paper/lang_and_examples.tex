@@ -90,7 +90,7 @@ restrictions on the definition of recursive functions.
 
 \subsection{Examples}
 
-\subsubsection{Factorial}
+\subsubsection{Factorial}\label{subsubsec:factorial}
 
 Although a factorial function (Figure~\ref{fig:lang_factorial}) may seem like
 an aggresively pedestrian first example, in a linearly typed language such as
@@ -104,7 +104,7 @@ linear values from its environment).
 
 The only argument is \highl{!x : !int}. The ! annotation on \texttt{x} is a
 syntactic convenience for declaring the value to used intuitionistically, its
-full and precise meaning is described in Section~\ref{subsubsec:initial}.
+full and precise meaning is described in Section~\ref{subsec:core_tt}.
 
 The condition for an \highl{if} may or may not use linear values (here, with
 \highl{x < 0 || x = 0}, it does not). Any linear values used by the condition
@@ -155,7 +155,7 @@ let row = row[i] := x1 in (* or *) let () = free row in
 (*                                                                 *)
 (* Var 'x is universally quantified                                *)
 (* Are you trying to write to/free/unshare an array you don't own? *)
-(* In examples/sum_array.lt, at line: 7 and column: 19        *)
+(* In examples/sum_array.lt, at line: 7 and column: 19             *)
     \end{minted}
     \caption{Attempting to write to or free a read only array in
     \lang.}\label{fig:lang_errormsg}

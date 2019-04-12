@@ -5,5 +5,4 @@ let rec sum_array (!i : !int) (!n : !int) (!x0 : !elt)
     else
         let (row, !x1) = row[i] in
         sum_array (i + 1) n (x0 +. x1) 'x row in
-    sum_array
-;;
+sum_array ;;

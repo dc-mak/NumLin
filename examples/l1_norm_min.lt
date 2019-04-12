@@ -10,5 +10,4 @@ let !l1_norm_min (q : z mat) (u : z mat) =
   let () = freeM q_inv_u in
   let () = freeM inv_u_T in
   answer in
-l1_norm_min
-;;
+l1_norm_min ;;

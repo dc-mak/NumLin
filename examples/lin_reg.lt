@@ -6,5 +6,4 @@ let !lin_reg ('x) (x : 'x mat)
   let (to_del, answer) = posv x_T_x xy in
   let () = freeM to_del in
   ((x, y), answer) in
-lin_reg
-;;
+lin_reg ;;

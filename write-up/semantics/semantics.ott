@@ -145,7 +145,7 @@ grammar
     | l                           ::   :: Location    {{ com heap location             }}
     | el                          ::   :: Elt_Intro   {{ com array element             }}
     | Many v                      ::   :: Bang_Intro  {{ com !-introduction            }}
-    | fun fc -> v                 ::   :: Gen         {{ com frac. perm. abstraction    }}
+    | fun fc -> v                 ::   :: Gen         {{ com frac. perm. abstraction   }}
     | ( v , v' )                  ::   :: Pair_Intro  {{ com pair introduction         }}
     | fun x : t -> e              ::   :: Lambda      (+ bind x in e                   +)
                                                       {{ com abstraction               }}

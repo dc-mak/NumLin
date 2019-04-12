@@ -10,5 +10,4 @@ let rec simp_oned_conv
     let !x2 <- write[i + 1] in
     let written = write[i] := w0 *. x0 +. (w1 *. x1 +. w2 *. x2) in
     simp_oned_conv (i + 1) n x1 written _ weights in
-  simp_oned_conv
-;;
+  simp_oned_conv ;;

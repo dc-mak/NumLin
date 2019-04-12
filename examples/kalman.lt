@@ -18,5 +18,4 @@ let !kalman
   let new_sigma <- [| sigma2 - x_h * sym(sigma) |] in
   let () = freeM (* n,n *) x_h in
   ((sigma, h), (new_sigma, (new_mu, (k_by_k, data_2)))) in
-kalman
-;;
+kalman ;;

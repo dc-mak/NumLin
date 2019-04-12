@@ -67,17 +67,16 @@ introduced in the factorial example in \ref{subsubsec:factorial} -- works. That
 is, we can explain why the meaning of $\mathbf{let}\ !x = e\ \mathbf{in}\ e'$
 can be expressed using only the rules presented thus far, as $\mathbf{let\
 Many}\ x = e\ \mathbf{in\ } \mathbf{let\ Many}\ x = \mathbf{Many}\
-(\mathbf{Many}\ x)\ \mathbf{in}\ e'$.
-\footnote{\emph{Why} we have this at all is for the sake of ergonomics when
-    using binary arithmetic operations (for example, of type
-    $!\ottkw{int} \, \otimes \, !\ottkw{int} \multimap \; !\ottkw{int}$): a
-    programmer should be able to write \highl{let x = 5 + 5 in x - x},
-    which, although non-linear in \highl{x}, is morally right because
-    integers and operations on them rarely need to be linear. Though it
-    should be possible to handle this using a LNL-style presentation of
-    linear types~\cite{benton1995} (using adjoint modalities to distinguish
-    between intrinsically linear and intrinsically intuitionistic types) that
-    is a pretty big digression from the stated goals of this paper.}
+(\mathbf{Many}\ x)\ \mathbf{in}\ e'$.\footnote{\emph{Why} we have this at all
+    is for the sake of ergonomics when using binary arithmetic operations
+    (e.g.\ of type $!\ottkw{int} \, \otimes \, !\ottkw{int} \multimap \;
+    !\ottkw{int}$): a programmer should be able to write \highl{let x = 5 + 5
+    in x - x}, which, although non-linear in \highl{x}, is morally right
+    because integers and operations on them rarely need to be linear. Though it
+    should be possible to handle this using a LNL-style presentation of linear
+    types~\cite{benton1995} (using adjoint modalities to distinguish between
+    intrinsically linear and intrinsically intuitionistic types) that is a
+    pretty big digression from the stated goals of this paper.}
 The reader is invited to quickly convince themselves that the following
 meta-rule is provable using \textsc{Ty\_Bang\_Intro} (twice),
 \textsc{Ty\_Bang\_Elim} (twice) and weakening the intuitionistic environment
@@ -90,7 +89,7 @@ $\Delta$ (once).
 \ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{,}  \mathit{x}  \ottsym{:}  \: !  \ottnt{t}  \ottsym{;}  \Gamma'  \vdash  \ottnt{e'}  \ottsym{:}  \ottnt{t'}}%
 }{
 \Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \ottsym{,}  \Gamma'  \vdash  \ottkw{let} \, ! \mathit{x} \ottsym{=} \ottnt{e} \, \ottkw{in} \, \ottnt{e'}  \ottsym{:}  \ottnt{t'}}{%
-{\ottdrulename{Meta\_Ty\_Bang\_Var\_Elim}}{}%
+{\ottdrulename{Meta\_Ty\_Let\_Bang}}{}%
 }
 \]
 
@@ -374,7 +373,7 @@ $\rightarrow$.  Basically, the following is not quite true:
 because after the $i$ steps, we need to invoke \textsc{Op\_Let\_Var} to proceed
 evalution for any remaining $j-i$ steps. After that, it suffices to use the
 induction hypothesis on the second sub-expression to finish the proof.  To do
-so, we need to construct a valid linear substitution and heap (i.e., one in
+so, we need to construct a valid linear substitution and heap (one in
 $\den{L}{k}{\Gamma', x : t}\theta$). We take the other `half' of the linear
 substitution and heap (from the inital split at the start) and extend it with
 $[x \mapsto v]$, (where $x$ is the variable bound in the let-expression and $v$

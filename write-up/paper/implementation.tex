@@ -43,9 +43,9 @@ benchmarking program and test-suite use code written in \lang.
 
 \subsubsection{Desugaring, Matrix Expressions and Type Checking}
 
-Desugaring is conventional, outlined in Appendix~\ref{sec:lang_desugar}.  Matrix
-expression are translated into BLAS/ LAPACK calls via purely syntactic
-pattern-matching, outlined in Figure~\ref{fig:lang_matexp}.
+As seen earlier (Figure~\ref{fig:lang_desugar}), desugaring is conventional.
+Matrix expressions are translated into BLAS/LAPACK calls via purely syntactic
+pattern-matching (also seen earlier in Figure~\ref{fig:lang_matexp}).
 
 \subsubsection{Type checking}
 
@@ -73,73 +73,11 @@ better error messages; variables are \emph{tagged} as linear or intuitionistic
 in \emph{one} environment as opposed to being stored in \emph{two} separate
 ones (this allows scoping/variable look-up to be handled uniformly).
 
-\begin{figure}[t]
-\begin{center}
-\[\def\arraystretch{1.3}
-    \begin{array}{rcl}
-    \mathbf{let\ } v \leftarrow x[e]\ \mathbf{in\ } e &
-    \Rightarrow &
-    \mathbf{let\ } (x, !v)\ = x[e]\ \mathbf{in\ } e \qquad \textrm{(similarly for matrices)}
-\\
-    \mathbf{let\ } x_2 \leftarrow \mathbf{new}\ [|\ x_1\ |]\ \mathbf{in\ } e &
-    \Rightarrow &
-    \mathbf{let\ } (x_1, x_2)\ = \mathbf{copyM\ } \_\ x_1\ \mathbf{in\ } e
-\\
-    \mathbf{let\ } x_2 \leftarrow [|\ x_1\ |]\ \mathbf{in\ } e &
-    \Rightarrow &
-    \mathbf{let\ } (x_1, x_2)\ = \mathbf{copyM\_to\ } \_\  x_1\ x_2\ \mathbf{in\ } e
-    \end{array}
-\]
-\[
-    M ::= X\ \mid\ X^T\ \mid\ \textrm{sym}( X )
-\]
-\end{center}
-\begin{align*}
-% new
-    \mathbf{let\ } &Y \leftarrow \mathbf{new}\ (n, k)\ [|\ \alpha M_1 M_2 \ |]\ \mathbf{in\ } e
-    \Rightarrow \\
-    & \mathbf{let\ } Y\ = \mathbf{matrix\ } n\ k\ \mathbf{in}
-    \ \mathbf{let\ } Y \leftarrow [|\ \alpha M_1 M_2 + 0Y\ |]\ \mathbf{in\ } e
-\\[0.1\baselineskip]
-%syrk
-    \mathbf{let\ } &Y \leftarrow [|\ \alpha X X^T + \beta Y\ |]\ \mathbf{in\ } e
-    \Rightarrow \\
-    & \mathbf{let\ } (X,Y)\ = \mathbf{syrk\ } \mathbf{false}
-    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e
-\\[0.1\baselineskip]
-    \mathbf{let\ } &Y \leftarrow [|\ \alpha X^T X + \beta Y\ |]\ \mathbf{in\ } e
-    \Rightarrow \\
-    & \mathbf{let\ } (X,Y)\ = \mathbf{syrk\ } \mathbf{true}
-    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e
-%symm
-\\[0.1\baselineskip]
-    \mathbf{let\ } &Y \leftarrow\ [|\ \alpha\,\textrm{sym}(X_1)\,X_2 + \beta Y\ |]\ \mathbf{in\ } e
-    \Rightarrow \\
-    & \mathbf{let\ } ((X_1,X_2),Y)\ = \mathbf{symm\ } \mathbf{false}
-        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ } e
-\\[0.1\baselineskip]
-    \mathbf{let\ } &Y \leftarrow\ [|\ \alpha\,X_2\,\textrm{sym}(X_1) + \beta Y\ |]\ \mathbf{in\ } e
-    \Rightarrow \\
-    & \mathbf{let\ } ((X_1,X_2),Y)\ = \mathbf{symm\ } \mathbf{true}
-        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ } e
-\\[0.1\baselineskip]
-%gemm
-    \mathbf{let\ } &Y \leftarrow [|\ \alpha X_1^{T?} X_2^{T?} + \beta Y\ |]\ \mathbf{in\ } e
-    \Rightarrow \\
-    & \mathbf{let\ } ((X_1,X_2),Y)\ =\ \mathbf{gemm\ } \alpha
-        \ \_\ \left(X_1, \substack{\mathbf{true}\\\mathbf{false}}\right)
-        \ \_\ \left(X_2, \substack{\mathbf{true}\\\mathbf{false}}\right)
-        \ \beta\ Y\ \mathbf{in\ } e
-\end{align*}
+\subsubsection{Code Generation}
 
-\caption{Purely syntactic pattern-matching translations of
-    matrix expressions.}\label{fig:lang_matexp}
-\end{figure}
-
-\subsubsection{Code Generation} is a straightforward mapping from \lang's core
-constructs to high-level OCaml ones. We embed \lang's type- and term-
-constructors into OCaml as a sanity check on the output
-(Figure~\ref{fig:type_grammar}).
+Code generation is a straightforward mapping from \lang's core constructs to
+high-level OCaml ones. We embed \lang's type- and term- constructors into OCaml
+as a sanity check on the output (Figure~\ref{fig:type_grammar}).
 
 \begin{figure}[t]
     \centering
@@ -147,9 +85,9 @@ constructors into OCaml as a sanity check on the output
         \centering
         \begin{grammar}
             <f> ::= `'
-            \alt <fc>
-            \alt `Z'
-            \alt `S' <f>
+            \alt <'fc>
+            \alt `z'
+            \alt <f> `s'
 
             <t> ::= `'
             \alt `unit'
@@ -159,7 +97,7 @@ constructors into OCaml as a sanity check on the output
             \alt <f> `arr'
             \alt <f> `mat'
             \alt `!' <t>
-            \alt \synt{$\forall$} <fc.> <t>
+            \alt <'fc.> <t>
             \alt <t> \lit{$\otimes$} \synt{$t'$}
             \alt <t> \lit{$\multimap$} \synt{$t'$}
         \end{grammar}
@@ -188,9 +126,9 @@ type 'a bang =
     \end{minipage}
     \begin{minipage}{.3\textwidth}
         \begin{align*}
-            [\![ f\!c ]\!] &= \texttt{'fc} \\
-            [\![ \textbf{Z} ]\!] &= \texttt{z}\\
-            [\![ \textbf{S} \, f ]\!] &= [\![ f ]\!]\, \texttt{s}\\
+            [\![ '\!f\!c ]\!] &= \texttt{'fc} \\
+            [\![ \textbf{z} ]\!] &= \texttt{z}\\
+            [\![ f \, \textbf{s} ]\!] &= [\![ f ]\!]\, \texttt{s}\\
             [\![ \textbf{unit} ]\!] &= \texttt{unit}\\
             [\![ \textbf{bool} ]\!] &= \texttt{bool}\\
             [\![ \textbf{int} ]\!] &= \texttt{int}\\
@@ -198,7 +136,7 @@ type 'a bang =
             [\![ f\, \textbf{arr} ]\!] &= [\![ f ]\!]\, \texttt{arr}\\
             [\![ f\, \textbf{mat} ]\!] &= [\![ f ]\!]\, \texttt{mat}\\
             [\![ \textbf{!} \, t ]\!] &= [\![ t ]\!]\, \texttt{bang}\\
-            [\![ \forall f\!c.\, t ]\!] &= [\![ t ]\!]\\
+            [\![  '\!f\!c.\, t ]\!] &= [\![ t ]\!]\\
             [\![ t \otimes t' ]\!] &= [\![ t ]\!] \texttt{*} [\![ t' ]\!]\\
             [\![ t \multimap t' ]\!] &= [\![ t ]\!] \rightarrow [\![ t' ]\!]
         \end{align*}

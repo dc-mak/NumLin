@@ -13,9 +13,6 @@ conditional on addressing the following points:
     paper, and your process for deriving the NumLin types from the BLAS API
     types and documentation.
 
- *  Improve the discussion of the desugaring of let !x = e1 in e2 as explained
-    in the response.
-
 ## Done
 
  *  Improve the introduction of NumLin to a) emphasise that the main
@@ -25,4 +22,7 @@ conditional on addressing the following points:
     permissions (as explained in the response).
 
  *  Provide an accessible description of your soundness result.
+
+ *  Improve the discussion of the desugaring of let !x = e1 in e2 as explained
+    in the response.
 

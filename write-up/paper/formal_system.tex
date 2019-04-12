@@ -53,15 +53,45 @@ parametric polymorphism.
     \ottdruleTyXXBangXXIntro{}
 \]
 
-Consuming a !-type value \emph{moves it} from the linear environment $\Gamma$
-and \emph{into} the intuitionistic environment $\Delta$. This is exactly why
-$\mathbf{let}\ !x = e_1\ \mathbf{in}\ e_2$ desugars to $\mathbf{let\ Many}\ x =
-e_1\ \mathbf{in\ } \mathbf{let\ Many}\ x = \mathbf{Many}\ (\mathbf{Many}\ x)\
-\mathbf{in}\ e_2$.
+Consuming a variable that refers to a !-type value \emph{moves it} from the
+linear environment $\Gamma$ and \emph{into} the intuitionistic environment
+$\Delta$.
 
 \vspace{-\baselineskip}
 \[
     \ottdruleTyXXBangXXElim{}
+\]
+
+Using this, we can explain how the ! annotation on variables -- first
+introduced in the factorial example in \ref{subsubsec:factorial} -- works. That
+is, we can explain why the meaning of $\mathbf{let}\ !x = e\ \mathbf{in}\ e'$
+can be expressed using only the rules presented thus far, as $\mathbf{let\
+Many}\ x = e\ \mathbf{in\ } \mathbf{let\ Many}\ x = \mathbf{Many}\
+(\mathbf{Many}\ x)\ \mathbf{in}\ e'$.
+\footnote{\emph{Why} we have this at all is for the sake of ergonomics when
+    using binary arithmetic operations (for example, of type
+    $!\ottkw{int} \, \otimes \, !\ottkw{int} \multimap \; !\ottkw{int}$): a
+    programmer should be able to write \highl{let x = 5 + 5 in x - x},
+    which, although non-linear in \highl{x}, is morally right because
+    integers and operations on them rarely need to be linear. Though it
+    should be possible to handle this using a LNL-style presentation of
+    linear types~\cite{benton1995} (using adjoint modalities to distinguish
+    between intrinsically linear and intrinsically intuitionistic types) that
+    is a pretty big digression from the stated goals of this paper.}
+The reader is invited to quickly convince themselves that the following
+meta-rule is provable using \textsc{Ty\_Bang\_Intro} (twice),
+\textsc{Ty\_Bang\_Elim} (twice) and weakening the intuitionistic environment
+$\Delta$ (once).
+
+\vspace{-\baselineskip}
+\[
+\ottdrule{%
+\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \: !  \ottnt{t}}%
+\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{,}  \mathit{x}  \ottsym{:}  \: !  \ottnt{t}  \ottsym{;}  \Gamma'  \vdash  \ottnt{e'}  \ottsym{:}  \ottnt{t'}}%
+}{
+\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \ottsym{,}  \Gamma'  \vdash  \ottkw{let} \, ! \mathit{x} \ottsym{=} \ottnt{e} \, \ottkw{in} \, \ottnt{e'}  \ottsym{:}  \ottnt{t'}}{%
+{\ottdrulename{Meta\_Ty\_Bang\_Var\_Elim}}{}%
+}
 \]
 
 Rules \textsc{Ty\_Gen} and \textsc{Ty\_Spc} are for fractional permission

@@ -1,6 +1,131 @@
 \section{\lang\ Overview and Examples}\label{sec:lang_and_examples}
 
-\subsection{Overview}
+\subsection{Syntax}
+
+\lang's concrete syntax is inspired by that of OCaml. It desugars
+(Figure~\ref{fig:lang_desugar}) into a smaller, core type and expression
+grammar (Figure~\ref{fig:core_grammar}).
+
+\begin{figure}[p]
+    \begin{center}
+    \[\def\arraystretch{1.3}
+    \begin{array}{rcl}
+        f & ::= & {'\!f\!c}
+                \mid \texttt{z}
+                \mid f\ \texttt{s} \\
+                \\
+        t & ::= & \Unit
+                \mid \Bool
+                \mid \Int
+                \mid \Elt
+                \mid f\:\ottkw{arr}
+                \mid f\:\Mat
+                \mid \Bang t
+                \mid {'\!f\!c}. \: t
+                \mid t \otimes t'
+                \mid t \multimap t' \\
+                \\
+        e & ::= & p \textrm{ (primitives)}
+                \mid x \textrm{ (variable)}
+                \mid \Let\ x = e\ \In\ e'
+                \mid ()
+                \mid \Let\ () = e\ \In\ e'
+                \mid \ottkw{true}
+                \mid \ottkw{false}
+                \\ && \ottkw{if}\ e\ \ottkw{then}\ e_1\ \ottkw{else}\ e_2
+                \mid k \textrm{ (integer)}
+                \mid l \textrm{ (heap location)}
+                \mid el \textrm{ (array element)}
+                \\ && \Many\ v
+                \mid \Let\ \Many\ x = e\ \In\ e'
+                \mid \ottkw{fun}\ '\!f\!c \rightarrow e
+                    \textrm{ (frac. perm. abstraction)}
+                \\ && e\ [f] \textrm{ (frac. perm. specialisiation)}
+                \mid (e, e')
+                \mid \Let\ (a,b) = e\ \In\ e'
+                \\ && \ottkw{fun}\ x : t \rightarrow e
+                \mid e\ e'
+                \mid \ottkw{fix} \: (g, x : t, e : t')
+    \end{array} \]
+    \end{center}
+    \caption{Core fraction $f$, type $t$ and expression $e$ grammar of
+        \lang. Values $v$ are a subset of the expressions, their full
+        definition and a list of all primitives $p$ is in
+        Appendix~\ref{sec:grammar_def}.}\label{fig:core_grammar}
+\end{figure}
+
+\begin{figure}[p]
+\begin{center}
+\[\def\arraystretch{1.3}
+    \begin{array}{rcl}
+    x[e] &
+    \Rightarrow &
+    \mathbf{get}\ \_\ x\ (e) \;\qquad \textrm{(similarly for matrices)}
+\\
+    x[e_1] := e_2 &
+    \Rightarrow &
+    \mathbf{set}\ x\ (e_1)\ (e_2) \quad \textrm{(similarly for matrices)}
+\\
+\\
+    pat & ::= & ()\ \mid\ x\ \mid\ !x\ \mid\ \mathbf{Many\ } pat\ \mid\ (pat, pat)
+\\
+    \mathbf{let}\ !x = e_1\ \mathbf{in}\ e_2 &
+    \Rightarrow &
+    \specialcell[t]{l}{\mathbf{let\ Many}\ x = e_1\ \mathbf{in\ } \\
+    \mathbf{let\ Many}\ x = \mathbf{Many}\ (\mathbf{Many}\ x)\ \mathbf{in}\ e_2}
+\\
+    \mathbf{let\ Many}\ \langle pat_x \rangle\ = e_1\ \mathbf{in}\ e_2 &
+    \Rightarrow &
+    \specialcell[t]{l}{%
+        \mathbf{let\ Many}\ x = x\ \mathbf{in\ } \\
+        \mathbf{let\ } \langle pat_x \rangle\ = x\ \mathbf{in\ } e_2}
+\\
+    \mathbf{let}\ (\langle pat_a \rangle, \langle pat_b \rangle)\  = e_1\ \mathbf{in}\ e_2 &
+    \Rightarrow &
+    \specialcell[t]{l}{%
+        \mathbf{let\ } (a,b)\ = a\_b\ \mathbf{in\ }
+        \ \mathbf{let\ } \langle pat_a \rangle\ = a\ \mathbf{in\ } \\
+        \mathbf{let\ } \langle pat_b \rangle\ = b\ \mathbf{in\ } e_2}
+\\
+    \mathbf{fun}\ (\langle pat_x \rangle : t) \rightarrow e &
+    \Rightarrow &
+    \mathbf{fun}\ (x : t) \rightarrow \mathbf{let\ } \langle pat_x \rangle = x\ \mathbf{in\ } e
+\\
+\\
+    arg & ::= & \langle pat \rangle : t\ \mid\ {'x} \textrm{ (fractional permission variable)}
+\\
+    \mathbf{fun}\ \langle arg_{1 .. n} \rangle \rightarrow e &
+    \Rightarrow &
+    \mathbf{fun}\ \langle arg_1 \rangle \rightarrow ..
+    \ \mathbf{fun}\ \langle arg_n \rangle \rightarrow e
+\\
+    \mathbf{let}\ f\ {\langle arg_{1 .. n} \rangle} = e_1\ \mathbf{in}\ e_2 &
+    \Rightarrow &
+    \mathbf{let}\ f = \mathbf{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1\
+    \mathbf{in}\ e_2
+\\
+    \mathbf{let}\ !f\ {\langle arg_{1 .. n} \rangle} = e_1\ \mathbf{in}\ e_2 &
+    \Rightarrow &
+    \mathbf{let\ Many}\ f = \mathbf{Many}\ (\mathbf{fun}\ {\langle arg_{1 .. n} \rangle}
+    \rightarrow e_1)\ \mathbf{in}\ e_2
+\\
+    \mathrm{fixpoint} & \equiv & \mathbf{fix}\ (f, x : t, \mathbf{fun}
+    \ {\langle arg_{1 .. n} \rangle} \rightarrow e_1 : {t'} )
+\\
+    \mathbf{let\ rec}\ f\ (x : t)\ {\langle arg_{1 .. n} \rangle} : {t'} = e_1\ \mathbf{in}\ e_2 &
+    \Rightarrow &
+    \mathbf{let}\ f = \mathrm{fixpoint}\ \mathbf{in}\ e_2
+\\
+    \mathbf{let\ rec}\ !f\ (x : t)\ {\langle arg_{1 .. n} \rangle} : {t'} = e_1\ \mathbf{in}\ e_2 &
+    \Rightarrow &
+    \mathbf{let\ Many}\ f = \mathbf{Many}\ \mathrm{fixpoint}\ \mathbf{in}\ e_2
+    \end{array}
+\]
+\end{center}
+\caption{Desugaring \lang.}\label{fig:lang_desugar}
+\end{figure}
+
+\subsection{Type System and Other Features}
 
 The core type theory of \lang\ is a nearly off-the-shelf linear type
 theory, supporting familiar features such as linear function spaces
@@ -14,7 +139,7 @@ that linearly-typed updates result in no \emph{observable} mutation.
 As a result, programmers can reason about \lang\ expressions as if they
 were ordinary mathematical expressions -- as indeed they are! We are
 merely adopting a stricter type discipline than usual to make managing
-memory safe. 
+memory safe.
 
 \subsubsection{Intuitionism: ! and \highl{Many}}
 
@@ -216,6 +341,62 @@ universally-quantified. In the recursive call, we see \texttt{\_} being used
 explicitly to tell the compiler to \emph{infer} the correct fractional
 permission based on the given arguments.
 
+\subsubsection{Digression: Types of Primitives}
+
+\emph{The most pertinent aspect of \lang\ is the types of its primitives}
+(Figure~\ref{fig:primitive_types}).  While the types of operations such as
+\texttt{get} and \texttt{set} might be borderline obvious, the types of
+BLAS/LAPACK routines become an \emph{incredibly useful, automated check for
+using the API correctly.}
+
+\begin{figure}
+    \begin{center}
+    \[\def\arraystretch{1.3}
+    \begin{array}{rcl}
+%
+        \ottkw{symm} &:& \; !\Bool \multimap \; !\Elt \multimap \; {'x}. \:
+            {'x}\ \Mat \multimap \; {'y}. \:  {'y}\ \Mat \multimap \; !\Elt
+            \multimap \texttt{z}\ \Mat \multimap
+            \\ && ( {'x}\ \Mat \otimes {'y}\ \Mat ) \otimes \texttt{z}\ \Mat \\
+%
+        \ottkw{gemm} &:& \; !\Elt \multimap \; {'x}. \:  {'x}\ \Mat \: \otimes \;
+            !\Bool \multimap \; {'y}. \:  {'y}\ \Mat \: \otimes \; !\Bool
+            \multimap \; !\Elt \multimap
+            \\ && \texttt{z}\ \Mat \multimap ( {'x}\ \Mat \otimes {'y}\ \Mat )
+            \otimes \texttt{z}\ \Mat \\
+%
+        \ottkw{gesv} &:& \texttt{z}\ \Mat \multimap \texttt{z}\ \Mat \multimap
+            \texttt{z}\ \Mat \otimes \texttt{z}\ \Mat \\
+%
+        \ottkw{posv} &:& \texttt{z}\ \Mat \multimap \texttt{z}\ \Mat \multimap
+            \texttt{z}\ \Mat \otimes \texttt{z}\ \Mat \\
+%
+        \ottkw{posv\_flip} &:& \texttt{z}\ \Mat \multimap \texttt{z}\ \Mat
+            \multimap \texttt{z}\ \Mat \otimes \texttt{z}\ \Mat \\
+%
+        \ottkw{potrs} &:& {'x}. \:  {'x}\ \Mat \multimap \texttt{z}\ \Mat
+            \multimap {'x}\ \Mat \otimes \texttt{z}\ \Mat \\
+%
+        \ottkw{syrk} &:& \; !\Bool \multimap \; !\Elt \multimap \; {'x}. \:
+            {'x}\ \Mat \multimap \; !\Elt \multimap \texttt{z}\ \Mat \multimap \;
+            {'x}\ \Mat \otimes \texttt{z}\ \Mat \\
+%
+    \end{array} \]
+    \end{center}
+    \caption{Types of some \lang\ primitives.}\label{fig:primitive_types}
+\end{figure}
+
+We determine the types for these routines by consulting their documentation.
+Each routine has a record of the expected aliasing behaviour and whether or not
+it modifies or consumes its argument in any way. We use that to derive the
+types in Figure~\ref{fig:primitive_types}. Since most of these low-level
+routines are very careful not to do any allocation themselves, it is generally
+very easy to give each a \lang\ type -- every argument that can modify/consume
+its argument needs a full permission, and all others can be
+fraction-polymorphic.  Taking Fortran as an example, it has a notion of
+\texttt{in}, \texttt{out} and \texttt{inout} parameters. The latter two would
+need full \texttt{z} permissions; the first would be fraction-polymorphic.
+
 \subsubsection{Squaring a Matrix}
 
 \begin{figure}[t]
@@ -224,11 +405,6 @@ permission based on the given arguments.
     \caption{Linear regression (OLS): $\hat\beta =
         \mathbf{(X^T X)^{-1} X^T y}$}\label{fig:lang_square}
 \end{figure}
-
-\emph{The most pertinent aspect of \lang\ is the types of its primitives.}
-While the types of operations such as \texttt{get} and \texttt{set} might be
-borderline obvious, the types of BLAS/LAPACK routines become an
-\emph{incredibly useful, automated check for using the API correctly.}
 
 Figure~\ref{fig:lang_square} shows how a linearly-typed matrix squaring
 function may be written in \lang. It is a \emph{non-recursive} function
@@ -256,7 +432,8 @@ then storing the result of the multiplication in it (\highl{let ((x1, x2),
 answer) = gemm 1. _ (x1, false) _ (x2, false) 0. answer}). \highl{false} means
 the matrix should not be accessed with indices transposed.
 
-By using some simple pattern-matching and syntactic sugar, we can:
+By using some simple pattern-matching and syntactic sugar
+(Figure~\ref{fig:lang_matexp}), we can:
 \begin{itemize}
     \item write normal-looking, apparently non-linear code
     \item use matrix expressions directly and have a call to an efficient
@@ -265,6 +442,69 @@ By using some simple pattern-matching and syntactic sugar, we can:
         having the compiler statically enforce the aliasing and read/write rules
         implicitly assumed by BLAS/LAPACK routines.
 \end{itemize}
+
+\begin{figure}[t]
+\begin{center}
+\[\def\arraystretch{1.3}
+    \begin{array}{rcl}
+    \mathbf{let\ } v \leftarrow x[e]\ \mathbf{in\ } e &
+    \Rightarrow &
+    \mathbf{let\ } (x, !v)\ = x[e]\ \mathbf{in\ } e \qquad \textrm{(similarly for matrices)}
+\\
+    \mathbf{let\ } x_2 \leftarrow \mathbf{new}\ [|\ x_1\ |]\ \mathbf{in\ } e &
+    \Rightarrow &
+    \mathbf{let\ } (x_1, x_2)\ = \mathbf{copyM\ } \_\ x_1\ \mathbf{in\ } e
+\\
+    \mathbf{let\ } x_2 \leftarrow [|\ x_1\ |]\ \mathbf{in\ } e &
+    \Rightarrow &
+    \mathbf{let\ } (x_1, x_2)\ = \mathbf{copyM\_to\ } \_\  x_1\ x_2\ \mathbf{in\ } e
+    \end{array}
+\]
+\[
+    M ::= X\ \mid\ X^T\ \mid\ \textrm{sym}( X )
+\]
+\end{center}
+\begin{align*}
+% new
+    \mathbf{let\ } &Y \leftarrow \mathbf{new}\ (n, k)\ [|\ \alpha M_1 M_2 \ |]\ \mathbf{in\ } e
+    \Rightarrow \\
+    & \mathbf{let\ } Y\ = \mathbf{matrix\ } n\ k\ \mathbf{in}
+    \ \mathbf{let\ } Y \leftarrow [|\ \alpha M_1 M_2 + 0Y\ |]\ \mathbf{in\ } e
+\\[0.1\baselineskip]
+%syrk
+    \mathbf{let\ } &Y \leftarrow [|\ \alpha X X^T + \beta Y\ |]\ \mathbf{in\ } e
+    \Rightarrow \\
+    & \mathbf{let\ } (X,Y)\ = \mathbf{syrk\ } \mathbf{false}
+    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e
+\\[0.1\baselineskip]
+    \mathbf{let\ } &Y \leftarrow [|\ \alpha X^T X + \beta Y\ |]\ \mathbf{in\ } e
+    \Rightarrow \\
+    & \mathbf{let\ } (X,Y)\ = \mathbf{syrk\ } \mathbf{true}
+    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e
+%symm
+\\[0.1\baselineskip]
+    \mathbf{let\ } &Y \leftarrow\ [|\ \alpha\,\textrm{sym}(X_1)\,X_2 + \beta Y\ |]\ \mathbf{in\ } e
+    \Rightarrow \\
+    & \mathbf{let\ } ((X_1,X_2),Y)\ = \mathbf{symm\ } \mathbf{false}
+        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ } e
+\\[0.1\baselineskip]
+    \mathbf{let\ } &Y \leftarrow\ [|\ \alpha\,X_2\,\textrm{sym}(X_1) + \beta Y\ |]\ \mathbf{in\ } e
+    \Rightarrow \\
+    & \mathbf{let\ } ((X_1,X_2),Y)\ = \mathbf{symm\ } \mathbf{true}
+        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ } e
+\\[0.1\baselineskip]
+%gemm
+    \mathbf{let\ } &Y \leftarrow [|\ \alpha X_1^{T?} X_2^{T?} + \beta Y\ |]\ \mathbf{in\ } e
+    \Rightarrow \\
+    & \mathbf{let\ } ((X_1,X_2),Y)\ =\ \mathbf{gemm\ } \alpha
+        \ \_\ \left(X_1, \substack{\mathbf{true}\\\mathbf{false}}\right)
+        \ \_\ \left(X_2, \substack{\mathbf{true}\\\mathbf{false}}\right)
+        \ \beta\ Y\ \mathbf{in\ } e
+\end{align*}
+
+\caption{Purely syntactic pattern-matching translations of
+    matrix expressions.}\label{fig:lang_matexp}
+\end{figure}
 
 \subsubsection{Linear Regression}
 
@@ -299,11 +539,11 @@ the original matrix. Since we do not need that matrix (or its memory) again, we
 used} error. Lastly, we return the \texttt{answer} alongside the untouched
 input matrices \texttt{(x,y)}.
 
-\subsubsection{L1-Norm Minimisation on Manifolds}
+\subsubsection{L1-norm Minimisation on Manifolds}
 
-L1-Norm minimisation is often used in optimisation problems, as a
+L1-norm minimisation is often used in optimisation problems, as a
 \emph{regularisation} term for reducing the influence of outliers.  Although
-the below formuation\cite{bronstein} is intended to be used with \emph{sparse}
+the below formulation~\cite{bronstein} is intended to be used with \emph{sparse}
 computations, \lang's current implementation only implements dense ones.
 However, it still serves as a useful example of explaining \lang's features.
 
@@ -334,7 +574,7 @@ throughout the computation.
 
 \subsubsection{Kalman Filter}
 
-A \emph{Kalman Filter}\cite{kalman} is a an algorithm for combining prior
+A \emph{Kalman Filter}~\cite{kalman} is a an algorithm for combining prior
 knowledge of a state, a statistical model and measurements from (noisy) sensors
 to produce an estimate a more reliable estimated of the current state.  It has
 various applications (navigation, signal-processing, econometrics) and is
@@ -352,7 +592,7 @@ equations.
 \begin{figure}[t]
     % align* uses too much vertical space
     {\centering
-    $  \displaystyle
+    $ \displaystyle
     \begin{aligned}
         \mu' &= \mu + \Sigma H^T (R + H \Sigma H^T)^{-1} (H \mu - \textrm{data})\\
         \Sigma' &= \Sigma ( I - H^T (R + H \Sigma H^T)^{-1} H \Sigma )
@@ -367,7 +607,7 @@ Figure~\ref{fig:lang_kalman} shows a \lang\ implementation of a Kalman filter
 are used in this implementation:
 \begin{itemize}
 
-    \item \texttt{sym} annotations in matrix expressions: when this is used, a 
+    \item \texttt{sym} annotations in matrix expressions: when this is used, a
         call to \texttt{symm} (the equivalent of \texttt{gemm} but for
         symmetric matrices so that only half the operations are performed) is
         inserted

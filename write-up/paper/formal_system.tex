@@ -132,7 +132,7 @@ latter.
 The full, small-step transition relation is in Appendix \ref{subsec:dyn_sem},
 but the key ideas are as follow.
 
-Heaps ($\sigma$) are multisets containing triples of an abstract location $l$,
+Heaps $\sigma$ are multisets containing triples of an abstract location $l$,
 a fractional permission $f$ and sized matrices $m_{n,k}$. The notation $l
 \mapsto_f m_{k_1, k_2}$ should be read as ``location $l$ represents $f$
 ownership over matrix $m$ (of size $k_1 \times k_2$)''.  Each heap-and-expression
@@ -141,8 +141,8 @@ In the full grammar definition we see a definition of values and contexts in
 the language.
 
 We draw the reader's attention to the definitions relating to fractional
-permissions. Specifically, unlike a lambda, the body of a $\ottkw{fun}\ f\!c
-\rightarrow v$ must be a syntactic value. The context $\ottkw{fun}\ f\!c
+permissions. Specifically, unlike a lambda, the body of a $\ottkw{fun}\ '\!f\!c
+\rightarrow v$ must be a syntactic value. The context $\ottkw{fun}\ '\!f\!c
 \rightarrow [-]$ means expressions can be reduced inside a fractional
 permission generalisation. This is to emphasize that fractions are merely
 \emph{compile-time constructs} and do not affect runtime behaviour. Correct

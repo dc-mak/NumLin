@@ -97,7 +97,7 @@
             So, \textsc{Op\_Context} runs $i$ times, and then we have the following.
             \suffices{$(\varsigma_f \star \varsigma_{e'}, \ottkw{let}\, x\, =\, v\, \ottkw{in}\,
                 \theta(\delta(\gamma(e')))) \in \C{k-i}{\theta(t')}$ by \ref{stepInC} $i$ times.}
-            \suffices{$(\varsigma_f \star \varsigma_{e'}, \theta(\delta(\gamma(e'))) [x/v]) \in
+            \suffices{$(\varsigma_f \star \varsigma_{e'}, \theta(\delta(\gamma(e'))) [v/x]) \in
                 \C{k-i-1}{\theta(t')}$ by \ref{stepInC}.}}
 
         \step{}{By \ref{subsetKJ}, $(\varsigma_{e'}, \gamma_{e'}[x \mapsto v]) \in
@@ -107,9 +107,9 @@
             \gamma_{e'}[x \mapsto v], \sigma_{e'}$ to conclude \\ $(\varsigma_{e'},
             \theta(\delta(\gamma_{e'}[x \mapsto v](e')))) \in \C{k-i-1}{\theta(t')}$.}
 
-        \step{}{By \ref{disjoint}, we have $\theta(\delta(\gamma(e'))) [x/v] =
+        \step{}{By \ref{disjoint}, we have $\theta(\delta(\gamma(e'))) [v/x] =
             \theta(\delta(\gamma_{e'}[x \mapsto v](e')))$ and \\ by \ref{frame} we conclude
-            $(\varsigma_f \star \varsigma_{e'}, \theta(\delta(\gamma(e'))) [x/v])
+            $(\varsigma_f \star \varsigma_{e'}, \theta(\delta(\gamma(e'))) [v/x])
             \in \C{k-i-1}{\theta(t')}$}
 
     \end{proof}
@@ -130,15 +130,15 @@
         \step{}{\suffices{$(\varsigma_{e'}, \theta(\delta(\gamma(e')))) \in
             \C{k-i-1}{\theta(t')}$ by \ref{stepInC} $i+1$ times.}}
 
-        \step{}{By \ref{subsetKJ}, $(\varsigma_{e'}, \gamma_{e'}[a \mapsto v_1, b \mapsto v_2 ])
+        \step{}{By \ref{subsetKJ}, $(\varsigma_{e'}, \gamma_{e'}[a \mapsto v_1, b \mapsto v_2])
             \in \den{L}{k}{\Gamma', a : t_1, b : t_2 }\theta \subseteq \den{L}{k-i-1}{\Gamma',
             a : t_1, b : t_2}\theta$.}
 
         \step{}{Instantiate $\den{}{k-i-1}{\Theta; \Delta; \Gamma', a : t_1, b : t_2 \vdash e' : t'}$
-            with $\theta, \delta, \gamma_{e'} [a \mapsto v_1, b \mapsto v_2 ] , \sigma_{e'}$.}
+            with $\theta, \delta, \gamma_{e'} [a \mapsto v_1, b \mapsto v_2] , \sigma_{e'}$.}
 
         \step{}{By \ref{disjoint} (for $\gamma = \gamma_e \cup \gamma_{e'}$ and $a,b$), conclude
-            $(\varsigma_{e'}, \theta(\delta(\gamma(e'[a / v_1][b / v_2])))) \in \C{k-i-1}{\theta(t')}$.}
+            $(\varsigma_{e'}, \theta(\delta(\gamma(e'[v_1 / a][v_2 / b])))) \in \C{k-i-1}{\theta(t')}$.}
 
     \end{proof}
 
@@ -159,13 +159,13 @@
         \step{}{\suffices{$(\varsigma_{e'}, \ottkw{let}\, \ottkw{Many}\, x\, =\, \ottkw{Many}\,
             v'\, \ottkw{in}\, \theta(\delta(\gamma(e')))) \in \C{k-i}{\theta(t)}$.}}
 
-        \step{}{\suffices{$(\varsigma_{e'}, \theta(\delta(\gamma(e'))) [ x / v ])
+        \step{}{\suffices{$(\varsigma_{e'}, \theta(\delta(\gamma(e'))) [v / x])
             \in \C{k-i-1}{\theta(t)}$ by \ref{stepInC} $i+1$ times.}}
 
         \step{}{Instantiate $\den{}{k-i-1}{\Theta; \Delta, x : t, \Gamma' \vdash e' : t'}$ with
             $\theta, \delta_{e'} = \delta[x \mapsto v'], \gamma_{e'}, \sigma_{e'}$.}
 
-        \step{}{By \ref{disjoint}, $(\varsigma_{e'}, \theta(\delta(\gamma(e'))) [ x / v ]) \in
+        \step{}{By \ref{disjoint}, $(\varsigma_{e'}, \theta(\delta(\gamma(e'))) [v / x]) \in
             \C{k-i-1}{\theta(t)}$.}
 
     \end{proof}
@@ -330,7 +330,7 @@
                 \in \C{j}{\theta(t')}$.}
 
             \suffices{$(\varsigma \star \varsigma_v, \theta(\delta(\gamma(e)))
-                [x / v]) \in \C{j-1}{\theta(t')}$ by \ref{stepInC}.}
+                [v / x]) \in \C{j-1}{\theta(t')}$ by \ref{stepInC}.}
 
         }
     }
@@ -345,7 +345,7 @@
             v](e)))\,) \in \C{j-1}{\theta(t')}$.}
 
         \step{}{By \ref{disjoint}, $\theta(\delta(\gamma[x \mapsto v](e))) =
-            \theta(\delta(\gamma(e))) [x / v]$, we are done.}
+            \theta(\delta(\gamma(e))) [v / x]$, we are done.}
 
     \end{proof}
 
@@ -471,10 +471,10 @@
 
         \step{}{So, \textsc{Op\_Context} runs $i_e$ times, and then we have the
             following.  \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma', \ottkw{fun}
-            f\!c \rightarrow e' ) \in \V{k-i_e}{\theta(\forall f\!c.\ t)}$ (for $f=f\!c$).}}
+            \: '\!f\!c \rightarrow e' ) \in \V{k-i_e}{\theta( {'\!f\!c}.\ t)}$ (for $f=f\!c$).}}
 
-        \step{}{\assume{Arbitrary $f'$.} \suffices{$(\varsigma', e' [f\!c / f'] )
-            \in \V{k-1-i_e}{\theta(t)[f\!c/f']}$ (for $f=f\!c$).}}
+        \step{}{\assume{Arbitrary $f'$.} \suffices{$(\varsigma', e' [f' / f\!c] )
+            \in \V{k-1-i_e}{\theta(t)[f' / f\!c]}$ (for $f=f\!c$).}}
 
         \step{}{This is true by instantiating \pfref{valueAllF} with $f=f'$.}
 
@@ -490,10 +490,10 @@
     \begin{proof}
 
         \step{}{By induction, $\forall k.\ \den{}{k}{\Theta; \Delta; \Gamma
-            \vdash e : \forall f\!c.\ t }$.}
+            \vdash e :  {'\!f\!c}.\ t }$.}
 
         \step{}{Instantiate with $k, \theta, \delta, \gamma, \sigma$ to conclude
-            $(\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{\theta(\forall f\!c.\ t})$.}
+            $(\varsigma, \theta(\delta(\gamma(e)))) \in \C{k}{\theta( {'\!f\!c}.\ t})$.}
 
         \step{}{Instantiate \emph{this} with $j$ and $\empH$ and to conclude
             $\langle \theta(\sigma), \theta(\delta(\gamma(e))) \rangle$ \\
@@ -512,15 +512,15 @@
         % _{k-i} <_ k - j
 
         \step{}{If it is, then $\exists i_e \leq j.\  (\varsigma_f, e_f) \in
-            \V{k-i_e}{\theta(\forall f\!c. t)} \subseteq \V{k-j}{\ldots}$ by
+            \V{k-i_e}{\theta( {'\!f\!c}. t)} \subseteq \V{k-j}{\ldots}$ by
             \ref{valueSub} and \ref{subsetKJ}.\\
-            So $e_f \equiv \ottkw{fun} f\!c \rightarrow v$ for some $v$.}\pflabel{valueAllF2}
+            So $e_f \equiv \ottkw{fun}\: '\!f\!c \rightarrow v$ for some $v$.}\pflabel{valueAllF2}
 
         \step{}{So, \textsc{Op\_Context} runs $i_e$ times, and then we have the following.
             \suffices{By \ref{stepInC} $i_e$ times, $(\varsigma_f,
-            (\ottkw{fun} f\!c \rightarrow v)\, [f] ) \in \C{k-i_e}{\theta(t[f\!c/f])}$.}
-            \suffices{By \ref{stepInC} once more, $(\varsigma_f, v [f\!c / f]) \in
-            \C{k-i_e-1}{\theta(t[f\!c/f])}$.}}
+            (\ottkw{fun}\: '\!f\!c \rightarrow v)\, [f] ) \in \C{k-i_e}{\theta(t[f/f\!c])}$.}
+            \suffices{By \ref{stepInC} once more, $(\varsigma_f, v [f / f\!c]) \in
+            \C{k-i_e-1}{\theta(t[f / f\!c])}$.}}
 
         \step{}{This is true by instantiating \pfref{valueAllF2} with $f$ and \ref{subsetVC}.}
 
@@ -540,11 +540,11 @@
 
             \pflet{$\tilde{e} \equiv \theta(\delta(e)))$.}
 
-            \suffices{$(\varsigma_v,\ottkw{fix} (g, x : t, \tilde{e} : t')\ v)
+            \suffices{$(\varsigma_v,\ottkw{fix} (g, x : t, \tilde{e} : t') \ v)
                 \in \C{j}{\theta(t')}$.}
 
-            \suffices{$(\varsigma_v, \tilde{e}\, [x / v]\, [g /\ottkw{fix} (g,
-                x : t, \tilde{e} : t')]) \in \C{j-1}{\theta(t')}$ by \ref{stepInC}.}
+            \suffices{$(\varsigma_v, \tilde{e}\, [v / x]\, [\ottkw{fix} (g, x :
+                t, \tilde{e} : t') / g]) \in \C{j-1}{\theta(t')}$ by \ref{stepInC}.}
 
         }
     }

@@ -59,7 +59,7 @@
 \ottprodline{|}{\ottnt{f} \, \ottkw{arr}}{}{}{}{\ottcom{arrays}}\ottprodnewline
 \ottprodline{|}{\ottnt{f} \, \ottkw{mat}}{}{}{}{\ottcom{matrices}}\ottprodnewline
 \ottprodline{|}{\: !  \ottnt{t}}{}{}{}{\ottcom{multiple-use type}}\ottprodnewline
-\ottprodline{|}{\forall \, \mathit{fc}  \ottsym{.}  \ottnt{t}}{}{\textsf{bind}\; \mathit{fc}\; \textsf{in}\; \ottnt{t}}{}{\ottcom{frac. perm. generalisation}}\ottprodnewline
+\ottprodline{|}{\: '\! \, \mathit{fc}  \ottsym{.}  \ottnt{t}}{}{\textsf{bind}\; \mathit{fc}\; \textsf{in}\; \ottnt{t}}{}{\ottcom{frac. perm. generalisation}}\ottprodnewline
 \ottprodline{|}{\ottnt{t} \, \otimes \, \ottnt{t'}}{}{}{}{\ottcom{pair}}\ottprodnewline
 \ottprodline{|}{\ottnt{t}  \multimap  \ottnt{t'}}{}{}{}{\ottcom{linear function}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{t}  \ottsym{)}} {\textsf{S}}{}{}{\ottcom{parentheses}}}
@@ -121,7 +121,7 @@
 \ottprodline{|}{\mathit{l}}{}{}{}{\ottcom{heap location}}\ottprodnewline
 \ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, \ottnt{v}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
-\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}}{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
+\ottprodline{|}{ \ottkw{fun}  {\: '\!  \mathit{fc}  }  \rightarrow   \ottnt{v} }{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{v}  \ottsym{,}  \ottnt{v'}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}}{}{\textsf{bind}\; \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{abstraction}}\ottprodnewline
 \ottprodline{|}{\ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}}{}{\textsf{bind}\; \mathit{g} \cup  \mathit{x}\; \textsf{in}\; \ottnt{e}}{}{\ottcom{fixpoint}}\ottprodnewline
@@ -142,7 +142,7 @@
 \ottprodline{|}{\mathit{el}}{}{}{}{\ottcom{array element}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, \ottnt{e}}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{}{}{\ottcom{!-elimination}}\ottprodnewline
-\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{e}}{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
+\ottprodline{|}{ \ottkw{fun}  {\: '\!  \mathit{fc}  }  \rightarrow   \ottnt{e} }{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
 \ottprodline{|}{\ottnt{e}  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. perm. specialisation}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{e}  \ottsym{,}  \ottnt{e'}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottsym{(}  \mathit{a}  \ottsym{,}  \mathit{b}  \ottsym{)}  \ottsym{=}  \ottnt{e} \, \ottkw{in} \, \ottnt{e'}}{}{\textsf{bind}\; \mathit{a} \cup  \mathit{b}\; \textsf{in}\; \ottnt{e'}}{}{\ottcom{pair elimination}}\ottprodnewline
@@ -158,7 +158,7 @@
 \ottprodline{|}{\ottkw{if} \, [ - ] \, \ottkw{then} \, \ottnt{e_{{\mathrm{1}}}} \, \ottkw{else} \, \ottnt{e_{{\mathrm{2}}}}}{}{}{}{\ottcom{if}}\ottprodnewline
 \ottprodline{|}{\ottkw{Many} \, [ - ]}{}{}{}{\ottcom{!-introduction}}\ottprodnewline
 \ottprodline{|}{\ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  [ - ] \, \ottkw{in} \, \ottnt{e}}{}{}{}{\ottcom{!-elimination}}\ottprodnewline
-\ottprodline{|}{\ottkw{fun} \, \mathit{fc}  \rightarrow  [ - ]}{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
+\ottprodline{|}{ \ottkw{fun}  {\: '\!  \mathit{fc}  }  \rightarrow   [ - ] }{}{}{}{\ottcom{frac. perm. abstraction}}\ottprodnewline
 \ottprodline{|}{[ - ]  \ottsym{[}  \ottnt{f}  \ottsym{]}}{}{}{}{\ottcom{frac. perm. specialisation}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  [ - ]  \ottsym{,}  \ottnt{e}  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
 \ottprodline{|}{\ottsym{(}  \ottnt{v}  \ottsym{,}  [ - ]  \ottsym{)}}{}{}{}{\ottcom{pair introduction}}\ottprodnewline
@@ -286,7 +286,7 @@
 \newcommand{\ottdruleWFXXTypeXXGen}[1]{\ottdrule[#1]{%
 \ottpremise{\Theta  \ottsym{,}  \mathit{fc}  \vdash  \ottnt{t} \, \textsf{Type}}%
 }{
-\Theta  \vdash  \forall \, \mathit{fc}  \ottsym{.}  \ottnt{t} \, \textsf{Type}}{%
+\Theta  \vdash  \: '\! \, \mathit{fc}  \ottsym{.}  \ottnt{t} \, \textsf{Type}}{%
 {\ottdrulename{WF\_Type\_Gen}}{}%
 }}
 
@@ -461,14 +461,14 @@
 \newcommand{\ottdruleTyXXGen}[1]{\ottdrule[#1]{%
 \ottpremise{\Theta  \ottsym{,}  \mathit{fc}  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \ottnt{t}}%
 }{
-\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{e}  \ottsym{:}  \forall \, \mathit{fc}  \ottsym{.}  \ottnt{t}}{%
+\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash   \ottkw{fun}  {\: '\!  \mathit{fc}  }  \rightarrow   \ottnt{e}   \ottsym{:}  \: '\! \, \mathit{fc}  \ottsym{.}  \ottnt{t}}{%
 {\ottdrulename{Ty\_Gen}}{}%
 }}
 
 
 \newcommand{\ottdruleTyXXSpc}[1]{\ottdrule[#1]{%
 \ottpremise{\Theta  \vdash  \ottnt{f} \, \textsf{Perm}}%
-\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \forall \, \mathit{fc}  \ottsym{.}  \ottnt{t}}%
+\ottpremise{\Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{:}  \: '\! \, \mathit{fc}  \ottsym{.}  \ottnt{t}}%
 }{
 \Theta  \ottsym{;}  \Delta  \ottsym{;}  \Gamma  \vdash  \ottnt{e}  \ottsym{[}  \ottnt{f}  \ottsym{]}  \ottsym{:}  \ottnt{t}  \ottsym{[}  \ottnt{f}  \ottsym{/}  \mathit{fc}  \ottsym{]}}{%
 {\ottdrulename{Ty\_Spc}}{}%
@@ -519,7 +519,7 @@
 
 \newcommand{\ottdruleOpXXLetXXVar}[1]{\ottdrule[#1]{%
 }{
-\langle  \sigma  \ottsym{,}  \ottkw{let} \, \mathit{x}  \ottsym{=}  \ottnt{v} \, \ottkw{in} \, \ottnt{e}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \mathit{x}  \ottsym{/}  \ottnt{v}  \ottsym{]}  \rangle}{%
+\langle  \sigma  \ottsym{,}  \ottkw{let} \, \mathit{x}  \ottsym{=}  \ottnt{v} \, \ottkw{in} \, \ottnt{e}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \ottnt{v}  \ottsym{/}  \mathit{x}  \ottsym{]}  \rangle}{%
 {\ottdrulename{Op\_Let\_Var}}{}%
 }}
 
@@ -540,35 +540,35 @@
 
 \newcommand{\ottdruleOpXXLetXXMany}[1]{\ottdrule[#1]{%
 }{
-\langle  \sigma  \ottsym{,}  \ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  \ottkw{Many} \, \ottnt{v} \, \ottkw{in} \, \ottnt{e}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \mathit{x}  \ottsym{/}  \ottnt{v}  \ottsym{]}  \rangle}{%
+\langle  \sigma  \ottsym{,}  \ottkw{let} \, \ottkw{Many} \, \mathit{x}  \ottsym{=}  \ottkw{Many} \, \ottnt{v} \, \ottkw{in} \, \ottnt{e}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \ottnt{v}  \ottsym{/}  \mathit{x}  \ottsym{]}  \rangle}{%
 {\ottdrulename{Op\_Let\_Many}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXLetXXPair}[1]{\ottdrule[#1]{%
 }{
-\langle  \sigma  \ottsym{,}  \ottkw{let} \, \ottsym{(}  \mathit{a}  \ottsym{,}  \mathit{b}  \ottsym{)}  \ottsym{=}  \ottsym{(}  \ottnt{v_{{\mathrm{1}}}}  \ottsym{,}  \ottnt{v_{{\mathrm{2}}}}  \ottsym{)} \, \ottkw{in} \, \ottnt{e}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \mathit{a}  \ottsym{/}  \ottnt{v_{{\mathrm{1}}}}  \ottsym{]}  \ottsym{[}  \mathit{b}  \ottsym{/}  \ottnt{v_{{\mathrm{2}}}}  \ottsym{]}  \rangle}{%
+\langle  \sigma  \ottsym{,}  \ottkw{let} \, \ottsym{(}  \mathit{a}  \ottsym{,}  \mathit{b}  \ottsym{)}  \ottsym{=}  \ottsym{(}  \ottnt{v_{{\mathrm{1}}}}  \ottsym{,}  \ottnt{v_{{\mathrm{2}}}}  \ottsym{)} \, \ottkw{in} \, \ottnt{e}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \ottnt{v_{{\mathrm{1}}}}  \ottsym{/}  \mathit{a}  \ottsym{]}  \ottsym{[}  \ottnt{v_{{\mathrm{2}}}}  \ottsym{/}  \mathit{b}  \ottsym{]}  \rangle}{%
 {\ottdrulename{Op\_Let\_Pair}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXFracXXPerm}[1]{\ottdrule[#1]{%
 }{
-\langle  \sigma  \ottsym{,}  \ottsym{(}  \ottkw{fun} \, \mathit{fc}  \rightarrow  \ottnt{v}  \ottsym{)}  \ottsym{[}  \ottnt{f}  \ottsym{]}  \rangle  \rightarrow  \langle  \sigma  \ottsym{[}  \mathit{fc}  \ottsym{/}  \ottnt{f}  \ottsym{]}  \ottsym{,}  \ottnt{v}  \ottsym{[}  \mathit{fc}  \ottsym{/}  \ottnt{f}  \ottsym{]}  \rangle}{%
+\langle  \sigma  \ottsym{,}  \ottsym{(}   \ottkw{fun}  {\: '\!  \mathit{fc}  }  \rightarrow   \ottnt{v}   \ottsym{)}  \ottsym{[}  \ottnt{f}  \ottsym{]}  \rangle  \rightarrow  \langle  \sigma  \ottsym{[}  \ottnt{f}  \ottsym{/}  \mathit{fc}  \ottsym{]}  \ottsym{,}  \ottnt{v}  \ottsym{[}  \ottnt{f}  \ottsym{/}  \mathit{fc}  \ottsym{]}  \rangle}{%
 {\ottdrulename{Op\_Frac\_Perm}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXAppXXFix}[1]{\ottdrule[#1]{%
 }{
-\langle  \sigma  \ottsym{,}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottnt{v}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \mathit{x}  \ottsym{/}  \ottnt{v}  \ottsym{]}  \ottsym{[}  \mathit{g}  \ottsym{/}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}  \ottsym{]}  \rangle}{%
+\langle  \sigma  \ottsym{,}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)} \, \ottnt{v}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \ottnt{v}  \ottsym{/}  \mathit{x}  \ottsym{]}  \ottsym{[}  \ottkw{fix} \, \ottsym{(}  \mathit{g}  \ottsym{,}  \mathit{x}  \ottsym{:}  \ottnt{t}  \ottsym{,}  \ottnt{e}  \ottsym{:}  \ottnt{t'}  \ottsym{)}  \ottsym{/}  \mathit{g}  \ottsym{]}  \rangle}{%
 {\ottdrulename{Op\_App\_Fix}}{}%
 }}
 
 
 \newcommand{\ottdruleOpXXAppXXLambda}[1]{\ottdrule[#1]{%
 }{
-\langle  \sigma  \ottsym{,}  \ottsym{(}  \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}  \ottsym{)} \, \ottnt{v}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \mathit{x}  \ottsym{/}  \ottnt{v}  \ottsym{]}  \rangle}{%
+\langle  \sigma  \ottsym{,}  \ottsym{(}  \ottkw{fun} \, \mathit{x}  \ottsym{:}  \ottnt{t}  \rightarrow  \ottnt{e}  \ottsym{)} \, \ottnt{v}  \rangle  \rightarrow  \langle  \sigma  \ottsym{,}  \ottnt{e}  \ottsym{[}  \ottnt{v}  \ottsym{/}  \mathit{x}  \ottsym{]}  \rangle}{%
 {\ottdrulename{Op\_App\_Lambda}}{}%
 }}
 
@@ -621,8 +621,9 @@
 
 
 \newcommand{\ottdruleOpXXUnshareXXEq}[1]{\ottdrule[#1]{%
+\ottpremise{\sigma'  \equiv    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \} }%
 }{
-\langle    \sigma   +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}    +  \{  \mathit{l}   \mapsto _  { \frac{1}{2}  \ottnt{f}  }    \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \ottkw{unshare}  \ottsym{[}  \ottnt{f}  \ottsym{]} \, \mathit{l} \, \mathit{l}  \rangle  \rightarrow  \langle   \sigma   +  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \mathit{l}  \rangle}{%
+\langle  \sigma'  \ottsym{,}  \ottkw{unshare}  \ottsym{[}  \ottnt{f}  \ottsym{]} \, \mathit{l} \, \mathit{l}  \rangle  \rightarrow  \langle   \sigma   +  \{  \mathit{l}   \mapsto _ \ottnt{f}   \ottnt{m} _{ \mathit{k_{{\mathrm{1}}}} ,  \mathit{k_{{\mathrm{2}}}} } \}   \ottsym{,}  \mathit{l}  \rangle}{%
 {\ottdrulename{Op\_Unshare\_Eq}}{}%
 }}
 

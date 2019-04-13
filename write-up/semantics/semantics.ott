@@ -34,8 +34,8 @@ grammar
     | --o   ::  :: lollipop  {{ tex \multimap     }}
     | |-    ::  :: turnstile {{ tex \vdash        }}
     | mem   ::  :: member    {{ tex \in           }}
-    | all   ::  :: all       {{ tex \forall       }}
-    | Perm   ::  :: perm       {{ tex \textsf{Perm}  }}
+    | all   ::  :: all       {{ tex \: '\!        }}
+    | Perm   ::  :: perm     {{ tex \textsf{Perm} }}
     | Type  ::  :: type      {{ tex \textsf{Type} }}
     | !     ::  :: bang      {{ tex \: !          }}
     | ->    ::  :: arrow     {{ tex \rightarrow   }}
@@ -63,9 +63,9 @@ grammar
 
   f :: 'f_' ::=       {{ com fractional permission }}
     | fc  ::  :: Var  {{ com variable              }}
-    | Z   ::  :: Zero {{ tex 1                     }}
+    | z   ::  :: Zero {{ tex 1                     }}
                       {{ com whole permission      }}
-    | S f ::  :: Succ {{ tex { \frac{1}{2} [[f]] } }}
+    | f s ::  :: Succ {{ tex { \frac{1}{2} [[f]] } }}
 
 
   t :: 't_' ::=                    {{ com linear type               }}
@@ -151,56 +151,58 @@ grammar
                                                       {{ com abstraction               }}
     | fix ( g , x : t , e : t' )  ::   :: Fix         (+ bind g union x in e           +)
                                                       {{ com fixpoint                  }}
-    | v [ fc / f ]                :: M :: Sub_fc      {{ com substitution              }}
+    | v [ f / fc ]                :: M :: Sub_fc      {{ com substitution              }}
     | ( v )                       :: S :: Paren       {{ com parentheses               }}
 
 
-  e :: 'e_' ::=                                       {{ com expression                }}
-    | p                           ::   :: Prim        {{ com primitives                }}
-    | x                           ::   :: Var         {{ com variable                  }}
-    | let x = e in e'             ::   :: Let         (+ bind x in e'                  +)
-                                                      {{ com let binding               }}
-    | ( )                         ::   :: Unit_Intro  {{ com unit introduction         }}
-    | let ( ) = e in e'           ::   :: Unit_Elim   {{ com unit elimination          }}
-    | true                        ::   :: Bool_True   {{ com true                      }}
-    | false                       ::   :: Bool_False  {{ com false                     }}
-    | if e then e1 else e2        ::   :: Bool_Elim   {{ com if                        }}
-    | k                           ::   :: Int_Intro   {{ com integer                   }}
-    | l                           ::   :: Location    {{ com heap location             }}
-    | el                          ::   :: Elt_Intro   {{ com array element             }}
-    | Many e                      ::   :: Bang_Intro  {{ com !-introduction            }}
-    | let Many x = e in e'        ::   :: Bang_Elim   {{ com !-elimination             }}
-    | fun fc -> e                 ::   :: Gen         {{ com frac. perm. abstraction    }}
-    | e [ f ]                     ::   :: Spc         {{ com frac. perm. specialisation }}
-    | ( e , e' )                  ::   :: Pair_Intro  {{ com pair introduction         }}
-    | let ( a , b ) = e in e'     ::   :: Pair_Elim   (+ bind a union b in e'          +)
-                                                      {{ com pair elimination          }}
-    | fun x : t -> e              ::   :: Lambda      (+ bind x in e                   +)
-                                                      {{ com abstraction               }}
-    | e e'                        ::   :: App         {{ com application               }}
-    | fix ( g , x : t , e : t' )  ::   :: Fix         (+ bind g union x in e           +)
-                                                      {{ com fixpoint                  }}
-    | e [ fc / f  ]               :: M :: Sub_fc      {{ com substitution              }}
-    | e [ x / e'  ]               :: M :: Sub         {{ com substitution              }}
-    | ( e )                       :: S :: Paren       {{ com parentheses               }}
-    | C [ e ]                     :: M :: Context     {{ com evaluation context        }}
+  e :: 'e_' ::=                                       {{ com expression                            }}
+    | p                           ::   :: Prim        {{ com primitives                            }}
+    | x                           ::   :: Var         {{ com variable                              }}
+    | let x = e in e'             ::   :: Let         (+ bind x in e'                              +)
+                                                      {{ com let binding                           }}
+    | ( )                         ::   :: Unit_Intro  {{ com unit introduction                     }}
+    | let ( ) = e in e'           ::   :: Unit_Elim   {{ com unit elimination                      }}
+    | true                        ::   :: Bool_True   {{ com true                                  }}
+    | false                       ::   :: Bool_False  {{ com false                                 }}
+    | if e then e1 else e2        ::   :: Bool_Elim   {{ com if                                    }}
+    | k                           ::   :: Int_Intro   {{ com integer                               }}
+    | l                           ::   :: Location    {{ com heap location                         }}
+    | el                          ::   :: Elt_Intro   {{ com array element                         }}
+    | Many e                      ::   :: Bang_Intro  {{ com !-introduction                        }}
+    | let Many x = e in e'        ::   :: Bang_Elim   {{ com !-elimination                         }}
+    | fun fc -> e                 ::   :: Gen         {{ com frac. perm. abstraction               }}
+                                                      {{ tex [[fun]] {\: '\! [[fc]] } [[->]] [[e]] }}
+    | e [ f ]                     ::   :: Spc         {{ com frac. perm. specialisation            }}
+    | ( e , e' )                  ::   :: Pair_Intro  {{ com pair introduction                     }}
+    | let ( a , b ) = e in e'     ::   :: Pair_Elim   (+ bind a union b in e'                      +)
+                                                      {{ com pair elimination                      }}
+    | fun x : t -> e              ::   :: Lambda      (+ bind x in e                               +)
+                                                      {{ com abstraction                           }}
+    | e e'                        ::   :: App         {{ com application                           }}
+    | fix ( g , x : t , e : t' )  ::   :: Fix         (+ bind g union x in e                       +)
+                                                      {{ com fixpoint                              }}
+    | e [ f / fc  ]               :: M :: Sub_fc      {{ com substitution                          }}
+    | e [ e' / x  ]               :: M :: Sub         {{ com substitution                          }}
+    | ( e )                       :: S :: Paren       {{ com parentheses                           }}
+    | C [ e ]                     :: M :: Context     {{ com evaluation context                    }}
 
-  C :: 'C_' ::=                                      {{ com evaluation contexts       }}
-    | let x = __ in e             ::   :: Let        (+ bind x in e                   +)
-                                                     {{ com let binding               }}
-    | let ( ) = __ in e           ::   :: Unit_Elim  {{ com unit elimination          }}
-    | if __ then e1 else e2       ::   :: Bool_Elim  {{ com if                        }}
-    | Many __                     ::   :: Bang_Intro {{ com !-introduction            }}
-    | let Many x = __ in e        ::   :: Bang_Elim  {{ com !-elimination             }}
-    | fun fc -> __                ::   :: Gen        {{ com frac. perm. abstraction    }}
-    | __ [ f ]                    ::   :: Spc        {{ com frac. perm. specialisation }}
-    | ( __ , e )                  ::   :: Pair_Fst   {{ com pair introduction         }}
-    | ( v , __ )                  ::   :: Pair_Snd   {{ com pair introduction         }}
-    | let ( a , b ) = __ in e     ::   :: Pair_Elim  (+ bind a union b in e           +)
-                                                     {{ com pair elimination          }}
-    | __ e                        ::   :: App_Fun    {{ com application               }}
-    | v __                        ::   :: App_Arg    {{ com application               }}
-%   | ( __ )                      :: S :: Paren      {{ com parentheses               }}
+  C :: 'C_' ::=                                      {{ com evaluation contexts                    }}
+    | let x = __ in e             ::   :: Let        (+ bind x in e                                +)
+                                                     {{ com let binding                            }}
+    | let ( ) = __ in e           ::   :: Unit_Elim  {{ com unit elimination                       }}
+    | if __ then e1 else e2       ::   :: Bool_Elim  {{ com if                                     }}
+    | Many __                     ::   :: Bang_Intro {{ com !-introduction                         }}
+    | let Many x = __ in e        ::   :: Bang_Elim  {{ com !-elimination                          }}
+    | fun fc -> __                ::   :: Gen        {{ com frac. perm. abstraction                }}
+                                                     {{ tex [[fun]] {\: '\! [[fc]] } [[->]] [[__]] }}
+    | __ [ f ]                    ::   :: Spc        {{ com frac. perm. specialisation             }}
+    | ( __ , e )                  ::   :: Pair_Fst   {{ com pair introduction                      }}
+    | ( v , __ )                  ::   :: Pair_Snd   {{ com pair introduction                      }}
+    | let ( a , b ) = __ in e     ::   :: Pair_Elim  (+ bind a union b in e                        +)
+                                                     {{ com pair elimination                       }}
+    | __ e                        ::   :: App_Fun    {{ com application                            }}
+    | v __                        ::   :: App_Arg    {{ com application                            }}
+%   | ( __ )                      :: S :: Paren      {{ com parentheses                            }}
 
 
 subrules
@@ -243,12 +245,12 @@ defns
 
 
     ---------- :: Zero
-    T |- Z Perm
+    T |- z Perm
 
 
     T |- f Perm
     ------------ :: Succ
-    T |- S f Perm
+    T |- f s Perm
 
 
   defn
@@ -413,7 +415,7 @@ grammar
     | H and { l |-> f , m k1 k2 } :: :: Ext 
     {{ tex [[H]] [[and]] \{ [[l]] [[|->]]_[[f]] [[m]]_{[[k1]], [[k2]]} \} }}
     {{ com location [[l]] points to matrix [[m]] }}
-    | H [ fc / f  ]               :: M :: Sub_fc
+    | H [ f / fc  ]               :: M :: Sub_fc
     {{ com substitution }}
 
 
@@ -435,7 +437,7 @@ defns
 
 
     --------------------------------------------- :: Let_Var
-    < H , let x = v in e > -> < H , e [ x / v ] >
+    < H , let x = v in e > -> < H , e [ v / x ] >
 
 
     --------------------------------------------- :: If_True
@@ -447,23 +449,23 @@ defns
 
 
     ------------------------------------------------------- :: Let_Many
-    < H , let Many x = Many v in e > -> < H , e [ x / v ] >
+    < H , let Many x = Many v in e > -> < H , e [ v / x ] >
 
 
     --------------------------------------------------------------------------- :: Let_Pair
-    < H , let ( a , b ) = ( v1 , v2 ) in e > -> < H , e [ a / v1 ] [ b / v2 ] >
+    < H , let ( a , b ) = ( v1 , v2 ) in e > -> < H , e [ v1 / a ] [ v2 / b ] >
 
 
     ---------------------------------------------------------------- :: Frac_Perm
-    < H , ( fun fc -> v ) [ f ] > -> < H [ fc / f ] , v [ fc / f ] >
+    < H , ( fun fc -> v ) [ f ] > -> < H [ f / fc ] , v [ f / fc ] >
 
 
     ---------------------------------------------------------------------------------------------- :: App_Fix
-    < H , fix ( g , x : t , e : t' ) v > -> < H , e [ x / v ] [ g / fix ( g , x : t , e : t' ) ] >
+    < H , fix ( g , x : t , e : t' ) v > -> < H , e [ v / x ] [ fix ( g , x : t , e : t' ) / g ] >
 
 
     --------------------------------------------------- :: App_Lambda
-    < H , ( fun x : t -> e ) v > -> < H , e [ x / v ] >
+    < H , ( fun x : t -> e ) v > -> < H , e [ v / x ] >
 
 
     < H , e >  -> < H' , e' >
@@ -479,7 +481,7 @@ defns
     0 <= k1 , k2
     l fresh
     ------------------------------------------------------------ :: Matrix
-    < H , matrix k1 k2 > -> < H and { l |-> Z ,  M k1 k2 } , l >
+    < H , matrix k1 k2 > -> < H and { l |-> z ,  M k1 k2 } , l >
 
 
     k1 < 0 or k2 < 0
@@ -488,25 +490,26 @@ defns
 
 
     ------------------------------------------------------- :: Free
-    < H and { l |-> Z , m k1 k2 } , free l > -> < H , ( ) >
+    < H and { l |-> z , m k1 k2 } , free l > -> < H , ( ) >
 
 
     -------------------------------------------------------------------------------------------------------------------------- :: Share
-    < H and { l |-> f , m k1 k2 } , share [f] l > -> < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , ( l , l ) >
+    < H and { l |-> f , m k1 k2 } , share [f] l > -> < H and { l |-> f s , m k1 k2 } and { l |-> f s , m k1 k2 } , ( l , l ) >
 
 
-    ---------------------------------------------------------------------------------------------------------------------- :: Unshare_Eq
-    < H and { l |-> S f , m k1 k2 } and { l |-> S f , m k1 k2 } , unshare [f] l l > -> < H and { l |-> f , m k1 k2 } , l >
+    H' == H and { l |-> f s , m k1 k2 } and { l |-> f s , m k1 k2 }
+    --------------------------------------------------------------- :: Unshare_Eq
+    < H' , unshare [f] l l > -> < H and { l |-> f , m k1 k2 } , l >
 
 
     l <> l'
     ----------------------------------------------------------------------------------------- :: Unshare_Neq
-    < H and { l |-> S f , m k1 k2 } and { l' |-> S f , m' k1 k2 } , unshare [f] l l' > -> err
+    < H and { l |-> f s , m k1 k2 } and { l' |-> f s , m' k1 k2 } , unshare [f] l l' > -> err
 
 
     H' == H and { l1 |-> fc1 , m1 k1 k2 } and { l2 |-> fc2 , m2 k2 k3 }
-    H1 == H' and { l3 |-> Z , m3 k1 k3 }
-    H2 == H' and { l3 |-> Z , ( m1 m2 + m3 ) k1 k3 }
+    H1 == H' and { l3 |-> z , m3 k1 k3 }
+    H2 == H' and { l3 |-> z , ( m1 m2 + m3 ) k1 k3 }
     ------------------------------------------------------------------- :: Gemm_Match
     < H1 , gemm [fc1] l1 [fc2] l2 l3 > -> < H2 , ( ( l1 , l2 ) , l3 ) >
 
@@ -514,7 +517,7 @@ defns
     k2 <> k2'
     H' == H and { l1 |-> fc1 , m1 k1 k2 } and { l2 |-> fc2 , m2 k2' k3 }
     --------------------------------------------------------------------- :: Gemm_Mismatch
-    < H' and { l3 |-> Z , m1 k1 k3 } , gemm [fc1] l1 [fc2] l2 l3 > -> err
+    < H' and { l3 |-> z , m1 k1 k3 } , gemm [fc1] l1 [fc2] l2 l3 > -> err
 
 
 grammar

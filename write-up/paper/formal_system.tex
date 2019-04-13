@@ -46,7 +46,9 @@ syntactic value which is not a location. This allows all safely duplicable
 resources, including functions which capture non-linear resources from their
 environments, but prevents producing aliases of (pointers to) arrays and
 matrices. This is exactly the same as value-restriction from the world of
-parametric polymorphism.
+parametric polymorphism; without it, the expression $\Let\ \Many\ x = \Many\
+(\ottkw{array}\ 5)\ \In\ \Let\ () = \ottkw{free}\ x\ \In\ x[0]$ would
+type-check but error at runtime.
 
 \vspace{-\baselineskip}
 \[
@@ -118,17 +120,12 @@ wrapped in \highl{Many} and used zero or multiple times).
 \]
 
 Lastly, types of almost all \lang\ primitives, as embedded in OCaml's type
-system, are shown in Appendix \ref{subsec:primitives}, with some similar ones
-(like those for binary arithmetic operators) omitted for brevity. The
-main difference between the OCaml type of a primitive like \highl{gemm} and its
-\lang\ counterpart is the inclusion of explicit `$\forall$'s.  So,
-\highl{float bang -> ('a mat * bool bang) -> ('b mat * bool bang) -> float
-bang -> z mat -> ('a mat * 'b mat) * z mat}
-will correspond to \\
-$!\ottkw{elt} \multimap \forall\, x.\ x \ \ottkw{mat} \ \otimes \ !\ottkw{bool}
-\multimap \forall\, y.\  y \ \ottkw{mat} \ \otimes \ !\ottkw{bool} \multimap
-\ !\ottkw{elt} \multimap z\ \ottkw{mat} \multimap ( x \ \ottkw{mat} \ \otimes y
-\ \ottkw{mat} ) \ \otimes z\ \ottkw{mat}$
+system, are shown in Appendix~\ref{subsec:primitives}, with some similar ones
+(like those for binary arithmetic operators) omitted for brevity. The main
+difference between the OCaml type of a primitive like \highl{gemm} and its
+\lang\ counterpart (Figure~\ref{fig:primitive_types}) is the inclusion of
+explicit universal-quantification of fractional permission variables in the
+latter.
 
 \subsection{Dynamic Semantics}\label{subsec:semantics}
 
@@ -144,8 +141,8 @@ In the full grammar definition we see a definition of values and contexts in
 the language.
 
 We draw the reader's attention to the definitions relating to fractional
-permissions. Specifically, unlike a lambda, the body of a $\ottkw{fun}\, f\!c
-\rightarrow \_$ must be a syntactic value. The context $\ottkw{fun}\, f\!c
+permissions. Specifically, unlike a lambda, the body of a $\ottkw{fun}\ f\!c
+\rightarrow v$ must be a syntactic value. The context $\ottkw{fun}\ f\!c
 \rightarrow [-]$ means expressions can be reduced inside a fractional
 permission generalisation. This is to emphasize that fractions are merely
 \emph{compile-time constructs} and do not affect runtime behaviour. Correct
@@ -216,7 +213,7 @@ well as the n-fold iteration of $\rightarrow$.
 
 \vspace{-\baselineskip}
 \[
-    \den{H}{}{\sigma} = \bigstar_{(l,f,m) \in \sigma} [ l \mapsto_f m ]
+    \den{H}{}{\sigma} = \bigstar_{(l,f,m) \in \sigma} [l \mapsto_f m]
 \]
 
 where
@@ -233,7 +230,7 @@ where
 \]
 
 We then define a step-indexed logical relation in the style of Morrisett et.
-al~\cite{morrisett}. $(\varsigma, v) \in \V{k}{t}$ means it takes a heap with
+al~\cite{ahmed20073}. $(\varsigma, v) \in \V{k}{t}$ means it takes a heap with
 exactly $\varsigma$ resources to produce a value $v$ of type $t$ in at most $k$
 steps. So, something like a $\ottkw{unit}$ or a $!t$ need no resources, whereas
 a $f\, \ottkw{mat}$ needs exactly $f$ ownership of a some matrix and a pair
@@ -245,14 +242,14 @@ needs a $\star$ combination of the heaps required for each component.
   \V{k}{ t_1 \otimes t_2 } &= \{ (\varsigma_1 \star \varsigma_2, ( v_1, v_2 )) \mid (\varsigma_1, v_1) \in \V{k}{t_1} \wedge (\varsigma_2, v_2) \in \V{k}{t_2} \}
 \end{align*}
 
-The definition of $\V{k}{\forall f\!c.\ t}$ says a value and heap
+The definition of $\V{k}{ '\!f\!c.\ t}$ says a value and heap
 must be the same regardless of what fraction is substituted into both; the
 $k-1$ is to take into account fraction specialisation takes ones step
 (\textsc{Op\_Spc}).
 
 \vspace{-\baselineskip}
 \[
-    \V{k}{ \forall f\!c.\  t } = \{ (\varsigma, \ottkw{fun}\, f\!c \rightarrow \, v) \mid \forall f.\ (\varsigma [ f\!c / f ], v [ f\!c / f ]) \in \V{k-1}{ t [ f\!c / f ] } \}
+    \V{k}{ '\!f\!c.\  t } = \{ (\varsigma, \ottkw{fun}\ '\!f\!c \rightarrow \, v) \mid \forall f.\ (\varsigma [f / f\!c], v [f / f\!c]) \in \V{k-1}{ t [f / f\!c] } \}
 \]
 
 To understand the definition of $\V{k}{t' \multimap t}$, we must first look at
@@ -271,7 +268,7 @@ that $v$ is a function and that evaluating the application of it to any
 argument (of the correct type, requiring its own set of resources, bounded by
 $k$ steps) satisfies all the aforementioned properties.
 \begin{align*}
-    \V{k}{ t' \multimap t } &= \{ (\varsigma_v, v ) \mid ( v \equiv \ottkw{fun}\, x : t' \rightarrow e \vee v \equiv \ottkw{fix} (g, x : t' , e : t) ) \, \wedge\\
+    \V{k}{ t' \multimap t } &= \{ (\varsigma_v, v ) \mid ( v \equiv \ottkw{fun}\ x : t' \rightarrow e \vee v \equiv \ottkw{fix} (g, x : t' , e : t) ) \, \wedge\\
                             & \qquad \qquad \forall j \leq k, (\varsigma_{v'}, v') \in \V{j}{ t' }.\ \varsigma_v \star \varsigma_v' \textrm{ defined } \Rightarrow (\varsigma_v \star \varsigma_v', v\, v') \in \C{j}{t} \}
 \end{align*}
 
@@ -279,8 +276,8 @@ The interpretation of typing environments $\Delta$ and $\Gamma$ are with
 respect to an arbitrary substitution of fractional permissions $\theta$. Note
 that only the interpretation of $\Gamma$ involves a (potentially) non-empty heap.
 \begin{align*}
-    \den{I}{k}{ \Delta, x : t } \theta &= \{ \delta[x \mapsto v_x ] \mid \delta \in \den{I}{k}{\Delta}\theta \wedge (\empH, v_x) \in \V{k}{\theta(t)} \} \\
-    \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\varsigma \star \varsigma_x, \gamma[x \mapsto v_x ]) \mid (\varsigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\varsigma_x, v_x) \in \V{k}{\theta(t)} \}
+    \den{I}{k}{ \Delta, x : t } \theta &= \{ \delta[x \mapsto v_x] \mid \delta \in \den{I}{k}{\Delta}\theta \wedge (\empH, v_x) \in \V{k}{\theta(t)} \} \\
+    \den{L}{k}{ \Gamma, x : t } \theta &= \{ (\varsigma \star \varsigma_x, \gamma[x \mapsto v_x]) \mid (\varsigma, \gamma) \in \den{L}{k}{\Gamma}\theta \wedge (\varsigma_x, v_x) \in \V{k}{\theta(t)} \}
 \end{align*}
 
 And so the final semantic interpretation of a typing judgement simply

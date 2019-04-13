@@ -68,12 +68,12 @@ $}\label{frame}
 
         \step{}{Only the pointed to matrix value at $l_3$ changes.}
 
-        \step{}{\suffices{$l_3 \notin \pi_1 [ \sigma_r ]$.}}
+        \step{}{\suffices{$l_3 \notin \pi_1 [\sigma_r]$.}}
 
         \step{}{By assumption of $\varsigma_s \star \varsigma_r$ defined, $l_3
             \notin \dom(\varsigma_r)$.}
 
-        \step{}{Hence $l_3 \notin \pi_1 [ \sigma_r ]$.}
+        \step{}{Hence $l_3 \notin \pi_1 [\sigma_r]$.}
 
     \end{proof}
 
@@ -109,7 +109,7 @@ In the lemma, and for the rest of its proof, $\varsigma = \den{H}{}{\sigma}$.
         This is true vacuously, because by assumption, $e$ is not a value.}}
 
     \step{}{\case{$j \geq 1$. We have $\langle \sigma, e \rangle
-        \rightarrow^j\, = \langle \sigma', e' \rangle \rightarrow^{j-1}$.}{
+        \rightarrow^j \, = \langle \sigma', e' \rangle \rightarrow^{j-1}$.}{
         Instantiate $(\varsigma', e') \in \C{k}{t}$, with $j-1 < k$ and
         $\sigma_r$ to conclude the required conditions.}}
 
@@ -178,20 +178,20 @@ Need to prove for $\V{}{}$, by induction on $t$ and then index.
         and \textsc{Op\_Gemm\_(Mis)Match}.}
 
     \step{}{\case{\textsc{Op\_Frac\_Perm.}}{Because substitution avoids capture,
-        \\ $\langle \theta(\sigma), \theta((\ottkw{fun} f\!c \rightarrow v) \, [f])
-         \rangle \rightarrow \langle \theta(\sigma'\, [f\!c/f]),
-        \theta(v\, [f\!c/f]) \rangle$.}}
+        \\ $\langle \theta(\sigma), \theta((\ottkw{fun}\: '\!f\!c \rightarrow v) \, [f])
+         \rangle \rightarrow \langle \theta(\sigma' \, [f / f\!c]),
+        \theta(v \, [f / f\!c]) \rangle$.}}
 
     \step{}{The rest of the cases are parametric in their use of fractional
         permission variables and so will take the same step ater any substitution.}
 
     \step{}{\textsc{Corollary:}
-        If $\langle \sigma \, [f\!c/f_1], e\, [f\!c/f_1] \rangle \rightarrow^n
+        If $\langle \sigma \, [f_1 / f\!c], e \, [f_1 / f\!c] \rangle \rightarrow^n
         \langle \sigma_2, e'_2 \rangle$ and
-        $\langle \sigma\, [f\!c/f_2], e \, [f\!c/f_2] \rangle \rightarrow^n
+        $\langle \sigma \, [f_2 / f\!c], e \, [f_2 / f\!c] \rangle \rightarrow^n
         \langle \sigma_2, e'_2 \rangle$, then
-        $\exists\,\sigma, e'.\ \sigma_1 = \sigma\,[f\!c/f_1] \wedge
-        \sigma_2 = \sigma\,[f\!c/f_2] \wedge
-        e'_1 = e'\,[f\!c/f_1] \wedge e'_2 = e'\,[f\!c/f_2]$.}
+        $\exists \, \sigma, e'.\ \sigma_1 = \sigma \, [f_1 / f\!c] \wedge
+        \sigma_2 = \sigma \, [f_2 / f\!c] \wedge
+        e'_1 = e' \, [f_1 / f\!c] \wedge e'_2 = e' \, [f_2 / f\!c]$.}
 
 \end{proof}

@@ -11,17 +11,17 @@ grammar (Figure~\ref{fig:core_grammar}).
     \[\def\arraystretch{1.3}
     \begin{array}{rcl}
         f & ::= & {'\!f\!c}
-                \mid \texttt{z}
-                \mid f\ \texttt{s} \\
+                \mid \Zf
+                \mid f\ \Sf \\
                 \\
         t & ::= & \Unit
                 \mid \Bool
                 \mid \Int
                 \mid \Elt
-                \mid f\:\ottkw{arr}
-                \mid f\:\Mat
+                \mid f\ \Arr
+                \mid f\ \Mat
                 \mid \Bang t
-                \mid {'\!f\!c}. \: t
+                \mid {'\!f\!c}.\ t
                 \mid t \otimes t'
                 \mid t \multimap t' \\
                 \\
@@ -60,65 +60,66 @@ grammar (Figure~\ref{fig:core_grammar}).
     \begin{array}{rcl}
     x[e] &
     \Rightarrow &
-    \mathbf{get}\ \_\ x\ (e) \;\qquad \textrm{(similarly for matrices)}
+    \ottkw{get}\ \_\ x\ (e) \:\qquad \textrm{(similarly for matrices)}
 \\
     x[e_1] := e_2 &
     \Rightarrow &
-    \mathbf{set}\ x\ (e_1)\ (e_2) \quad \textrm{(similarly for matrices)}
+    \ottkw{set}\ x\ (e_1)\ (e_2) \quad \textrm{(similarly for matrices)}
 \\
 \\
-    pat & ::= & ()\ \mid\ x\ \mid\ !x\ \mid\ \mathbf{Many\ } pat\ \mid\ (pat, pat)
+    pat & ::= & () \mid x \mid {!x} \mid \Many\ pat \mid (pat, pat)
 \\
-    \mathbf{let}\ !x = e_1\ \mathbf{in}\ e_2 &
-    \Rightarrow &
-    \specialcell[t]{l}{\mathbf{let\ Many}\ x = e_1\ \mathbf{in\ } \\
-    \mathbf{let\ Many}\ x = \mathbf{Many}\ (\mathbf{Many}\ x)\ \mathbf{in}\ e_2}
-\\
-    \mathbf{let\ Many}\ \langle pat_x \rangle\ = e_1\ \mathbf{in}\ e_2 &
+    \Let\ !x = e_1\ \In\ e_2 &
     \Rightarrow &
     \specialcell[t]{l}{%
-        \mathbf{let\ Many}\ x = x\ \mathbf{in\ } \\
-        \mathbf{let\ } \langle pat_x \rangle\ = x\ \mathbf{in\ } e_2}
+        \Let\ \Many\ x = e_1\ \In \\
+        \Let\ \Many\ x = \Many\ (\Many\ x)\ \In\ e_2}
 \\
-    \mathbf{let}\ (\langle pat_a \rangle, \langle pat_b \rangle)\  = e_1\ \mathbf{in}\ e_2 &
+    \Let\ \Many\ \langle pat_x \rangle\ = e_1\ \In\ e_2 &
     \Rightarrow &
     \specialcell[t]{l}{%
-        \mathbf{let\ } (a,b)\ = a\_b\ \mathbf{in\ }
-        \ \mathbf{let\ } \langle pat_a \rangle\ = a\ \mathbf{in\ } \\
-        \mathbf{let\ } \langle pat_b \rangle\ = b\ \mathbf{in\ } e_2}
+        \Let\ \Many\ x = x\ \In \\
+        \Let\ \langle pat_x \rangle\ = x\ \In\ e_2}
 \\
-    \mathbf{fun}\ (\langle pat_x \rangle : t) \rightarrow e &
+    \Let\ (\langle pat_a \rangle, \langle pat_b \rangle)\ = e_1\ \In\ e_2 &
     \Rightarrow &
-    \mathbf{fun}\ (x : t) \rightarrow \mathbf{let\ } \langle pat_x \rangle = x\ \mathbf{in\ } e
+    \specialcell[t]{l}{%
+        \Let\ (a,b)\ = a\_b\ \In\
+        \Let\ \langle pat_a \rangle\ = a\ \In \\
+        \Let\ \langle pat_b \rangle\ = b\ \In\ e_2}
+\\
+    \ottkw{fun}\ (\langle pat_x \rangle : t) \rightarrow e &
+    \Rightarrow &
+    \ottkw{fun}\ (x : t) \rightarrow \Let\ \langle pat_x \rangle = x\ \In\ e
 \\
 \\
     arg & ::= & \langle pat \rangle : t\ \mid\ {'x} \textrm{ (fractional permission variable)}
 \\
-    \mathbf{fun}\ \langle arg_{1 .. n} \rangle \rightarrow e &
+    \ottkw{fun}\ \langle arg_{1 .. n} \rangle \rightarrow e &
     \Rightarrow &
-    \mathbf{fun}\ \langle arg_1 \rangle \rightarrow ..
-    \ \mathbf{fun}\ \langle arg_n \rangle \rightarrow e
+    \ottkw{fun}\ \langle arg_1 \rangle \rightarrow ..
+    \ \ottkw{fun}\ \langle arg_n \rangle \rightarrow e
 \\
-    \mathbf{let}\ f\ {\langle arg_{1 .. n} \rangle} = e_1\ \mathbf{in}\ e_2 &
+    \Let\ f\ {\langle arg_{1 .. n} \rangle} = e_1\ \In\ e_2 &
     \Rightarrow &
-    \mathbf{let}\ f = \mathbf{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1\
-    \mathbf{in}\ e_2
+    \Let\ f = \ottkw{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1\
+    \In\ e_2
 \\
-    \mathbf{let}\ !f\ {\langle arg_{1 .. n} \rangle} = e_1\ \mathbf{in}\ e_2 &
+    \Let\ !f\ {\langle arg_{1 .. n} \rangle} = e_1\ \In\ e_2 &
     \Rightarrow &
-    \mathbf{let\ Many}\ f = \mathbf{Many}\ (\mathbf{fun}\ {\langle arg_{1 .. n} \rangle}
-    \rightarrow e_1)\ \mathbf{in}\ e_2
+    \Let\ \Many\ f = \Many\ (\ottkw{fun}\ {\langle arg_{1 .. n} \rangle}
+    \rightarrow e_1)\ \In\ e_2
 \\
-    \mathrm{fixpoint} & \equiv & \mathbf{fix}\ (f, x : t, \mathbf{fun}
-    \ {\langle arg_{1 .. n} \rangle} \rightarrow e_1 : {t'} )
+    \mathrm{fixpoint} & \equiv & \ottkw{fix}\ (f, x : t, \ottkw{fun}
+    \ {\langle arg_{0 .. n} \rangle} \rightarrow e_1 : {t'} )
 \\
-    \mathbf{let\ rec}\ f\ (x : t)\ {\langle arg_{1 .. n} \rangle} : {t'} = e_1\ \mathbf{in}\ e_2 &
+    \Let\ \ottkw{rec}\ f\ (x : t)\ {\langle arg_{0 .. n} \rangle} : {t'} = e_1\ \In\ e_2 &
     \Rightarrow &
-    \mathbf{let}\ f = \mathrm{fixpoint}\ \mathbf{in}\ e_2
+    \Let\ f = \mathrm{fixpoint}\ \In\ e_2
 \\
-    \mathbf{let\ rec}\ !f\ (x : t)\ {\langle arg_{1 .. n} \rangle} : {t'} = e_1\ \mathbf{in}\ e_2 &
+    \Let\ \ottkw{rec}\ !f\ (x : t)\ {\langle arg_{0 .. n} \rangle} : {t'} = e_1\ \In\ e_2 &
     \Rightarrow &
-    \mathbf{let\ Many}\ f = \mathbf{Many}\ \mathrm{fixpoint}\ \mathbf{in}\ e_2
+    \Let\ \Many\ f = \Many\ \mathrm{fixpoint}\ \In\ e_2
     \end{array}
 \]
 \end{center}
@@ -128,13 +129,13 @@ grammar (Figure~\ref{fig:core_grammar}).
 \subsection{Type System and Other Features}
 
 The core type theory of \lang\ is a nearly off-the-shelf linear type
-theory, supporting familiar features such as linear function spaces
-$A \multimap B$ and tensor products $A \otimes B$. We adopt linearity
--- the restriction that each program variable be used at most once --
-since it allows us to express purely functional APIs for numerical
-library routines that mutate arrays and matrices~\cite{Wadler90}. Due
-to linearity, values cannot alias and are only used once, which means
-that linearly-typed updates result in no \emph{observable} mutation.
+theory~\cite{barber1996}, supporting familiar features such as linear function
+spaces $A \multimap B$ and tensor products $A \otimes B$. We adopt linearity --
+the restriction that each program variable be used at most once -- since it
+allows us to express purely functional APIs for numerical library routines that
+mutate arrays and matrices~\cite{Wadler90}. Due to linearity, values cannot
+alias and are only used once, which means that linearly-typed updates result in
+no \emph{observable} mutation.
 
 As a result, programmers can reason about \lang\ expressions as if they
 were ordinary mathematical expressions -- as indeed they are! We are
@@ -294,11 +295,11 @@ the expression, so it needs to be returned and then rebound to be used for the
 rest of the function.
 
 An example of this consuming and re-binding is in \highl{let (row, !x1) =
-row[i]}. Indexing is implemented as a primitive \highl{get: 'x. 'x arr --o
-!int --o 'x arr * !elt}. Although fractional permissions can be passed around
-explicitly  (as done in the recursive call), they can also be
-\emph{automatically inferred at call sites}: \highl{row[i] == get _ row i}
-takes advantage of this convenience.
+row[i]}. Indexing is implemented as a primitive $\ottkw{get}:\ {'x}.\ {{'x}\
+\Arr} \multimap {!\Int} \multimap {'x\ \Arr} \otimes {!\Elt}$.
+Although fractional permissions can be passed around explicitly  (as done in
+the recursive call), they can also be \emph{automatically inferred at call
+sites}: \highl{row[i] == get _ row i} takes advantage of this convenience.
 
 \subsubsection{One-dimensional Convolution}
 
@@ -329,12 +330,13 @@ simplifications are:
     \item the first and last values of \texttt{write} are ignored.
 \end{itemize}
 
-Mutating an array is implemented similarly to indexing one: a primitive
-\highl{set: z arr --o !int --o !elt --o z arr}.  It consumes the original
-array and returns a new array with the updated value.  \highl{let written =
-write[i] := <exp> } is just syntactic sugar for \highl{let written = set write i <exp>}.
+Mutating an array is implemented similarly to indexing one -- a primitive
+$\ottkw{set}:\ {\Zf\ \Arr} \multimap {!\Int} \multimap {!\Elt} \multimap
+{\Zf\ \Arr}$. It consumes the original array and returns a new array with
+the updated value.  \highl{let written = write[i] := <exp> } is just syntactic
+sugar for \highl{let written = set write i <exp>}.
 
-Since \highl{write: z arr} (where \texttt{z} stands for $k=0$, representing a
+Since \highl{write: z arr} (where \Zf stands for $k=0$, representing a
 fractional permission of $2^{-k} = 2^{-0} = 1$), we may mutate it, but since we
 only need to read from \texttt{weights}, its fractional permission index can be
 universally-quantified. In the recursive call, we see \texttt{\_} being used
@@ -345,7 +347,7 @@ permission based on the given arguments.
 
 \emph{The most pertinent aspect of \lang\ is the types of its primitives}
 (Figure~\ref{fig:primitive_types}).  While the types of operations such as
-\texttt{get} and \texttt{set} might be borderline obvious, the types of
+\textbf{get} and \textbf{set} might be borderline obvious, the types of
 BLAS/LAPACK routines become an \emph{incredibly useful, automated check for
 using the API correctly.}
 
@@ -354,32 +356,29 @@ using the API correctly.}
     \[\def\arraystretch{1.3}
     \begin{array}{rcl}
 %
-        \ottkw{symm} &:& \; !\Bool \multimap \; !\Elt \multimap \; {'x}. \:
-            {'x}\ \Mat \multimap \; {'y}. \:  {'y}\ \Mat \multimap \; !\Elt
-            \multimap \texttt{z}\ \Mat \multimap
-            \\ && ( {'x}\ \Mat \otimes {'y}\ \Mat ) \otimes \texttt{z}\ \Mat \\
+        \ottkw{symm} &:& {!\Bool} \multimap {!\Elt} \multimap {'x}.\
+            {{'x}\ \Mat} \multimap {'y}.\ {{'y}\ \Mat} \multimap {!\Elt}
+            \multimap {\Zf\ \Mat} \multimap
+            \\ && ( {{'x}\ \Mat} \otimes {{'y}\ \Mat} ) \otimes {\Zf\ \Mat} \\
 %
-        \ottkw{gemm} &:& \; !\Elt \multimap \; {'x}. \:  {'x}\ \Mat \: \otimes \;
-            !\Bool \multimap \; {'y}. \:  {'y}\ \Mat \: \otimes \; !\Bool
-            \multimap \; !\Elt \multimap
-            \\ && \texttt{z}\ \Mat \multimap ( {'x}\ \Mat \otimes {'y}\ \Mat )
-            \otimes \texttt{z}\ \Mat \\
+        \ottkw{gemm} &:& {!\Elt} \multimap {'x}.\ {{'x}\ \Mat} \otimes
+            {!\Bool} \multimap {'y}.\ {{'y}\ \Mat} \otimes {!\Bool}
+            \multimap {!\Elt} \multimap
+            \\ && {\Zf\ \Mat} \multimap ( {{'x}\ \Mat} \otimes {{'y}\ \Mat} )
+            \otimes {\Zf\ \Mat} \\
 %
-        \ottkw{gesv} &:& \texttt{z}\ \Mat \multimap \texttt{z}\ \Mat \multimap
-            \texttt{z}\ \Mat \otimes \texttt{z}\ \Mat \\
+        \ottkw{gesv} &:& {\Zf\ \Mat} \multimap {\Zf\ \Mat} \multimap
+            {\Zf\ \Mat} \otimes {\Zf\ \Mat} \\
 %
-        \ottkw{posv} &:& \texttt{z}\ \Mat \multimap \texttt{z}\ \Mat \multimap
-            \texttt{z}\ \Mat \otimes \texttt{z}\ \Mat \\
+        \ottkw{posv} &:& {\Zf\ \Mat} \multimap {\Zf\ \Mat} \multimap
+            {\Zf\ \Mat} \otimes {\Zf\ \Mat} \\
 %
-        \ottkw{posv\_flip} &:& \texttt{z}\ \Mat \multimap \texttt{z}\ \Mat
-            \multimap \texttt{z}\ \Mat \otimes \texttt{z}\ \Mat \\
+        \ottkw{potrs} &:& {'x}.\ {{'x}\ \Mat} \multimap {\Zf\ \Mat}
+            \multimap {{'x}\ \Mat} \otimes {\Zf\ \Mat} \\
 %
-        \ottkw{potrs} &:& {'x}. \:  {'x}\ \Mat \multimap \texttt{z}\ \Mat
-            \multimap {'x}\ \Mat \otimes \texttt{z}\ \Mat \\
-%
-        \ottkw{syrk} &:& \; !\Bool \multimap \; !\Elt \multimap \; {'x}. \:
-            {'x}\ \Mat \multimap \; !\Elt \multimap \texttt{z}\ \Mat \multimap \;
-            {'x}\ \Mat \otimes \texttt{z}\ \Mat \\
+        \ottkw{syrk} &:& {!\Bool} \multimap {!\Elt} \multimap {'x}.\
+            {{'x}\ \Mat} \multimap {!\Elt} \multimap {\Zf\ \Mat} \multimap
+            {{'x}\ \Mat} \otimes {\Zf\ \Mat} \\
 %
     \end{array} \]
     \end{center}
@@ -395,7 +394,7 @@ very easy to give each a \lang\ type -- every argument that can modify/consume
 its argument needs a full permission, and all others can be
 fraction-polymorphic.  Taking Fortran as an example, it has a notion of
 \texttt{in}, \texttt{out} and \texttt{inout} parameters. The latter two would
-need full \texttt{z} permissions; the first would be fraction-polymorphic.
+need full \Zf permissions; the first would be fraction-polymorphic.
 
 \subsubsection{Squaring a Matrix}
 
@@ -415,9 +414,10 @@ surrounding environment).
 
 To square a matrix, first, we extract the dimensions of the argument
 \texttt{x}. Then, because we need to use \texttt{x} twice (so that we can
-multiply it by itself) but linearity only allows one use, we use \highl{shareM:
-'x. 'x mat --o 'x s mat * 'x s mat} to split the permission \texttt{'x} (which
-represents $2^{-x}$) into two halves (\texttt{'x s}, which represents $2^{-(x+1)}$).
+multiply it by itself) but linearity only allows one use, we use
+$\ottkw{shareM}:\ {'x}.\ {{'x}\ \Mat} \multimap {{'x}\ \Sf\ \Mat} \otimes
+{{'x}\ \Sf\ \Mat}$ to split the permission \texttt{'x} (which represents
+$2^{-x}$) into two halves (\texttt{'x s}, which represents $2^{-(x+1)}$).
 
 Even if \texttt{x} had type \texttt{z mat}, sharing it now enforces the
 assumption of all BLAS/LAPACK routines that any matrix which is written to
@@ -447,17 +447,17 @@ By using some simple pattern-matching and syntactic sugar
 \begin{center}
 \[\def\arraystretch{1.3}
     \begin{array}{rcl}
-    \mathbf{let\ } v \leftarrow x[e]\ \mathbf{in\ } e &
+    \Let\ v \leftarrow x[e]\ \In\ e &
     \Rightarrow &
-    \mathbf{let\ } (x, !v)\ = x[e]\ \mathbf{in\ } e \qquad \textrm{(similarly for matrices)}
+    \Let\ (x, !v)\ = x[e]\ \In\ e \qquad \textrm{(similarly for matrices)}
 \\
-    \mathbf{let\ } x_2 \leftarrow \mathbf{new}\ [|\ x_1\ |]\ \mathbf{in\ } e &
+    \Let\ x_2 \leftarrow \ottkw{new}\ [|\ x_1\ |]\ \In\ e &
     \Rightarrow &
-    \mathbf{let\ } (x_1, x_2)\ = \mathbf{copyM\ } \_\ x_1\ \mathbf{in\ } e
+    \Let\ (x_1, x_2)\ = \ottkw{copyM}\ \_\ x_1\ \In\ e
 \\
-    \mathbf{let\ } x_2 \leftarrow [|\ x_1\ |]\ \mathbf{in\ } e &
+    \Let\ x_2 \leftarrow [|\ x_1\ |]\ \In\ e &
     \Rightarrow &
-    \mathbf{let\ } (x_1, x_2)\ = \mathbf{copyM\_to\ } \_\  x_1\ x_2\ \mathbf{in\ } e
+    \Let\ (x_1, x_2)\ = \ottkw{copyM\_to}\ \_\ x_1\ x_2\ \In\ e
     \end{array}
 \]
 \[
@@ -466,40 +466,40 @@ By using some simple pattern-matching and syntactic sugar
 \end{center}
 \begin{align*}
 % new
-    \mathbf{let\ } &Y \leftarrow \mathbf{new}\ (n, k)\ [|\ \alpha M_1 M_2 \ |]\ \mathbf{in\ } e
+    \Let\ &Y \leftarrow \ottkw{new}\ (n, k)\ [|\ \alpha M_1 M_2 \ |]\ \In\ e
     \Rightarrow \\
-    & \mathbf{let\ } Y\ = \mathbf{matrix\ } n\ k\ \mathbf{in}
-    \ \mathbf{let\ } Y \leftarrow [|\ \alpha M_1 M_2 + 0Y\ |]\ \mathbf{in\ } e
+    & \Let\ Y\ = \ottkw{matrix}\ n\ k\ \In
+    \ \Let\ Y \leftarrow [|\ \alpha M_1 M_2 + 0Y\ |]\ \In\ e
 \\[0.1\baselineskip]
 %syrk
-    \mathbf{let\ } &Y \leftarrow [|\ \alpha X X^T + \beta Y\ |]\ \mathbf{in\ } e
+    \Let\ &Y \leftarrow [|\ \alpha X X^T + \beta Y\ |]\ \In\ e
     \Rightarrow \\
-    & \mathbf{let\ } (X,Y)\ = \mathbf{syrk\ } \mathbf{false}
-    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e
+    & \Let\ (X,Y)\ = \ottkw{syrk}\ \ottkw{false}
+    \ \alpha\ \_\ X\ \beta\ Y\ \In\ e
 \\[0.1\baselineskip]
-    \mathbf{let\ } &Y \leftarrow [|\ \alpha X^T X + \beta Y\ |]\ \mathbf{in\ } e
+    \Let\ &Y \leftarrow [|\ \alpha X^T X + \beta Y\ |]\ \In\ e
     \Rightarrow \\
-    & \mathbf{let\ } (X,Y)\ = \mathbf{syrk\ } \mathbf{true}
-    \ \alpha\ \_\ X\ \beta\ Y\ \mathbf{in\ } e
+    & \Let\ (X,Y)\ = \ottkw{syrk}\ \ottkw{true}
+    \ \alpha\ \_\ X\ \beta\ Y\ \In\ e
 %symm
 \\[0.1\baselineskip]
-    \mathbf{let\ } &Y \leftarrow\ [|\ \alpha\,\textrm{sym}(X_1)\,X_2 + \beta Y\ |]\ \mathbf{in\ } e
+    \Let\ &Y \leftarrow\ [|\ \alpha\,\textrm{sym}(X_1)\,X_2 + \beta Y\ |]\ \In\ e
     \Rightarrow \\
-    & \mathbf{let\ } ((X_1,X_2),Y)\ = \mathbf{symm\ } \mathbf{false}
-        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ } e
+    & \Let\ ((X_1,X_2),Y)\ = \ottkw{symm}\ \ottkw{false}
+        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \In\ e
 \\[0.1\baselineskip]
-    \mathbf{let\ } &Y \leftarrow\ [|\ \alpha\,X_2\,\textrm{sym}(X_1) + \beta Y\ |]\ \mathbf{in\ } e
+    \Let\ &Y \leftarrow\ [|\ \alpha\,X_2\,\textrm{sym}(X_1) + \beta Y\ |]\ \In\ e
     \Rightarrow \\
-    & \mathbf{let\ } ((X_1,X_2),Y)\ = \mathbf{symm\ } \mathbf{true}
-        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \mathbf{in\ } e
+    & \Let\ ((X_1,X_2),Y)\ = \ottkw{symm}\ \ottkw{true}
+        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \In\ e
 \\[0.1\baselineskip]
 %gemm
-    \mathbf{let\ } &Y \leftarrow [|\ \alpha X_1^{T?} X_2^{T?} + \beta Y\ |]\ \mathbf{in\ } e
+    \Let\ &Y \leftarrow [|\ \alpha X_1^{T?} X_2^{T?} + \beta Y\ |]\ \In\ e
     \Rightarrow \\
-    & \mathbf{let\ } ((X_1,X_2),Y)\ =\ \mathbf{gemm\ } \alpha
-        \ \_\ \left(X_1, \substack{\mathbf{true}\\\mathbf{false}}\right)
-        \ \_\ \left(X_2, \substack{\mathbf{true}\\\mathbf{false}}\right)
-        \ \beta\ Y\ \mathbf{in\ } e
+    & \Let\ ((X_1,X_2),Y)\ =\ \ottkw{gemm}\ \alpha
+        \ \_\ \left(X_1, \substack{\ottkw{true}\\\ottkw{false}}\right)
+        \ \_\ \left(X_2, \substack{\ottkw{true}\\\ottkw{false}}\right)
+        \ \beta\ Y\ \In\ e
 \end{align*}
 
 \caption{Purely syntactic pattern-matching translations of
@@ -525,16 +525,17 @@ used in Figure~\ref{fig:lang_square}, with a \highl{^T} annotation on
 
 However, the line \highl{let x_T_x <- new (m,m) [| x^T * x |]}, works for a
 slightly different reason: that pattern is matched to a BLAS call to
-(\highl{syrk true 1.  x 0. x_T_x}), which only uses \texttt{x} once. Hence
+(\highl{syrk true 1. x 0. x_T_x}), which only uses \texttt{x} once. Hence
 \texttt{x} can appear \emph{twice} in the \emph{pattern} without any calls to
 \texttt{share}.
 
 After computing \texttt{x\_T\_x}, we need to invert it and then multiply it by
-\texttt{xy}. The BLAS routine \highl{posv: z mat --o z mat --o z mat * z mat}
-does exactly that: assuming the first argument is symmetric, \texttt{posv}
-mutates its second argument to contain the desired value. Its first argument is
-also mutated to contain the (upper triangular) Cholesky decomposition factor of
-the original matrix. Since we do not need that matrix (or its memory) again, we
+\texttt{xy}. The BLAS routine $\ottkw{posv}:\ {\Zf\ \Mat} \multimap
+{\Zf\ \Mat} \multimap {\Zf\ \Mat} \otimes {\Zf\ \Mat}$ does
+exactly that: assuming the first argument is symmetric, \texttt{posv} mutates
+its second argument to contain the desired value. Its first argument is also
+mutated to contain the (upper triangular) Cholesky decomposition factor of the
+original matrix. Since we do not need that matrix (or its memory) again, we
 \texttt{free} it. If we forgot to, we would get a \texttt{Variable to\_del not
 used} error. Lastly, we return the \texttt{answer} alongside the untouched
 input matrices \texttt{(x,y)}.
@@ -555,11 +556,12 @@ However, it still serves as a useful example of explaining \lang's features.
 \end{figure}
 
 Figure~\ref{fig:lang_l1_norm_min} shows even more pattern-matching. Patterns of
-the form \highl{let <id> <- [| beta * c + alpha * a * b |]} are also desugared to
-\texttt{gemm} calls. Primitives like \highl{transpose: 'x. 'x mat --o 'x mat *
-z mat} and \highl{eye: !int --o z mat} allocate new matrices;
-\texttt{transpose} returns the transpose of a given matrix and \texttt{eye k}
-evaluates to a $k \times k$ identity matrix.
+the form \highl{let <id> <- [| beta * c + alpha * a * b |]} are also desugared
+to \texttt{gemm} calls. Primitives like $\ottkw{transpose}:\ {'x}.\ {{'x}\ \Mat}
+\multimap {{'x}\ \Mat} \otimes {\Zf\ \Mat}$ and $\ottkw{eye}:\ {!\Int}
+\multimap {\Zf\ \Mat}$ allocate new matrices; \texttt{transpose} returns
+the transpose of a given matrix and \texttt{eye k} evaluates to a $k \times k$
+identity matrix.
 
 We also see our first example of re-using memory for different matrices: like
 with \texttt{to\_del} and \texttt{posv} in the previous example, we do not need
@@ -574,7 +576,7 @@ throughout the computation.
 
 \subsubsection{Kalman Filter}
 
-A \emph{Kalman Filter}~\cite{kalman} is a an algorithm for combining prior
+A \emph{Kalman Filter}~\cite{kalman} is an algorithm for combining prior
 knowledge of a state, a statistical model and measurements from (noisy) sensors
 to produce an estimate a more reliable estimated of the current state.  It has
 various applications (navigation, signal-processing, econometrics) and is

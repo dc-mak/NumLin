@@ -31,10 +31,10 @@ result, programs written in high-level statistical languages can
 be much less memory-efficient than programs that make full use
 of the powers the low-level APIs offer. 
 
-So in practice, programmers face a tradeoff: they can eschew safety
+So in practice, programmers face a trade-off: they can eschew safety
 and exploit the full power of the underlying linear algebra libraries,
 or they can obtain safety at the price of unneeded copies and worse
-memory efficiency. In this work, we show that this tradeoff is not a
+memory efficiency. In this work, we show that this trade-off is not a
 fundamental one.
 
 \lang\ is a functional programming language whose type system is
@@ -58,6 +58,19 @@ algorithm, using \lang's type system to guide us.
 
 \subsection{Contributions}
 
+Our contribution is the idea applying of linear types with fractional
+permissions to enforce the correct \emph{usage} (as opposed to
+\emph{implementation}) of linear algebra libraries. We explain the idea in
+detail and provide evidence for its efficacy. Prior type systems for fractional
+permissions \cite{boyland2003, bierhoff, bierhoff2008plural} are quite complex.
+This is because these type systems typically encode a sophisticated analysis to
+automatically infer how fractional permissions should be split and rejoined.
+
+In contrast, in \lang, we made sharing and merging explicit. As a result, we
+were able to drastically simplify the type system. Thefore, our formal system
+is very close to standard presentations of linear logic, and the implementation
+complexity is no worse than that for parametric polymorphism.
+
 In this paper
 \begin{itemize}
     \item we describe \lang, a linearly typed language for linear algebra programs
@@ -68,7 +81,7 @@ In this paper
         for polymorphic fractional permissions (similar to ones used for
         parametric polymorphism), demonstrating an alternative approach to
         dataflow analysis \cite{bierhoff}
-    \item we describe an implementation that is both compatible with and usable
+    \item we describe an implementation that is compatible with and usable
         from existing code
     \item we show an example of how using \lang\ helped highlight linearity
         and aliasing bugs, and reduce the memory usage of a \emph{generated}

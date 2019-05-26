@@ -488,7 +488,7 @@
 \RequirePackage{soul}
 \sodef\textsolittle{}{.12em}{.5em\@plus.08em\@minus.06em}%
         {.4em\@plus.275em\@minus.183em}
-\RequirePackage[dvipsnames,usenames]{color}
+\RequirePackage{color}
 \definecolor{darkgray}{rgb}{0.31,0.31,0.33}
 \RequirePackage{babel}
 \RequirePackage[tbtags,fleqn]{amsmath}

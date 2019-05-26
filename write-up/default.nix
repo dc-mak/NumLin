@@ -4,7 +4,7 @@ with pkgs;
 
 stdenv.mkDerivation {
 
-    name = "lt4la";
+    name = "numlin";
 
     buildInputs = [
         (texlive.combine {

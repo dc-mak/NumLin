@@ -1,10 +1,11 @@
 \section{Lemmas}
 
-\subsection{$
+\subsection{Moral equivalent of frame-rule
+\texorpdfstring{$
     \forall \sigma_s, \sigma_r, e.\ \varsigma_s \star \varsigma_r \textrm{ defined }
     \Rightarrow \forall n.\ \langle \sigma_s, e \rangle \rightarrow^n =
     \langle \sigma_s + \sigma_r , e \rangle \rightarrow^n
-$}\label{frame}
+$}{}}\label{frame}
 
 \begin{proof}
 
@@ -19,82 +20,88 @@ $}\label{frame}
     \prove{$\langle \sigma_s + \sigma_r, e \rangle \rightarrow
         \langle \sigma_f + \sigma_r, e_f \rangle$.\\}
 
-    \step{}{\case{\textsc{Op\_Free}, $\sigma_s \equiv \sigma' + \{ l
+    \step{<1>1}{\case{\textsc{Op\_Free}, $\sigma_s \equiv \sigma' + \{ l
         \mapsto_1 m \}$, $\sigma_f = \sigma'$.}{\pf~Instantiate
         \textsc{Op\_Free} with $(\sigma' + \sigma_r) + \{ l \mapsto_1 m
         \}$,\\valid because $l \notin \dom(\varsigma_r)$ by $\varsigma' \star
         [l \mapsto_1 m] \star \varsigma_r$ defined (assumption).}}
 
-    \step{}{\case{\textsc{Op\_Matrix}}{
+    \step{<1>2}{\case{\textsc{Op\_Matrix}}{
         \pf~Rule has no requirements on $\sigma_s$ so will also work with
         $\sigma_s + \sigma_r$.
     }}
 
-    \step{}{\case{\textsc{Op\_Share}, $\sigma_s \equiv \sigma' + \{ l \mapsto_f
+    \step{<1>3}{\case{\textsc{Op\_Share}, $\sigma_s \equiv \sigma' + \{ l \mapsto_f
         m \}$, $\sigma_f = \sigma' + \{ l \mapsto_{\frac{1}{2} \cdot f} m \} +
         \{ l \mapsto_{\frac{1}{2} \cdot f} m \}$.}{
         \pf~Union-ing $\sigma_r$ does not remove $l \mapsto_f m$, so that can
         be split out of $ \sigma_s + \sigma_r$ as before.
     }}
 
-    \step{}{\case{\textsc{Op\_Unshare\_Eq}, $\sigma_s \equiv \sigma' + \{ l
+    \step{<1>4}{\case{\textsc{Op\_Unshare\_Eq}, $\sigma_s \equiv \sigma' + \{ l
         \mapsto_{\frac{1}{2} \cdot f} m \} + \{ l \mapsto_{\frac{1}{2} \cdot f}
         m \}$, $\sigma_f = \sigma' + \{ l \mapsto_f m \}$.}{}}
 
     \begin{proof}
 
-        \step{}{Union-ing $\sigma_r$ does not remove $l \mapsto_{\frac{1}{2}
+        \step{<2>1}{Union-ing $\sigma_r$ does not remove $l \mapsto_{\frac{1}{2}
             \cdot f} m$, so that can still be split out of $ \sigma_s + \sigma_r$.}
 
-        \step{}{There may also be other valid splits introduced by $\sigma_r$.}
+        \step{<2>2}{There may also be other valid splits introduced by $\sigma_r$.}
 
-        \step{}{However, by assumption of $\varsigma_s \star \varsigma_r$
+        \step{<2>3}{However, by assumption of $\varsigma_s \star \varsigma_r$
             defined, any splitting of $\sigma_s + \sigma_r$ will
             satisfy $f \leq 1$.}
 
     \end{proof}
 
-    \step{}{\case{\textsc{Op\_Gemm\_Match}}{}}
+    \step{<1>5}{\case{\textsc{Op\_Gemm\_Match}}{}}
 
     \begin{proof}
 
-        \step{}{By assumption of $\varsigma_s \star \varsigma_r$ defined,
+        \step{<2>1}{By assumption of $\varsigma_s \star \varsigma_r$ defined,
             either $l_1$ (or $l_2$, or both) are not in $\sigma_r$, or they are
             and the matrix values they point to are the same.}
 
-        \step{}{The permissions (of $l_1$ and/or $l_2$) may differ, but
+        \step{<2>2}{The permissions (of $l_1$ and/or $l_2$) may differ, but
             \textsc{Op\_Gemm\_Match} universally quantifies over them and
             leaves them unchanged, so they are irrelevant.}
 
-        \step{}{Only the pointed to matrix value at $l_3$ changes.}
+        \step{<2>3}{Only the pointed to matrix value at $l_3$ changes.}
 
-        \step{}{\suffices{$l_3 \notin \pi_1 [\sigma_r]$.}}
+        \step{<2>4}{\suffices{$l_3 \notin \pi_1 [\sigma_r]$.}}
 
-        \step{}{By assumption of $\varsigma_s \star \varsigma_r$ defined, $l_3
+        \step{<2>5}{By assumption of $\varsigma_s \star \varsigma_r$ defined, $l_3
             \notin \dom(\varsigma_r)$.}
 
-        \step{}{Hence $l_3 \notin \pi_1 [\sigma_r]$.}
+        \step{<2>6}{Hence $l_3 \notin \pi_1 [\sigma_r]$.}
 
     \end{proof}
 
 \end{proof}
 
-\subsection{$\forall k, t.\ \V{k}{t} \subseteq \C{k}{t}$}\label{subsetVC}
+\subsection{Semantically, values are expressions
+    \texorpdfstring{$\forall k, t.\ \V{k}{t} \subseteq \C{k}{t}$}{}
+}\label{subsetVC}
+
 Follows from definition of $\C{k}{t}$, $\rightarrow^j$ ($\forall n.\ \langle
 \sigma , v \rangle \rightarrow^n \langle \sigma , v \rangle$) for arbitrary
 $j \leq k$ and \ref{frame}.
 
-\subsection{$\forall \theta, \delta, \gamma, v.\ \theta(\delta(\gamma(v)))\textrm{ is a value.}$}\label{valueSub}
+\subsection{Values remain values under all substitutions
+    \texorpdfstring{$\forall \theta, \delta, \gamma, v.\ \theta(\delta(\gamma(v)))\textrm{ is a value.}$}{}
+}\label{valueSub}
 
 $\theta$ is irrelevant because it only maps fractional permission variables to
 fractional permissions. By construction, $\delta$ and $\gamma$ only map
 variables to values, and values are closed under substitution.
 
-\subsection{$
-    \forall k, \sigma, \sigma', e, e', t.  \ (\varsigma', e') \in \C{k}{t} \wedge
+\subsection{Stepping reduces the step-index
+\texorpdfstring{
+    $\forall k, \sigma, \sigma', e, e', t.  \ (\varsigma', e') \in \C{k}{t} \wedge
     \langle \sigma, e \rangle \rightarrow \langle \sigma', e' \rangle
     \Rightarrow (\varsigma, e) \in \C{k+1}{t}
-$}\label{stepInC}
+$}{}}\label{stepInC}
 
 In the lemma, and for the rest of its proof, $\varsigma = \den{H}{}{\sigma}$.
 
@@ -103,19 +110,21 @@ In the lemma, and for the rest of its proof, $\varsigma = \den{H}{}{\sigma}$.
     \assume{arbitrary $j < k + 1$, and $\sigma_r$ such that $\varsigma
     \star \varsigma_r$ defined.\\}
 
-    \step{}{\case{$j=0$. Clearly $\sigma_f = \sigma_s + \sigma_r$ and $e' = e$.}{
+    \step{<1>1}{\case{$j=0$. Clearly $\sigma_f = \sigma_s + \sigma_r$ and $e' = e$.}{
         Remains to show that if $e$ is a value then $(\varsigma_s \star
         \varsigma_r, e) \in \V{k}{t}$.\\
         This is true vacuously, because by assumption, $e$ is not a value.}}
 
-    \step{}{\case{$j \geq 1$. We have $\langle \sigma, e \rangle
+    \step{<1>2}{\case{$j \geq 1$. We have $\langle \sigma, e \rangle
         \rightarrow^j \, = \langle \sigma', e' \rangle \rightarrow^{j-1}$.}{
         Instantiate $(\varsigma', e') \in \C{k}{t}$, with $j-1 < k$ and
         $\sigma_r$ to conclude the required conditions.}}
 
 \end{proof}
 
-\subsection{$j \leq k \Rightarrow \den{\_\ }{k}{\cdot} \subseteq \den{\_\ }{j}{\cdot}$}\label{subsetKJ}
+\subsection{Monotonicity for step-index
+    \texorpdfstring{$j \leq k \Rightarrow \den{\_\ }{k}{\cdot} \subseteq \den{\_\ }{j}{\cdot}$}{}
+}\label{subsetKJ}
 
 For the rest of this proof, $\varsigma = \den{H}{}{\sigma}$.\\
 Lemma~\ref{stepInC} is the inductive step for this lemma for the $\C{}{}$ case.\\
@@ -130,62 +139,71 @@ Need to prove for $\V{}{}$, by induction on $t$ and then index.
 
     \prove{$(\varsigma_{v'}, v') \in \V{j}{t \multimap t'}$.\\}
 
-    \step{}{$v'$ is of the correct syntactic form (lambda or fixpoint) by
+    \step{<1>1}{$v'$ is of the correct syntactic form (lambda or fixpoint) by
         assumption.}
 
-    \step{}{\assume{arbitrary $j' \leq j$ and $(\varsigma_v, v) \in \V{j'}{t}$
+    \step{<1>2}{\assume{arbitrary $j' \leq j$ and $(\varsigma_v, v) \in \V{j'}{t}$
         such that $\varsigma_{v'} \star \varsigma_v$ is defined.}}
 
-    \step{}{\suffices{to show $(\varsigma_{v'} \star \varsigma_v, v' v) \in
+    \step{<1>3}{\suffices{to show $(\varsigma_{v'} \star \varsigma_v, v' v) \in
         \C{j'}{t'}$.}}
 
-    \step{}{This is true by instantiating $(\varsigma_{v'}, v') \in \V{k}{t
+    \step{<1>4}{This is true by instantiating $(\varsigma_{v'}, v') \in \V{k}{t
         \multimap t'}$ with $j' \leq k$ and $(\varsigma_v, v) \in \V{j'}{t}$.}
 
 \end{proof}
 
-\subsection{$\forall \Delta, \Gamma, t, k, \theta, \delta, \gamma.\ %
+\subsection{Domains match
+\texorpdfstring{$
+    \forall \Delta, \Gamma, t, k, \theta, \delta, \gamma.\ %
     \delta \in \den{I}{k}{\Delta}\theta \wedge \gamma \in \pi_2[\den{L}{k}{\Gamma}\theta]
-    \Rightarrow \dom(\Delta) = \dom(\delta)$ and $\dom(\Gamma) = \dom(\gamma)$}\label{samedom}
+    \Rightarrow \dom(\Delta) = \dom(\delta)$ and $\dom(\Gamma) = \dom(\gamma)
+$}{}}\label{samedom}
 
 \pf~By induction on $\Delta$ and $\Gamma$.
 
-\subsection{$\forall k, \Gamma, \Gamma', \theta, \sigma_+, \gamma_+.\ %
+\subsection{Splitting up linear environments corresponds to splitting up heaps
+\texorpdfstring{$
+    \forall k, \Gamma, \Gamma', \theta, \sigma_+, \gamma_+.\ %
     (\varsigma_+, \gamma) \in \den{L}{k}{ \Gamma, \Gamma' }\theta
     \wedge \Gamma, \Gamma' \textrm{ disjoint } \Rightarrow
     \exists \sigma, \gamma, \sigma' , \gamma' .\ \sigma_+ = \sigma + \sigma'
     \wedge \gamma, \gamma' \textrm{ disjoint }
     \wedge \gamma_+ = \gamma \cup \gamma'
     \wedge (\varsigma, \gamma) \in \den{L}{k}{\Gamma}
-    \wedge (\varsigma', \gamma') \in \den{L}{k}{\Gamma'} $}\label{restriction}
+    \wedge (\varsigma', \gamma') \in \den{L}{k}{\Gamma'}
+$}{}}\label{restriction}
 
 \pf~By induction on $\Gamma'$.
 
-\subsection{$\forall e, \sigma, e', \sigma', \theta.\
+\subsection{Fractional permission substitutions preserve progress
+\texorpdfstring{$
+    \forall e, \sigma, e', \sigma', \theta.\
     \langle \sigma, e \rangle \rightarrow \langle \sigma',  e' \rangle
     \Rightarrow \langle \theta(\sigma), \theta(e) \rangle \rightarrow
-    \langle \theta(\sigma') , \theta(e') \rangle$}\label{fracPermSub}
+    \langle \theta(\sigma') , \theta(e') \rangle
+$}{}}\label{fracPermSub}
 
 \pf~By induction on $\rightarrow$.
 \begin{proof}
 
-    \step{}{\assume{Arbitrary $e, \sigma, e', \sigma', \theta$ such that 
+    \step{<1>1}{\assume{Arbitrary $e, \sigma, e', \sigma', \theta$ such that 
         $\langle \sigma, e \rangle \rightarrow \langle \sigma', e' \rangle$.}}
 
-    \step{}{\suffices{To consider only the following rules which mention
-        fractional permission variables.}
-        \textsc{Op\_Frac\_Perm}, \textsc{Op\_Share}, \textsc{Op\_Unshare\_(N)Eq}
-        and \textsc{Op\_Gemm\_(Mis)Match}.}
+    \step{<1>2}{\suffices{To consider only the following rules which mention
+        fractional permission variables: \textsc{Op\_Frac\_Perm},
+        \textsc{Op\_Share}, \textsc{Op\_Unshare\_(N)Eq} and
+        \textsc{Op\_Gemm\_(Mis)Match}.}}
 
-    \step{}{\case{\textsc{Op\_Frac\_Perm.}}{Because substitution avoids capture,
+    \step{<1>3}{\case{\textsc{Op\_Frac\_Perm.}}{Because substitution avoids capture,
         \\ $\langle \theta(\sigma), \theta((\ottkw{fun}\: '\!f\!c \rightarrow v) \, [f])
          \rangle \rightarrow \langle \theta(\sigma' \, [f / f\!c]),
         \theta(v \, [f / f\!c]) \rangle$.}}
 
-    \step{}{The rest of the cases are parametric in their use of fractional
+    \step{<1>4}{The rest of the cases are parametric in their use of fractional
         permission variables and so will take the same step ater any substitution.}
 
-    \step{}{\textsc{Corollary:}
+    \step{<1>5}{\textsc{Corollary:}
         If $\langle \sigma \, [f_1 / f\!c], e \, [f_1 / f\!c] \rangle \rightarrow^n
         \langle \sigma_2, e'_2 \rangle$ and
         $\langle \sigma \, [f_2 / f\!c], e \, [f_2 / f\!c] \rangle \rightarrow^n

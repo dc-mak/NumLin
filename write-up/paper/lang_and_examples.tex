@@ -1,137 +1,11 @@
 \section{\lang\ Overview and Examples}\label{sec:lang_and_examples}
 
-\subsection{Syntax}
-
-\lang's concrete syntax is inspired by that of OCaml. It desugars
-(Figure~\ref{fig:lang_desugar}) into a smaller, core type and expression
-grammar (Figure~\ref{fig:core_grammar}).
-
-\begin{figure}[p]
-    \begin{center}
-    \[\def\arraystretch{1.3}
-    \begin{array}{rcl}
-        f & ::= & {'\!f\!c}
-                \mid \Zf
-                \mid f\ \Sf \\
-                \\
-        t & ::= & \Unit
-                \mid \Bool
-                \mid \Int
-                \mid \Elt
-                \mid f\ \Arr
-                \mid f\ \Mat
-                \mid \Bang t
-                \mid {'\!f\!c}.\ t
-                \mid t \otimes t'
-                \mid t \multimap t' \\
-                \\
-        e & ::= & p \textrm{ (primitives)}
-                \mid x \textrm{ (variable)}
-                \mid \Let\ x = e\ \In\ e'
-                \mid ()
-                \mid \Let\ () = e\ \In\ e'
-                \mid \ottkw{true}
-                \mid \ottkw{false}
-                \\ && \ottkw{if}\ e\ \ottkw{then}\ e_1\ \ottkw{else}\ e_2
-                \mid k \textrm{ (integer)}
-                \mid l \textrm{ (heap location)}
-                \mid el \textrm{ (array element)}
-                \\ && \Many\ v
-                \mid \Let\ \Many\ x = e\ \In\ e'
-                \mid \ottkw{fun}\ '\!f\!c \rightarrow e
-                    \textrm{ (frac. perm. abstraction)}
-                \\ && e\ [f] \textrm{ (frac. perm. specialisiation)}
-                \mid (e, e')
-                \mid \Let\ (a,b) = e\ \In\ e'
-                \\ && \ottkw{fun}\ x : t \rightarrow e
-                \mid e\ e'
-                \mid \ottkw{fix} \: (g, x : t, e : t')
-    \end{array} \]
-    \end{center}
-    \caption{Core fraction $f$, type $t$ and expression $e$ grammar of
-        \lang. Values $v$ are a subset of the expressions, their full
-        definition and a list of all primitives $p$ is in
-        Appendix~\ref{sec:grammar_def}.}\label{fig:core_grammar}
-\end{figure}
-
-\begin{figure}[p]
-\begin{center}
-\[\def\arraystretch{1.3}
-    \begin{array}{rcl}
-    x[e] &
-    \Rightarrow &
-    \ottkw{get}\ \_\ x\ (e) \:\qquad \textrm{(similarly for matrices)}
-\\
-    x[e_1] := e_2 &
-    \Rightarrow &
-    \ottkw{set}\ x\ (e_1)\ (e_2) \quad \textrm{(similarly for matrices)}
-\\
-\\
-    pat & ::= & () \mid x \mid {!x} \mid \Many\ pat \mid (pat, pat)
-\\
-    \Let\ !x = e_1\ \In\ e_2 &
-    \Rightarrow &
-    \specialcell[t]{l}{%
-        \Let\ \Many\ x = e_1\ \In \\
-        \Let\ \Many\ x = \Many\ (\Many\ x)\ \In\ e_2}
-\\
-    \Let\ \Many\ \langle pat_x \rangle\ = e_1\ \In\ e_2 &
-    \Rightarrow &
-    \specialcell[t]{l}{%
-        \Let\ \Many\ x = x\ \In \\
-        \Let\ \langle pat_x \rangle\ = x\ \In\ e_2}
-\\
-    \Let\ (\langle pat_a \rangle, \langle pat_b \rangle)\ = e_1\ \In\ e_2 &
-    \Rightarrow &
-    \specialcell[t]{l}{%
-        \Let\ (a,b)\ = a\_b\ \In\
-        \Let\ \langle pat_a \rangle\ = a\ \In \\
-        \Let\ \langle pat_b \rangle\ = b\ \In\ e_2}
-\\
-    \ottkw{fun}\ (\langle pat_x \rangle : t) \rightarrow e &
-    \Rightarrow &
-    \ottkw{fun}\ (x : t) \rightarrow \Let\ \langle pat_x \rangle = x\ \In\ e
-\\
-\\
-    arg & ::= & \langle pat \rangle : t\ \mid\ {'x} \textrm{ (fractional permission variable)}
-\\
-    \ottkw{fun}\ \langle arg_{1 .. n} \rangle \rightarrow e &
-    \Rightarrow &
-    \ottkw{fun}\ \langle arg_1 \rangle \rightarrow ..
-    \ \ottkw{fun}\ \langle arg_n \rangle \rightarrow e
-\\
-    \Let\ f\ {\langle arg_{1 .. n} \rangle} = e_1\ \In\ e_2 &
-    \Rightarrow &
-    \Let\ f = \ottkw{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1\
-    \In\ e_2
-\\
-    \Let\ !f\ {\langle arg_{1 .. n} \rangle} = e_1\ \In\ e_2 &
-    \Rightarrow &
-    \Let\ \Many\ f = \Many\ (\ottkw{fun}\ {\langle arg_{1 .. n} \rangle}
-    \rightarrow e_1)\ \In\ e_2
-\\
-    \mathrm{fixpoint} & \equiv & \ottkw{fix}\ (f, x : t, \ottkw{fun}
-    \ {\langle arg_{0 .. n} \rangle} \rightarrow e_1 : {t'} )
-\\
-    \Let\ \ottkw{rec}\ f\ (x : t)\ {\langle arg_{0 .. n} \rangle} : {t'} = e_1\ \In\ e_2 &
-    \Rightarrow &
-    \Let\ f = \mathrm{fixpoint}\ \In\ e_2
-\\
-    \Let\ \ottkw{rec}\ !f\ (x : t)\ {\langle arg_{0 .. n} \rangle} : {t'} = e_1\ \In\ e_2 &
-    \Rightarrow &
-    \Let\ \Many\ f = \Many\ \mathrm{fixpoint}\ \In\ e_2
-    \end{array}
-\]
-\end{center}
-\caption{Desugaring \lang.}\label{fig:lang_desugar}
-\end{figure}
-
 \subsection{Type System and Other Features}
 
 The core type theory of \lang\ is a nearly off-the-shelf linear type
 theory~\cite{barber1996}, supporting familiar features such as linear function
 spaces $A \multimap B$ and tensor products $A \otimes B$. We adopt linearity --
-the restriction that each program variable be used at most once -- since it
+the restriction that each program variable be used exactly once -- since it
 allows us to express purely functional APIs for numerical library routines that
 mutate arrays and matrices~\cite{Wadler90}. Due to linearity, values cannot
 alias and are only used once, which means that linearly-typed updates result in
@@ -142,7 +16,7 @@ were ordinary mathematical expressions -- as indeed they are! We are
 merely adopting a stricter type discipline than usual to make managing
 memory safe.
 
-\subsubsection{Intuitionism: ! and \highl{Many}}
+\subsubsection{Intuitionism: ! and \texorpdfstring{\highl{Many}}{Many}}
 
 However, linearity by itself is not sufficient to produce an expressive enough
 programming language. For values such as booleans, integers, floating-point
@@ -155,7 +29,7 @@ and prevent a programmer from ignoring them (a memory leak), \lang\ enforces
 simple syntactic restrictions on which values can be wrapped up in a
 \highl{Many} constructor (details in Section~\ref{sec:formal_system}).
 
-\subsubsection{Fractional Permissions}
+\subsubsection{Fractional Permissions}\label{subsubsec:frac_perm}
 
 There are also valid cases in which we would want to alias pointers to a
 matrix. The most common is exemplified by the BLAS routine \highl{gemm}, which
@@ -214,23 +88,242 @@ linear values. A function can be recursive if it captures no linear values from
 its environment. Like with \highl{Many}, this is enforced via simple syntactic
 restrictions on the definition of recursive functions.
 
+\subsection{Syntax}\label{subsec:syntax}
+
+\lang's concrete syntax is inspired by that of OCaml. It desugars
+(Figure~\ref{fig:lang_desugar}) into a smaller, core type and expression
+grammar (Figure~\ref{fig:core_grammar}).
+
+\begin{figure}[p]
+    \begin{center}
+    \[\def\arraystretch{1.3}
+    \begin{array}{rcl}
+        f & ::= & {'\!f\!c}
+                \mid \Zf
+                \mid f\ \Sf \\
+                \\
+        t & ::= & \Unit
+                \mid \Bool
+                \mid \Int
+                \mid \Elt
+                \mid f\ \Arr
+                \mid f\ \Mat
+                \mid \Bang t
+                \mid {'\!f\!c}.\ t
+                \mid t \otimes t'
+                \mid t \multimap t' \\
+                \\
+        e & ::= & p \textrm{ (primitives)}
+                \mid x \textrm{ (variable)}
+                \mid \Let\ x = e\ \In\ e'
+                \mid ()
+                \mid \Let\ () = e\ \In\ e'
+                \mid \ottkw{true}
+                \mid \ottkw{false}
+                \\ && \ottkw{if}\ e\ \ottkw{then}\ e_1\ \ottkw{else}\ e_2
+                \mid k \textrm{ (integer)}
+                \mid l \textrm{ (heap location)}
+                \mid el \textrm{ (array element)}
+                \\ && \Many\ v
+                \mid \Let\ \Many\ x = e\ \In\ e'
+                \mid \ottkw{fun}\ '\!f\!c \rightarrow e
+                    \textrm{ (frac. perm. abstraction)}
+                \\ && e\ [f] \textrm{ (frac. perm. specialisation)}
+                \mid (e, e')
+                \mid \Let\ (a,b) = e\ \In\ e'
+                \\ && \ottkw{fun}\ x : t \rightarrow e
+                \mid e\ e'
+                \mid \ottkw{fix} \: (g, x : t, e : t')
+    \end{array} \]
+    \end{center}
+    \caption{Core fraction $f$, type $t$ and expression $e$ grammar of
+        \lang. Values $v$ are a subset of the expressions, their full
+        definition and a list of all primitives $p$ is in
+        Appendix~\ref{sec:grammar_def}.}\label{fig:core_grammar}
+\end{figure}
+
+\begin{figure}[p]
+\begin{center}
+\[\def\arraystretch{1.3}
+    \begin{array}{rcl}
+    x[e] &
+    \Rightarrow &
+    \ottkw{get}\ \_\ x\ (e) \:\qquad \textrm{(similarly for matrices)}
+\\
+    x[e_1] := e_2 &
+    \Rightarrow &
+    \ottkw{set}\ x\ (e_1)\ (e_2) \quad \textrm{(similarly for matrices)}
+\\
+\\
+    pat & ::= & () \mid x \mid {!x} \mid \Many\ pat \mid (pat, pat)
+\\
+    \Let\ !x = e_1\ \In\ e_2 &
+    \Rightarrow &
+    \specialcell[t]{l}{%
+        \Let\ \Many\ x = e_1\ \In \\
+        \Let\ \Many\ x = \Many\ (\Many\ x)\ \In\ e_2}
+\\
+    \Let\ \Many\ \langle pat_x \rangle\ = e_1\ \In\ e_2 &
+    \Rightarrow &
+    \specialcell[t]{l}{%
+        \Let\ \Many\ x = x\ \In \\
+        \Let\ \langle pat_x \rangle\ = x\ \In\ e_2}
+\\
+    \Let\ (\langle pat_a \rangle, \langle pat_b \rangle)\ = e_1\ \In\ e_2 &
+    \Rightarrow &
+    \specialcell[t]{l}{%
+        \Let\ (a,b)\ = a\_b\ \In\
+        \Let\ \langle pat_a \rangle\ = a\ \In \\
+        \Let\ \langle pat_b \rangle\ = b\ \In\ e_2}
+\\
+    \ottkw{fun}\ (\langle pat_x \rangle : t) \rightarrow e &
+    \Rightarrow &
+    \ottkw{fun}\ (x : t) \rightarrow \Let\ \langle pat_x \rangle = x\ \In\ e
+\\
+\\
+    arg & ::= & (\langle pat \rangle : t)\ \mid\ ({'x}) \textrm{ (fractional permission variable)}
+\\
+    \ottkw{fun}\ \langle arg_{1 .. n} \rangle \rightarrow e &
+    \Rightarrow &
+    \ottkw{fun}\ \langle arg_1 \rangle \rightarrow ..
+    \ \ottkw{fun}\ \langle arg_n \rangle \rightarrow e
+\\
+    \Let\ f\ {\langle arg_{1 .. n} \rangle} = e_1\ \In\ e_2 &
+    \Rightarrow &
+    \Let\ f = \ottkw{fun}\ {\langle arg_{1 .. n} \rangle} \rightarrow e_1\
+    \In\ e_2
+\\
+    \Let\ !f\ {\langle arg_{1 .. n} \rangle} = e_1\ \In\ e_2 &
+    \Rightarrow &
+    \Let\ \Many\ f = \Many\ (\ottkw{fun}\ {\langle arg_{1 .. n} \rangle}
+    \rightarrow e_1)\ \In\ e_2
+\\
+    \mathrm{fixpoint} & \equiv & \ottkw{fix}\ (f, x : t, \ottkw{fun}
+    \ {\langle arg_{0 .. n} \rangle} \rightarrow e_1 : {t'} )
+\\
+    \Let\ \ottkw{rec}\ f\ (x : t)\ {\langle arg_{0 .. n} \rangle} : {t'} = e_1\ \In\ e_2 &
+    \Rightarrow &
+    \Let\ f = \mathrm{fixpoint}\ \In\ e_2
+\\
+    \Let\ \ottkw{rec}\ !f\ (x : t)\ {\langle arg_{0 .. n} \rangle} : {t'} = e_1\ \In\ e_2 &
+    \Rightarrow &
+    \Let\ \Many\ f = \Many\ \mathrm{fixpoint}\ \In\ e_2
+    \end{array}
+\]
+\end{center}
+\caption{Desugaring \lang.}\label{fig:lang_desugar}
+\end{figure}
+
+\begin{figure}[t]
+\begin{center}
+\[\def\arraystretch{1.3}
+    \begin{array}{rcl}
+    \Let\ v \leftarrow x[e]\ \In\ e' &
+    \Rightarrow &
+    \Let\ (x, !v)\ = x[e]\ \In\ e' \qquad \textrm{(similarly for matrices)}
+\\
+    \Let\ x_2 \leftarrow \ottkw{new}\ [|\ x_1\ |]\ \In\ e &
+    \Rightarrow &
+    \Let\ (x_1, x_2)\ = \ottkw{copyM}\ \_\ x_1\ \In\ e
+\\
+    \Let\ x_2 \leftarrow [|\ x_1\ |]\ \In\ e &
+    \Rightarrow &
+    \Let\ (x_1, x_2)\ = \ottkw{copyM\_to}\ \_\ x_1\ x_2\ \In\ e
+    \end{array}
+\]
+\[
+    M ::= X\ \mid\ X^T\ \mid\ \textrm{sym}( X )
+\]
+\end{center}
+\begin{align*}
+% new
+    \Let\ &Y \leftarrow \ottkw{new}\ (n, k)\ [|\ \alpha M_1 M_2 \ |]\ \In\ e
+    \Rightarrow \\
+    & \Let\ Y\ = \ottkw{matrix}\ n\ k\ \In
+    \ \Let\ Y \leftarrow [|\ \alpha M_1 M_2 + 0Y\ |]\ \In\ e
+\\[0.1\baselineskip]
+%syrk
+    \Let\ &Y \leftarrow [|\ \alpha X X^T + \beta Y\ |]\ \In\ e
+    \Rightarrow \\
+    & \Let\ (X,Y)\ = \ottkw{syrk}\ \ottkw{false}
+    \ \alpha\ \_\ X\ \beta\ Y\ \In\ e
+\\[0.1\baselineskip]
+    \Let\ &Y \leftarrow [|\ \alpha X^T X + \beta Y\ |]\ \In\ e
+    \Rightarrow \\
+    & \Let\ (X,Y)\ = \ottkw{syrk}\ \ottkw{true}
+    \ \alpha\ \_\ X\ \beta\ Y\ \In\ e
+%symm
+\\[0.1\baselineskip]
+    \Let\ &Y \leftarrow\ [|\ \alpha\,\textrm{sym}(X_1)\,X_2 + \beta Y\ |]\ \In\ e
+    \Rightarrow \\
+    & \Let\ ((X_1,X_2),Y)\ = \ottkw{symm}\ \ottkw{false}
+        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \In\ e
+\\[0.1\baselineskip]
+    \Let\ &Y \leftarrow\ [|\ \alpha\,X_2\,\textrm{sym}(X_1) + \beta Y\ |]\ \In\ e
+    \Rightarrow \\
+    & \Let\ ((X_1,X_2),Y)\ = \ottkw{symm}\ \ottkw{true}
+        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \In\ e
+\\[0.1\baselineskip]
+%gemm
+    \Let\ &Y \leftarrow [|\ \alpha X_1^{T?} X_2^{T?} + \beta Y\ |]\ \In\ e
+    \Rightarrow \\
+    & \Let\ ((X_1,X_2),Y)\ =\ \ottkw{gemm}\ \alpha
+        \ \_\ \left(X_1, \substack{\ottkw{true}\\\ottkw{false}}\right)
+        \ \_\ \left(X_2, \substack{\ottkw{true}\\\ottkw{false}}\right)
+        \ \beta\ Y\ \In\ e
+\end{align*}
+
+\caption{Purely syntactic pattern-matching translations of
+    matrix expressions.}\label{fig:lang_matexp}
+\end{figure}
+
+As described in Section~\ref{subsubsec:frac_perm}, fractional permissions $f$
+are either variables $'\!f\!c$, $\Zf$ ($2^0$) or $f\ \Sf$ ($2^{-(f + 1)}$).
+
+Types are either simple ($\Unit$, $\Bool$, $\Int$, $\Elt$), indexed
+by fractional permission ($f\ \Arr$, $f\ \Mat$) or compound (!
+constructor for intuitionism, universally-quantifying over a
+fractional-permission $'\!f\!c$ in $t$ for fraction-polymorphic types, pairs,
+linear functions).
+
+Expressions are standard with the exception of $'\!f\!c.\ t$ introduction
+(fractional permission abstraction) and elimination (fractional permission
+specialisation) forms.
+
+The ! annotation on variables is a syntactic convenience for declaring the
+variable to used intuitionistically; why it desugars the way it does is
+explained in Section~\ref{subsec:core_tt}.
+
+Array/matrix indexing and duplication (non-destructive and destructive) also
+have special syntax to lessen the syntactic overhead of re-binding identifiers.
+Furthermore, to aid readability, there is support for using BLAS methods via
+conventional-looking matrix expressions.
+
+In particular, the syntax \highl{let y <- new (m,n) [| alpha * x1 * x2 |]} is
+syntactic sugar for first creating a new $m \times n$ matrix (\highl{let y =
+matrix m n}) and then storing the result of the multiplication in it
+(\highl{let ((x1, x2), y) = .. in ..}).
+
+Note that, the pattern \highl{let y <- [| x^T * x + beta * y |]} translates to
+(\highl{syrk true 1. x beta y}), which uses \texttt{x} once only.
+
 \subsection{Examples}
 
 \subsubsection{Factorial}\label{subsubsec:factorial}
 
 Although a factorial function (Figure~\ref{fig:lang_factorial}) may seem like
-an aggresively pedestrian first example, in a linearly typed language such as
+an aggressively pedestrian first example, in a linearly typed language such as
 \lang\ it represents the culmination of many features.
 
-To simplifiy the design and implementation of \lang's type system, recursive
+To simplify the design and implementation of \lang's type system, recursive
 functions must have full type annotations (non-recursive functions need only
-their argument types annotated). Its body is a closed expression (with respect
-to the function's arguments), so it type-checks (since it does not capture any
-linear values from its environment).
+their argument types annotated). The body of the factorial function is a closed
+expression (with respect to the function's arguments), so it type-checks (since
+it does not capture any linear values from its environment).
 
-The only argument is \highl{!x : !int}. The ! annotation on \texttt{x} is a
-syntactic convenience for declaring the value to used intuitionistically, its
-full and precise meaning is described in Section~\ref{subsec:core_tt}.
+The only argument is \highl{!x : !int}. As explained before
+(Section~\ref{subsec:syntax}), this declares \texttt{x} to be used
+intuitionistically.
 
 The condition for an \highl{if} may or may not use linear values (here, with
 \highl{x < 0 || x = 0}, it does not). Any linear values used by the condition
@@ -241,7 +334,7 @@ uses it twice.
 All numeric and boolean literals are implicitly wrapped in a \highl{Many} and
 all primitives involving them return a \highl{!int}, \highl{!bool} or
 \highl{!elt} (types of elements of arrays/matrices, typically 64-bit
-floating-point numbers). The short-circuting \texttt{||} behaves in exactly the
+floating-point numbers). The short-circuiting \texttt{||} behaves in exactly the
 same way as a boolean-valued \highl{if}-expression.
 
 \begin{figure}[t]
@@ -299,7 +392,8 @@ row[i]}. Indexing is implemented as a primitive $\ottkw{get}:\ {'x}.\ {{'x}\
 \Arr} \multimap {!\Int} \multimap {'x\ \Arr} \otimes {!\Elt}$.
 Although fractional permissions can be passed around explicitly  (as done in
 the recursive call), they can also be \emph{automatically inferred at call
-sites}: \highl{row[i] == get _ row i} takes advantage of this convenience.
+sites}: \highl{row[i]} $\Rightarrow$ \highl{get _ row i} takes advantage of
+this convenience.
 
 \subsubsection{One-dimensional Convolution}
 
@@ -333,10 +427,9 @@ simplifications are:
 Mutating an array is implemented similarly to indexing one -- a primitive
 $\ottkw{set}:\ {\Zf\ \Arr} \multimap {!\Int} \multimap {!\Elt} \multimap
 {\Zf\ \Arr}$. It consumes the original array and returns a new array with
-the updated value.  \highl{let written = write[i] := <exp> } is just syntactic
-sugar for \highl{let written = set write i <exp>}.
+the updated value.
 
-Since \highl{write: z arr} (where \Zf stands for $k=0$, representing a
+Since \highl{write: z arr} (where \Zf\ stands for $k=0$, representing a
 fractional permission of $2^{-k} = 2^{-0} = 1$), we may mutate it, but since we
 only need to read from \texttt{weights}, its fractional permission index can be
 universally-quantified. In the recursive call, we see \texttt{\_} being used
@@ -401,8 +494,7 @@ need full \Zf\ permissions; the first would be fraction-polymorphic.
 \begin{figure}[t]
     \centering
     \inputminted[fontsize=\small]{ocaml}{../../examples/square.lt}
-    \caption{Linear regression (OLS): $\hat\beta =
-        \mathbf{(X^T X)^{-1} X^T y}$}\label{fig:lang_square}
+    \caption{Squaring a matrix}\label{fig:lang_square}
 \end{figure}
 
 Figure~\ref{fig:lang_square} shows how a linearly-typed matrix squaring
@@ -426,12 +518,6 @@ matrix in scope. So if we did try to use one of the aliases in mutating way,
 the expression would not type check, and we would get an error similar to the
 one in Figure~\ref{fig:lang_errormsg}.
 
-The line \highl{let answer <- new (m,n) [| x1 * x2 |]} is syntactic sugar for
-first creating a new $m \times n$ matrix (\highl{let answer = matrix m n}) and
-then storing the result of the multiplication in it (\highl{let ((x1, x2),
-answer) = gemm 1. _ (x1, false) _ (x2, false) 0. answer}). \highl{false} means
-the matrix should not be accessed with indices transposed.
-
 By using some simple pattern-matching and syntactic sugar
 (Figure~\ref{fig:lang_matexp}), we can:
 \begin{itemize}
@@ -442,69 +528,6 @@ By using some simple pattern-matching and syntactic sugar
         having the compiler statically enforce the aliasing and read/write rules
         implicitly assumed by BLAS/LAPACK routines.
 \end{itemize}
-
-\begin{figure}[t]
-\begin{center}
-\[\def\arraystretch{1.3}
-    \begin{array}{rcl}
-    \Let\ v \leftarrow x[e]\ \In\ e &
-    \Rightarrow &
-    \Let\ (x, !v)\ = x[e]\ \In\ e \qquad \textrm{(similarly for matrices)}
-\\
-    \Let\ x_2 \leftarrow \ottkw{new}\ [|\ x_1\ |]\ \In\ e &
-    \Rightarrow &
-    \Let\ (x_1, x_2)\ = \ottkw{copyM}\ \_\ x_1\ \In\ e
-\\
-    \Let\ x_2 \leftarrow [|\ x_1\ |]\ \In\ e &
-    \Rightarrow &
-    \Let\ (x_1, x_2)\ = \ottkw{copyM\_to}\ \_\ x_1\ x_2\ \In\ e
-    \end{array}
-\]
-\[
-    M ::= X\ \mid\ X^T\ \mid\ \textrm{sym}( X )
-\]
-\end{center}
-\begin{align*}
-% new
-    \Let\ &Y \leftarrow \ottkw{new}\ (n, k)\ [|\ \alpha M_1 M_2 \ |]\ \In\ e
-    \Rightarrow \\
-    & \Let\ Y\ = \ottkw{matrix}\ n\ k\ \In
-    \ \Let\ Y \leftarrow [|\ \alpha M_1 M_2 + 0Y\ |]\ \In\ e
-\\[0.1\baselineskip]
-%syrk
-    \Let\ &Y \leftarrow [|\ \alpha X X^T + \beta Y\ |]\ \In\ e
-    \Rightarrow \\
-    & \Let\ (X,Y)\ = \ottkw{syrk}\ \ottkw{false}
-    \ \alpha\ \_\ X\ \beta\ Y\ \In\ e
-\\[0.1\baselineskip]
-    \Let\ &Y \leftarrow [|\ \alpha X^T X + \beta Y\ |]\ \In\ e
-    \Rightarrow \\
-    & \Let\ (X,Y)\ = \ottkw{syrk}\ \ottkw{true}
-    \ \alpha\ \_\ X\ \beta\ Y\ \In\ e
-%symm
-\\[0.1\baselineskip]
-    \Let\ &Y \leftarrow\ [|\ \alpha\,\textrm{sym}(X_1)\,X_2 + \beta Y\ |]\ \In\ e
-    \Rightarrow \\
-    & \Let\ ((X_1,X_2),Y)\ = \ottkw{symm}\ \ottkw{false}
-        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \In\ e
-\\[0.1\baselineskip]
-    \Let\ &Y \leftarrow\ [|\ \alpha\,X_2\,\textrm{sym}(X_1) + \beta Y\ |]\ \In\ e
-    \Rightarrow \\
-    & \Let\ ((X_1,X_2),Y)\ = \ottkw{symm}\ \ottkw{true}
-        \ \alpha\ \_ \ X_1 \_\ X_2\ \beta\ Y\ \In\ e
-\\[0.1\baselineskip]
-%gemm
-    \Let\ &Y \leftarrow [|\ \alpha X_1^{T?} X_2^{T?} + \beta Y\ |]\ \In\ e
-    \Rightarrow \\
-    & \Let\ ((X_1,X_2),Y)\ =\ \ottkw{gemm}\ \alpha
-        \ \_\ \left(X_1, \substack{\ottkw{true}\\\ottkw{false}}\right)
-        \ \_\ \left(X_2, \substack{\ottkw{true}\\\ottkw{false}}\right)
-        \ \beta\ Y\ \In\ e
-\end{align*}
-
-\caption{Purely syntactic pattern-matching translations of
-    matrix expressions.}\label{fig:lang_matexp}
-\end{figure}
 
 \subsubsection{Linear Regression}
 
@@ -523,11 +546,9 @@ syntactic sugar for \texttt{matrix} and \texttt{gemm} calls similar to that
 used in Figure~\ref{fig:lang_square}, with a \highl{^T} annotation on
 \texttt{x} to set \texttt{x}'s `transpose indices'-flag to \highl{true}).
 
-However, the line \highl{let x_T_x <- new (m,m) [| x^T * x |]}, works for a
-slightly different reason: that pattern is matched to a BLAS call to
-(\highl{syrk true 1. x 0. x_T_x}), which only uses \texttt{x} once. Hence
-\texttt{x} can appear \emph{twice} in the \emph{pattern} without any calls to
-\texttt{share}.
+Note that \texttt{x} can appear \emph{twice} in the \emph{pattern} without any
+calls to \texttt{share} because the pattern is matched to a BLAS call to
+\highl{syrk true 1. x 0. x_T_x}, which uses \texttt{x} once only.
 
 After computing \texttt{x\_T\_x}, we need to invert it and then multiply it by
 \texttt{xy}. The BLAS routine $\ottkw{posv}:\ {\Zf\ \Mat} \multimap
@@ -555,9 +576,7 @@ However, it still serves as a useful example of explaining \lang's features.
         $\mathbf{Q^{-1}U(I+U^TQ^{-1}U)^{-1}U^T}$}\label{fig:lang_l1_norm_min}
 \end{figure}
 
-Figure~\ref{fig:lang_l1_norm_min} shows even more pattern-matching. Patterns of
-the form \highl{let <id> <- [| beta * c + alpha * a * b |]} are also desugared
-to \texttt{gemm} calls. Primitives like $\ottkw{transpose}:\ {'x}.\ {{'x}\ \Mat}
+Primitives like $\ottkw{transpose}:\ {'x}.\ {{'x}\ \Mat}
 \multimap {{'x}\ \Mat} \otimes {\Zf\ \Mat}$ and $\ottkw{eye}:\ {!\Int}
 \multimap {\Zf\ \Mat}$ allocate new matrices; \texttt{transpose} returns
 the transpose of a given matrix and \texttt{eye k} evaluates to a $k \times k$
@@ -565,11 +584,11 @@ identity matrix.
 
 We also see our first example of re-using memory for different matrices: like
 with \texttt{to\_del} and \texttt{posv} in the previous example, we do not need
-the value stored in \texttt{tmp\_5\_5} after the call to \texttt{gesv} (a
+the value stored in \texttt{tmp\_n\_n} after the call to \texttt{gesv} (a
 primitive similar to \texttt{posv} but for a non-symmetric first argument).
 However, we can re-use its memory much later to store \texttt{answer} with
-\highl{let answer <- [| 0. * tmp_5_5 + q_inv_u * inv_u_T |]}. Again, thanks to
-linearity, the identifiers \texttt{q} and \texttt{tmp\_5\_5} are out of scope
+\highl{let answer <- [| 0. * tmp_n_n + q_inv_u * inv_u_T |]}. Again, thanks to
+linearity, the identifiers \texttt{q} and \texttt{tmp\_n\_n} are out of scope
 by the time \texttt{answer} is bound. Although during execution, all three
 refer to the same piece of memory, logically they represent different values
 throughout the computation.
@@ -617,8 +636,6 @@ are used in this implementation:
     \item \texttt{copyM\_to} is used to re-use memory by \emph{overwriting} the
         contents of its second argument to that of its first (erroring if
         dimensions do not match)
-
-    \item \highl{let new_r <- new [| r_2 |]} creates a copy of \texttt{r\_2}
 
     \item \texttt{posvFlip} is like \texttt{posv} except for solving $XA = B$
 

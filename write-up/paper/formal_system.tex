@@ -17,7 +17,7 @@ ideas are as follow.
     \item $\Delta$ is the environment storing non-linearly or \emph{inuitionistically}
         typed variables.
 
-    \item $\Gamma$ is the environment storing linearly typed variables. 
+    \item $\Gamma$ is the environment storing linearly typed variables.
 
 \end{itemize}
 
@@ -71,7 +71,7 @@ can be expressed using only the rules presented thus far, as $\mathbf{let\
 Many}\ x = e\ \mathbf{in\ } \mathbf{let\ Many}\ x = \mathbf{Many}\
 (\mathbf{Many}\ x)\ \mathbf{in}\ e'$.\footnote{\emph{Why} we have this at all
     is for the sake of ergonomics when using binary arithmetic operations
-    (e.g.\ of type $!\ottkw{int} \, \otimes \, !\ottkw{int} \multimap \;
+    (e.g.\ of type $!\ottkw{int} \multimap \; !\ottkw{int} \multimap \;
     !\ottkw{int}$): a programmer should be able to write \highl{let x = 5 + 5
     in x - x}, which, although non-linear in \highl{x}, is morally right
     because integers and operations on them rarely need to be linear. Though it
@@ -204,7 +204,7 @@ that are written to and $\mapsto_{f\!c}$ for anything else.
     \ottdruleOpXXGemmXXMatch{}
 \]
 
-\subsection{Logical Relation}
+\subsection{Logical Relation}\label{subsec:logical_rel}
 
 First, we define an interpretation of heaps with fractional permissions in the
 style of Bornat et. al~\cite{bornat} (interpreting the multiset as a partial
@@ -244,7 +244,7 @@ needs a $\star$ combination of the heaps required for each component.
 
 The definition of $\V{k}{ '\!f\!c.\ t}$ says a value and heap
 must be the same regardless of what fraction is substituted into both; the
-$k-1$ is to take into account fraction specialisation takes ones step
+$k-1$ is to take into account fraction specialisation takes one step
 (\textsc{Op\_Spc}).
 
 \vspace{-\baselineskip}
@@ -255,9 +255,10 @@ $k-1$ is to take into account fraction specialisation takes ones step
 To understand the definition of $\V{k}{t' \multimap t}$, we must first look at
 $\C{k}{t}$, the computational interpretation of types. Intuitively, it is a
 combination of a frame rule on heaps (no interference), type-preservation and
-termination (in $j < k$ steps) to either an error or a heap-and-expression,
-with the further condition that if the expression is a syntactic value then it
-is also one semantically.
+termination (in $j < k$ steps) to either an error or a heap-and-expression.
+For the case of termination to a heap-and-expression, there is a further
+condition: if the expression is a value syntactically then it is also one
+semantically.
 \begin{align*}
     \C{k}{ t } &= \{ (\varsigma_s, e_s) \mid \forall \, j < k, \sigma_r.\ \varsigma_s \star \varsigma_r \textrm{ defined } \Rightarrow \langle \sigma_s + \sigma_r, e_s \rangle \rightarrow^j \ottkw{err}\ \vee \exists \sigma_f, e_f.\\
                & \qquad \qquad \langle \sigma_s + \sigma_r, e_s \rangle \rightarrow^j \langle \sigma_f + \sigma_r, e_f \rangle \wedge ( e_f \textrm { is a value } \Rightarrow ( \varsigma_f \star \varsigma_r, e_f ) \in \V{k-j}{t} ) \}
@@ -301,24 +302,24 @@ $\delta$ and heaps $\sigma$. Note that, $\varsigma \equiv \den{H}{}{\theta(\sigm
 
 \subsubsection{Explanation}
 
-If an expression is syntactically type-checked, then for an arbitrary number of
-steps $k$, under any substitution $\theta$ of free fractional-permission
-variables, linear variables $\gamma$ (with a suitable heap $\varsigma$) and
-intuitionistic variables $\delta$, that suitable heap and expression
-$(\varsigma, \theta(\delta(\gamma(e))))$ are in the computational
-interpretation of the type of that expression $\C{k}{ \theta(t) }$.
-
-The \emph{computational interpretation} is as defined before: a combination of
-a frame rule on heaps (no interference), type-preservation and termination (in
-$j < k$ steps) to either an error or a heap-and-expression, with the further
-condition that if the expression is a syntactic value then it is also one
-semantically.
-
-It identifies executions that do no un- or ill-defined behaviours (e.g.\ adding
-a boolean and an integer). Since our operational semantics explicitly models
-deallocation, we now know no well-typed program will ever try to access
-deallocated memory, establishing the correctness of our memory management
-checking.
+If an expression $e$ is syntactically type-checked (against a type $t$), then
+\begin{itemize}
+    \item for an arbitrary number of steps $k$,
+    \item under any substitution of
+        \begin{itemize}
+            \item free fractional permission variables $\theta$,
+            \item linear variables with a suitable heap $(\gamma, \varsigma)$ and
+            \item intuitionistic variables $\delta$,
+        \end{itemize}
+    \item the aforementioned suitable heap and expression $(\varsigma, \theta(\delta(\gamma(e))))$
+    \item are in the computational interpretation $\C{k}{ \theta(t) }$ of the type $t$.
+\end{itemize}
+The \emph{computational interpretation} is as defined before
+(Section~\ref{subsec:logical_rel}); it identifies executions that do no un- or
+ill-defined behaviours (e.g.\ adding a boolean and an integer). Since our
+operational semantics explicitly models deallocation, we now know no well-typed
+program will ever try to access deallocated memory, establishing the
+correctness of our memory management checking.
 
 \subsubsection{Proof Sketch}
 
@@ -336,7 +337,7 @@ the step-index and assume exactly the thing we need to prove at a smaller index.
 
 The case for \textsc{Ty\_Gen} follows a similar pattern, but has the extra
 complication of reducing an expression with an arbitrary fractional permission
-variable in it, and then instantiating it at the last momemnt to conclude,
+variable in it, and then instantiating it at the last moment to conclude,
 which is where \ref{fracPermSub} (heap-and-expressions take the same steps of
 evaluation under any substitution of their free fractional permissions) is
 used.

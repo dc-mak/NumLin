@@ -19,12 +19,12 @@ by \lang's type system.
 The original implementation used 6 temporaries, one of which was immediately
 spotted as never being used due to linearity. It also contained two variables
 which were marked as \texttt{intent(in)} but would have been written over by
-calls to `gemm', spotted by the fractional capabilities feature. Furthermore,
+calls to `gemm', spotted by the fractional permissions feature. Furthermore,
 it used a matrix \emph{twice} in a call to `symm', once with a read permission
 but once with a \emph{write} permission.  Fortran assumes that any parameter
 being written to is not aliased and so this call was not only incorrect, but
 illegal according to the standard, both aspects of which were captured by
-linearity and fractional capabilities.
+linearity and fractional permissions.
 
 Lastly, it contained another unnecessary temporary, however one that was not
 obvious without linear types. To spot it, we first performed live-range
@@ -38,6 +38,8 @@ programming.
 
 \subsection{Related Work}
 
+\subsubsection{Linear types for \emph{implementing} linear algebra routines}
+
 Using linear types for BLAS routines is a particularly good domain fit (given
 the implicit restrictions on aliasing arguments), and as a result the idea of
 using substructural types to express array computations is not a particularly
@@ -50,11 +52,16 @@ The work of \cite{bernardy2016} forbids term-level recursion, in order to
 ensure that all higher-order computations can be statically normalized away and
 thereby maximize opportunities for array fusion.
 
+\subsubsection{Our contribution: linear types for enforcing correct
+    \emph{usage} of linear algebra routines}
+
 In contrast, our approach is to begin with the assumption that we can take
 existing efficient BLAS-like libraries, and then enforce their correct
 \emph{usage} using a linear type discipline with fractional permissions. 
 
-This approach is similar to the one taken in linear algebra libraries for Rust
+\subsubsection{Traditionally complex approaches to sharing}
+
+Our approach is similar to the one taken in linear algebra libraries for Rust
 -- these libraries typically take advantage of the distinction that Rust's type
 system offers between mutable views/references to arrays.  The work of
 \cite{weiss} and \cite{rustbelt} suggest that Rust's borrow-checker \emph{can
@@ -73,12 +80,16 @@ programs, but can create the impression that using fractional permissions
 requires a heavy theoretical and engineering effort going well beyond that
 needed for supporting basic linear types.
 
+\subsubsection{Our contribution: a simpler approach to sharing}
+
 Instead, our approach, of requiring sharing to be made explicit, lets us
 demonstrate that the existing unification machinery already in place for
 ordinary ML-style type inference can be reused to support fractions. Basically,
 we can view sharing a value as dividing a fraction by two, and after taking
 logarithms all fractions are Peano numbers, whose equality can be established
 with ordinary unification.
+
+\subsubsection{Implications}
 
 This fact is important because there are major upcoming implementations of
 linear types such as Linear Haskell~\cite{bernardy2017linear}, which do not
@@ -90,7 +101,7 @@ backwards-compatible, it also means that the type system has no built-in
 support for the concurrent reader, exclusive writer pattern that fractional
 permissions enable.
 
-However, since our type system shows demonstrates unification is ``all one
+However, since our type system shows unification is ``all one
 needs'' for fractions, it should be possible to \emph{encode} \lang's approach
 to fractional permissions in Linear Haskell by adding a GADT-style natural
 number index to array types tracking the fraction, which should enable

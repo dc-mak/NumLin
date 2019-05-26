@@ -2,14 +2,16 @@
 
 FLAGS := -quiet
 
-TARGETS := semantics.pdf \
-           proposal.pdf  \
-           dissertation.pdf \
-           paper.pdf
-
 BUILD := build
 
-# Add Bibligraphy at some point
+# Proposal
+
+PROP := proposal.bib
+PROP_DIR := proposal
+PROP := $(addprefix $(PROP_DIR)/,$(PROP))
+
+# Dissertation
+
 DIS :=  myclass.cls \
         semantics_def.tex \
         titlepage.tex \
@@ -24,6 +26,7 @@ DIS :=  myclass.cls \
         ott_spec.tex \
         timings.tex \
         primitives.tex \
+	proposal.bib \
         eval_data.tex \
         timings_all.tex \
         timings.txt \
@@ -32,6 +35,8 @@ DIS :=  myclass.cls \
 DIS_DIR := dissertation
 DIS := $(addprefix $(DIS_DIR)/,$(DIS))
 
+# Semantics
+
 SEM := semantics_def.tex \
        interpretation.tex \
        lemmas.tex \
@@ -39,6 +44,17 @@ SEM := semantics_def.tex \
 
 SEM_DIR := semantics
 SEM := $(addprefix $(SEM_DIR)/,$(SEM))
+
+# Paper
+
+EXAMPLES := factorial.lt \
+            sum_array.lt \
+            weighted_avg_infer.lt \
+            square.lt \
+            lin_reg.lt \
+            l1_norm_min.lt \
+            kalman.lt
+EXAMPLES :=  $(addprefix ../examples/,$(EXAMPLES))
 
 PAPER := intro.tex \
          lang_and_examples.tex \
@@ -57,35 +73,68 @@ PAPER := intro.tex \
 PAPER_DIR := paper
 PAPER := $(addprefix $(PAPER_DIR)/,$(PAPER))
 
+# Isolated paper for submission
+
+ISOLATED := lipics-v2019.cls \
+            ottlayout.sty \
+            pf2.sty \
+            orcid.pdf \
+            cc-by.pdf \
+            lipics-logo-bw.pdf \
+            impl_build.png \
+            ourbib.bib \
+            plainurl.bst
+
+ISOLATED_DIR := isolated
+
+ISOLATED := $(addprefix $(PAPER_DIR)/,$(ISOLATED)) $(EXAMPLES)
+
 BUILD_DIS := $(BUILD)/$(DIS_DIR)
 
-.PHONY: all
-all: $(TARGETS)
+PDFS := $(SEM_DIR).pdf \
+        $(PROP_DIR).pdf  \
+        $(DIS_DIR).pdf \
+        $(PAPER_DIR).pdf
+
+.PHONY: all clean
+all: $(PDFS) $(ISOLATED_DIR).tar.gz
 
 .SECONDEXPANSION:
-$(TARGETS):%.pdf: $$*/$$*.tex | $(BUILD)
+$(PDFS):%.pdf: $$*/$$*.tex | $(BUILD)
 	cd $(dir $<) && latexmk -pdf -dvi- -ps- $(notdir $<) -shell-escape -output-directory=../$(BUILD) $(FLAGS)
 	mv $(BUILD)/$@ $@
 
-$(PAPER_DIR)/paper.tex: $(PAPER)
+$(PAPER_DIR)/$(PAPER_DIR).tex: $(PAPER) $(SEM) $(EXAMPLES)
 	touch $@
 
-$(DIS_DIR)/dissertation.tex: $(DIS) | $(BUILD_DIS)
+$(DIS_DIR)/$(DIS_DIR).tex: $(DIS) | $(BUILD_DIS)
 	touch $@
 
 $(DIS_DIR)/semantics_def.tex: $(DIS_DIR)/semantics.ott
 	ott -i $< -tex_show_meta false -tex_wrap false -o $@
 
-$(SEM_DIR)/semantics.tex: $(SEM)
+$(SEM_DIR)/$(SEM_DIR).tex: $(SEM)
+	touch $@
+
+$(PROP_DIR)/$(PROP_DIR).tex: $(PROP)
 	touch $@
 
 $(SEM_DIR)/semantics_def.tex: $(SEM_DIR)/semantics.ott
 	ott -i $< -tex_show_meta false -tex_wrap false -o $@
 
+.SECONDEXPANSION:
+$(ISOLATED_DIR).tar.gz:%.tar.gz: $$*/$$*.tex $(ISOLATED) | $(ISOLATED_DIR)
+	cp $(ISOLATED) $(dir $<)
+	tar czf $@ $(dir $<)
+
+$(ISOLATED_DIR)/$(ISOLATED_DIR).tex: $(PAPER_DIR)/$(PAPER_DIR).tex $(ISOLATED) | $(ISOLATED_DIR)
+	cd $(dir $<) && latexpand $(notdir $<) > ../$@
+	sed -i 's~\[outputdir=\.\./$(BUILD)\]~~' $@
+	sed -i 's~\.\./\.\./examples/~~' $@
+
 $(BUILD_DIS): $(BUILD)
-$(BUILD) $(BUILD_DIS): %:
+$(BUILD) $(BUILD_DIS) $(ISOLATED_DIR): %:
 	mkdir -p $@
 
-.PHONY: clean
 clean:
-	rm -rf $(BUILD)
+	rm -rf $(BUILD) $(ISOLATED_DIR)

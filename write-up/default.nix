@@ -28,6 +28,7 @@ stdenv.mkDerivation {
             hyperref
             ifplatform # minted
             latexmk
+            latexpand
             lastpage
             lineno # minted
             listings
@@ -55,9 +56,9 @@ stdenv.mkDerivation {
             xstring # minted
             ;
         })
-        pythonPackages.pygments
-        ocamlPackages.ott
         ghostscript
+        ocamlPackages.ott
+        pythonPackages.pygments
         which
     ];
 

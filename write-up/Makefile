@@ -135,7 +135,6 @@ $(ISOLATED_DIR)/$(ISOLATED_DIR).tex: $(PAPER_DIR)/$(PAPER_DIR).tex $(ISOLATED) |
 	sed -i 's/^permissions (\\ref{fracPermSub})/permissions; all of these (and more) are stated formally and proved in the Appendix/g' $@
 	sed -i 's/ (\\ref{\(frame\|subsetKJ\|restriction\|fracPermSub\)})//g' $@
 	sed -i 's/\\ref{fracPermSub}/one of the lemmas/g' $@
-	sed -i 's~\clearpage\appendix\input{appendix}~~' $@
 
 $(BUILD_DIS): $(BUILD)
 $(BUILD) $(BUILD_DIS) $(ISOLATED_DIR): %:

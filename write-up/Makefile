@@ -128,9 +128,13 @@ $(ISOLATED_DIR).tar.gz:%.tar.gz: $$*/$$*.tex $(ISOLATED) | $(ISOLATED_DIR)
 	tar czf $@ $(dir $<)
 
 $(ISOLATED_DIR)/$(ISOLATED_DIR).tex: $(PAPER_DIR)/$(PAPER_DIR).tex $(ISOLATED) | $(ISOLATED_DIR)
-	cd $(dir $<) && latexpand $(notdir $<) > ../$@
+	cd $(dir $<) && cat $(notdir $<) | sed 's~^\\clearpage\\appendix\\input{appendix}$$~%&~' | latexpand - > ../$@
 	sed -i 's~\[outputdir=\.\./$(BUILD)\]~~' $@
 	sed -i 's~\.\./\.\./examples/~~' $@
+	sed -i 's/Figure~\\ref{fig:\(cblas\|ocaml\)_kalman}\|Appendix~\\ref{\w\+\:\(\w\|_\)\+}/the Appendix/g' $@
+	sed -i 's/ (\\ref{\(frame\|subsetKJ\|restriction\|fracPermSub\)})//g' $@
+	sed -i 's/\\ref{fracPermSub}/one of the lemmas/g' $@
+	sed -i 's~\clearpage\appendix\input{appendix}~~' $@
 
 $(BUILD_DIS): $(BUILD)
 $(BUILD) $(BUILD_DIS) $(ISOLATED_DIR): %:

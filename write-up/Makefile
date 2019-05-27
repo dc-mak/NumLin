@@ -132,6 +132,7 @@ $(ISOLATED_DIR)/$(ISOLATED_DIR).tex: $(PAPER_DIR)/$(PAPER_DIR).tex $(ISOLATED) |
 	sed -i 's~\[outputdir=\.\./$(BUILD)\]~~' $@
 	sed -i 's~\.\./\.\./examples/~~' $@
 	sed -i 's/Figure~\\ref{fig:\(cblas\|ocaml\)_kalman}\|Appendix~\\ref{\w\+\:\(\w\|_\)\+}/the Appendix/g' $@
+	sed -i 's/^permissions (\\ref{fracPermSub})/permissions; all of these (and more) are stated formally and proved in the Appendix/g' $@
 	sed -i 's/ (\\ref{\(frame\|subsetKJ\|restriction\|fracPermSub\)})//g' $@
 	sed -i 's/\\ref{fracPermSub}/one of the lemmas/g' $@
 	sed -i 's~\clearpage\appendix\input{appendix}~~' $@

@@ -4,5 +4,4 @@ let !square ('x) (x : 'x mat) =
     let answer <- new (m, n) [| x1 * x2 |] in
     let x = unshareM _ x1 x2 in
     (x, answer) in
-    square
-;;
+    square ;;

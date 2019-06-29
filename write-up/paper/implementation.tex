@@ -193,13 +193,12 @@ Figure~\ref{fig:ocaml_kalman}.
 \begin{figure}[tp]
     \centering
     \begin{minted}[fontsize=\small]{ocaml}
-let rec f i n x0 row =
+let rec sum_array i n x0 row =
   if Prim.extract @@ Prim.eqI i n then (row, x0)
   else
     let row, x1 = Prim.get row i in
-    f (Prim.addI i (Many 1)) n (Prim.addE x0 x1) row
-in
-f
+    sum_array (Prim.addI i (Many 1)) n (Prim.addE x0 x1) row in
+sum_array
     \end{minted}
     \caption{Recursive OCaml function for a summing over an array, generated (at
         \emph{compile time}) from the code in Figure~\ref{fig:lang_sumarray},

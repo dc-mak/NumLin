@@ -4,7 +4,7 @@
  (libraries numlin lwt lambda-term)
  (flags :standard -short-paths)
  (preprocess
-  (pps lwt_ppx)))
+  (pps lwt_ppx ppx_jane)))
 
 (executable
  (name benchmark)
@@ -14,4 +14,4 @@
  (flags :standard -short-paths)
  (ocamlopt_flags :standard -p)
  (preprocess
-  (pps ppx_jane)))
+  (pps lwt_ppx ppx_jane)))

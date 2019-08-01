@@ -22,7 +22,7 @@
 (library
  (name bindings)
  (modules bindings)
- (libraries ctypes.stubs ctypes)
+ (libraries ctypes.stubs ctypes))
  ; HACK to generate .merlin file with PPX rewriters
- (preprocess
-  (pps ppx_jane lwt_ppx ppxlib.runner)))
+ ; (preprocess
+ ;(pps ppx_jane lwt_ppx ppxlib.runner)))

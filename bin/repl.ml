@@ -36,7 +36,7 @@ let make_output state out =
 class read_line ~term ~history ~state =
   object(self)
     inherit LTerm_read_line.read_line ~history ()
-    inherit [Zed_utf8.t] LTerm_read_line.term term
+    inherit [Zed_string.t] LTerm_read_line.term term
     method! show_box = false
     initializer self#set_prompt (S.const (make_prompt state))
   end
@@ -61,6 +61,7 @@ let rec loop term history ?cont state =
 
   | Some command ->
     step term history command @@
+    let command = Zed_string.to_utf8 command in
     begin match cont with
     | Some cont -> cont (Lexing.from_string command)
     | None -> Eval.eval state command

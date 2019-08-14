@@ -5,10 +5,9 @@ the horns of a dilemma. The foundational, low-level linear algebra
 libraries such as BLAS and LAPACK offer programmers very precise
 control over the memory lifetime and usage of vector and matrix
 values. However, this power comes paired with the responsibility to
-manually manage the memory associated with each array object, and in
-addition to bringing in the familiar difficulties of reasoning about
-lifetimes, aliasing and sharing that plague low-level systems
-programming; this also moves the APIs away from the linear-algebraic,
+manually manage the memory, lifetimes, aliasing and sharing of each array
+object: concerns similar to those that plague low-level systems
+programming. It also moves the APIs away from the linear-algebraic,
 mathematical style of thinking that numerical programmers want to use.
 
 As a result, programmers often turn to higher-level languages such as
